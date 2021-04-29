@@ -122,6 +122,8 @@ public class BugSplat
         }
 
         bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
+        bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
+        bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
     }
 
     /// <summary>
@@ -130,14 +132,14 @@ public class BugSplat
     /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
     /// <param name="options">Optional parameters that will override the defaults if provided</param>
     /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
-    public IEnumerator Post(Exception ex, BugSplatPostOptions options = null, Action<HttpResponseMessage> callback = null)
+    public IEnumerator Post(Exception ex, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
     {
         if (!ShouldPostException(ex))
         {
             yield break;
         }
 
-        options = options ?? new BugSplatPostOptions();
+        options = options ?? new ExceptionPostOptions();
 
         if (CaptureEditorLog)
         {
@@ -225,10 +227,10 @@ public class BugSplat
     /// </summary>
     /// <param name="options">Optional parameters that will override the defaults if provided</param>
     /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after all crashes are posted to BugSplat</param>
-    public IEnumerator PostAllCrashes(BugSplatPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
+    public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
     {
 #if UNITY_STANDALONE_WIN
-        options = options ?? new BugSplatPostOptions();
+        options = options ?? new MinidumpPostOptions();
 
         var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
         var crashFolders = folder.GetDirectories();
@@ -251,10 +253,10 @@ public class BugSplat
     /// </summary>
     /// <param name="options">Optional parameters that will override the defaults if provided</param>
     /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-    public IEnumerator PostCrash(DirectoryInfo crashFolder, BugSplatPostOptions options = null, Action<HttpResponseMessage> callback = null)
+    public IEnumerator PostCrash(DirectoryInfo crashFolder, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
     {
 #if UNITY_STANDALONE_WIN
-        options = options ?? new BugSplatPostOptions();
+        options = options ?? new MinidumpPostOptions();
 
         if (crashFolder == null)
         {
@@ -296,10 +298,10 @@ public class BugSplat
     /// </summary>
     /// <param name="options">Optional parameters that will override the defaults if provided</param>
     /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-    public IEnumerator PostMostRecentCrash(BugSplatPostOptions options = null, Action<HttpResponseMessage> callback = null)
+    public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
     {
 #if UNITY_STANDALONE_WIN
-        options = options ?? new BugSplatPostOptions();
+        options = options ?? new MinidumpPostOptions();
 
         var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
         var crashFolder = folder.GetDirectories()
@@ -329,7 +331,7 @@ public class BugSplat
         }
     }
 
-    private IEnumerator Post(FileInfo minidump, BugSplatPostOptions options = null, Action<HttpResponseMessage> callback = null)
+    private IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
     {
 #if UNITY_STANDALONE_WIN
         yield return Task.Run(
