@@ -129,12 +129,12 @@ public class BugSplat
     /// <summary>
     /// Post an Exception to BugSplat
     /// </summary>
-    /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
+    /// <param name="exception">The Exception that will be serialized and posted to BugSplat</param>
     /// <param name="options">Optional parameters that will override the defaults if provided</param>
     /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
-    public IEnumerator Post(Exception ex, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+    public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
     {
-        if (!ShouldPostException(ex))
+        if (!ShouldPostException(exception))
         {
             yield break;
         }
@@ -164,7 +164,7 @@ public class BugSplat
 
         if (CapturePlayerLog)
         {
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN 
             var localLowId = new Guid("A520A1A4-1780-4FF6-BD18-167343C5AF16");
             var localLow = GetKnownFolderPath(localLowId);
             var playerLogFilePath = Path.Combine(localLow, Application.companyName, Application.productName, "Player.log");
@@ -208,7 +208,7 @@ public class BugSplat
             {
                 try
                 {
-                    var result = await bugsplat.Post(ex, options);
+                    var result = await bugsplat.Post(exception, options);
                     if (callback != null)
                     {
                         callback(result);
@@ -245,6 +245,7 @@ public class BugSplat
         callback(results);
 #else
         Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
+        yield return null;
 #endif
     }
 
@@ -290,6 +291,7 @@ public class BugSplat
         });
 #else
         Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
+        yield return null;
 #endif
     }
 
@@ -311,6 +313,7 @@ public class BugSplat
         yield return PostCrash(crashFolder, options, callback);
 #else
         Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
+        yield return null;
 #endif
     }
 
@@ -353,6 +356,7 @@ public class BugSplat
         );
 #else
         Debug.Log($"BugSplat info: Post is not implemented on this platform");
+        yield return null;
 #endif
     }
 
