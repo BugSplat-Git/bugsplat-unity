@@ -42,7 +42,7 @@ public class BugSplat
     public bool CaptureScreenshots { get; set; } = false;
 
     /// <summary>
-    /// A guard that prevents Exceptions from being posted in rapid succession - defaults to 1 crash every 10 seconds.
+    /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
     /// </summary>
     public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl;
 
@@ -124,6 +124,41 @@ public class BugSplat
         bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
         bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
         bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+    }
+
+    /// <summary>
+    /// Event handler that will post the stackTrace to BugSplat if type equals LogType.Exception
+    /// </summary>
+    /// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
+    /// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
+    /// <param name="type">type provided by logMessageReceived event</param>
+    public async void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+    {
+        if (type != LogType.Exception)
+        {
+            return;
+        }
+
+        if (!ShouldPostException(null))
+        {
+            return;
+        }
+
+        var options = new ExceptionPostOptions();
+        options.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
+        stackTrace = $"{logMessage}\n{stackTrace}";
+
+        try
+        {
+            var result = await bugsplat.Post(stackTrace, options);
+            var status = result.StatusCode;
+            var contents = await result.Content.ReadAsStringAsync();
+            Debug.Log($"BugSplat info: status {status}\n {contents}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"BugSplat error: {ex}");
+        }
     }
 
     /// <summary>
