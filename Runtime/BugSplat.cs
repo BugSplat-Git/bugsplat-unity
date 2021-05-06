@@ -266,8 +266,13 @@ namespace BugSplatUnity
 #if UNITY_STANDALONE_WIN
             options ??= new MinidumpPostOptions();
 
-            var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
-            var crashFolders = folder.GetDirectories();
+            var crashReportFolder = new DirectoryInfo(CrashReporting.crashReportFolder);
+            if (!crashReportFolder.Exists)
+            {
+                yield break;
+            }
+
+            var crashFolders = crashReportFolder.GetDirectories();
             var results = new List<HttpResponseMessage>();
 
             foreach (var crashFolder in crashFolders)
@@ -276,7 +281,7 @@ namespace BugSplatUnity
                 yield return PostCrash(crashFolder, options, (response) => results.Add(response));
             }
 
-            callback(results);
+            callback?.Invoke(results);
 #else
         Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
         yield return null;
@@ -300,7 +305,6 @@ namespace BugSplatUnity
             }
 
             var crashFiles = crashFolder.GetFiles();
-
             if (crashFiles.Any(file => file.Name == sentinelFileName))
             {
                 Debug.Log($"BugSplat info: {crashFolder.Name} already posted, skipping...");
@@ -308,8 +312,17 @@ namespace BugSplatUnity
             }
 
             var minidump = crashFiles.Where(file => file.Extension == ".dmp").FirstOrDefault();
+            if (minidump == null)
+            {
+                Debug.Log($"BugSplat info: {crashFolder.FullName} does not contain a minidump file, skipping...");
+                yield break;
+            }
+
             var attachments = crashFiles.Where(file => file.Extension != ".dmp");
-            options.AdditionalAttachments.AddRange(attachments);
+            if (attachments != null)
+            {
+                options.AdditionalAttachments.AddRange(attachments);
+            }
 
             Debug.Log($"BugSplat info: Posting {crashFolder.Name}");
             yield return Post(minidump, options, async (response) =>
@@ -321,7 +334,7 @@ namespace BugSplatUnity
                     var sentinelFileContents = await response.Content.ReadAsStringAsync();
                     System.IO.File.WriteAllText(sentinelFilePath, sentinelFileContents);
                 }
-                callback(response);
+                callback?.Invoke(response);
             });
 #else
         Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
