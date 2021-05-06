@@ -29,6 +29,12 @@ public class BuildPostprocessor
             var bugSplatDir = Path.Combine(projectDir, @"..\..\bin");
             var pluginsDir = Path.Combine(Path.Combine(projectDir, @"Assets\Plugins"), _platform);
 
+            if (!Directory.Exists(pluginsDir))
+            {
+                UnityEngine.Debug.Log("Plugins directory doesn't exist, skipping SendPdbs...");
+                return;
+            }
+
             RunSendPdbs(pluginsDir, bugSplatDir);
         }
     }
