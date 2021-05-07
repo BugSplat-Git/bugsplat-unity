@@ -31,7 +31,7 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 ## Usage
 
-BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to create new script and attach it to a GameObject. In your script, create add a using statement that aliases `BugSplatUnity.BugSplat` as `BugSplat`.
+BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to create new script and attach it to a GameObject. In your script, add a using statement that aliases `BugSplatUnity.BugSplat` as `BugSplat`.
 
 ```cs
 using BugSplat = BugSplatUnity.BugSplat;
@@ -43,7 +43,7 @@ Next, create a new instance of `BugSplat` passing it your `database`, `applicati
 var bugsplat = new BugSplat(database, Application.productName, Application.version);
 ```
 
-You can set the defaults for a variety of properties on the `BugSplat` instance. These default values will be used in exception and crash posts. Additionally you can tell BugSplat to capture a screenshot, include the Player.log file, and the Editor.log file when an exception is recorded.
+You can set the defaults for a variety of properties on the `BugSplat` instance. These default values will be used in exception and crash posts. Additionally you can tell BugSplat to capture a screenshot, include the Player.log file, and include the Editor.log file when an exception is recorded.
 
 ```cs
 bugsplat.Attachments.Add(new FileInfo("/path/to/attachment.txt"));
@@ -56,7 +56,7 @@ bugsplat.CapturePlayerLog = false;
 bugsplat.CaptureScreenshots = true;
 ```
 
-You can send exceptions to BugSplat by using a try/catch block by calling `Post`.
+You can send exceptions to BugSplat in a try/catch block by calling `Post`.
 
 ```cs
 try
@@ -69,7 +69,7 @@ catch (Exception ex)
 }
 ```
 
-The default values specified on the instance of `BugSplat` can be overriden in the call to `Post`. Additionally, you can provide a `callback` to `Post` that will be invoked with the result once the upload is complete.
+The default values specified on the instance of `BugSplat` can be overridden in the call to `Post`. Additionally, you can provide a `callback` to `Post` that will be invoked with the result once the upload is complete.
 
 ```cs
 var options = new ExceptionPostOptions()
@@ -106,7 +106,7 @@ StartCoroutine(bugsplat.PostMostRecentCrash());
 StartCoroutine(bugsplat.PostAllCrashes());
 ```
 
-Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The useage of `MinidumpPostOptions` and `callback` are nearly identically to the `ExceptionPostOptions` example listed above.
+Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identically to the `ExceptionPostOptions` example listed above.
 
 You can generate a test crash on Windows with any of the following methods.
 
