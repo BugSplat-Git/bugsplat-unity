@@ -192,10 +192,21 @@ namespace BugSplatUnity
                 {
                     Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
                 }
+#elif UNITY_EDITOR_OSX
+                var home = Environment.GetEnvironmentVariable("HOME");
+                var editorLogFilePath = Path.Combine(home, "Library", "Logs", "Unity", "Editor.log");
+                var editorLogFileInfo = new FileInfo(editorLogFilePath);
+                if (editorLogFileInfo.Exists)
+                {
+                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                }
+                else
+                {
+                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
+                }
 #else
             Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
 #endif
-                // TODO BG mac
                 // TODO BG linux
             }
 
@@ -214,10 +225,21 @@ namespace BugSplatUnity
                 {
                     Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
                 }
+#elif UNITY_STANDALONE_OSX
+                var home = Environment.GetEnvironmentVariable("HOME");
+                var playerLogFilePath = Path.Combine(home, "Library", "Logs", Application.companyName, Application.productName, "Player.log");
+                var playerLogFileInfo = new FileInfo(playerLogFilePath);
+                if (playerLogFileInfo.Exists)
+                {
+                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                }
+                else
+                {
+                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
+                }
 #else
             Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
 #endif
-                // TODO BG mac
                 // TODO BG linux
             }
 
