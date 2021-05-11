@@ -43,7 +43,7 @@ Next, create a new instance of `BugSplat` passing it your `database`, `applicati
 var bugsplat = new BugSplat(database, Application.productName, Application.version);
 ```
 
-You can set the defaults for a variety of properties on the `BugSplat` instance. These default values will be used in exception and crash posts. Additionally you can tell BugSplat to capture a screenshot, include the Player.log file, and include the Editor.log file when an exception is recorded.
+You can set the defaults for a variety of properties on the `BugSplat` instance. These default values will be used in exception and crash posts. Additionally, you can tell BugSplat to capture a screenshot, include the Player.log file, and include the Editor.log file when an exception is recorded.
 
 ```cs
 bugsplat.Attachments.Add(new FileInfo("/path/to/attachment.txt"));
