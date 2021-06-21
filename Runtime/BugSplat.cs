@@ -204,10 +204,21 @@ namespace BugSplatUnity
                 {
                     Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
                 }
+#elif UNITY_EDITOR_LINUX
+                var home = Environment.GetEnvironmentVariable("HOME");
+                var editorLogFilePath = Path.Combine(home, ".config", "unity3d", "Editor.log");
+                var editorLogFileInfo = new FileInfo(editorLogFilePath);
+                if (editorLogFileInfo.Exists)
+                {
+                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                }
+                else
+                {
+                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
+                }
 #else
-            Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
+                Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
 #endif
-                // TODO BG linux
             }
 
             if (CapturePlayerLog)
@@ -237,10 +248,21 @@ namespace BugSplatUnity
                 {
                     Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
                 }
+#elif UNITY_STANDALONE_LINUX
+                var home = Environment.GetEnvironmentVariable("HOME");
+                var editorLogFilePath = Path.Combine(home, ".config", "unity3d", Application.companyName, Application.productName, "Player.log");
+                var editorLogFileInfo = new FileInfo(editorLogFilePath);
+                if (editorLogFileInfo.Exists)
+                {
+                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                }
+                else
+                {
+                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
+                }
 #else
-            Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
+                Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
 #endif
-                // TODO BG linux
             }
 
             if (CaptureScreenshots)
