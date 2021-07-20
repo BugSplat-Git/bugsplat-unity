@@ -223,7 +223,7 @@ namespace BugSplatUnity
 
             if (CapturePlayerLog)
             {
-#if UNITY_STANDALONE_WIN
+#if  UNITY_STANDALONE_WIN
                 var localLowId = new Guid("A520A1A4-1780-4FF6-BD18-167343C5AF16");
                 var localLow = GetKnownFolderPath(localLowId);
                 var playerLogFilePath = Path.Combine(localLow, Application.companyName, Application.productName, "Player.log");
@@ -259,6 +259,18 @@ namespace BugSplatUnity
                 else
                 {
                     Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
+                }
+#elif UNITY_WSA
+                var tempState = Application.temporaryCachePath;
+                var playerLogFilePath = Path.Combine(tempState, "UnityPlayer.log");
+                var playerLogFileInfo = new FileInfo(playerLogFilePath);
+                if (playerLogFileInfo.Exists)
+                {
+                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                }
+                else
+                {
+                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
                 }
 #else
                 Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
@@ -327,8 +339,8 @@ namespace BugSplatUnity
 
             callback?.Invoke(results);
 #else
-        Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
-        yield return null;
+            Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
+            yield return null;
 #endif
         }
 
@@ -381,8 +393,8 @@ namespace BugSplatUnity
                 callback?.Invoke(response);
             });
 #else
-        Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
-        yield return null;
+            Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
+            yield return null;
 #endif
         }
 
@@ -403,8 +415,8 @@ namespace BugSplatUnity
 
             yield return PostCrash(crashFolder, options, callback);
 #else
-        Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
-        yield return null;
+            Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
+            yield return null;
 #endif
         }
 
@@ -443,8 +455,8 @@ namespace BugSplatUnity
                 }
             );
 #else
-        Debug.Log($"BugSplat info: Post is not implemented on this platform");
-        yield return null;
+            Debug.Log($"BugSplat info: Post is not implemented on this platform");
+            yield return null;
 #endif
         }
 
