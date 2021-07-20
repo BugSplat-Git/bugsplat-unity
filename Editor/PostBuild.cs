@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 
-public class BuildPostprocessor
+public class BuildPostprocessors
 {
     static string _platform;
 
@@ -20,23 +20,20 @@ public class BuildPostprocessor
         {
             case BuildTarget.StandaloneWindows64: _platform = "x86_64"; break;
             case BuildTarget.StandaloneWindows: _platform = "x86"; break;
-            default: _platform = string.Empty; break;
+            default: return;
         }
 
-        if (!string.IsNullOrEmpty(_platform))
+        var projectDir = Path.GetDirectoryName(Application.dataPath);
+        var bugSplatDir = Path.Combine(projectDir, "Packages", "com.bugsplat.unity", "Editor");
+        var pluginsDir = Path.Combine(Path.Combine(projectDir, @"Assets\Plugins"), _platform);
+
+        if (!Directory.Exists(pluginsDir))
         {
-            var projectDir = Path.GetDirectoryName(Application.dataPath);
-            var bugSplatDir = Path.Combine(projectDir, @"..\..\bin");
-            var pluginsDir = Path.Combine(Path.Combine(projectDir, @"Assets\Plugins"), _platform);
-
-            if (!Directory.Exists(pluginsDir))
-            {
-                UnityEngine.Debug.Log("Plugins directory doesn't exist, skipping SendPdbs...");
-                return;
-            }
-
-            RunSendPdbs(pluginsDir, bugSplatDir);
+            UnityEngine.Debug.Log("Plugins directory doesn't exist, skipping SendPdbs...");
+            return;
         }
+
+        RunSendPdbs(pluginsDir, bugSplatDir);
     }
 
     static void RunSendPdbs(string pluginsDir, string bugSplatDir)
@@ -50,6 +47,7 @@ public class BuildPostprocessor
             + " /v " + Application.version
             + " /d \"" + pluginsDir + "\""
             + " /s";
+
         using (var process = Process.Start(startInfo))
         {
             process.WaitForExit();
