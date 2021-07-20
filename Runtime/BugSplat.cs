@@ -424,11 +424,12 @@ namespace BugSplatUnity
         {
             try
             {
-                // TODO BG the example calls Destory on texture, do we need to do that?
                 var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
                 texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
                 texture.Apply();
-                return texture.EncodeToPNG();
+                var result = texture.EncodeToPNG();
+                GameObject.Destroy(texture);
+                return result;
             }
             catch (Exception ex)
             {
