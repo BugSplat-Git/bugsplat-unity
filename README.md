@@ -121,6 +121,39 @@ Once you've posted an exception or a minidump to BugSplat click the link in the 
 
 ![BugSplat crash page](https://bugsplat-public.s3.amazonaws.com/unity/my-unity-crasher.png)
 
+## UWP
+
+In order to use BugSplat in a Universal Windows Platform application you will need to add some capabilities to the `Package.appxmanifest` file in the solution directory that Unity generates at build time.
+
+### Exceptions and Log Files
+
+In order to report exceptions and upload log files you will need to add the `Internet (Client)` capability.
+
+### Windows Minidumps
+
+To upload minidumps created on Windows you will need to add the `Internet (Client)` capability.
+
+Additionally, we found there were some restricted capabilities that were required in order to generate minidumps. Please see this Microsoft [document](https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps) that describes how to configure your system to generate minidumps for UWP native crashes.
+
+To upload minidumps from `%LOCALAPPDATA%\CrashDumps` you will also need to add the `broadFileSystemAccess` restricted capability. To add access to the file system you will need to add the following to your `Package.appxmanifest`:
+
+```xml
+<Package xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" ... >
+```
+
+Under the `Capabilities` section add the `broadFileSystemAccess` capability:
+
+```xml
+<Capabilities>
+    <rescap:Capability Name="broadFileSystemAccess" />
+</Capabilities>
+```
+
+Finally, ensure that your application has access to the file system. The following is a snippet illustrating where this is set for our [my-unity-crasher](https://github.com/BugSplat-Git/my-unity-crasher) sample:
+
+![Unity file system access](https://bugsplat-public.s3.amazonaws.com/unity/unity-file-system-access.png)
+
+
 ## Contributing
 
 BugSplat ❤️s open source! If you feel that this integration can be improved, please open an [Issue](https://github.com/BugSplat-Git/bugsplat-unity/issues). If you have an awesome new feature you'd like to implement, we'd love to merge your [Pull Request](https://github.com/BugSplat-Git/bugsplat-unity/pulls). You can also reach out to us via an email to support@bugsplat.com or the in-app chat on bugsplat.com.
