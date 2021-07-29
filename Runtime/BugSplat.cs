@@ -438,9 +438,9 @@ namespace BugSplatUnity
             }
         }
 
-        private IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_WSA
             yield return Task.Run(
                 async () =>
                 {
