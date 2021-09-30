@@ -6,9 +6,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.IO;
 using System.Runtime.InteropServices;
-using UnityEngine.Windows;
 using System.Linq;
 using BugSplatDotNetStandard;
+
+#if UNITY_STANDALONE_WIN
+using UnityEngine.Windows;
+#endif
 
 namespace BugSplatUnity
 {
