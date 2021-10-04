@@ -1,5 +1,4 @@
 using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime;
 using Packages.com.bugsplat.unity.Runtime.Client;
 using Packages.com.bugsplat.unity.Runtime.Reporter;
 using Packages.com.bugsplat.unity.Runtime.Settings;
@@ -18,6 +17,8 @@ namespace BugSplatUnity
     /// </summary>
     public class BugSplat
     {
+        // TODO BG can we support all these things in WebGL
+        // TODO BG if not, implement somethinglike WebGLClientSettingsRepository that logs errors
         /// <summary>
         /// A list of files to be uploaded every time Post is called
         /// </summary>
@@ -134,10 +135,10 @@ namespace BugSplatUnity
         }
 
         private readonly IClientSettingsRepository clientSettings;
-        private readonly IExceptionClient bugsplat;
+        private readonly IExceptionReporter exceptionReporter;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
-        private readonly BugSplatWindowsClient nativeBugSplat;
+        private readonly INativeCrashReporter nativeCrashReporter;
 #endif
 
         /// <summary>
@@ -169,15 +170,14 @@ namespace BugSplatUnity
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
+            bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
+            bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
             var settings = new DotNetStandardClientSettingsRepository(bugsplat);
-            var dotNetStandardReporter = new DotNetStandardReporter(bugsplat);
-            var bugsplatClient = new BugSplatClient(dotNetStandardReporter, settings);
-            var windowsClient = new BugSplatWindowsClient(bugsplatClient, dotNetStandardReporter);
-
-            // TODO BG
-            //var client = new BugSplatWindowsClient(database, application, version);
-            //bugsplat = client;
-            //nativeBugSplat = client;
+            var dotNetStandardClient = new DotNetStandardClient(bugsplat);
+            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(settings, dotNetStandardClient);
+            var windowsReporter = new WindowsReporter(dotNetStandardExceptionReporter, dotNetStandardClient);
+            exceptionReporter = windowsReporter;
+            nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
             bugsplat = new BugSplatWebGLClient(database, application, version);
 #else
@@ -193,7 +193,7 @@ namespace BugSplatUnity
         /// <param name="type">type provided by logMessageReceived event</param>
         public Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            return bugsplat.LogMessageReceived(logMessage, stackTrace, type);
+            return exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace BugSplatUnity
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            return bugsplat.Post(exception, options, callback);
+            return exceptionReporter.Post(exception, options, callback);
         }
 
         /// <summary>
@@ -255,7 +255,7 @@ namespace BugSplatUnity
         public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN || UNITY_WSA
-            return nativeBugSplat.Post(minidump, options, callback);
+            return nativeCrashReporter.Post(minidump, options, callback);
 #else
             Debug.Log($"BugSplat info: Post is not implemented on this platform");
             yield return null;

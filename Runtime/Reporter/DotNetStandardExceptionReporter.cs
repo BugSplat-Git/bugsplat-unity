@@ -8,19 +8,19 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
 
     // TODO BG better names for BugSplatClient and IBugSplatClient
-    internal class DotNetStandardExceptionClient: IExceptionClient
+    internal class DotNetStandardExceptionReporter: IExceptionReporter
     {
         private readonly IClientSettingsRepository _clientSettings;
-        private readonly IExceptionReporter _exceptionReporter;
+        private readonly IExceptionClient _exceptionClient;
 
-        public DotNetStandardExceptionClient(IClientSettingsRepository clientSettings, IExceptionReporter exceptionReporter)
+        public DotNetStandardExceptionReporter(IClientSettingsRepository clientSettings, IExceptionClient exceptionClient)
         {
             _clientSettings = clientSettings;
-            _exceptionReporter = exceptionReporter;
+            _exceptionClient = exceptionClient;
             // TODO BG where should this go?
             //bugsplat.MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows;
             //bugsplat.ExceptionType = BugSplat.ExceptionTypeId.Unity;
@@ -44,7 +44,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Client
 
             try
             {
-                var result = await _exceptionReporter.Post(stackTrace, options);
+                var result = await _exceptionClient.Post(stackTrace, options);
                 var status = result.StatusCode;
                 var contents = await result.Content.ReadAsStringAsync();
                 Debug.Log($"BugSplat info: status {status}\n {contents}");
@@ -187,7 +187,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Client
                 {
                     try
                     {
-                        var result = await _exceptionReporter.Post(exception, options);
+                        var result = await _exceptionClient.Post(exception, options);
                         callback?.Invoke(result);
                     }
                     catch (Exception ex)

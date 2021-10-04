@@ -13,31 +13,29 @@ using UnityEngine;
 using UnityEngine.Windows;
 #endif
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
-    // TODO BG implement nativeCrashPostClient
-    internal class BugSplatWindowsClient: IExceptionClient
+    internal class WindowsReporter: IExceptionReporter, INativeCrashReporter
     {
         private static readonly string sentinelFileName = "BugSplatPostSuccess.txt";
 
-        // TODO BG proper interface
-        private readonly IExceptionClient _bugsplatClient;
-        private readonly INativeCrashReporter _nativeCrashReporter;
+        private readonly IExceptionReporter _exceptionReporter;
+        private readonly INativeCrashReportClient _nativeCrashReporter;
 
-        public BugSplatWindowsClient(IExceptionClient bugsplatClient, INativeCrashReporter nativeCrashReporter)
+        public WindowsReporter(IExceptionReporter exceptionReporter, INativeCrashReportClient nativeCrashReporter)
         {
-            _bugsplatClient = bugsplatClient;
+            _exceptionReporter = exceptionReporter;
             _nativeCrashReporter = nativeCrashReporter;
         }
 
         public Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            return _bugsplatClient.LogMessageReceived(logMessage, stackTrace, type);
+            return _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            return _bugsplatClient.Post(exception, options, callback);
+            return _exceptionReporter.Post(exception, options, callback);
         }
 
         public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)

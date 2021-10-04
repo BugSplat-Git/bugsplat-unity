@@ -9,27 +9,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
-    internal class BugSplatWebGLClient : IExceptionClient
+    internal class WebGLReporter : IExceptionReporter
     {
-        // TODO BG can we support all theses things in WebGL?
-        public List<FileInfo> Attachments => _attachments;
-        public bool CaptureEditorLog { get; set; } = false;
-        public bool CapturePlayerLog { get; set; } = false;
-        public bool CaptureScreenshots { get; set; } = false;
-        public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
-        public string Description { set; private get; }
-        public string Email { set; private get; }
-        public string Key { set; private get; }
-        public string User { set; private get; }
-
-        private List<FileInfo> _attachments = new List<FileInfo>();
-        private string _database;
-        private string _application;
-        private string _version;
-
-        public BugSplatWebGLClient(string database, string application, string version)
+        public WebGLReporter(string database, string application, string version)
         {
             _database = database;
             _application = application;

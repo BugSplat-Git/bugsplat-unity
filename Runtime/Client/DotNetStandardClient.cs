@@ -4,13 +4,13 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Packages.com.bugsplat.unity.Runtime.Reporter
+namespace Packages.com.bugsplat.unity.Runtime.Client
 {
-    internal class DotNetStandardReporter : INativeCrashReporter, IExceptionReporter
+    internal class DotNetStandardClient : INativeCrashReportClient, IExceptionClient
     {
         private readonly BugSplat _bugsplat;
 
-        public DotNetStandardReporter(BugSplat bugsplat)
+        public DotNetStandardClient(BugSplat bugsplat)
         {
             _bugsplat = bugsplat;
         }

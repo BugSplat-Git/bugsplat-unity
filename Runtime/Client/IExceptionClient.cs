@@ -1,15 +1,19 @@
-﻿using BugSplatDotNetStandard; // TODO BG can we use this type directly in WebGL?
+﻿using BugSplatDotNetStandard;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 
+// TODO BG this namespace was Exception but that caused 'Exception' type to be treated as
+// a namespace in BugSplatClient... can we do better with the namespace name here?
 namespace Packages.com.bugsplat.unity.Runtime.Client
 {
     internal interface IExceptionClient
     {
-        Task LogMessageReceived(string logMessage, string stackTrace, LogType type);
-        IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null);
+        Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null);
+        Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null);
     }
 }
