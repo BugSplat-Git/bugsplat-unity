@@ -1,4 +1,5 @@
 ﻿using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime.Client;
 using Packages.com.bugsplat.unity.Runtime.Reporter;
 using System;
 using System.Collections;

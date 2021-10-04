@@ -1,4 +1,5 @@
 ﻿using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime.Client;
 using Packages.com.bugsplat.unity.Runtime.Reporter;
 using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
@@ -21,9 +22,6 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
         {
             _clientSettings = clientSettings;
             _exceptionClient = exceptionClient;
-            // TODO BG where should this go?
-            //bugsplat.MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows;
-            //bugsplat.ExceptionType = BugSplat.ExceptionTypeId.Unity;
         }
 
         public async Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
