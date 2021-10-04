@@ -1,4 +1,5 @@
 ﻿using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,29 +7,46 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Packages.com.bugsplat.unity.Runtime.Client
 {
     internal class WebGLExceptionClient : IExceptionClient
     {
-        public Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
-        {
+        private readonly string _database;
+        private readonly string _application;
+        private readonly string _version;
 
+        public WebGLExceptionClient(
+            string database,
+            string application,
+            string version
+        )
+        {
+            _database = database;
+            _application = application;
+            _version = version;
+        }
+
+        public async Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
+        {
             var url = $"https://{_database}.bugsplat.com/post/dotnetstandard/";
             var formData = new List<IMultipartFormSection>();
             formData.Add(new MultipartFormDataSection($"database=${_database}"));
             formData.Add(new MultipartFormDataSection($"appName=${_application}"));
             formData.Add(new MultipartFormDataSection($"version=${_version}"));
-            formData.Add(new MultipartFormDataSection($"description=${Description}"));
-            formData.Add(new MultipartFormDataSection($"email=${Email}"));
-            formData.Add(new MultipartFormDataSection($"appKey=${Key}"));
-            formData.Add(new MultipartFormDataSection($"user=${User}"));
-            formData.Add(new MultipartFormDataSection($"callstack=${logMessage}\n${stackTrace}"));
+            //formData.Add(new MultipartFormDataSection($"description=${Description}"));
+            //formData.Add(new MultipartFormDataSection($"email=${Email}"));
+            //formData.Add(new MultipartFormDataSection($"appKey=${Key}"));
+            //formData.Add(new MultipartFormDataSection($"user=${User}"));
+            formData.Add(new MultipartFormDataSection($"callstack=${stackTrace}"));
 
             var www = UnityWebRequest.Post(url, formData);
             var request = www.SendWebRequest();
             var task = GetTask(request);
             await task;
+
+            throw new NotImplementedException("TODO BG");
 
             //if (www.result != UnityWebRequest.Result.Success)
             //{
@@ -42,7 +60,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Client
 
         public Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("TODO BG");
         }
 
 

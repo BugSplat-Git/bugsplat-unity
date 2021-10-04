@@ -172,10 +172,12 @@ namespace BugSplatUnity
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
             bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
             bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
-            var settings = new DotNetStandardClientSettingsRepository(bugsplat);
+            var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(settings, dotNetStandardClient);
+            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
             var windowsReporter = new WindowsReporter(dotNetStandardExceptionReporter, dotNetStandardClient);
+            
+            clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
@@ -191,9 +193,9 @@ namespace BugSplatUnity
         /// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
         /// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
         /// <param name="type">type provided by logMessageReceived event</param>
-        public Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            return exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
+            exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         /// <summary>
