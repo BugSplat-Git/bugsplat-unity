@@ -1,14 +1,15 @@
+using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime;
+using Packages.com.bugsplat.unity.Runtime.Client;
+using Packages.com.bugsplat.unity.Runtime.Reporter;
+using Packages.com.bugsplat.unity.Runtime.Settings;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using System;
-using System.Threading.Tasks;
-using System.Net.Http;
 using System.IO;
-using System.Runtime.InteropServices;
-using UnityEngine.Windows;
-using System.Linq;
-using BugSplatDotNetStandard;
+using System.Net.Http;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace BugSplatUnity
 {
@@ -24,29 +25,69 @@ namespace BugSplatUnity
         {
             get
             {
-                return bugsplat.Attachments;
+                return clientSettings.Attachments;
             }
         }
 
         /// <summary>
         /// Upload Editor.log when Post is called
         /// </summary>
-        public bool CaptureEditorLog { get; set; } = false;
+        public bool CaptureEditorLog
+        {
+            get
+            {
+                return clientSettings.CaptureEditorLog;
+            }
+            set
+            {
+                clientSettings.CaptureEditorLog = value;
+            }
+        }
 
         /// <summary>
         /// Upload Player.log when Post is called
         /// </summary>
-        public bool CapturePlayerLog { get; set; } = true;
+        public bool CapturePlayerLog
+        {
+            get 
+            {
+                return clientSettings.CapturePlayerLog;
+            }
+            set
+            {
+                clientSettings.CapturePlayerLog = value;
+            }
+        }
 
         /// <summary>
         /// Take a screenshot and upload it when Post is called
         /// </summary>
-        public bool CaptureScreenshots { get; set; } = false;
+        public bool CaptureScreenshots
+        {
+            get
+            {
+                return clientSettings.CaptureScreenshots;
+            }
+            set
+            {
+                clientSettings.CaptureScreenshots = value;
+            }
+        }
 
         /// <summary>
         /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
         /// </summary>
-        public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl;
+        public Func<Exception, bool> ShouldPostException
+        {
+            get
+            {
+                return clientSettings.ShouldPostException;
+            }
+            set
+            {
+                clientSettings.ShouldPostException = value;
+            }
+        }
 
         /// <summary>
         /// A default description that can be overridden by call to Post
@@ -55,7 +96,7 @@ namespace BugSplatUnity
         {
             set
             {
-                bugsplat.Description = value;
+                clientSettings.Description = value;
             }
         }
 
@@ -66,7 +107,7 @@ namespace BugSplatUnity
         {
             set
             {
-                bugsplat.Email = value;
+                clientSettings.Email = value;
             }
         }
 
@@ -77,7 +118,7 @@ namespace BugSplatUnity
         {
             set
             {
-                bugsplat.Key = value;
+                clientSettings.Key = value;
             }
         }
 
@@ -88,13 +129,16 @@ namespace BugSplatUnity
         {
             set
             {
-                bugsplat.User = value;
+                clientSettings.User = value;
             }
         }
 
-        private readonly BugSplatDotNetStandard.BugSplat bugsplat;
-        private static DateTime lastPost;
-        private static readonly string sentinelFileName = "BugSplatPostSuccess.txt";
+        private readonly IClientSettingsRepository clientSettings;
+        private readonly IExceptionClient bugsplat;
+
+#if UNITY_STANDALONE_WIN || UNITY_WSA
+        private readonly BugSplatWindowsClient nativeBugSplat;
+#endif
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -123,9 +167,22 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
-            bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
-            bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+#if UNITY_STANDALONE_WIN || UNITY_WSA
+            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
+            var settings = new DotNetStandardClientSettingsRepository(bugsplat);
+            var dotNetStandardReporter = new DotNetStandardReporter(bugsplat);
+            var bugsplatClient = new BugSplatClient(dotNetStandardReporter, settings);
+            var windowsClient = new BugSplatWindowsClient(bugsplatClient, dotNetStandardReporter);
+
+            // TODO BG
+            //var client = new BugSplatWindowsClient(database, application, version);
+            //bugsplat = client;
+            //nativeBugSplat = client;
+#elif UNITY_WEBGL
+            bugsplat = new BugSplatWebGLClient(database, application, version);
+#else
+            bugsplat = new BugSplatClient(database, application, version);
+#endif
         }
 
         /// <summary>
@@ -134,33 +191,9 @@ namespace BugSplatUnity
         /// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
         /// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
         /// <param name="type">type provided by logMessageReceived event</param>
-        public async void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            if (type != LogType.Exception)
-            {
-                return;
-            }
-
-            if (!ShouldPostException(null))
-            {
-                return;
-            }
-
-            var options = new ExceptionPostOptions();
-            options.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
-            stackTrace = $"{logMessage}\n{stackTrace}";
-
-            try
-            {
-                var result = await bugsplat.Post(stackTrace, options);
-                var status = result.StatusCode;
-                var contents = await result.Content.ReadAsStringAsync();
-                Debug.Log($"BugSplat info: status {status}\n {contents}");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"BugSplat error: {ex}");
-            }
+            return bugsplat.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         /// <summary>
@@ -171,145 +204,7 @@ namespace BugSplatUnity
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            if (!ShouldPostException(exception))
-            {
-                yield break;
-            }
-
-            options ??= new ExceptionPostOptions();
-
-            if (CaptureEditorLog)
-            {
-#if UNITY_EDITOR_WIN
-                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var editorLogFilePath = Path.Combine(localAppData, "Unity", "Editor", "Editor.log");
-                var editorLogFileInfo = new FileInfo(editorLogFilePath);
-                if (editorLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_EDITOR_OSX
-                var home = Environment.GetEnvironmentVariable("HOME");
-                var editorLogFilePath = Path.Combine(home, "Library", "Logs", "Unity", "Editor.log");
-                var editorLogFileInfo = new FileInfo(editorLogFilePath);
-                if (editorLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_EDITOR_LINUX
-                var home = Environment.GetEnvironmentVariable("HOME");
-                var editorLogFilePath = Path.Combine(home, ".config", "unity3d", "Editor.log");
-                var editorLogFileInfo = new FileInfo(editorLogFilePath);
-                if (editorLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
-                }
-#else
-                Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
-#endif
-            }
-
-            if (CapturePlayerLog)
-            {
-#if  UNITY_STANDALONE_WIN
-                var localLowId = new Guid("A520A1A4-1780-4FF6-BD18-167343C5AF16");
-                var localLow = GetKnownFolderPath(localLowId);
-                var playerLogFilePath = Path.Combine(localLow, Application.companyName, Application.productName, "Player.log");
-                var playerLogFileInfo = new FileInfo(playerLogFilePath);
-                if (playerLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_STANDALONE_OSX
-                var home = Environment.GetEnvironmentVariable("HOME");
-                var playerLogFilePath = Path.Combine(home, "Library", "Logs", Application.companyName, Application.productName, "Player.log");
-                var playerLogFileInfo = new FileInfo(playerLogFilePath);
-                if (playerLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_STANDALONE_LINUX
-                var home = Environment.GetEnvironmentVariable("HOME");
-                var editorLogFilePath = Path.Combine(home, ".config", "unity3d", Application.companyName, Application.productName, "Player.log");
-                var editorLogFileInfo = new FileInfo(editorLogFilePath);
-                if (editorLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_WSA
-                var tempState = Application.temporaryCachePath;
-                var playerLogFilePath = Path.Combine(tempState, "UnityPlayer.log");
-                var playerLogFileInfo = new FileInfo(playerLogFilePath);
-                if (playerLogFileInfo.Exists)
-                {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
-                }
-#else
-                Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
-#endif
-            }
-
-            if (CaptureScreenshots)
-            {
-                // There isn't really a safe way to do this
-                // Serializing the image to disk potentially litters the file system
-                // Capturing the image in memory potentially risks a memory exception
-                yield return new WaitForEndOfFrame();
-                var bytes = CaptureInMemoryPngScreenshot();
-                if (bytes != null)
-                {
-                    var param = new FormDataParam()
-                    {
-                        Name = "screenshot",
-                        Content = new ByteArrayContent(bytes),
-                        FileName = "screenshot.png"
-                    };
-                    options.AdditionalFormDataParams.Add(param);
-                }
-            }
-
-            yield return Task.Run(
-                async () =>
-                {
-                    try
-                    {
-                        var result = await bugsplat.Post(exception, options);
-                        callback?.Invoke(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"BugSplat error: {ex}");
-                    }
-                }
-            );
+            return bugsplat.Post(exception, options, callback);
         }
 
         /// <summary>
@@ -320,24 +215,7 @@ namespace BugSplatUnity
         public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            options ??= new MinidumpPostOptions();
-
-            var crashReportFolder = new DirectoryInfo(CrashReporting.crashReportFolder);
-            if (!crashReportFolder.Exists)
-            {
-                yield break;
-            }
-
-            var crashFolders = crashReportFolder.GetDirectories();
-            var results = new List<HttpResponseMessage>();
-
-            foreach (var crashFolder in crashFolders)
-            {
-                yield return new WaitForSeconds(1);
-                yield return PostCrash(crashFolder, options, (response) => results.Add(response));
-            }
-
-            callback?.Invoke(results);
+            return nativeBugSplat.PostAllCrashes(options, callback);
 #else
             Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
             yield return null;
@@ -352,46 +230,7 @@ namespace BugSplatUnity
         public IEnumerator PostCrash(DirectoryInfo crashFolder, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            options ??= new MinidumpPostOptions();
-
-            if (crashFolder == null)
-            {
-                Debug.LogError($"BugSplat error: folder {crashFolder.Name} was not found");
-                yield break;
-            }
-
-            var crashFiles = crashFolder.GetFiles();
-            if (crashFiles.Any(file => file.Name == sentinelFileName))
-            {
-                Debug.Log($"BugSplat info: {crashFolder.Name} already posted, skipping...");
-                yield break;
-            }
-
-            var minidump = crashFiles.Where(file => file.Extension == ".dmp").FirstOrDefault();
-            if (minidump == null)
-            {
-                Debug.Log($"BugSplat info: {crashFolder.FullName} does not contain a minidump file, skipping...");
-                yield break;
-            }
-
-            var attachments = crashFiles.Where(file => file.Extension != ".dmp");
-            if (attachments != null)
-            {
-                options.AdditionalAttachments.AddRange(attachments);
-            }
-
-            Debug.Log($"BugSplat info: Posting {crashFolder.Name}");
-            yield return Post(minidump, options, async (response) =>
-            {
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    Debug.Log("BugSplat info: Crash post success, writing crash post sentinel file...");
-                    var sentinelFilePath = Path.Combine(crashFolder.FullName, sentinelFileName);
-                    var sentinelFileContents = await response.Content.ReadAsStringAsync();
-                    System.IO.File.WriteAllText(sentinelFilePath, sentinelFileContents);
-                }
-                callback?.Invoke(response);
-            });
+            return nativeBugSplat.PostCrash(crashFolder, options, callback);
 #else
             Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
             yield return null;
@@ -406,92 +245,21 @@ namespace BugSplatUnity
         public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            options ??= new MinidumpPostOptions();
-
-            var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
-            var crashFolder = folder.GetDirectories()
-                .OrderBy(dir => dir.LastWriteTime)
-                .FirstOrDefault();
-
-            yield return PostCrash(crashFolder, options, callback);
+            return nativeBugSplat.PostMostRecentCrash(options, callback);
 #else
             Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
             yield return null;
 #endif
         }
 
-        private byte[] CaptureInMemoryPngScreenshot()
-        {
-            try
-            {
-                var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-                texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-                texture.Apply();
-                var result = texture.EncodeToPNG();
-                GameObject.Destroy(texture);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"BugSplat error: Could not create a screenshot {ex.Message}");
-                return null;
-            }
-        }
-
         public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN || UNITY_WSA
-            yield return Task.Run(
-                async () =>
-                {
-                    try
-                    {
-                        var result = await bugsplat.Post(minidump, options);
-                        callback?.Invoke(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"BugSplat error: {ex}");
-                    }
-                }
-            );
+            return nativeBugSplat.Post(minidump, options, callback);
 #else
             Debug.Log($"BugSplat info: Post is not implemented on this platform");
             yield return null;
 #endif
         }
-
-        private static bool ShouldPostExceptionImpl(Exception ex)
-        {
-            if (lastPost + TimeSpan.FromSeconds(10) > DateTime.Now)
-            {
-                return false;
-            }
-
-            lastPost = DateTime.Now;
-            return true;
-        }
-
-#if UNITY_STANDALONE_WIN
-        [DllImport("shell32.dll")]
-        static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid rfid, uint dwFlags, IntPtr hToken, out IntPtr pszPath);
-
-        private string GetKnownFolderPath(Guid knownFolderId)
-        {
-            IntPtr pszPath = IntPtr.Zero;
-            try
-            {
-                int hr = SHGetKnownFolderPath(knownFolderId, 0, IntPtr.Zero, out pszPath);
-                if (hr >= 0)
-                    return Marshal.PtrToStringAuto(pszPath);
-                throw Marshal.GetExceptionForHR(hr);
-            }
-            finally
-            {
-                if (pszPath != IntPtr.Zero)
-                    Marshal.FreeCoTaskMem(pszPath);
-            }
-        }
-#endif
     }
 }
