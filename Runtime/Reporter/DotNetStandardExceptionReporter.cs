@@ -24,7 +24,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             _exceptionClient = exceptionClient;
         }
 
-        public async Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public async void LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
             if (type != LogType.Exception)
             {

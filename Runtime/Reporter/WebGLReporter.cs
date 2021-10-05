@@ -2,39 +2,38 @@
 using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
-    internal class WebGLReporter : IExceptionReporter
+    internal class WebGLReporter : MonoBehaviour, IExceptionReporter
     {
-        private IClientSettingsRepository _clientSettings;
-        private readonly string _database;
-        private readonly string _application;
-        private readonly string _version;
-        //private IExceptionClient _exceptionClient;
+        private IClientSettingsRepository Settings;
+        public string Database { get; set; }
+        public string Application { get; set; }
+        public string Version { get; set; }
 
-        public WebGLReporter(string database, string application, string version, IClientSettingsRepository clientSettings)
+        public static WebGLReporter Create(string database, string application, string version, IClientSettingsRepository clientSettings, GameObject gameObject)
         {
-            _database = database;
-            _application = application;
-            _version = version;
-            _clientSettings = clientSettings;
-            //_exceptionClient = exceptionClient;
+            var reporter = gameObject.AddComponent(typeof(WebGLReporter)) as WebGLReporter;
+            reporter.Database = database;
+            reporter.Application = application;
+            reporter.Version = version;
+            reporter.Settings = clientSettings;
+            return reporter;
         }
 
-        public async Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
+
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
             if (type != LogType.Exception)
             {
                 return;
             }
 
-            if (!_clientSettings.ShouldPostException(null))
+            if (!Settings.ShouldPostException(null))
             {
                 return;
             }
@@ -43,66 +42,52 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             options.ExceptionType = BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
-            try
-            {
-                throw new NotImplementedException("TODO BG");
-                //var result = await _exceptionClient.Post(stackTrace, options);
-                //var status = result.StatusCode;
-                //var contents = await result.Content.ReadAsStringAsync();
-                //Debug.Log($"BugSplat info: status {status}\n {contents}");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"BugSplat error: {ex}");
-            }
+            StartCoroutine(PostException(stackTrace, 12));
         }
 
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            if (!_clientSettings.ShouldPostException(exception))
+            if (!Settings.ShouldPostException(exception))
             {
                 yield break;
             }
 
             options ??= new ExceptionPostOptions();
 
-            if (_clientSettings.CaptureEditorLog)
+            if (Settings.CaptureEditorLog)
             {
+                // TODO BG can we support this?
                 Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
             }
 
-            if (_clientSettings.CapturePlayerLog)
+            if (Settings.CapturePlayerLog)
             {
                 // TODO BG can we support this?
                 Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
             }
 
-            if (_clientSettings.CaptureScreenshots)
+            if (Settings.CaptureScreenshots)
             {
                 // TODO BG can we support this?
                 Debug.Log("BugSplat info: CaptureScreenshots is not implemented on this platform");
             }
 
-            var url = $"https://{_database}.bugsplat.com/post/dotnetstandard/";
-            //var formData = new List<IMultipartFormSection>();
-            //formData.Add(new MultipartFormDataSection($"database=${_database}"));
-            //formData.Add(new MultipartFormDataSection($"appName=${_application}"));
-            //formData.Add(new MultipartFormDataSection($"version=${_version}"));
-            //formData.Add(new MultipartFormDataSection($"description=${_clientSettings.Description}"));
-            //formData.Add(new MultipartFormDataSection($"email=${_clientSettings.Email}"));
-            //formData.Add(new MultipartFormDataSection($"appKey=${_clientSettings.Key}"));
-            //formData.Add(new MultipartFormDataSection($"user=${_clientSettings.User}"));
-            //formData.Add(new MultipartFormDataSection($"callstack=${exception}"));
+            yield return PostException(exception.ToString(), 24);
+        }
+
+        private IEnumerator PostException(string exception, int crashTypeId)
+        {
+            var url = $"https://{Database}.bugsplat.com/post/dotnetstandard/";
             var formData = new WWWForm();
-            formData.AddField("database", _database);
-            formData.AddField("appName", _application);
-            formData.AddField("appVersion", _version);
-            formData.AddField("description", _clientSettings.Description);
-            formData.AddField("email", _clientSettings.Email);
-            formData.AddField("appKey", _clientSettings.Key);
-            formData.AddField("user", _clientSettings.User);
+            formData.AddField("database", Database);
+            formData.AddField("appName", Application);
+            formData.AddField("appVersion", Version);
+            formData.AddField("description", Settings.Description);
+            formData.AddField("email", Settings.Email);
+            formData.AddField("appKey", Settings.Key);
+            formData.AddField("user", Settings.User);
             formData.AddField("callstack", exception.ToString());
-            formData.AddField("crashTypeId", 24);
+            formData.AddField("crashTypeId", crashTypeId);
 
             var request = UnityWebRequest.Post(url, formData);
             yield return request.SendWebRequest();

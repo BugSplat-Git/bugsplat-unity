@@ -179,8 +179,15 @@ namespace BugSplatUnity
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
+            var gameObject = new GameObject();
             var webGLClientSettings = new WebGLClientSettingsRepository();
-            var webGLReporter = new WebGLReporter(database, application, version, webGLClientSettings);
+            var webGLReporter = WebGLReporter.Create(
+                database,
+                application,
+                version,
+                webGLClientSettings,
+                gameObject
+            );
             clientSettings = webGLClientSettings;
             exceptionReporter = webGLReporter;
 #else

@@ -9,7 +9,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
     internal interface IExceptionReporter
     {
-        Task LogMessageReceived(string logMessage, string stackTrace, LogType type);
+        void LogMessageReceived(string logMessage, string stackTrace, LogType type);
         IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null);
     }
 }
