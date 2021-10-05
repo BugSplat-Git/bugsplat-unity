@@ -1,0 +1,6 @@
+{
+    "name": "BugSplat.Unity.RuntimeTests",
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
