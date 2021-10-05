@@ -27,9 +27,9 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             _nativeCrashReporter = nativeCrashReporter;
         }
 
-        public Task LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            return _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
+            _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)

@@ -8,6 +8,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 
+#if UNITY_STANDALONE_WIN
+using System.Runtime.InteropServices;
+#endif
+
 namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
     internal class DotNetStandardExceptionReporter: IExceptionReporter

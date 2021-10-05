@@ -226,7 +226,7 @@ namespace BugSplatUnity
         public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            return nativeBugSplat.PostAllCrashes(options, callback);
+            return nativeCrashReporter.PostAllCrashes(options, callback);
 #else
             Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
             yield return null;
@@ -241,7 +241,7 @@ namespace BugSplatUnity
         public IEnumerator PostCrash(DirectoryInfo crashFolder, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            return nativeBugSplat.PostCrash(crashFolder, options, callback);
+            return nativeCrashReporter.PostCrash(crashFolder, options, callback);
 #else
             Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
             yield return null;
@@ -256,7 +256,7 @@ namespace BugSplatUnity
         public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            return nativeBugSplat.PostMostRecentCrash(options, callback);
+            return nativeCrashReporter.PostMostRecentCrash(options, callback);
 #else
             Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
             yield return null;
