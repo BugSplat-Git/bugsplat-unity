@@ -4,25 +4,25 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace BugSplatUnity.Runtime.Client
 {
     internal class DotNetStandardClient : INativeCrashReportClient, IExceptionClient<Task<HttpResponseMessage>>
     {
-        private readonly BugSplat _bugsplat;
+        private readonly BugSplatDotNetStandard.BugSplat _bugsplat;
 
-        public DotNetStandardClient(BugSplat bugsplat)
+        public DotNetStandardClient(BugSplatDotNetStandard.BugSplat bugsplat)
         {
             _bugsplat = bugsplat;
         }
 
-        public Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
+        public Task<HttpResponseMessage> Post(string stackTrace, IExceptionPostOptions options = null)
         {
-            return _bugsplat.Post(stackTrace, options);
+            return _bugsplat.Post(stackTrace, (ExceptionPostOptions)options);
         }
 
-        public Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
+        public Task<HttpResponseMessage> Post(Exception ex, IExceptionPostOptions options = null)
         {
-            return _bugsplat.Post(ex, options);
+            return _bugsplat.Post(ex, (ExceptionPostOptions)options);
         }
 
         // TODO BG use in WindowsReporter

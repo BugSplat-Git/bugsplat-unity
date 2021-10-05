@@ -3,7 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace BugSplatUnity.Runtime.Client
 {
     internal interface INativeCrashReportClient
     {

@@ -1,10 +1,10 @@
 ﻿using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Util;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Packages.com.bugsplat.unity.Runtime.Settings
+namespace BugSplatUnity.Runtime.Settings
 {
     internal class DotNetStandardClientSettingsRepository: IClientSettingsRepository
     {
@@ -73,9 +73,9 @@ namespace Packages.com.bugsplat.unity.Runtime.Settings
             }
         }
 
-        protected readonly BugSplat _bugsplat;
+        protected readonly BugSplatDotNetStandard.BugSplat _bugsplat;
 
-        public DotNetStandardClientSettingsRepository(BugSplat bugsplat)
+        public DotNetStandardClientSettingsRepository(BugSplatDotNetStandard.BugSplat bugsplat)
         {
             _bugsplat = bugsplat;
         }

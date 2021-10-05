@@ -1,11 +1,11 @@
-﻿using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Settings;
+﻿using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Settings;
 
-namespace Packages.com.bugsplat.unity.Runtime.Util
+namespace BugSplatUnity.Runtime.Util
 {
     internal static class ExceptionPostOptionsExtensions
     {
-        public static void SetNullOrEmptyValues(this ExceptionPostOptions options, IClientSettingsRepository clientSettings)
+        public static void SetNullOrEmptyValues(this IExceptionPostOptions options, IClientSettingsRepository clientSettings)
         {
             if (string.IsNullOrEmpty(options.Description))
             {

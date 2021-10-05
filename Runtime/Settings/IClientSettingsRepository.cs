@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Packages.com.bugsplat.unity.Runtime.Settings
+namespace BugSplatUnity.Runtime.Settings
 {
     internal interface IClientSettingsRepository
     {

@@ -1,7 +1,7 @@
 ﻿
 #if UNITY_STANDALONE_WIN || UNITY_WSA
 using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Client;
+using BugSplatUnity.Runtime.Client;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Windows;
 
-namespace Packages.com.bugsplat.unity.Runtime.Reporter
+namespace BugSplatUnity.Runtime.Reporter
 {
     internal class WindowsReporter: IExceptionReporter, INativeCrashReporter
     {
@@ -32,7 +32,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
-        public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             return _exceptionReporter.Post(exception, options, callback);
         }

@@ -1,9 +1,9 @@
-﻿using Packages.com.bugsplat.unity.Runtime.Util;
+﻿using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Packages.com.bugsplat.unity.Runtime.Settings
+namespace BugSplatUnity.Runtime.Settings
 {
     internal class WebGLClientSettingsRepository : IClientSettingsRepository
     {

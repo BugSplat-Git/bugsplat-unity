@@ -1,14 +1,16 @@
 using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Client;
-using Packages.com.bugsplat.unity.Runtime.Reporter;
-using Packages.com.bugsplat.unity.Runtime.Settings;
+using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Settings;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
+[assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
 namespace BugSplatUnity
 {
     /// <summary>
@@ -215,7 +217,7 @@ namespace BugSplatUnity
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
         public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            return exceptionReporter.Post(exception, options, callback);
+            return exceptionReporter.Post(exception, (IExceptionPostOptions)options, callback);
         }
 
         /// <summary>

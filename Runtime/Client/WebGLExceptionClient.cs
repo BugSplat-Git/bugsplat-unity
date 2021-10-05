@@ -1,16 +1,19 @@
 ﻿using BugSplatDotNetStandard;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Packages.com.bugsplat.unity.Runtime.Client
+namespace BugSplatUnity.Runtime.Client
 {
     internal class WebGLExceptionClient : IExceptionClient<IEnumerator>
     {
         private readonly string _database;
         private readonly string _application;
         private readonly string _version;
+
+        public IUnityWebClient UnityWebClient { get; set; } = new UnityWebClient();
 
         public WebGLExceptionClient(string database, string application, string version)
         {
@@ -19,33 +22,35 @@ namespace Packages.com.bugsplat.unity.Runtime.Client
             _version = version;
         }
 
-        public IEnumerator Post(string stackTrace, ExceptionPostOptions options = null)
+        public IEnumerator Post(string stackTrace, IExceptionPostOptions options = null)
         {
             return PostException(stackTrace, options);
         }
 
-        public IEnumerator Post(Exception ex, ExceptionPostOptions options = null)
+        public IEnumerator Post(Exception ex, IExceptionPostOptions options = null)
         {
             return PostException(ex.ToString(), options);
         }
 
-        private IEnumerator PostException(string exception, ExceptionPostOptions options = null)
+        private IEnumerator PostException(string exception, IExceptionPostOptions options = null)
         {
-            options ??= new ExceptionPostOptions();
+            options ??= UnityWebClient.CreateExceptionPostOptions();
 
             var url = $"https://{_database}.bugsplat.com/post/dotnetstandard/";
-            var formData = new WWWForm();
-            formData.AddField("database", _database);
-            formData.AddField("appName", _application);
-            formData.AddField("appVersion", _version);
-            formData.AddField("description", options.Description);
-            formData.AddField("email", options.Email);
-            formData.AddField("appKey", options.Key);
-            formData.AddField("user", options.User);
-            formData.AddField("callstack", exception);
-            formData.AddField("crashTypeId", $"{(int)options.ExceptionType}");
+            var formData = new Dictionary<string, string>()
+            {
+                { "database", _database },
+                { "appName", _application },
+                { "appVersion", _version },
+                { "description", options.Description },
+                { "email", options.Email },
+                { "appKey", options.Key },
+                { "user", options.User },
+                { "callstack", exception },
+                { "crashTypeId", $"{(int)options.ExceptionType}" }
+            };
 
-            var request = UnityWebRequest.Post(url, formData);
+            var request = UnityWebClient.Post(url, formData);
             yield return request.SendWebRequest();
 
             if (request.result != UnityWebRequest.Result.Success)

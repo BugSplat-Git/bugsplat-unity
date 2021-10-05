@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 
-namespace Packages.com.bugsplat.unity.Runtime.Reporter
+namespace BugSplatUnity.Runtime.Reporter
 {
     interface INativeCrashReporter
     {

@@ -1,13 +1,13 @@
 ﻿using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Client;
-using Packages.com.bugsplat.unity.Runtime.Settings;
-using Packages.com.bugsplat.unity.Runtime.Util;
+using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Net.Http;
 using UnityEngine;
 
-namespace Packages.com.bugsplat.unity.Runtime.Reporter
+namespace BugSplatUnity.Runtime.Reporter
 {
     internal class WebGLReporter : MonoBehaviour, IExceptionReporter
     {
@@ -34,18 +34,18 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
                 return;
             }
 
-            var options = new ExceptionPostOptions();
+            var options = (IExceptionPostOptions)new ExceptionPostOptions();
             options.Description = ClientSettings.Description;
             options.Email = ClientSettings.Email;
             options.Key = ClientSettings.Key;
             options.User = ClientSettings.User;
-            options.ExceptionType = BugSplat.ExceptionTypeId.UnityLegacy;
+            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             StartCoroutine(ExceptionClient.Post(stackTrace, options));
         }
 
-        public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             if (!ClientSettings.ShouldPostException(exception))
             {
@@ -53,9 +53,9 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             }
 
             // TODO BG test
-            options ??= new ExceptionPostOptions();
+            options ??= (IExceptionPostOptions)new ExceptionPostOptions();
             options.SetNullOrEmptyValues(ClientSettings);
-            options.ExceptionType = BugSplat.ExceptionTypeId.Unity;
+            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
             if (ClientSettings.CaptureEditorLog)
             {

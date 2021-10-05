@@ -1,6 +1,6 @@
 ﻿using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Client;
-using Packages.com.bugsplat.unity.Runtime.Settings;
+using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Settings;
 using System;
 using System.Collections;
 using System.IO;
@@ -12,7 +12,7 @@ using UnityEngine;
 using System.Runtime.InteropServices;
 #endif
 
-namespace Packages.com.bugsplat.unity.Runtime.Reporter
+namespace BugSplatUnity.Runtime.Reporter
 {
     internal class DotNetStandardExceptionReporter: IExceptionReporter
     {
@@ -40,8 +40,8 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
                 return;
             }
 
-            var options = new ExceptionPostOptions();
-            options.ExceptionType = BugSplat.ExceptionTypeId.UnityLegacy;
+            var options = (IExceptionPostOptions)new ExceptionPostOptions();
+            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             try
@@ -57,14 +57,14 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
             }
         }
 
-        public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<System.Net.Http.HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             if (!_clientSettings.ShouldPostException(exception))
             {
                 yield break;
             }
 
-            options ??= new ExceptionPostOptions();
+            options ??= (IExceptionPostOptions)new ExceptionPostOptions();
 
             if (_clientSettings.CaptureEditorLog)
             {
@@ -179,7 +179,7 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
                         Name = "screenshot",
                         Content = new ByteArrayContent(bytes),
                         FileName = "screenshot.png"
-                    };
+                    } as IFormDataParam;
                     options.AdditionalFormDataParams.Add(param);
                 }
             }

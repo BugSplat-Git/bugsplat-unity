@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Packages.com.bugsplat.unity.Runtime.Util
+namespace BugSplatUnity.Runtime.Util
 {
     public static class ShouldPostExceptionImpl
     {
