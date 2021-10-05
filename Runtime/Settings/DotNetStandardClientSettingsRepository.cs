@@ -1,4 +1,5 @@
 ﻿using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;

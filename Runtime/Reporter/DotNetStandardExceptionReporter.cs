@@ -1,6 +1,5 @@
 ﻿using BugSplatDotNetStandard;
 using Packages.com.bugsplat.unity.Runtime.Client;
-using Packages.com.bugsplat.unity.Runtime.Reporter;
 using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
 using System.Collections;
@@ -11,14 +10,15 @@ using UnityEngine;
 
 namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
-
-    // TODO BG better names for BugSplatClient and IBugSplatClient
     internal class DotNetStandardExceptionReporter: IExceptionReporter
     {
         private readonly IClientSettingsRepository _clientSettings;
-        private readonly IExceptionClient _exceptionClient;
+        private readonly IExceptionClient<Task<HttpResponseMessage>> _exceptionClient;
 
-        public DotNetStandardExceptionReporter(IClientSettingsRepository clientSettings, IExceptionClient exceptionClient)
+        public DotNetStandardExceptionReporter(
+            IClientSettingsRepository clientSettings,
+            IExceptionClient<Task<HttpResponseMessage>> exceptionClient
+        )
         {
             _clientSettings = clientSettings;
             _exceptionClient = exceptionClient;

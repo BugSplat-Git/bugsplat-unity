@@ -1,4 +1,5 @@
 using BugSplatDotNetStandard;
+using Packages.com.bugsplat.unity.Runtime.Client;
 using Packages.com.bugsplat.unity.Runtime.Reporter;
 using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
@@ -15,8 +16,6 @@ namespace BugSplatUnity
     /// </summary>
     public class BugSplat
     {
-        // TODO BG can we support all these things in WebGL
-        // TODO BG if not, implement somethinglike WebGLClientSettingsRepository that logs errors
         /// <summary>
         /// A list of files to be uploaded every time Post is called
         /// </summary>
@@ -166,6 +165,9 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
+            // TODO BG should we leave this
+            Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
+
 #if UNITY_STANDALONE_WIN || UNITY_WSA
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
             bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
@@ -181,11 +183,10 @@ namespace BugSplatUnity
 #elif UNITY_WEBGL
             var gameObject = new GameObject();
             var webGLClientSettings = new WebGLClientSettingsRepository();
+            var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
             var webGLReporter = WebGLReporter.Create(
-                database,
-                application,
-                version,
                 webGLClientSettings,
+                webGLExceptionClient,
                 gameObject
             );
             clientSettings = webGLClientSettings;
