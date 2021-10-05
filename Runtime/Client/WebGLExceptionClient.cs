@@ -11,6 +11,7 @@ using UnityEngine.Networking;
 
 namespace Packages.com.bugsplat.unity.Runtime.Client
 {
+    // TODO do we need this?
     internal class WebGLExceptionClient : IExceptionClient
     {
         private readonly string _database;

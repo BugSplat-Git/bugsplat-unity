@@ -1,6 +1,7 @@
-﻿using BugSplatDotNetStandard;
+﻿
+#if UNITY_STANDALONE_WIN || UNITY_WSA
+using BugSplatDotNetStandard;
 using Packages.com.bugsplat.unity.Runtime.Client;
-using Packages.com.bugsplat.unity.Runtime.Reporter;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,10 +10,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
-
-#if UNITY_STANDALONE_WIN || UNITY_WSA
 using UnityEngine.Windows;
-#endif
 
 namespace Packages.com.bugsplat.unity.Runtime.Reporter
 {
@@ -136,3 +134,4 @@ namespace Packages.com.bugsplat.unity.Runtime.Reporter
         }
     }
 }
+#endif

@@ -1,5 +1,4 @@
 using BugSplatDotNetStandard;
-using Packages.com.bugsplat.unity.Runtime.Client;
 using Packages.com.bugsplat.unity.Runtime.Reporter;
 using Packages.com.bugsplat.unity.Runtime.Settings;
 using System;
@@ -7,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace BugSplatUnity
@@ -181,7 +179,10 @@ namespace BugSplatUnity
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
-            bugsplat = new BugSplatWebGLClient(database, application, version);
+            var webGLClientSettings = new WebGLClientSettingsRepository();
+            var webGLReporter = new WebGLReporter(database, application, version, webGLClientSettings);
+            clientSettings = webGLClientSettings;
+            exceptionReporter = webGLReporter;
 #else
             bugsplat = new BugSplatClient(database, application, version);
 #endif
