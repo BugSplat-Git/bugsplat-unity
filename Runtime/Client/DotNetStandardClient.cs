@@ -15,12 +15,12 @@ namespace BugSplatUnity.Runtime.Client
             _bugsplat = bugsplat;
         }
 
-        public Task<HttpResponseMessage> Post(string stackTrace, IExceptionPostOptions options = null)
+        public Task<HttpResponseMessage> Post(string stackTrace, IReportPostOptions options = null)
         {
             return _bugsplat.Post(stackTrace, (ExceptionPostOptions)options);
         }
 
-        public Task<HttpResponseMessage> Post(Exception ex, IExceptionPostOptions options = null)
+        public Task<HttpResponseMessage> Post(Exception ex, IReportPostOptions options = null)
         {
             return _bugsplat.Post(ex, (ExceptionPostOptions)options);
         }

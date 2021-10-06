@@ -6,9 +6,9 @@ namespace BugSplatUnity.Runtime.Client
 {
     internal class UnityWebClient : IUnityWebClient
     {
-        public IExceptionPostOptions CreateExceptionPostOptions()
+        public IReportPostOptions CreateExceptionPostOptions()
         {
-            return (IExceptionPostOptions)new ExceptionPostOptions();
+            return (IReportPostOptions)new ReportPostOptions();
         }
 
         public IUnityWebRequest Post(string url, Dictionary<string, string> formData)

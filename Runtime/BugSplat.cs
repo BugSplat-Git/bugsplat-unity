@@ -215,9 +215,9 @@ namespace BugSplatUnity
         /// <param name="exception">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
-        public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, ExceptionPostOptions options = null, Action callback = null)
         {
-            return exceptionReporter.Post(exception, (IExceptionPostOptions)options, callback);
+            return exceptionReporter.Post(exception, (IReportPostOptions)options, callback);
         }
 
         /// <summary>

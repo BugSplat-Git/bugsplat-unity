@@ -22,17 +22,17 @@ namespace BugSplatUnity.Runtime.Client
             _version = version;
         }
 
-        public IEnumerator Post(string stackTrace, IExceptionPostOptions options = null)
+        public IEnumerator Post(string stackTrace, IReportPostOptions options = null)
         {
             return PostException(stackTrace, options);
         }
 
-        public IEnumerator Post(Exception ex, IExceptionPostOptions options = null)
+        public IEnumerator Post(Exception ex, IReportPostOptions options = null)
         {
             return PostException(ex.ToString(), options);
         }
 
-        private IEnumerator PostException(string exception, IExceptionPostOptions options = null)
+        private IEnumerator PostException(string exception, IReportPostOptions options = null)
         {
             options ??= UnityWebClient.CreateExceptionPostOptions();
 
@@ -47,7 +47,7 @@ namespace BugSplatUnity.Runtime.Client
                 { "appKey", options.Key },
                 { "user", options.User },
                 { "callstack", exception },
-                { "crashTypeId", $"{(int)options.ExceptionType}" }
+                { "crashTypeId", $"{(int)options.CrashTypeId}" }
             };
 
             var request = UnityWebClient.Post(url, formData);

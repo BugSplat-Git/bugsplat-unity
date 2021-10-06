@@ -5,7 +5,7 @@ namespace BugSplatUnity.Runtime.Util
 {
     internal static class ExceptionPostOptionsExtensions
     {
-        public static void SetNullOrEmptyValues(this IExceptionPostOptions options, IClientSettingsRepository clientSettings)
+        public static void SetNullOrEmptyValues(this IReportPostOptions options, IClientSettingsRepository clientSettings)
         {
             if (string.IsNullOrEmpty(options.Description))
             {

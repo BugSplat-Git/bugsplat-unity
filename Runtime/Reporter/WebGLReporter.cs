@@ -4,7 +4,6 @@ using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
-using System.Net.Http;
 using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Reporter
@@ -22,7 +21,7 @@ namespace BugSplatUnity.Runtime.Reporter
             return reporter;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
         {
             if (type != LogType.Exception)
             {
@@ -34,30 +33,35 @@ namespace BugSplatUnity.Runtime.Reporter
                 return;
             }
 
-            var options = (IExceptionPostOptions)new ExceptionPostOptions();
+            var options = new ReportPostOptions();
             options.Description = ClientSettings.Description;
             options.Email = ClientSettings.Email;
             options.Key = ClientSettings.Key;
             options.User = ClientSettings.User;
-            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
+            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
-            StartCoroutine(ExceptionClient.Post(stackTrace, options));
+            StartCoroutine(Post(stackTrace, options, callback));
         }
 
-        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action callback = null)
         {
-            if (!ClientSettings.ShouldPostException(exception))
+            if (!ClientSettings.ShouldPostException(ex))
             {
                 yield break;
             }
 
             // TODO BG test
-            options ??= (IExceptionPostOptions)new ExceptionPostOptions();
+            options ??= new ReportPostOptions();
             options.SetNullOrEmptyValues(ClientSettings);
-            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
-            if (ClientSettings.CaptureEditorLog)
+            yield return Post(ex.ToString(), options, callback);
+        }
+
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
+        {
+            if(ClientSettings.CaptureEditorLog)
             {
                 // TODO BG can we support this?
                 Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
@@ -75,8 +79,9 @@ namespace BugSplatUnity.Runtime.Reporter
                 Debug.Log("BugSplat info: CaptureScreenshots is not implemented on this platform");
             }
 
-            // TODO BG can we return the response message here?
-            yield return ExceptionClient.Post(exception, options);
+            yield return ExceptionClient.Post(stackTrace, options);
+
+            callback?.Invoke();
         }
     }
 }

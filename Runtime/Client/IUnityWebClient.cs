@@ -20,7 +20,7 @@ namespace BugSplatUnity.Runtime.Client
 
     internal interface IUnityWebClient
     {
-        IExceptionPostOptions CreateExceptionPostOptions();
+        IReportPostOptions CreateExceptionPostOptions();
         IUnityWebRequest Post(string url, Dictionary<string, string> formData);
     }
 }

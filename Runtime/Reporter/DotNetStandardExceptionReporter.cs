@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
+using BugSplatUnity.Runtime.Util;
 
 #if UNITY_STANDALONE_WIN
 using System.Runtime.InteropServices;
@@ -28,7 +29,7 @@ namespace BugSplatUnity.Runtime.Reporter
             _exceptionClient = exceptionClient;
         }
 
-        public async void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
         {
             if (type != LogType.Exception)
             {
@@ -40,16 +41,25 @@ namespace BugSplatUnity.Runtime.Reporter
                 return;
             }
 
-            var options = (IExceptionPostOptions)new ExceptionPostOptions();
-            options.ExceptionType = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
+            var options = new ReportPostOptions();
+            options.SetNullOrEmptyValues(_clientSettings);
+            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             try
             {
-                var result = await _exceptionClient.Post(stackTrace, options);
-                var status = result.StatusCode;
-                var contents = await result.Content.ReadAsStringAsync();
-                Debug.Log($"BugSplat info: status {status}\n {contents}");
+                _exceptionClient
+                    .Post(stackTrace, options)
+                    .ContinueWith(
+                        async task =>
+                        {
+                            var result = await task;
+                            var status = result.StatusCode;
+                            var contents = await result.Content.ReadAsStringAsync();
+                            Debug.Log($"BugSplat info: status {status}\n {contents}");
+                            callback?.Invoke();
+                        }
+                    );
             }
             catch (Exception ex)
             {
@@ -57,14 +67,16 @@ namespace BugSplatUnity.Runtime.Reporter
             }
         }
 
-        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
         {
             if (!_clientSettings.ShouldPostException(exception))
             {
                 yield break;
             }
 
-            options ??= (IExceptionPostOptions)new ExceptionPostOptions();
+            options ??= new ReportPostOptions();
+            options.SetNullOrEmptyValues(_clientSettings);
+            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
             if (_clientSettings.CaptureEditorLog)
             {
@@ -190,7 +202,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     try
                     {
                         var result = await _exceptionClient.Post(exception, options);
-                        callback?.Invoke(result);
+                        callback?.Invoke();
                     }
                     catch (Exception ex)
                     {

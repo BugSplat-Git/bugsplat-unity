@@ -27,20 +27,18 @@ namespace BugSplatUnity.Runtime.Reporter
             _nativeCrashReporter = nativeCrashReporter;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
         {
-            _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
+           _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type, callback);
         }
 
-        public IEnumerator Post(Exception exception, IExceptionPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
         {
             return _exceptionReporter.Post(exception, options, callback);
         }
 
         public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
-            options ??= new MinidumpPostOptions();
-
             var crashReportFolder = new DirectoryInfo(CrashReporting.crashReportFolder);
             if (!crashReportFolder.Exists)
             {
@@ -105,8 +103,6 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            options ??= new MinidumpPostOptions();
-
             var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
             var crashFolder = folder.GetDirectories()
                 .OrderBy(dir => dir.LastWriteTime)
@@ -117,6 +113,9 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
+            // TODO BG set options defaults!
+            options ??= new MinidumpPostOptions();
+
             yield return Task.Run(
                 async () =>
                 {
