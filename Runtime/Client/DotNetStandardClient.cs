@@ -25,7 +25,6 @@ namespace BugSplatUnity.Runtime.Client
             return _bugsplat.Post(ex, (ExceptionPostOptions)options);
         }
 
-        // TODO BG use in WindowsReporter
         public Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
             return _bugsplat.Post(minidumpFileInfo, options);

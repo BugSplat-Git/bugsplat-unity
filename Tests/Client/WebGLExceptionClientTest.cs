@@ -8,15 +8,8 @@ using UnityEngine.TestTools;
 
 public class WebGLExceptionClientTest
 {
-    //// A Test behaves as an ordinary method
-    //[Test]
-    //public void TestSimplePasses()
-    //{
-    //    // Use the Assert class to test conditions
-    //}
-
     [UnityTest]
-    public IEnumerator ShouldCallCorrectEndpointWithUrlAndFormData()
+    public IEnumerator Post_ShouldCallPostWithUrlAndFormData()
     {
         var database = "database";
         var application = "application";
