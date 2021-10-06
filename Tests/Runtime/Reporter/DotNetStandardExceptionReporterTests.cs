@@ -1,6 +1,7 @@
 ﻿using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using System;
 using System.Collections;
@@ -149,60 +150,6 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             yield return completed.AsCoroutine();
 
             Assert.IsTrue(invoked);
-        }
-    }
-
-    public class FakeExceptionClient : IExceptionClient<Task<HttpResponseMessage>>
-    {
-        public List<FakeExceptionClientPostCall> Calls { get; } = new List<FakeExceptionClientPostCall>();
-
-        private readonly HttpResponseMessage _result;
-
-        public FakeExceptionClient(HttpResponseMessage result)
-        {
-            _result = result;
-        }
-
-        public Task<HttpResponseMessage> Post(string stackTrace, IReportPostOptions options = null)
-        {
-            Calls.Add(
-                new FakeExceptionClientPostCall()
-                {
-                    StackTrace = stackTrace,
-                    Options = options
-                }
-            );
-            return Task.FromResult(_result);
-        }
-
-        public Task<HttpResponseMessage> Post(Exception ex, IReportPostOptions options = null)
-        {
-            Calls.Add(
-                new FakeExceptionClientPostCall()
-                {
-                    Exception = ex,
-                    Options = options
-                }
-            );
-            return Task.FromResult(_result);
-        }
-    }
-
-    public class FakeExceptionClientPostCall
-    {
-        public string StackTrace { get; set; }
-        public Exception Exception { get; set; }
-        public IReportPostOptions Options { get; set; }
-    }
-
-    public static class TaskExtensions
-    {
-        public static IEnumerator AsCoroutine(this Task task)
-        {
-            while (!task.IsCompleted) yield return null;
-
-            // Will throw if task faults
-            task.GetAwaiter().GetResult();
         }
     }
 }
