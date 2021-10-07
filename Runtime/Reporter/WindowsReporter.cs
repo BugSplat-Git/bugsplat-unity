@@ -49,13 +49,15 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
-            var crashReportFolder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
-            if (!crashReportFolder.Exists)
+            var unityCrashesFolder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
+            if (!unityCrashesFolder.Exists)
             {
+                // TODO BG this breaks a test... what should we do here instead?
+                //Debug.LogError($"BugSplat error: unity crash folder {unityCrashesFolder.Name} was not found");
                 yield break;
             }
 
-            var crashFolders = crashReportFolder.GetDirectories();
+            var crashFolders = unityCrashesFolder.GetDirectories();
             var results = new List<HttpResponseMessage>();
 
             foreach (var crashFolder in crashFolders)
@@ -71,7 +73,7 @@ namespace BugSplatUnity.Runtime.Reporter
         {
             options ??= new ReportPostOptions();
 
-            if (crashFolder == null)
+            if (!crashFolder.Exists)
             {
                 Debug.LogError($"BugSplat error: folder {crashFolder.Name} was not found");
                 yield break;
