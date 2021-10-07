@@ -57,15 +57,17 @@ namespace BugSplatUnity.Runtime.Reporter
                 yield break;
             }
 
-            var crashFolders = unityCrashesFolder.GetDirectories();
             var results = new List<HttpResponseMessage>();
+            var crashFolders = unityCrashesFolder.GetDirectories();
+            var crashFoldersCount = crashFolders.Count();
 
-            // TODO BG we shouldn't wait on the last one either!
-            foreach (var crashFolder in crashFolders)
+            for (var i = 0; i < crashFoldersCount; i++)
             {
+                var crashFolder = crashFolders[i];
+
                 yield return PostCrash(crashFolder, options, (response) => results.Add(response));
                 
-                if (crashFolders.Count() > 1)
+                if (crashFoldersCount > 1 && i < crashFoldersCount - 1)
                 {
                     yield return new WaitForSeconds(1);
                 }

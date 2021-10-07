@@ -43,7 +43,7 @@ namespace BugSplatUnity.Runtime.Client
                     FileName = param.FileName,
                     Name = param.Name
                 };
-            });
+            }).ToList();
             var exceptionPostOptions = new ExceptionPostOptions();
             exceptionPostOptions.AdditionalAttachments.AddRange(options.AdditionalAttachments);
             exceptionPostOptions.AdditionalFormDataParams.AddRange(formDataParams);
@@ -67,7 +67,7 @@ namespace BugSplatUnity.Runtime.Client
                     FileName = param.FileName,
                     Name = param.Name
                 };
-            });
+            }).ToList();
             var minidumpPostOptions = new MinidumpPostOptions();
             minidumpPostOptions.AdditionalAttachments.AddRange(options.AdditionalAttachments);
             minidumpPostOptions.AdditionalFormDataParams.AddRange(formDataParams);
