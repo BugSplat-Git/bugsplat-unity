@@ -90,7 +90,9 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             clientSettings.Key = "key";
             clientSettings.User = "fred";
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var httpResponseMessage = new HttpResponseMessage();
+            httpResponseMessage.Content = new StringContent(string.Empty);
+            var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var completed = new Task<bool>(() => true);
@@ -121,7 +123,9 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             options.Email = "barney@bugsplat.com";
             options.Key = "new key";
             options.User = "barney";
-            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var httpResponseMessage = new HttpResponseMessage();
+            httpResponseMessage.Content = new StringContent(string.Empty);
+            var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var completed = new Task<bool>(() => true);
@@ -143,7 +147,9 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var exception = new Exception("BugSplat rocks!");
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var httpResponseMessage = new HttpResponseMessage();
+            httpResponseMessage.Content = new StringContent(string.Empty);
+            var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var invoked = false;
