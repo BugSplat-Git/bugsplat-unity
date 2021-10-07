@@ -52,8 +52,7 @@ namespace BugSplatUnity.Runtime.Reporter
             var unityCrashesFolder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
             if (!unityCrashesFolder.Exists)
             {
-                // TODO BG this breaks a test... what should we do here instead?
-                //Debug.LogError($"BugSplat error: unity crash folder {unityCrashesFolder.Name} was not found");
+                Debug.Log($"BugSplat info: unity crash folder {unityCrashesFolder.Name} was not found");
                 yield break;
             }
 
