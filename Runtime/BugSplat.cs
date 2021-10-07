@@ -177,7 +177,7 @@ namespace BugSplatUnity
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
-            var windowsReporter = new WindowsReporter(dotNetStandardExceptionReporter, dotNetStandardClient);
+            var windowsReporter = new WindowsReporter(clientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
             
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;
@@ -225,7 +225,7 @@ namespace BugSplatUnity
         /// </summary>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after all crashes are posted to BugSplat</param>
-        public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
+        public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
 #if UNITY_STANDALONE_WIN
             return nativeCrashReporter.PostAllCrashes(options, callback);
@@ -240,10 +240,10 @@ namespace BugSplatUnity
         /// </summary>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-        public IEnumerator PostCrash(DirectoryInfo crashFolder, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator PostCrash(DirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
-            return nativeCrashReporter.PostCrash(crashFolder, options, callback);
+            return nativeCrashReporter.PostCrash(new WrappedDirectoryInfo(crashFolder), options, callback);
 #else
             Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
             yield return null;
@@ -255,7 +255,7 @@ namespace BugSplatUnity
         /// </summary>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-        public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN
             return nativeCrashReporter.PostMostRecentCrash(options, callback);
@@ -265,7 +265,7 @@ namespace BugSplatUnity
 #endif
         }
 
-        public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
 #if UNITY_STANDALONE_WIN || UNITY_WSA
             return nativeCrashReporter.Post(minidump, options, callback);

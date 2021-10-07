@@ -1,7 +1,8 @@
 ﻿
 #if UNITY_STANDALONE_WIN || UNITY_WSA
-using BugSplatDotNetStandard;
 using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,15 +17,24 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal class WindowsReporter: IExceptionReporter, INativeCrashReporter
     {
-        private static readonly string sentinelFileName = "BugSplatPostSuccess.txt";
+        public IDirectoryInfoFactory DirectoryInfoFactory { get; set; } = new DirectoryInfoFactory();
+        public IFileContentsWriter FileContentsWriter { get; set; } = new FileContentsWriter();
 
+        public static readonly string SentinelFileName = "BugSplatPostSuccess.txt";
+
+        private readonly IClientSettingsRepository _clientSettings;
         private readonly IExceptionReporter _exceptionReporter;
-        private readonly INativeCrashReportClient _nativeCrashReporter;
+        private readonly INativeCrashReportClient _nativeCrashReportClient;
 
-        public WindowsReporter(IExceptionReporter exceptionReporter, INativeCrashReportClient nativeCrashReporter)
+        public WindowsReporter(
+            IClientSettingsRepository clientSettings,
+            IExceptionReporter exceptionReporter,
+            INativeCrashReportClient nativeCrashReportClient
+        )
         {
+            _clientSettings = clientSettings;
             _exceptionReporter = exceptionReporter;
-            _nativeCrashReporter = nativeCrashReporter;
+            _nativeCrashReportClient = nativeCrashReportClient;
         }
 
         public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
@@ -37,9 +47,9 @@ namespace BugSplatUnity.Runtime.Reporter
             return _exceptionReporter.Post(exception, options, callback);
         }
 
-        public IEnumerator PostAllCrashes(MinidumpPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
+        public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
         {
-            var crashReportFolder = new DirectoryInfo(CrashReporting.crashReportFolder);
+            var crashReportFolder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
             if (!crashReportFolder.Exists)
             {
                 yield break;
@@ -57,9 +67,9 @@ namespace BugSplatUnity.Runtime.Reporter
             callback?.Invoke(results);
         }
 
-        public IEnumerator PostCrash(DirectoryInfo crashFolder, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator PostCrash(IDirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            options ??= new MinidumpPostOptions();
+            options ??= new ReportPostOptions();
 
             if (crashFolder == null)
             {
@@ -68,7 +78,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
 
             var crashFiles = crashFolder.GetFiles();
-            if (crashFiles.Any(file => file.Name == sentinelFileName))
+            if (crashFiles.Any(file => file.Name == SentinelFileName))
             {
                 Debug.Log($"BugSplat info: {crashFolder.Name} already posted, skipping...");
                 yield break;
@@ -82,7 +92,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
 
             var attachments = crashFiles.Where(file => file.Extension != ".dmp");
-            if (attachments != null)
+            if (attachments?.Count() > 0)
             {
                 options.AdditionalAttachments.AddRange(attachments);
             }
@@ -93,17 +103,21 @@ namespace BugSplatUnity.Runtime.Reporter
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     Debug.Log("BugSplat info: Crash post success, writing crash post sentinel file...");
-                    var sentinelFilePath = Path.Combine(crashFolder.FullName, sentinelFileName);
-                    var sentinelFileContents = await response.Content.ReadAsStringAsync();
-                    System.IO.File.WriteAllText(sentinelFilePath, sentinelFileContents);
+                    var sentinelFilePath = Path.Combine(crashFolder.FullName, SentinelFileName);
+                    var sentinelFileContents = string.Empty;
+                    if (response.Content != null)
+                    {
+                        sentinelFileContents = await response.Content.ReadAsStringAsync();
+                    }
+                    FileContentsWriter.WriteAllText(sentinelFilePath, sentinelFileContents);
                 }
                 callback?.Invoke(response);
             });
         }
 
-        public IEnumerator PostMostRecentCrash(MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            var folder = new DirectoryInfo(CrashReporting.crashReportFolder);
+            var folder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
             var crashFolder = folder.GetDirectories()
                 .OrderBy(dir => dir.LastWriteTime)
                 .FirstOrDefault();
@@ -111,17 +125,17 @@ namespace BugSplatUnity.Runtime.Reporter
             yield return PostCrash(crashFolder, options, callback);
         }
 
-        public IEnumerator Post(FileInfo minidump, MinidumpPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            // TODO BG set options defaults!
-            options ??= new MinidumpPostOptions();
+            options ??= new ReportPostOptions();
+            options.SetNullOrEmptyValues(_clientSettings);
 
             yield return Task.Run(
                 async () =>
                 {
                     try
                     {
-                        var result = await _nativeCrashReporter.Post(minidump, options);
+                        var result = await _nativeCrashReportClient.Post(minidump, options);
                         callback?.Invoke(result);
                     }
                     catch (Exception ex)
@@ -130,6 +144,96 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                 }
             );
+        }
+    }
+
+    internal interface IDirectoryInfoFactory
+    {
+        public IDirectoryInfo CreateDirectoryInfo(string path);
+    }
+
+    internal interface IDirectoryInfo
+    {
+        public IDirectoryInfo[] GetDirectories();
+        public FileInfo[] GetFiles();
+        public bool Exists { get; }
+        public string FullName { get; }
+        public DateTime LastWriteTime { get; }
+        public string Name { get; }
+    }
+
+    class WrappedDirectoryInfo : IDirectoryInfo
+    {
+        public bool Exists
+        {
+            get
+            {
+                return _directory.Exists;
+            }
+        }
+
+        public string FullName
+        {
+            get
+            {
+                return _directory.FullName;
+            }
+        }
+
+        public DateTime LastWriteTime
+        {
+            get
+            {
+                return _directory.LastWriteTime;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return _directory.Name;
+            }
+        }
+
+        private readonly DirectoryInfo _directory;
+
+        public WrappedDirectoryInfo(DirectoryInfo directory)
+        {
+            _directory = directory;
+        }
+
+        public IDirectoryInfo[] GetDirectories()
+        {
+            return _directory.GetDirectories()
+                .Select(dir => new WrappedDirectoryInfo(dir))
+                .ToArray();
+        }
+
+        public FileInfo[] GetFiles()
+        {
+            return _directory.GetFiles();
+        }
+    }
+
+    class DirectoryInfoFactory : IDirectoryInfoFactory
+    {
+        public IDirectoryInfo CreateDirectoryInfo(string path)
+        {
+            return new WrappedDirectoryInfo(new DirectoryInfo(path));
+        }
+    }
+
+    interface IFileContentsWriter
+    {
+        void WriteAllText(string path, string contents);
+    }
+
+    class FileContentsWriter : IFileContentsWriter
+    {
+        public void WriteAllText(string path, string contents)
+        {
+            System.IO.File.WriteAllText(path, contents);
         }
     }
 }
