@@ -5,7 +5,6 @@ using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -22,7 +21,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var stackTrace = "stackTrace";
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Log);
@@ -37,7 +36,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var stackTrace = "stackTrace";
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => false;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
@@ -46,13 +45,13 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [Test]
-        public void LogMessageReceived_WhenTypeExceptionAndShouldPostExceptionTrue_ShouldCallPostWithStackTraceAndOptions()
+        public void LogMessageReceived_WhenLogTypeExceptionAndShouldPostExceptionTrue_ShouldCallPostWithStackTraceAndOptions()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
 
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
@@ -70,7 +69,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var exception = new Exception("BugSplat rocks!");
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => false;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             yield return sut.Post(exception);
@@ -88,7 +87,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             clientSettings.Key = "key";
             clientSettings.User = "fred";
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var completed = new Task<bool>(() => true);
@@ -119,7 +118,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             options.Email = "barney@bugsplat.com";
             options.Key = "new key";
             options.User = "barney";
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var completed = new Task<bool>(() => true);
@@ -141,7 +140,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var exception = new Exception("BugSplat rocks!");
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeExceptionClient(new HttpResponseMessage());
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
 
             var invoked = false;

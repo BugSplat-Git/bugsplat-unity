@@ -1,5 +1,4 @@
-﻿using BugSplatDotNetStandard;
-using BugSplatUnity.Runtime.Client;
+﻿using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.Runtime.Util;
 using System;
@@ -51,7 +50,6 @@ namespace BugSplatUnity.Runtime.Reporter
                 yield break;
             }
 
-            // TODO BG test
             options ??= new ReportPostOptions();
             options.SetNullOrEmptyValues(ClientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
@@ -61,7 +59,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
         {
-            if(ClientSettings.CaptureEditorLog)
+            if (ClientSettings.CaptureEditorLog)
             {
                 // TODO BG can we support this?
                 Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
