@@ -37,7 +37,7 @@ namespace BugSplatUnity.Runtime.Client
             // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
             var formDataParams = options.AdditionalFormDataParams.Select(param =>
             {
-                return new FormDataParam()
+                return new BugSplatDotNetStandard.FormDataParam()
                 {
                     Content = param.Content,
                     FileName = param.FileName,
@@ -61,7 +61,7 @@ namespace BugSplatUnity.Runtime.Client
             // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
             var formDataParams = options.AdditionalFormDataParams.Select(param =>
             {
-                return new FormDataParam()
+                return new BugSplatDotNetStandard.FormDataParam()
                 {
                     Content = param.Content,
                     FileName = param.FileName,

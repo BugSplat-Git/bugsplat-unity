@@ -3,11 +3,11 @@ using BugSplatUnity.Runtime.Settings;
 
 namespace BugSplatUnity.Runtime.Util
 {
-    internal static class ExceptionPostOptionsExtensions
+    internal static class ReportPostOptionsExtensions
     {
         public static void SetNullOrEmptyValues(this IReportPostOptions options, IClientSettingsRepository clientSettings)
         {
-            if (clientSettings.Attachments.Count != 0)
+            if (clientSettings.Attachments?.Count != 0)
             {
                 options.AdditionalAttachments.AddRange(clientSettings.Attachments);
             }

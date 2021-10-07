@@ -72,7 +72,7 @@ namespace BugSplatUnity.Runtime.Settings
             }
         }
 
-        protected readonly BugSplatDotNetStandard.BugSplat _bugsplat;
+        private readonly BugSplatDotNetStandard.BugSplat _bugsplat;
 
         public DotNetStandardClientSettingsRepository(BugSplatDotNetStandard.BugSplat bugsplat)
         {

@@ -22,6 +22,13 @@ namespace BugSplatUnity.Runtime.Client
         public int CrashTypeId { get; set; }
     }
 
+    public class FormDataParam : IFormDataParam
+    {
+        public string Name { get; set; }
+        public HttpContent Content { get; set; }
+        public string FileName { get; set; }
+    }
+
     public class ReportPostOptions : IReportPostOptions
     {
         public List<FileInfo> AdditionalAttachments { get; } = new List<FileInfo>();

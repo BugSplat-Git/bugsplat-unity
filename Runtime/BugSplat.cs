@@ -176,7 +176,7 @@ namespace BugSplatUnity
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
-            var windowsReporter = new WindowsReporter(clientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
+            var windowsReporter = new WindowsReporter(dotNetStandardClientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
             
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;

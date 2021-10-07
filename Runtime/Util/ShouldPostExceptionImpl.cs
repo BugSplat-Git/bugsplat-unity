@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Util
 {
@@ -10,6 +11,7 @@ namespace BugSplatUnity.Runtime.Util
         {
             if (lastPost + TimeSpan.FromSeconds(10) > DateTime.Now)
             {
+                Debug.Log("BugSplat info: Report rate-limiting triggered, skipping report...");
                 return false;
             }
 

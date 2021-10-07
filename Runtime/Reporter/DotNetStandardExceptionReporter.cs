@@ -1,5 +1,4 @@
-﻿using BugSplatDotNetStandard;
-using BugSplatUnity.Runtime.Client;
+﻿using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Settings;
 using System;
 using System.Collections;
@@ -192,7 +191,7 @@ namespace BugSplatUnity.Runtime.Reporter
                         Name = "screenshot",
                         Content = new ByteArrayContent(bytes),
                         FileName = "screenshot.png"
-                    } as IFormDataParam;
+                    };
                     options.AdditionalFormDataParams.Add(param);
                 }
             }
@@ -203,6 +202,10 @@ namespace BugSplatUnity.Runtime.Reporter
                     try
                     {
                         var result = await _exceptionClient.Post(exception, options);
+                        var status = result.StatusCode;
+                        var contents = await result.Content.ReadAsStringAsync();
+                        Debug.Log($"BugSplat info: status {status}\n {contents}");
+                        // TODO can we return the response here?
                         callback?.Invoke();
                     }
                     catch (Exception ex)
