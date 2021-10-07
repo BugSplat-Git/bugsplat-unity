@@ -12,7 +12,7 @@ namespace BugSplatUnity.Runtime.Client
 
     internal interface IUnityWebRequest
     {
-        IEnumerator SendWebRequest();
+        UnityWebRequestAsyncOperation SendWebRequest();
         Result result { get; }
         string error { get; }
         long responseCode { get; }
@@ -21,21 +21,47 @@ namespace BugSplatUnity.Runtime.Client
 
     internal interface IUnityWebClient
     {
-        IReportPostOptions CreateExceptionPostOptions();
         IUnityWebRequest Post(string url, Dictionary<string, string> formData);
     }
 
     internal class UnityWebClient : IUnityWebClient
     {
-        // TODO can we remove this?
-        public IReportPostOptions CreateExceptionPostOptions()
-        {
-            return new ReportPostOptions();
-        }
-
         public IUnityWebRequest Post(string url, Dictionary<string, string> formData)
         {
-            return (IUnityWebRequest)UnityWebRequest.Post(url, formData);
+            var request = UnityWebRequest.Post(url, formData);
+            return new WrappedUnityWebRequest(request);
+        }
+    }
+
+    internal class WrappedUnityWebRequest: IUnityWebRequest
+    {
+        public Result result => _request.result;
+        public string error => _request.error;
+        public long responseCode => _request.responseCode;
+        public IDownloadHandler downloadHandler => new WrappedDownloadHandler(_request.downloadHandler);
+
+        private readonly UnityWebRequest _request;
+
+        public WrappedUnityWebRequest(UnityWebRequest request)
+        {
+            _request = request;
+        }
+
+        public UnityWebRequestAsyncOperation SendWebRequest()
+        {
+            return _request.SendWebRequest();
+        }
+    }
+
+    internal class WrappedDownloadHandler : IDownloadHandler
+    {
+        public string text => _downloadHandler.text;
+
+        private readonly DownloadHandler _downloadHandler;
+
+        public WrappedDownloadHandler(DownloadHandler downloadHandler)
+        {
+            _downloadHandler = downloadHandler;
         }
     }
 }

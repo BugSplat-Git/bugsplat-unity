@@ -5,7 +5,6 @@ namespace BugSplatUnity.Runtime.Util
 {
     internal static class ExceptionPostOptionsExtensions
     {
-        // TODO BG test
         public static void SetNullOrEmptyValues(this IReportPostOptions options, IClientSettingsRepository clientSettings)
         {
             if (clientSettings.Attachments.Count != 0)

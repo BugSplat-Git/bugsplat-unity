@@ -39,9 +39,9 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
         public long responseCode { get; set; } = 200;
         public IDownloadHandler downloadHandler { get; set; } = new FakeDownloadHandler(string.Empty);
 
-        public IEnumerator SendWebRequest()
+        public UnityWebRequestAsyncOperation SendWebRequest()
         {
-            yield return null;
+            return new UnityWebRequestAsyncOperation();
         }
     }
 

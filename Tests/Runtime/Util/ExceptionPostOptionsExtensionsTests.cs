@@ -8,6 +8,6 @@ namespace BugSplatUnity.RuntimeTests.Util
 {
     class ExceptionPostOptionsExtensionsTests
     {
-        // TODO BG
+        // TODO BG exception post options tests
     }
 }
