@@ -1,4 +1,5 @@
-﻿using BugSplatUnity.Runtime.Client;
+﻿#if UNITY_STANDALONE_WIN || UNITY_WSA
+using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Reporter.Fakes;
 using BugSplatUnity.Runtime.Settings;
@@ -340,6 +341,26 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
+        public IEnumerator PostCrash_WithFolderContainingAttachments_ShouldCallPostWithAdditionaAttachments()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeCrashFiles = new FileInfo[] {
+                new FileInfo("bugsplat.dmp"),
+                new FileInfo("log.txt")
+            };
+            var fakeCrashFolder = new FakeDirectoryInfo(files: fakeCrashFiles) { Exists = true };
+
+            yield return sut.PostCrash(fakeCrashFolder);
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(fakeCrashFiles[1], fakeNativeCrashReportClient.Calls[0].Options.AdditionalAttachments[0]);
+        }
+
+        [UnityTest]
         public IEnumerator PostCrash_WhenResponseStatusCodeOK_ShouldWriteSentinelFile()
         {
             var clientSettings = new WebGLClientSettingsRepository();
@@ -529,27 +550,101 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
-        public IEnumerator Post_WithoutOptions_ShouldNotThrow()
+        public IEnumerator Post_WithoutOptions_ShouldCallPostWithDefaultOptions()
         {
-            throw new NotImplementedException();
+            var minidump = new FileInfo("bugsplat.dmp");
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.Description = "BugSplat rocks!";
+            clientSettings.Email = "fred@bugsplat.com";
+            clientSettings.Key = "key";
+            clientSettings.User = "fred";
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+
+            yield return sut.Post(minidump);
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(minidump, fakeNativeCrashReportClient.Calls[0].MinidumpFileInfo);
+            Assert.AreEqual(clientSettings.Description, fakeNativeCrashReportClient.Calls[0].Options.Description);
+            Assert.AreEqual(clientSettings.Email, fakeNativeCrashReportClient.Calls[0].Options.Email);
+            Assert.AreEqual(clientSettings.Key, fakeNativeCrashReportClient.Calls[0].Options.Key);
+            Assert.AreEqual(clientSettings.User, fakeNativeCrashReportClient.Calls[0].Options.User);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WithOptions_ShouldCallPostWithOverriddenOptions()
+        {
+            var minidump = new FileInfo("bugsplat.dmp");
+            var options = new ReportPostOptions();
+            options.Description = "new description";
+            options.Email = "barney@bugsplat.com";
+            options.Key = "new key";
+            options.User = "barney";
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.Description = "BugSplat rocks!";
+            clientSettings.Email = "fred@bugsplat.com";
+            clientSettings.Key = "key";
+            clientSettings.User = "fred";
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+
+            yield return sut.Post(minidump, options);
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(minidump, fakeNativeCrashReportClient.Calls[0].MinidumpFileInfo);
+            Assert.AreEqual(options.Description, fakeNativeCrashReportClient.Calls[0].Options.Description);
+            Assert.AreEqual(options.Email, fakeNativeCrashReportClient.Calls[0].Options.Email);
+            Assert.AreEqual(options.Key, fakeNativeCrashReportClient.Calls[0].Options.Key);
+            Assert.AreEqual(options.User, fakeNativeCrashReportClient.Calls[0].Options.User);
         }
 
         [UnityTest]
         public IEnumerator Post_WithoutCallback_ShouldNotThrow()
         {
-            throw new NotImplementedException();
-        }
+            var minidump = new FileInfo("bugsplat.dmp");
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeNativeCrashReportPostResponse = new HttpResponseMessage();
+            fakeNativeCrashReportPostResponse.StatusCode = System.Net.HttpStatusCode.OK;
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(fakeNativeCrashReportPostResponse);
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            sut.FileContentsWriter = new FakeFileContentsWriter();
 
-        [UnityTest]
-        public IEnumerator Post_ShouldCallPostWithMinidumpAndOptions()
-        {
-            throw new NotImplementedException();
+            yield return sut.Post(minidump);
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
         }
 
         [UnityTest]
         public IEnumerator Post_WithCallback_ShouldInvokeCallbackWithResult()
         {
-            throw new NotImplementedException();
+            var minidump = new FileInfo("bugsplat.dmp");
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeNativeCrashReportPostResponse = new HttpResponseMessage();
+            fakeNativeCrashReportPostResponse.StatusCode = System.Net.HttpStatusCode.OK;
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(fakeNativeCrashReportPostResponse);
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            sut.FileContentsWriter = new FakeFileContentsWriter();
+
+            var result = new HttpResponseMessage();
+            var completed = new Task<bool>(() => true);
+            Action<HttpResponseMessage> callback = (response) =>
+            {
+                result = response;
+                completed.Start();
+            };
+            yield return sut.Post(minidump, callback: callback);
+            yield return completed.AsCoroutine();
+
+            Assert.AreEqual(fakeNativeCrashReportPostResponse, result);
         }
     }
 }
+#endif

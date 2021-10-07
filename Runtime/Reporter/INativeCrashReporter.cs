@@ -1,4 +1,5 @@
 ﻿using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Net.Http;
 
 namespace BugSplatUnity.Runtime.Reporter
 {
+
     interface INativeCrashReporter
     {
         IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null);

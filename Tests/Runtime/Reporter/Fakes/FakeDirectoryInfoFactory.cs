@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BugSplatUnity.Runtime.Util;
+using System;
 using System.IO;
 
 namespace BugSplatUnity.Runtime.Reporter.Fakes

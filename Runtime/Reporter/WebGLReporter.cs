@@ -12,7 +12,11 @@ namespace BugSplatUnity.Runtime.Reporter
         public IClientSettingsRepository ClientSettings { get; set; }
         public IExceptionClient<IEnumerator> ExceptionClient { get; set; }
 
-        public static WebGLReporter Create(IClientSettingsRepository clientSettings, IExceptionClient<IEnumerator> exceptionClient, GameObject gameObject)
+        public static WebGLReporter Create(
+            IClientSettingsRepository clientSettings,
+            IExceptionClient<IEnumerator> exceptionClient,
+            GameObject gameObject
+        )
         {
             var reporter = gameObject.AddComponent(typeof(WebGLReporter)) as WebGLReporter;
             reporter.ClientSettings = clientSettings;

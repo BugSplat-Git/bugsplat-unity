@@ -77,6 +77,8 @@ namespace BugSplatUnity
         /// <summary>
         /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
         /// </summary>
+        /// 
+        // TODO can we be more explicit that the Exception might be null with the Type here?
         public Func<Exception, bool> ShouldPostException
         {
             get
@@ -183,6 +185,7 @@ namespace BugSplatUnity
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
+            // TODO BG is instantiating a game object like this safe?
             var gameObject = new GameObject();
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);

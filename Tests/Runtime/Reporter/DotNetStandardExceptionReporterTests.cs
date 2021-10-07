@@ -14,6 +14,9 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 {
     class DotNetStandardExceptionReporterTests
     {
+        const int UnityLegacyCrashTypeId = 12;
+        const int UnityCrashTypeId = 24;
+
         [Test]
         public void LogMessageReceived_WhenTypeNotException_ShouldNotCallPost()
         {
@@ -59,7 +62,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
             Assert.NotNull(fakeExceptionClient.Calls[0].Options);
-            Assert.AreEqual(12, fakeExceptionClient.Calls[0].Options.CrashTypeId);
+            Assert.AreEqual(UnityLegacyCrashTypeId, fakeExceptionClient.Calls[0].Options.CrashTypeId);
             StringAssert.AreEqualIgnoringCase($"{logMessage}\n{stackTrace}", fakeExceptionClient.Calls[0].StackTrace);
         }
 
@@ -100,7 +103,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.AreEqual(clientSettings.Email, fakeExceptionClient.Calls[0].Options.Email);
             Assert.AreEqual(clientSettings.Key, fakeExceptionClient.Calls[0].Options.Key);
             Assert.AreEqual(clientSettings.User, fakeExceptionClient.Calls[0].Options.User);
-            Assert.AreEqual(24, fakeExceptionClient.Calls[0].Options.CrashTypeId);
+            Assert.AreEqual(UnityCrashTypeId, fakeExceptionClient.Calls[0].Options.CrashTypeId);
         }
 
         [UnityTest]
@@ -131,7 +134,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.AreEqual(options.Email, fakeExceptionClient.Calls[0].Options.Email);
             Assert.AreEqual(options.Key, fakeExceptionClient.Calls[0].Options.Key);
             Assert.AreEqual(options.User, fakeExceptionClient.Calls[0].Options.User);
-            Assert.AreEqual(24, fakeExceptionClient.Calls[0].Options.CrashTypeId);
+            Assert.AreEqual(UnityCrashTypeId, fakeExceptionClient.Calls[0].Options.CrashTypeId);
         }
 
         [UnityTest]

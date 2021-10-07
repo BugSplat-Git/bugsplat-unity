@@ -7,7 +7,6 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal interface IExceptionReporter
     {
-        // TODO BG callback return type
         void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null);
         IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null);
     }

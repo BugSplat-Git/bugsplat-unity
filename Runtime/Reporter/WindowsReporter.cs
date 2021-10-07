@@ -60,10 +60,15 @@ namespace BugSplatUnity.Runtime.Reporter
             var crashFolders = unityCrashesFolder.GetDirectories();
             var results = new List<HttpResponseMessage>();
 
+            // TODO BG we shouldn't wait on the last one either!
             foreach (var crashFolder in crashFolders)
             {
-                yield return new WaitForSeconds(1);
                 yield return PostCrash(crashFolder, options, (response) => results.Add(response));
+                
+                if (crashFolders.Count() > 1)
+                {
+                    yield return new WaitForSeconds(1);
+                }
             }
 
             callback?.Invoke(results);
@@ -146,96 +151,6 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                 }
             );
-        }
-    }
-
-    internal interface IDirectoryInfoFactory
-    {
-        public IDirectoryInfo CreateDirectoryInfo(string path);
-    }
-
-    internal interface IDirectoryInfo
-    {
-        public IDirectoryInfo[] GetDirectories();
-        public FileInfo[] GetFiles();
-        public bool Exists { get; }
-        public string FullName { get; }
-        public DateTime LastWriteTime { get; }
-        public string Name { get; }
-    }
-
-    class WrappedDirectoryInfo : IDirectoryInfo
-    {
-        public bool Exists
-        {
-            get
-            {
-                return _directory.Exists;
-            }
-        }
-
-        public string FullName
-        {
-            get
-            {
-                return _directory.FullName;
-            }
-        }
-
-        public DateTime LastWriteTime
-        {
-            get
-            {
-                return _directory.LastWriteTime;
-            }
-        }
-
-        public string Name
-        {
-            get
-            {
-                return _directory.Name;
-            }
-        }
-
-        private readonly DirectoryInfo _directory;
-
-        public WrappedDirectoryInfo(DirectoryInfo directory)
-        {
-            _directory = directory;
-        }
-
-        public IDirectoryInfo[] GetDirectories()
-        {
-            return _directory.GetDirectories()
-                .Select(dir => new WrappedDirectoryInfo(dir))
-                .ToArray();
-        }
-
-        public FileInfo[] GetFiles()
-        {
-            return _directory.GetFiles();
-        }
-    }
-
-    class DirectoryInfoFactory : IDirectoryInfoFactory
-    {
-        public IDirectoryInfo CreateDirectoryInfo(string path)
-        {
-            return new WrappedDirectoryInfo(new DirectoryInfo(path));
-        }
-    }
-
-    interface IFileContentsWriter
-    {
-        void WriteAllText(string path, string contents);
-    }
-
-    class FileContentsWriter : IFileContentsWriter
-    {
-        public void WriteAllText(string path, string contents)
-        {
-            System.IO.File.WriteAllText(path, contents);
         }
     }
 }

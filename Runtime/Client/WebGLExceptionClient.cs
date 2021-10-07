@@ -34,6 +34,7 @@ namespace BugSplatUnity.Runtime.Client
 
         private IEnumerator PostException(string exception, IReportPostOptions options = null)
         {
+            // TODO bg i think we can remove this
             options ??= UnityWebClient.CreateExceptionPostOptions();
 
             var url = $"https://{_database}.bugsplat.com/post/dotnetstandard/";

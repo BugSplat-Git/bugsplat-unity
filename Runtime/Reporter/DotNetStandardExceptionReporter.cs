@@ -57,6 +57,7 @@ namespace BugSplatUnity.Runtime.Reporter
                             var status = result.StatusCode;
                             var contents = await result.Content.ReadAsStringAsync();
                             Debug.Log($"BugSplat info: status {status}\n {contents}");
+                            // TODO can we return the response here?
                             callback?.Invoke();
                         }
                     );

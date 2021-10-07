@@ -27,6 +27,7 @@ namespace BugSplatUnity.Runtime.Client
     public class ReportPostOptions : IReportPostOptions
     {
         public List<FileInfo> AdditionalAttachments { get; } = new List<FileInfo>();
+        // TODO BG do we use this anywhere?
         public List<IFormDataParam> AdditionalFormDataParams { get; } = new List<IFormDataParam>();
         public string Description { get; set; }
         public string Email { get; set; }

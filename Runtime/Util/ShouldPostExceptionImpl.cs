@@ -6,7 +6,7 @@ namespace BugSplatUnity.Runtime.Util
     {
         private static DateTime lastPost;
 
-        public static bool DefaultShouldPostExceptionImpl(Exception ex)
+        public static bool DefaultShouldPostExceptionImpl(Exception ex = null)
         {
             if (lastPost + TimeSpan.FromSeconds(10) > DateTime.Now)
             {

@@ -1,4 +1,4 @@
-﻿using BugSplatUnity.Runtime.Reporter;
+﻿using BugSplatUnity.Runtime.Util;
 using System.Collections.Generic;
 
 namespace BugSplatUnity.RuntimeTests.Reporter.Fakes

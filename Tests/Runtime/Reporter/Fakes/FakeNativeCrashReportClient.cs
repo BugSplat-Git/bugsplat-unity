@@ -1,5 +1,4 @@
 ﻿using BugSplatUnity.Runtime.Client;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;

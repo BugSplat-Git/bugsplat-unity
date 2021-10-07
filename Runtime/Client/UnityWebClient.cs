@@ -27,6 +27,7 @@ namespace BugSplatUnity.Runtime.Client
 
     internal class UnityWebClient : IUnityWebClient
     {
+        // TODO can we remove this?
         public IReportPostOptions CreateExceptionPostOptions()
         {
             return new ReportPostOptions();

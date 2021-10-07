@@ -1,5 +1,6 @@
 ﻿using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
 {
-    class FakeDotNetStandardExceptionReporter : IExceptionReporter, INativeCrashReporter
+    class FakeDotNetStandardExceptionReporter : IExceptionReporter
     {
         public FakeDotNetStandardExceptionReporterCalls Calls { get; } = new FakeDotNetStandardExceptionReporterCalls();
 
@@ -57,21 +58,6 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
             );
             yield return null;
             callback?.Invoke(_result);
-        }
-
-        public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator PostCrash(IDirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-            throw new NotImplementedException();
         }
     }
 

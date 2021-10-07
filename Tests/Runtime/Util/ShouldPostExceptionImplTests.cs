@@ -8,5 +8,6 @@ namespace BugSplatUnity.RuntimeTests.Util
 {
     class ShouldPostExceptionImplTests
     {
+        // TODO
     }
 }
