@@ -121,7 +121,7 @@ namespace BugSplatUnity.Runtime.Reporter
         {
             var folder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
             var crashFolder = folder.GetDirectories()
-                .OrderBy(dir => dir.LastWriteTime)
+                .OrderByDescending(dir => dir.LastWriteTime)
                 .FirstOrDefault();
 
             yield return PostCrash(crashFolder, options, callback);

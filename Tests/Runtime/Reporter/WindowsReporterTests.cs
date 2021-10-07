@@ -76,7 +76,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
-        public IEnumerator PostAllCrashes_WithoutOptions_ShouldCallPostWithDefaultedOptions()
+        public IEnumerator PostAllCrashes_WithoutOptions_ShouldCallPostWithDefaultOptions()
         {
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.Description = "BugSplat rocks!";
@@ -417,21 +417,115 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
-        public IEnumerator PostMostRecentCrash_WithoutOptions_ShouldNotThrow()
+        public IEnumerator PostMostRecentCrash_WithoutOptions_ShouldCallPostWithDefaultOptions()
         {
-            throw new NotImplementedException();
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.Description = "BugSplat rocks!";
+            clientSettings.Email = "fred@bugsplat.com";
+            clientSettings.Key = "key";
+            clientSettings.User = "fred";
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeCrashFiles = new FileInfo[] { new FileInfo("bugsplat.dmp") };
+            var fakeCrashFolders = new FakeDirectoryInfo[] { new FakeDirectoryInfo(files: fakeCrashFiles) };
+            var fakeDirectoryInfo = new FakeDirectoryInfo(fakeCrashFolders) { Exists = true };
+            sut.DirectoryInfoFactory = new FakeDirectoryInfoFactory(fakeDirectoryInfo);
+
+            yield return sut.PostMostRecentCrash();
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(clientSettings.Description, fakeNativeCrashReportClient.Calls[0].Options.Description);
+            Assert.AreEqual(clientSettings.Email, fakeNativeCrashReportClient.Calls[0].Options.Email);
+            Assert.AreEqual(clientSettings.Key, fakeNativeCrashReportClient.Calls[0].Options.Key);
+            Assert.AreEqual(clientSettings.User, fakeNativeCrashReportClient.Calls[0].Options.User);
         }
 
         [UnityTest]
-        public IEnumerator PostMostRecentCrash_WithoutCallback_ShouldNotThrow()
+        public IEnumerator PostMostRecentCrash_WithOptions_ShouldCallPostWithOverriddenOptions()
         {
-            throw new NotImplementedException();
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.Description = "BugSplat rocks!";
+            clientSettings.Email = "fred@bugsplat.com";
+            clientSettings.Key = "key";
+            clientSettings.User = "fred";
+            var options = new ReportPostOptions();
+            options.Description = "new description";
+            options.Email = "barney@bugsplat.com";
+            options.Key = "new key";
+            options.User = "barney";
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeCrashFiles = new FileInfo[] { new FileInfo("bugsplat.dmp") };
+            var fakeCrashFolders = new FakeDirectoryInfo[] { new FakeDirectoryInfo(files: fakeCrashFiles) };
+            var fakeDirectoryInfo = new FakeDirectoryInfo(fakeCrashFolders) { Exists = true };
+            sut.DirectoryInfoFactory = new FakeDirectoryInfoFactory(fakeDirectoryInfo);
+
+            yield return sut.PostMostRecentCrash(options);
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(options.Description, fakeNativeCrashReportClient.Calls[0].Options.Description);
+            Assert.AreEqual(options.Email, fakeNativeCrashReportClient.Calls[0].Options.Email);
+            Assert.AreEqual(options.Key, fakeNativeCrashReportClient.Calls[0].Options.Key);
+            Assert.AreEqual(options.User, fakeNativeCrashReportClient.Calls[0].Options.User);
+        }
+
+        [UnityTest]
+        public IEnumerator PostMostRecentCrash_WithCallback_ShouldInvokeCallbackWithResponse()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeNativeCrashReportPostResponse = new HttpResponseMessage();
+            fakeNativeCrashReportPostResponse.StatusCode = System.Net.HttpStatusCode.OK;
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(fakeNativeCrashReportPostResponse);
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeCrashFiles = new FileInfo[] { new FileInfo("bugsplat.dmp") };
+            var fakeCrashFolders = new FakeDirectoryInfo[] { new FakeDirectoryInfo(files: fakeCrashFiles) };
+            var fakeDirectoryInfo = new FakeDirectoryInfo(fakeCrashFolders) { Exists = true };
+            sut.DirectoryInfoFactory = new FakeDirectoryInfoFactory(fakeDirectoryInfo);
+            sut.FileContentsWriter = new FakeFileContentsWriter();
+            
+            var result = new HttpResponseMessage();
+            var completed = new Task<bool>(() => true);
+            Action<HttpResponseMessage> callback = (response) =>
+            {
+                result = response;
+                completed.Start();
+            };
+            yield return sut.PostMostRecentCrash(callback: callback);
+            yield return completed.AsCoroutine();
+
+            Assert.AreEqual(fakeNativeCrashReportPostResponse, result);
         }
 
         [UnityTest]
         public IEnumerator PostMostRecentCrash_ShouldCallPostWithMostRecentCrash()
         {
-            throw new NotImplementedException();
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeNativeCrashReportPostResponse = new HttpResponseMessage();
+            fakeNativeCrashReportPostResponse.StatusCode = System.Net.HttpStatusCode.OK;
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(fakeNativeCrashReportPostResponse);
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeCrashFiles0 = new FileInfo[] { new FileInfo("bugsplat0.dmp") };
+            var fakeCrashFiles1 = new FileInfo[] { new FileInfo("bugsplat1.dmp") };
+            var fakeCrashFolders = new FakeDirectoryInfo[] {
+                new FakeDirectoryInfo(files: fakeCrashFiles0) { LastWriteTime = new DateTime(0) },
+                new FakeDirectoryInfo(files: fakeCrashFiles1)
+            };
+            var fakeDirectoryInfo = new FakeDirectoryInfo(fakeCrashFolders) { Exists = true };
+            sut.DirectoryInfoFactory = new FakeDirectoryInfoFactory(fakeDirectoryInfo);
+            sut.FileContentsWriter = new FakeFileContentsWriter();
+
+            yield return sut.PostMostRecentCrash();
+
+            Assert.IsNotEmpty(fakeNativeCrashReportClient.Calls);
+            Assert.AreEqual(fakeCrashFiles1[0], fakeNativeCrashReportClient.Calls[0].MinidumpFileInfo);
         }
 
         [UnityTest]
