@@ -1,7 +1,7 @@
-using BugSplatDotNetStandard;
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;

@@ -8,7 +8,7 @@ namespace BugSplatUnity.Runtime.Settings
     internal class WebGLClientSettingsRepository : IClientSettingsRepository
     {
         // TODO BG what do we do about attachments here...
-        // https://github.com/BugSplat-Git/bugsplat-unity/issues/37
+        // https://github.com/BugSplat-Git/bugsplat-unity/issues/37n
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
         public bool CaptureEditorLog { get; set; } = false;
         public bool CapturePlayerLog { get; set; } = false;
