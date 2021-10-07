@@ -34,6 +34,7 @@ namespace BugSplatUnity.Runtime.Client
         private ExceptionPostOptions CreateExceptionPostOptions(IReportPostOptions options)
         {
             // TODO BG move IFormDataParam to BugSplatDotNetStandard
+            // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
             var formDataParams = options.AdditionalFormDataParams.Select(param =>
             {
                 return new FormDataParam()
@@ -57,6 +58,7 @@ namespace BugSplatUnity.Runtime.Client
         private MinidumpPostOptions CreateMinidumpPostOptions(IReportPostOptions options)
         {
             // TODO BG move IFormDataParam to BugSplatDotNetStandard
+            // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
             var formDataParams = options.AdditionalFormDataParams.Select(param =>
             {
                 return new FormDataParam()
