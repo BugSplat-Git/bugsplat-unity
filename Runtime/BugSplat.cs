@@ -213,12 +213,12 @@ namespace BugSplatUnity
 		public BugSplat(BugSplatConfigurationOptions configurationOptions) 
             : this(configurationOptions?.Database, configurationOptions?.Application, configurationOptions?.Version)
 		{
-            Email = configurationOptions?.Email;
-            Key = configurationOptions?.Key;
-            User = configurationOptions?.User;
-            CaptureEditorLog = configurationOptions.CaptureEditorLog;
-            CapturePlayerLog = configurationOptions.CapturePlayerLog;
-            CaptureScreenshots = configurationOptions.CaptureScreenshots;
+            clientSettings.Email = configurationOptions?.Email;
+            clientSettings.Key = configurationOptions?.Key;
+            clientSettings.User = configurationOptions?.User;
+            clientSettings.CaptureEditorLog = configurationOptions.CaptureEditorLog;
+            clientSettings.CapturePlayerLog = configurationOptions.CapturePlayerLog;
+            clientSettings.CaptureScreenshots = configurationOptions.CaptureScreenshots;
 
             foreach (var filePath in configurationOptions.PersistentDataFileAttachmentPaths)
 			{

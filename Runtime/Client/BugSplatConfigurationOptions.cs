@@ -38,13 +38,6 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Take a screenshot and upload it when Post is called")]
 		public bool CaptureScreenshots;
 
-		[Header("BugSplatManager Options")]
-		[Tooltip("Should the BugSplatManager be destroyed when a new scene is loaded?")]
-		public bool DestroyManagerOnSceneLoad = false;
-
-		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization")]
-		public bool RegisterLogMessageRecieved;
-
 		public List<string> PersistentDataFileAttachmentPaths => persistentDataFileAttachmentPaths
 			.Select(fileAttachment => UnityEngine.Application.persistentDataPath + fileAttachment)
 			.ToList();

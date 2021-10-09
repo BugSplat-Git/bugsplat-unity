@@ -1,40 +1,21 @@
 using BugSplatUnity.Runtime.Client;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace BugSplatUnity.RuntimeTests.Client
 {
 	public class BugSplatManagerTest
 	{
-		[Test]
-		public void BugSplatManager_WillRegisterCallback_WhenRegisterLogMessageRecievedConfigurationOption_IsTrue()
+		BugSplatConfigurationOptions configurationOptions;
+		GameObject managerObject;
+
+		[SetUp]
+		public void Setup()
 		{
-			var configOptions = new BugSplatConfigurationOptions();
-			configOptions.RegisterLogMessageRecieved = true;
-
-			var testObj = new GameObject();
-			testObj.AddComponent(typeof(BugSplatManager));
-
+			configurationOptions = new BugSplatConfigurationOptions();
+			managerObject = new GameObject();
+			managerObject.AddComponent(typeof(BugSplatManager));
 		}
-
-		[Test]
-		public void BugSplatManager_WillNotCallback_WhenRegisterLogMessageRecievedConfigurationOption_IsFalse()
-		{
-
-		}
-
-		[Test]
-		public void BugSplatManager_WillDestroyOnLoad_WhenDestroyManagerOnSceneLoadConfigurationOption_IsTrue()
-		{
-
-		}
-
-		[Test]
-		public void BugSplatManager_WillNotDestroyOnLoad_WhenDestroyManagerOnSceneLoadConfigurationOption_IsFalse()
-		{
-
-		}
-
-
 	}
 }
