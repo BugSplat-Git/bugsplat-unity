@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Client
 {
-	public class BugSplatManager : MonoBehaviour
+	public sealed class BugSplatManager : MonoBehaviour
 	{
 		public static BugSplatManager GetBugSplatManager => FindObjectOfType<BugSplatManager>();
 
@@ -17,18 +17,12 @@ namespace BugSplatUnity.Runtime.Client
 		[SerializeField]
 		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization.")]
 		private bool registerLogMessageRecieved;
-		
-		//TODO Might be nice to optionally disable BugSplat when in-editor 
 
 		public BugSplat BugSplat;
 
-		protected virtual void Awake()
+		private void Awake()
 		{
-			if (configurationOptions != null)
-			{
-				ConfigureBugSplat(configurationOptions);
-			}
-
+			ConfigureBugSplat();
 			if (dontDestroyManagerOnSceneLoad)
 			{
 				DontDestroyOnLoad(this);
@@ -36,25 +30,22 @@ namespace BugSplatUnity.Runtime.Client
 		}
 
 		/// <summary>
-		/// Override-able function to instantiate BugSplat based on ConfigurationOptions.
+		/// Function to instantiate BugSplat object based on configurationOptions.
 		/// </summary>
-		public virtual void ConfigureBugSplat(BugSplatConfigurationOptions configurationOptions)
+		private void ConfigureBugSplat()
 		{
-			finalizeConfiguration();
+			if (configurationOptions == null)
+			{
+				Debug.LogError("No BugSplatConfigurationOptions serialized for BugSplatManager! BugSplat will not be created.", this);
+				return;
+			}
 
-			this.configurationOptions = configurationOptions;
-
-			BugSplat = new BugSplat(this.configurationOptions);
+			BugSplat = BugSplatFactory.CreateBugSplatFromConfigurationOptions(configurationOptions, Application.productName, Application.version);
 
 			if (registerLogMessageRecieved)
 			{
 				Application.logMessageReceived += BugSplat.LogMessageReceived;
 			}
 		}
-
-		/// <summary>
-		/// Optional override-able function to modify configuration options before BugSplat is constructed.
-		/// </summary>
-		protected virtual void finalizeConfiguration() {}
 	}
 }

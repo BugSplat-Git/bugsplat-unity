@@ -207,47 +207,6 @@ namespace BugSplatUnity
         }
 
 		/// <summary>
-		/// Post Exceptions and minidump files to BugSplat
-		/// </summary>
-		/// <param name="configurationOptions">A serializedobject providing BugSplat configuration options</param>
-		public BugSplat(BugSplatConfigurationOptions configurationOptions) 
-            : this(configurationOptions?.Database, configurationOptions?.Application, configurationOptions?.Version)
-		{
-            clientSettings.Email = configurationOptions?.Email;
-            clientSettings.Key = configurationOptions?.Key;
-            clientSettings.User = configurationOptions?.User;
-            clientSettings.CaptureEditorLog = configurationOptions.CaptureEditorLog;
-            clientSettings.CapturePlayerLog = configurationOptions.CapturePlayerLog;
-            clientSettings.CaptureScreenshots = configurationOptions.CaptureScreenshots;
-
-            foreach (var filePath in configurationOptions.PersistentDataFileAttachmentPaths)
-			{
-                AddAdditionalAttachment(filePath);
-			}
-        }
-
-        public void AddAdditionalAttachment(string path)
-		{
-            if (clientSettings == null)
-			{
-                Debug.LogWarning($"Warning: Cannot add additional attachment before BugSplat has been configured. Skipping file at path: {path}");
-                return;
-			}
-
-            var fileInfo = new FileInfo(path);
-
-            if (!fileInfo.Exists)
-			{
-                Debug.LogWarning($"Warning: No file found at path {path}. Skipping.");
-                return;
-			}
-
-            clientSettings.Attachments.Add(fileInfo);
-
-            //TODO ZL check valid file extensions? Upload size? What are the restrictions here, and should it happen at this level?
-        }
-
-		/// <summary>
 		/// Event handler that will post the stackTrace to BugSplat if type equals LogType.Exception
 		/// </summary>
 		/// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>

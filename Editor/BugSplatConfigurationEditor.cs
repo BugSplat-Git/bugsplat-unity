@@ -5,9 +5,13 @@ using UnityEngine;
 [CustomEditor(typeof(BugSplatConfigurationOptions))]
 public class BugSplatConfigurationEditor : Editor
 {
+	private string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
+
+	private string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
+
 	public override void OnInspectorGUI()
 	{
-		var texture = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.bugsplat.unity/Editor/EditorResources/logo.png", typeof(Texture2D));
+		var texture = (Texture2D)AssetDatabase.LoadAssetAtPath(logoPath, typeof(Texture2D));
 		if (texture != null)
 		{
 			GUILayout.BeginHorizontal();
@@ -21,23 +25,9 @@ public class BugSplatConfigurationEditor : Editor
 
 		var t = (target as BugSplatConfigurationOptions);
 
-		var errorMessage = string.Empty;
 		if (string.IsNullOrEmpty(t.Database))
 		{
-			errorMessage = "Database cannot be null or empty!";
+			EditorGUILayout.HelpBox(emptyDatabaseErrorMessage, MessageType.Error);
 		} 
-		else if (string.IsNullOrEmpty(t.Application))
-		{
-			errorMessage = "Application cannot be null or empty!";
-		} 
-		else if (string.IsNullOrEmpty(t.Version))
-		{
-			errorMessage = "Version cannot be null or empty!";
-		}
-
-		if (!string.IsNullOrEmpty(errorMessage))
-		{
-			EditorGUILayout.HelpBox(errorMessage, MessageType.Error);
-		}
 	}
 }
