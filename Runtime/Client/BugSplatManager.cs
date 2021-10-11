@@ -29,7 +29,7 @@ namespace BugSplatUnity.Runtime.Client
 		}
 
 		/// <summary>
-		/// Function to instantiate BugSplat object based on configurationOptions.
+		/// Function to instantiate BugSplat object based on BugSplatOptions.
 		/// </summary>
 		private void ConfigureBugSplat()
 		{
