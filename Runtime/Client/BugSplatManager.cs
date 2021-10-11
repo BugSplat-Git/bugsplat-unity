@@ -17,6 +17,8 @@ namespace BugSplatUnity.Runtime.Client
 		[SerializeField]
 		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization.")]
 		private bool registerLogMessageRecieved;
+		
+		//TODO Might be nice to optionally disable BugSplat when in-editor 
 
 		public BugSplat BugSplat;
 
