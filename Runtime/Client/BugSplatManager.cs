@@ -1,14 +1,13 @@
+using System;
 using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Client
 {
 	public sealed class BugSplatManager : MonoBehaviour
 	{
-		public static BugSplatManager GetBugSplatManager => FindObjectOfType<BugSplatManager>();
-
 		[SerializeField]
 		[Tooltip("BugSplat configuration SerializedObject to instantiate BugSplat with.")]
-		private BugSplatConfigurationOptions configurationOptions = null;
+		private BugSplatOptions bugSplatOptions = null;
 
 		[SerializeField]
 		[Tooltip("Should the BugSplatManager be destroyed when a new scene is loaded?")]
@@ -18,7 +17,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization.")]
 		private bool registerLogMessageRecieved;
 
-		public BugSplat BugSplat;
+		public BugSplat BugSplat { get; private set; }
 
 		private void Awake()
 		{
@@ -34,13 +33,12 @@ namespace BugSplatUnity.Runtime.Client
 		/// </summary>
 		private void ConfigureBugSplat()
 		{
-			if (configurationOptions == null)
+			if (bugSplatOptions == null)
 			{
-				Debug.LogError("No BugSplatConfigurationOptions serialized for BugSplatManager! BugSplat will not be created.", this);
-				return;
+				throw new InvalidOperationException("BugSplat error: no instance of BugSplatOptions is serialized in BugSplatManager! BugSplat will not be initialied.");
 			}
 
-			BugSplat = BugSplatFactory.CreateBugSplatFromConfigurationOptions(configurationOptions, Application.productName, Application.version);
+			BugSplat = BugSplat.CreateFromOptions(bugSplatOptions, Application.productName, Application.version);
 
 			if (registerLogMessageRecieved)
 			{

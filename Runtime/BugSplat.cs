@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -206,13 +207,46 @@ namespace BugSplatUnity
 #endif
         }
 
-		/// <summary>
-		/// Event handler that will post the stackTrace to BugSplat if type equals LogType.Exception
-		/// </summary>
-		/// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
-		/// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
-		/// <param name="type">type provided by logMessageReceived event</param>
-		public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        /// <summary>
+        /// Constructs a BugSplat object from ConfigurationOptions
+        /// </summary>
+        /// <param name="options">collection of options which can be used to configure a BugSplat object </param>
+        /// <param name="application">Your application's name (must match value used to upload symbols)</param>
+        /// <param name="version">Your application's version (must match value used to upload symbols)</param>
+        public static BugSplat CreateFromOptions(BugSplatOptions options, string application, string version)
+        {
+            var bugSplat = new BugSplat(options.Database, application, version);
+
+            bugSplat.Email = options?.Email;
+            bugSplat.Key = options?.Key;
+            bugSplat.User = options?.User;
+            bugSplat.CaptureEditorLog = options.CaptureEditorLog;
+            bugSplat.CapturePlayerLog = options.CapturePlayerLog;
+            bugSplat.CaptureScreenshots = options.CaptureScreenshots;
+
+            if (options.PersistentDataFileAttachmentPaths != null)
+			{
+                var paths = options.PersistentDataFileAttachmentPaths
+                    .Select(fileAttachment => Path.Combine(Application.persistentDataPath, fileAttachment))
+                    .ToList();
+
+                foreach (var filePath in options.PersistentDataFileAttachmentPaths)
+                {
+                    var fileInfo = new FileInfo(filePath);
+                    bugSplat.Attachments.Add(fileInfo);
+                }
+            }
+
+            return bugSplat;
+        }
+
+        /// <summary>
+        /// Event handler that will post the stackTrace to BugSplat if type equals LogType.Exception
+        /// </summary>
+        /// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
+        /// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
+        /// <param name="type">type provided by logMessageReceived event</param>
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
             exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }

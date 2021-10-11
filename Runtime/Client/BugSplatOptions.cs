@@ -5,7 +5,7 @@ using System.Linq;
 namespace BugSplatUnity.Runtime.Client
 {
 	[CreateAssetMenu(menuName = "BugSplat Configuration Options")]
-	public class BugSplatConfigurationOptions : ScriptableObject
+	public class BugSplatOptions : ScriptableObject
 	{
 		[Header("Database Settings")]
 		[Tooltip("The name of your BugSplat database.")]
@@ -36,5 +36,3 @@ namespace BugSplatUnity.Runtime.Client
 		public List<string> PersistentDataFileAttachmentPaths;
 	}
 }
-
-

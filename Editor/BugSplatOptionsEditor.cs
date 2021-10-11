@@ -2,8 +2,8 @@ using BugSplatUnity.Runtime.Client;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(BugSplatConfigurationOptions))]
-public class BugSplatConfigurationEditor : Editor
+[CustomEditor(typeof(BugSplatOptions))]
+public class BugSplatOptionsEditor : Editor
 {
 	private string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
 
@@ -23,7 +23,7 @@ public class BugSplatConfigurationEditor : Editor
 
 		base.OnInspectorGUI();
 
-		var t = (target as BugSplatConfigurationOptions);
+		var t = (target as BugSplatOptions);
 
 		if (string.IsNullOrEmpty(t.Database))
 		{
