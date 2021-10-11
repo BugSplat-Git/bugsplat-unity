@@ -226,13 +226,10 @@ namespace BugSplatUnity
 
             if (options.PersistentDataFileAttachmentPaths != null)
 			{
-                var paths = options.PersistentDataFileAttachmentPaths
-                    .Select(fileAttachment => Path.Combine(Application.persistentDataPath, fileAttachment))
-                    .ToList();
-
                 foreach (var filePath in options.PersistentDataFileAttachmentPaths)
                 {
-                    var fileInfo = new FileInfo(filePath);
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, filePath);
+                    var fileInfo = new FileInfo(fullFilePath);
                     bugSplat.Attachments.Add(fileInfo);
                 }
             }
