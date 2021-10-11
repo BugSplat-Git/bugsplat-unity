@@ -208,7 +208,7 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Constructs a BugSplat object from ConfigurationOptions
+        /// Constructs and returns a BugSplat object from BugSplatOptions
         /// </summary>
         /// <param name="options">collection of options which can be used to configure a BugSplat object </param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
