@@ -211,8 +211,6 @@ namespace BugSplatUnity
         /// Constructs and returns a BugSplat object from BugSplatOptions
         /// </summary>
         /// <param name="options">collection of options which can be used to configure a BugSplat object </param>
-        /// <param name="application">Your application's name (must match value used to upload symbols)</param>
-        /// <param name="version">Your application's version (must match value used to upload symbols)</param>
         public static BugSplat CreateFromOptions(BugSplatOptions options)
         {
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;

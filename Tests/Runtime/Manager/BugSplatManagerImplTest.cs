@@ -2,7 +2,6 @@ using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Manager;
 using NUnit.Framework;
 using System;
-using UnityEditor;
 using UnityEngine;
 
 namespace BugSplatUnity.RuntimeTests.Manager
