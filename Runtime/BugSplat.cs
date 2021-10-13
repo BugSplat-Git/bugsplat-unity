@@ -213,8 +213,11 @@ namespace BugSplatUnity
         /// <param name="options">collection of options which can be used to configure a BugSplat object </param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
-        public static BugSplat CreateFromOptions(BugSplatOptions options, string application, string version)
+        public static BugSplat CreateFromOptions(BugSplatOptions options)
         {
+            var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
+            var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+            
             var bugSplat = new BugSplat(options.Database, application, version);
 
             bugSplat.Email = options?.Email;
@@ -228,7 +231,8 @@ namespace BugSplatUnity
 			{
                 foreach (var filePath in options.PersistentDataFileAttachmentPaths)
                 {
-                    var fullFilePath = Path.Combine(Application.persistentDataPath, filePath);
+                    var trimmedFilePath = filePath.TrimStart('/', '\\');
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
                     var fileInfo = new FileInfo(fullFilePath);
                     bugSplat.Attachments.Add(fileInfo);
                 }

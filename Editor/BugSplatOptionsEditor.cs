@@ -5,9 +5,9 @@ using UnityEngine;
 [CustomEditor(typeof(BugSplatOptions))]
 public class BugSplatOptionsEditor : Editor
 {
-	private string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
+	private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
 
-	private string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
+	private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
 
 	public override void OnInspectorGUI()
 	{
@@ -23,9 +23,9 @@ public class BugSplatOptionsEditor : Editor
 
 		base.OnInspectorGUI();
 
-		var t = (target as BugSplatOptions);
+		var options = (target as BugSplatOptions);
 
-		if (string.IsNullOrEmpty(t.Database))
+		if (string.IsNullOrEmpty(options.Database))
 		{
 			EditorGUILayout.HelpBox(emptyDatabaseErrorMessage, MessageType.Error);
 		} 

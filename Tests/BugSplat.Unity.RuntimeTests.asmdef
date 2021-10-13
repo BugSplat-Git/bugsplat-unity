@@ -2,9 +2,7 @@
     "name": "BugSplat.Unity.RuntimeTests",
     "rootNamespace": "",
     "references": [
-        "BugSplat.Unity.Runtime",
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "BugSplat.Unity.Runtime"
     ],
     "includePlatforms": [
         "Editor"
