@@ -1,7 +1,9 @@
 {
     "name": "BugSplat.Unity.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:a8de7f358e223354dbef7a09cad00841"
+    ],
     "includePlatforms": [
         "Editor"
     ],

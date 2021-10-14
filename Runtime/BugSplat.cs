@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -204,6 +205,39 @@ namespace BugSplatUnity
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
 #endif
+        }
+
+        /// <summary>
+        /// Constructs and returns a BugSplat object from BugSplatOptions
+        /// </summary>
+        /// <param name="options">collection of options which can be used to configure a BugSplat object </param>
+        public static BugSplat CreateFromOptions(BugSplatOptions options)
+        {
+            var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
+            var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+            
+            var bugSplat = new BugSplat(options.Database, application, version);
+
+            bugSplat.Description = options.Description;
+            bugSplat.Email = options.Email;
+            bugSplat.Key = options.Key;
+            bugSplat.User = options.User;
+            bugSplat.CaptureEditorLog = options.CaptureEditorLog;
+            bugSplat.CapturePlayerLog = options.CapturePlayerLog;
+            bugSplat.CaptureScreenshots = options.CaptureScreenshots;
+
+            if (options.PersistentDataFileAttachmentPaths != null)
+			{
+                foreach (var filePath in options.PersistentDataFileAttachmentPaths)
+                {
+                    var trimmedFilePath = filePath.TrimStart('/', '\\');
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
+                    var fileInfo = new FileInfo(fullFilePath);
+                    bugSplat.Attachments.Add(fileInfo);
+                }
+            }
+
+            return bugSplat;
         }
 
         /// <summary>
