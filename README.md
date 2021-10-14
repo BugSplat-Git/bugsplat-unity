@@ -108,7 +108,6 @@ First, find your instance of BugSplat. For example, using the BugSplatManager:
 
 ```cs
 var bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
-
 ```
 
 You can send exceptions to BugSplat in a try/catch block by calling `Post`.
