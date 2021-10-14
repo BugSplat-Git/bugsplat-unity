@@ -69,10 +69,10 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 
 ## Usage Programmatically
-If your application requires special configuration, you may optionally create your own script to manage and instantiate `BugSplat`. To do so, create a new script and attach it to a GameObject. In your script, add a using statement that aliases `BugSplatUnity.BugSplat` as `BugSplat`.
+If your application requires special configuration, you may optionally create your own script to manage and instantiate `BugSplat`. To do so, create a new script and attach it to a GameObject. In your script, add a using statement for BugSplatUnity.
 
 ```cs
-using BugSplat = BugSplatUnity.BugSplat;
+using BugSplatUnity;
 ```
 
 Next, create a new instance of `BugSplat` passing it your `database`, `application`, and `version`. Use `Application.productName`, and `Application.version` for application and version respectively.
@@ -126,7 +126,7 @@ catch (Exception ex)
 The default values specified on the instance of `BugSplat` can be overridden in the call to `Post`. Additionally, you can provide a `callback` to `Post` that will be invoked with the result once the upload is complete.
 
 ```cs
-var options = new ExceptionPostOptions()
+var options = new ReportPostOptions()
 {
     Description = "a new description",
     Email = "barney@bugsplat.com",
@@ -136,11 +136,9 @@ var options = new ExceptionPostOptions()
 
 options.AdditionalAttachments.Add(new FileInfo("/path/to/additional.txt"));
 
-static async void callback(HttpResponseMessage response)
+static void callback()
 {
-    var status = response.StatusCode;
-    var contents = await response.Content.ReadAsStringAsync();
-    Debug.Log($"Response {status}: {contents}");
+    Debug.Log($"Exception post callback!");
 };
 
 StartCoroutine(bugsplat.Post(ex, options, callback));
