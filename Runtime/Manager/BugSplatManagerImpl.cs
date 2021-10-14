@@ -26,11 +26,6 @@ namespace BugSplatUnity.Runtime.Manager
 
 		public void Instantiate()
 		{
-			if (dontDestroyManagerOnSceneLoad)
-			{
-				Object.DontDestroyOnLoad(managerGameObject);
-			}
-
 			if (bugSplatOptions == null)
 			{
 				throw new ArgumentException("BugSplat error: BugSplatOptions is null! BugSplat will not be initialized.");
@@ -41,6 +36,11 @@ namespace BugSplatUnity.Runtime.Manager
 			if (registerLogMessageRecieved)
 			{
 				Application.logMessageReceived += BugSplat.LogMessageReceived;
+			}
+			
+			if (dontDestroyManagerOnSceneLoad)
+			{
+				Object.DontDestroyOnLoad(managerGameObject);
 			}
 		}
 	}
