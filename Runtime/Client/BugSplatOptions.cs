@@ -18,6 +18,9 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("The version of your BugSplat application. Defaults to Application.version if no value is set.")]
 		public string Version;
 
+		[Tooltip("A default description that can be overridden by call to Post.")]
+		public string Description;
+
 		[Tooltip("A default email that can be overridden by call to Post.")]
 		public string Email;
 

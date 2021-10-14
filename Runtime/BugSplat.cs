@@ -218,9 +218,10 @@ namespace BugSplatUnity
             
             var bugSplat = new BugSplat(options.Database, application, version);
 
-            bugSplat.Email = options?.Email;
-            bugSplat.Key = options?.Key;
-            bugSplat.User = options?.User;
+            bugSplat.Description = options.Description;
+            bugSplat.Email = options.Email;
+            bugSplat.Key = options.Key;
+            bugSplat.User = options.User;
             bugSplat.CaptureEditorLog = options.CaptureEditorLog;
             bugSplat.CapturePlayerLog = options.CapturePlayerLog;
             bugSplat.CaptureScreenshots = options.CaptureScreenshots;
