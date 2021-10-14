@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace BugSplatUnity.Runtime.Client
 {
-	[CreateAssetMenu(menuName = "BugSplat Configuration Options")]
+	[CreateAssetMenu(menuName = "BugSplat Options")]
 	public class BugSplatOptions : ScriptableObject
 	{
 		[Header("Required")]
