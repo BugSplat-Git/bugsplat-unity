@@ -2,7 +2,7 @@
 using System.IO;
 using System.Net.Http;
 
-namespace BugSplatUnity.Runtime.Client
+namespace BugSplatUnity
 {
     public interface IFormDataParam
     {
