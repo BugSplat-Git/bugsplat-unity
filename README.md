@@ -31,7 +31,41 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 ## Usage
 
-BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to create new script and attach it to a GameObject. In your script, add a using statement that aliases `BugSplatUnity.BugSplat` as `BugSplat`.
+BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to attach the `BugSplatManager` Monobehaviour to a GameObject.
+
+![BugSplat Manager](https://bugsplat-public.s3.amazonaws.com/unity/BugSplatManager.png)
+
+`BugSplatManager` needs be initialized with a `BugSplatOptions` serialized object. A new instance of `BugSplatOptions` can be created through the Asset create menu.
+
+![BugSplat Create Options](https://bugsplat-public.s3.amazonaws.com/unity/BugSplatOptions.png)
+
+Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will by default configure these values with Application.appName and Application.version, respectively.
+
+![BugSplat Options](https://bugsplat-public.s3.amazonaws.com/unity/BugSplatOptionsObject.png)
+
+Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
+
+![BugSplat Manager Configured](https://bugsplat-public.s3.amazonaws.com/unity/ConfiguredBugSplatManager.png)
+
+### BugSplat Manager Settings
+* DontDestroyManagerOnSceneLoad - Should the BugSplat Manager persist through scene loads?
+* RegisterLogMessageRecieved - Register BugSplat to capture LogType.Exceptions on initialization.
+
+### Bugsplat Options
+* Database - The name of your BugSplat database.
+* Application - The name of your BugSplat application. Defaults to Application.productName if no value is set.
+* Version - The version of your BugSplat application. Defaults to Application.version if no value is set.
+* Description - A default description that can be overridden by call to Post.
+* Email - A default email that can be overridden by call to Post.
+* Key - A default key that can be overridden by call to Post.
+* User - A default user that can be overridden by call to Post
+* CaptureEditorLog - Should BugSplat upload Editor.log when Post is called
+* CapturePlayerLog - Should BugSplat upload Player.log when Post is called
+* CaptureScreenshots - Should BugSplat a screenshot and upload it when Post is called
+* PersistentDataFileAttachmentPaths - Paths to files (relative to Application.persistentDataPath) to upload with each report
+
+## Usage Programmatically
+If your application requires special configuration, you may optionally create your own script to manage and instantiate `BugSplat`. To do so, create a new script and attach it to a GameObject. In your script, add a using statement that aliases `BugSplatUnity.BugSplat` as `BugSplat`.
 
 ```cs
 using BugSplat = BugSplatUnity.BugSplat;
@@ -56,6 +90,16 @@ bugsplat.CapturePlayerLog = false;
 bugsplat.CaptureScreenshots = true;
 ```
 
+Alternatively, a new instance of BugSplat can be created with `BugSplatOptions`.
+
+```cs
+[SerializeField]
+BugSplatOptions bugSplatOptions;
+...
+var bugsplat = BugSplat.CreateFromOptions(bugSplatOptions);
+```
+
+## Posting an Exception
 You can send exceptions to BugSplat in a try/catch block by calling `Post`.
 
 ```cs
@@ -65,7 +109,7 @@ try
 }
 catch (Exception ex)
 {
-    StartCoroutine(bugsplat.Post(ex));
+    StartCoroutine(manager.Bugsplat.Post(ex));
 }
 ```
 
@@ -89,21 +133,21 @@ static async void callback(HttpResponseMessage response)
     Debug.Log($"Response {status}: {contents}");
 };
 
-StartCoroutine(bugsplat.Post(ex, options, callback));
+StartCoroutine(manager.Bugsplat.Post(ex, options, callback));
 ```
 
-You can also configure a global `LogMessageRecieved` callback. When the BugSplat instance recieves a logging event where the type is `Exception` it will upload the exception.
+You can also configure a global `LogMessageRecieved` callback. When the BugSplat instance recieves a logging event where the type is `Exception` it will upload the exception. Note that the `BugSplatManager` can be configured to register this callback at startup.
 
 ```cs
-Application.logMessageReceived += bugsplat.LogMessageReceived;
+Application.logMessageReceived += manager.Bugsplat.LogMessageReceived;
 ```
 
 BugSplat can be configured to upload Windows minidumps created by the `UnityCrashHandler`. If your game contains Native Windows C++ plugins, `.exe`, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders they will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 ```cs
-StartCoroutine(bugsplat.PostCrash(new FileInfo("/path/to/crash/folder")));
-StartCoroutine(bugsplat.PostMostRecentCrash());
-StartCoroutine(bugsplat.PostAllCrashes());
+StartCoroutine(manager.Bugsplat.PostCrash(new FileInfo("/path/to/crash/folder")));
+StartCoroutine(manager.Bugsplat.PostMostRecentCrash());
+StartCoroutine(manager.Bugsplat.PostAllCrashes());
 ```
 
 Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identically to the `ExceptionPostOptions` example listed above.
