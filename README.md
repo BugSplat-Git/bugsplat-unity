@@ -48,7 +48,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 ![BugSplat Manager Configured](https://bugsplat-public.s3.amazonaws.com/unity/ConfiguredBugSplatManager.png)
 
 ### BugSplat Manager Settings
-| Option | Description |
+| Setting | Description |
 | --------------- | --------------- |
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
 | RegisterLogMessageRecieved | Register BugSplat to capture LogType.Exceptions on initialization.|
