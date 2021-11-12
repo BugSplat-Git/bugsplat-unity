@@ -18,9 +18,12 @@ namespace Crasher
 		{
 			bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
 			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
-		}
+#if UNITY_STANDALONE_WIN
+            StartCoroutine(bugsplat.PostMostRecentCrash());
+#endif
+        }
 
-		private void generateSampleStackFramesAndThrow()
+        private void generateSampleStackFramesAndThrow()
 		{
 			sampleStackFrame0();
 		}
