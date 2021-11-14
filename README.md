@@ -29,6 +29,26 @@ Information on adding a Unity package via a git URL can be found [here](https://
 https://github.com/BugSplat-Git/bugsplat-unity.git
 ```
 
+## Sample
+
+After installing `com.bugsplat.unity` you'll have the opportunity to import a sample project that's fully configured to post error reports to BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
+
+To import the sample, click the carrot next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
+
+![Importing the Sample](https://bugsplat-public.s3.amazonaws.com/unity/import-sample.png)
+
+In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
+
+Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **BugSplatOptions** object. Click BugSplatOptions and replace the value of database with your BugSplat database.
+
+![Finding the Sample](https://bugsplat-public.s3.amazonaws.com/unity/bugsplat-options.png)
+
+![Configuring BugSplat](https://bugsplat-public.s3.amazonaws.com/unity/bugsplat-manager.png)
+
+Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard] (https://app.bugsplat.com/v2/dashboard) and ensure that you have the correct database selected.
+
+![Running the Sample](https://bugsplat-public.s3.amazonaws.com/unity/sample-scene.png)
+
 ## Usage
 
 BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to attach the `BugSplatManager` Monobehaviour to a GameObject.
@@ -51,7 +71,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 | Setting | Description |
 | --------------- | --------------- |
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
-| RegisterLogMessageRecieved | Register BugSplat to capture LogType.Exceptions on initialization.|
+| RegisterLogMessageRecieved | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
 
 ### BugSplat Options
 | Option | Description |
@@ -68,7 +88,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 
-## Usage Programmatically
+## Configuring in Code
 If your application requires special configuration, you may optionally create your own script to manage and instantiate `BugSplat`. To do so, create a new script and attach it to a GameObject. In your script, add a using statement for BugSplatUnity.
 
 ```cs

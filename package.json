@@ -19,9 +19,9 @@
   ],
   "samples": [
     {
-      "displayName": "Sample Crasher",
-      "description": "Contains a sample Unity crasher for testing BugSplat functionality.",
-      "path": "Samples~/SampleCrasher"
+      "displayName": "my-unity-crasher",
+      "description": "Contains a sample Unity project for testing BugSplat error reporting.",
+      "path": "Samples~/my-unity-crasher"
     }
   ],
     "author": {
