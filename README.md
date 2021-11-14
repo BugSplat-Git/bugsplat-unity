@@ -31,7 +31,7 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 ## Sample
 
-After installing `com.bugsplat.unity` you'll have the oppertunity to import an example project that's fully configured to post error report to BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
+After installing `com.bugsplat.unity` you'll have the opportunity to import an example project that's fully configured to post error report to BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
 
 To import the sample, click the carrot next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
 
