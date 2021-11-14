@@ -1,29 +1,29 @@
 {
     "name": "com.bugsplat.unity",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
     "unity": "2018.4",
-  "keywords": [
-    "bugsplat",
-    "crash",
-    "report",
-    "reporting",
-    "error",
-    "exception",
-    "call",
-    "stack",
-    "trace",
-    "try",
-    "catch"
-  ],
-  "samples": [
-    {
-      "displayName": "my-unity-crasher",
-      "description": "Contains a sample Unity project for testing BugSplat error reporting.",
-      "path": "Samples~/my-unity-crasher"
-    }
-  ],
+    "keywords": [
+        "bugsplat",
+        "crash",
+        "report",
+        "reporting",
+        "error",
+        "exception",
+        "call",
+        "stack",
+        "trace",
+        "try",
+        "catch"
+    ],
+    "samples": [
+        {
+            "displayName": "my-unity-crasher",
+            "description": "Contains a sample Unity project for testing BugSplat error reporting.",
+            "path": "Samples~/my-unity-crasher"
+        }
+    ],
     "author": {
         "name": "BugSplat",
         "email": "support@bugsplat.com",
