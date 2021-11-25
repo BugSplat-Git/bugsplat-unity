@@ -1,5 +1,4 @@
-﻿using BugSplatUnity.Runtime.Client;
-using BugSplatUnity.Runtime.Settings;
+﻿using BugSplatUnity.Runtime.Settings;
 
 namespace BugSplatUnity.Runtime.Util
 {

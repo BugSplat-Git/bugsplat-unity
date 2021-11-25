@@ -1,7 +1,6 @@
 ﻿using BugSplatDotNetStandard;
 using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -33,20 +32,9 @@ namespace BugSplatUnity.Runtime.Client
 
         private ExceptionPostOptions CreateExceptionPostOptions(IReportPostOptions options)
         {
-            // TODO BG move IFormDataParam to BugSplatDotNetStandard
-            // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
-            var formDataParams = options.AdditionalFormDataParams.Select(param =>
-            {
-                return new BugSplatDotNetStandard.FormDataParam()
-                {
-                    Content = param.Content,
-                    FileName = param.FileName,
-                    Name = param.Name
-                };
-            }).ToList();
             var exceptionPostOptions = new ExceptionPostOptions();
             exceptionPostOptions.AdditionalAttachments.AddRange(options.AdditionalAttachments);
-            exceptionPostOptions.AdditionalFormDataParams.AddRange(formDataParams);
+            exceptionPostOptions.AdditionalFormDataParams.AddRange(options.AdditionalFormDataParams);
             exceptionPostOptions.Description = options.Description;
             exceptionPostOptions.Email = options.Email;
             exceptionPostOptions.Key = options.Key;
@@ -57,20 +45,9 @@ namespace BugSplatUnity.Runtime.Client
 
         private MinidumpPostOptions CreateMinidumpPostOptions(IReportPostOptions options)
         {
-            // TODO BG move IFormDataParam to BugSplatDotNetStandard
-            // https://github.com/BugSplat-Git/bugsplat-net-standard/issues/31
-            var formDataParams = options.AdditionalFormDataParams.Select(param =>
-            {
-                return new BugSplatDotNetStandard.FormDataParam()
-                {
-                    Content = param.Content,
-                    FileName = param.FileName,
-                    Name = param.Name
-                };
-            }).ToList();
             var minidumpPostOptions = new MinidumpPostOptions();
             minidumpPostOptions.AdditionalAttachments.AddRange(options.AdditionalAttachments);
-            minidumpPostOptions.AdditionalFormDataParams.AddRange(formDataParams);
+            minidumpPostOptions.AdditionalFormDataParams.AddRange(options.AdditionalFormDataParams);
             minidumpPostOptions.Description = options.Description;
             minidumpPostOptions.Email = options.Email;
             minidumpPostOptions.Key = options.Key;
