@@ -316,5 +316,11 @@ namespace BugSplatUnity
             yield return null;
 #endif
         }
+
+        #if UNITY_IOS
+        public void StartIOSNativeCrashReporter() {
+            IOSNativeInteropProxy.Start();
+        }
+        #endif
     }
 }
