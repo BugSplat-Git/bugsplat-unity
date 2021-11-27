@@ -58,7 +58,7 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
     class FakeExceptionPostOptions : IReportPostOptions
     {
         public List<FileInfo> AdditionalAttachments { get; }
-        public List<IFormDataParam> AdditionalFormDataParams { get; }
+        public List<FormDataParam> AdditionalFormDataParams { get; }
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }

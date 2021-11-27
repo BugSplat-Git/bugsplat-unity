@@ -1,20 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using BugSplatDotNetStandard;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 
 namespace BugSplatUnity
 {
-    public interface IFormDataParam
-    {
-        public string Name { get; set; }
-        public HttpContent Content { get; set; }
-        public string FileName { get; set; }
-    }
-
     public interface IReportPostOptions
     {
         public List<FileInfo> AdditionalAttachments { get; }
-        public List<IFormDataParam> AdditionalFormDataParams { get; }
+        public List<FormDataParam> AdditionalFormDataParams { get; }
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }
@@ -32,7 +26,7 @@ namespace BugSplatUnity
     public class ReportPostOptions : IReportPostOptions
     {
         public List<FileInfo> AdditionalAttachments { get; } = new List<FileInfo>();
-        public List<IFormDataParam> AdditionalFormDataParams { get; } = new List<IFormDataParam>();
+        public List<FormDataParam> AdditionalFormDataParams { get; } = new List<FormDataParam>();
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }
