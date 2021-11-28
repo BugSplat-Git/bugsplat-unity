@@ -317,10 +317,14 @@ namespace BugSplatUnity
 #endif
         }
 
-        #if UNITY_IOS
+#if UNITY_IOS
         public void StartIOSNativeCrashReporter() {
-            IOSNativeInteropProxy.Start();
+#if !UNITY_EDITOR
+                IOSNativeInteropProxy.Start();
+#else
+                Debug.Log($"BugSplat info: StartIOSNativeCrashReporter is not implemented in the Editor");
+#endif
         }
-        #endif
+#endif
     }
 }
