@@ -31,8 +31,8 @@ public class BuildPostprocessors
 
     private static void iOSPostprocessBuild(BuildTarget target, string pathToBuiltProject)
     {
-        var frameworksOutputPath = Path.Combine(pathToBuiltProject, "Frameworks");
-        var bugsplatFrameworkOutputPath = Path.Combine(frameworksOutputPath, iOSFrameworkName);
+        var bugsplatFrameworkRelativePath = Path.Combine("Frameworks", iOSFrameworkName);
+        var bugsplatFrameworkOutputPath = Path.Combine(pathToBuiltProject, bugsplatFrameworkRelativePath);
 
         if (Directory.Exists(bugsplatFrameworkOutputPath)) 
         {
@@ -62,20 +62,27 @@ public class BuildPostprocessors
 
         pbxProject.ReadFromString(File.ReadAllText(pbxProjectPath));
 
-        var bugsplatFrameworkGuid = pbxProject.AddFile(bugsplatFrameworkOutputPath, bugsplatFrameworkOutputPath);
         var unityTargetGuid = pbxProject.GetUnityMainTargetGuid();
-        var unityFrameworkTargetGuid = pbxProject.GetUnityFrameworkTargetGuid();
         pbxProject.AddFrameworkToProject(unityTargetGuid, iOSFrameworkName, false);
-        pbxProject.AddFrameworkToProject(unityFrameworkTargetGuid, iOSFrameworkName, false);
-        pbxProject.AddFileToEmbedFrameworks(unityTargetGuid, bugsplatFrameworkGuid);
+        pbxProject.SetBuildProperty(unityTargetGuid, "ENABLE_BITCODE", "NO");
+        pbxProject.SetBuildProperty(unityTargetGuid, "IPHONEOS_DEPLOYMENT_TARGET", "13.0");
         pbxProject.SetBuildProperty(unityTargetGuid, "FRAMEWORK_SEARCH_PATHS", "$(inherited)");
         pbxProject.AddBuildProperty(unityTargetGuid, "FRAMEWORK_SEARCH_PATHS", "$(PROJECT_DIR)/Frameworks/");
+        pbxProject.AddBuildProperty(unityTargetGuid, "OTHER_LDFLAGS", "-ObjC");
+
+        var unityFrameworkTargetGuid = pbxProject.GetUnityFrameworkTargetGuid();
+        pbxProject.AddFrameworkToProject(unityFrameworkTargetGuid, iOSFrameworkName, false);
+        pbxProject.SetBuildProperty(unityFrameworkTargetGuid, "ENABLE_BITCODE", "NO");
+        pbxProject.SetBuildProperty(unityFrameworkTargetGuid, "IPHONEOS_DEPLOYMENT_TARGET", "13.0");
         pbxProject.SetBuildProperty(unityFrameworkTargetGuid, "FRAMEWORK_SEARCH_PATHS", "$(inherited)");
         pbxProject.AddBuildProperty(unityFrameworkTargetGuid, "FRAMEWORK_SEARCH_PATHS", "$(PROJECT_DIR)/Frameworks/");
-        pbxProject.AddBuildProperty(unityTargetGuid, "OTHER_LDFLAGS", "-ObjC");
+
+        var bugsplatFrameworkGuid = pbxProject.AddFile(bugsplatFrameworkOutputPath, bugsplatFrameworkOutputPath);
+        pbxProject.AddFileToEmbedFrameworks(unityTargetGuid, bugsplatFrameworkGuid);
+        
         pbxProject.WriteToFile(pbxProjectPath);
-        // TODO BG Add code snippet to main
-        // TODO BG disable bitcode
+        
+        // TODO BG Add code snippet to main (?)
     }
 
     private static void WindowsPostprocessBuild(BuildTarget target, string pathToBuiltProject, string platform)
