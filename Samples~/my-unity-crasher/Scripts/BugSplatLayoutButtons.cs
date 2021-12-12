@@ -11,7 +11,7 @@ public class BugSplatLayoutButtons : MonoBehaviour
     private readonly Color bugSplatBlue = new Color32(58, 163, 255, 255);
     
 
-    void Awake()
+    void Start()
     {
         var images = transform.GetComponentsInChildren<Image>();
         var count = 0;
@@ -19,7 +19,6 @@ public class BugSplatLayoutButtons : MonoBehaviour
         {            
             if (image.gameObject.activeInHierarchy)
             {
-                Debug.Log(count);
                 switch (count % 3)
                 {
                     case 0:
