@@ -4,6 +4,8 @@ public class LockOrientation : MonoBehaviour
 {
     void Start()
     {
-        Screen.orientation = ScreenOrientation.Landscape;
+        Screen.autorotateToPortrait = false;
+        Screen.autorotateToPortraitUpsideDown = false;
+        Screen.orientation = ScreenOrientation.AutoRotation;
     }
 }
