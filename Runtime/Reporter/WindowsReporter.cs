@@ -125,8 +125,14 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            var folder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
-            var crashFolder = folder.GetDirectories()
+            var unityCrashesFolder = DirectoryInfoFactory.CreateDirectoryInfo(CrashReporting.crashReportFolder);
+            if (!unityCrashesFolder.Exists)
+            {
+                Debug.Log($"BugSplat info: unity crash folder {unityCrashesFolder.Name} was not found");
+                yield break;
+            }
+
+            var crashFolder = unityCrashesFolder.GetDirectories()
                 .OrderByDescending(dir => dir.LastWriteTime)
                 .FirstOrDefault();
 
