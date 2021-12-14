@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Windows;
 
 namespace BugSplatUnity.RuntimeTests.Reporter
 {
@@ -64,7 +65,6 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public IEnumerator PostAllCrashes_WhenCrashFolderExistsFalse_ShouldNotCallPost()
         {
             var clientSettings = new WebGLClientSettingsRepository();
-            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
             var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
             var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
@@ -521,6 +521,22 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             yield return completed.AsCoroutine();
 
             Assert.AreEqual(fakeNativeCrashReportPostResponse, result);
+        }
+
+
+        [UnityTest]
+        public IEnumerator PostMostRecentCrash_WhenCrashFolderExistsFalse_ShouldNotCallPost()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            var fakeNativeCrashReportClient = new FakeNativeCrashReportClient(new HttpResponseMessage());
+            var fakeDotNetStandardExceptionReporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
+            var sut = new WindowsReporter(clientSettings, fakeDotNetStandardExceptionReporter, fakeNativeCrashReportClient);
+            var fakeDirectoryInfo = new FakeDirectoryInfo() { Exists = false };
+            sut.DirectoryInfoFactory = new FakeDirectoryInfoFactory(fakeDirectoryInfo);
+
+            yield return sut.PostMostRecentCrash();
+
+            Assert.IsEmpty(fakeNativeCrashReportClient.Calls);   
         }
 
         [UnityTest]
