@@ -19,6 +19,8 @@ namespace BugSplatUnity.Runtime.Reporter
         private readonly IClientSettingsRepository _clientSettings;
         private readonly IExceptionClient<Task<HttpResponseMessage>> _exceptionClient;
 
+        internal IReportUploadGuardService _reportUploadGuardService = new ReportUploadGuardService(); 
+
         public DotNetStandardExceptionReporter(
             IClientSettingsRepository clientSettings,
             IExceptionClient<Task<HttpResponseMessage>> exceptionClient
@@ -30,12 +32,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
         {
-            if (type != LogType.Exception)
-            {
-                return;
-            }
-
-            if (!_clientSettings.ShouldPostException(null))
+            if (!_reportUploadGuardService.ShouldPostLogMessage(_clientSettings, null, type))
             {
                 return;
             }
@@ -69,7 +66,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
         {
-            if (!_clientSettings.ShouldPostException(exception))
+            if (!_reportUploadGuardService.ShouldPostException(_clientSettings, exception))
             {
                 yield break;
             }

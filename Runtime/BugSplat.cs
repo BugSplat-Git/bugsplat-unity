@@ -76,6 +76,22 @@ namespace BugSplatUnity
         }
 
         /// <summary>
+        /// Determines whether BugSplat should post exceptions when user is in the Unity editor.
+        /// </summary>
+        /// 
+        public bool PostExceptionsInEditor
+        {
+            get
+            {
+                return clientSettings.PostExceptionsInEditor;
+            }
+            set
+            {
+                clientSettings.PostExceptionsInEditor = value;
+            }
+        }
+
+        /// <summary>
         /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
         /// </summary>
         /// 
@@ -225,6 +241,7 @@ namespace BugSplatUnity
             bugSplat.CaptureEditorLog = options.CaptureEditorLog;
             bugSplat.CapturePlayerLog = options.CapturePlayerLog;
             bugSplat.CaptureScreenshots = options.CaptureScreenshots;
+            bugSplat.PostExceptionsInEditor = options.PostExceptionsInEditor;
 
             if (options.PersistentDataFileAttachmentPaths != null)
 			{
