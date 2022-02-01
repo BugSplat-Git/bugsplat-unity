@@ -86,6 +86,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 | CaptureEditorLog| Should BugSplat upload Editor.log when Post is called|
 | CapturePlayerLog| Should BugSplat upload Player.log when Post is called |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
+| PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 
 ## Configuring in Code
