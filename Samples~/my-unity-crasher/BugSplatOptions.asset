@@ -22,4 +22,5 @@ MonoBehaviour:
   CaptureEditorLog: 1
   CapturePlayerLog: 1
   CaptureScreenshots: 1
+  PostExceptionsInEditor: 1
   PersistentDataFileAttachmentPaths: []

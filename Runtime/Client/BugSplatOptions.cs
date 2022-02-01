@@ -40,7 +40,7 @@ namespace BugSplatUnity.Runtime.Client
 		public bool CaptureScreenshots;
 
 		[Tooltip("Should BugSplat upload exceptions when in editor")]
-		public bool PostExceptionsInEditor;
+		public bool PostExceptionsInEditor = true;
 
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;
