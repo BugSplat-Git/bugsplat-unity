@@ -9,12 +9,12 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
 {
     internal class FakeTrueReportUploadGuardService : IReportUploadGuardService
     {
-        public bool ShouldPostException(IClientSettingsRepository clientSettingsRepository, Exception exception)
+        public bool ShouldPostException(Exception exception)
         {
             return true;
         }
 
-        public bool ShouldPostLogMessage(IClientSettingsRepository clientSettingsRepository, Exception exception, LogType type)
+        public bool ShouldPostLogMessage(LogType type)
         {
             return true;
         }
@@ -22,12 +22,12 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
 
     internal class FakeFalseReportUploadGuardService : IReportUploadGuardService
     {
-        public bool ShouldPostException(IClientSettingsRepository clientSettingsRepository, Exception exception)
+        public bool ShouldPostException(Exception exception)
         {
             return false;
         }
 
-        public bool ShouldPostLogMessage(IClientSettingsRepository clientSettingsRepository, Exception exception, LogType type)
+        public bool ShouldPostLogMessage(LogType type)
         {
             return false;
         }

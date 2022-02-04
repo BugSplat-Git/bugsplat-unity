@@ -9,27 +9,33 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal interface IReportUploadGuardService
     {
-        public bool ShouldPostLogMessage(IClientSettingsRepository clientSettingsRepository, Exception exception, LogType type);
-        public bool ShouldPostException(IClientSettingsRepository clientSettingsRepository, Exception exception);
+        public bool ShouldPostLogMessage(LogType type);
+        public bool ShouldPostException(Exception exception);
     }
 
     internal class ReportUploadGuardService : IReportUploadGuardService
     {
-        public bool ShouldPostException(IClientSettingsRepository clientSettingsRepository, Exception exception)
+        private IClientSettingsRepository _clientSettingsRepository;
+        public ReportUploadGuardService(IClientSettingsRepository clientSettingsRepository)
         {
-            var shouldPostException = clientSettingsRepository.ShouldPostException(exception);
+            _clientSettingsRepository = clientSettingsRepository;
+        }
+
+        public bool ShouldPostException(Exception exception)
+        {
+            var shouldPostException = _clientSettingsRepository.ShouldPostException(exception);
 
             if (Application.isEditor)
             {
-                shouldPostException &= clientSettingsRepository.PostExceptionsInEditor;
+                shouldPostException &= _clientSettingsRepository.PostExceptionsInEditor;
             }
 
             return shouldPostException;
         }
 
-        public bool ShouldPostLogMessage(IClientSettingsRepository clientSettingsRepository, Exception exception, LogType type)
+        public bool ShouldPostLogMessage(LogType type)
         {
-            var shouldPostLogMessage = ShouldPostException(clientSettingsRepository, exception);
+            var shouldPostLogMessage = ShouldPostException(null);
             shouldPostLogMessage &= (type == LogType.Exception);
             return shouldPostLogMessage;
         }
