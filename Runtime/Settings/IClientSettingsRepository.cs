@@ -10,6 +10,7 @@ namespace BugSplatUnity.Runtime.Settings
         bool CaptureEditorLog { get; set; }
         bool CapturePlayerLog { get; set; }
         bool CaptureScreenshots { get; set; }
+        bool PostExceptionsInEditor { get; set; }
         Func<Exception, bool> ShouldPostException { get; set; }
         string Description { get; set; }
         string Email { get; set; }

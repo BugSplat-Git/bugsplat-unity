@@ -1,6 +1,6 @@
-﻿using BugSplatUnity.Runtime.Client;
-using BugSplatUnity.Runtime.Reporter;
+﻿using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.RuntimeTests.Client.Fakes;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using System;
@@ -17,28 +17,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         const int UnityCrashTypeId = 24;
 
         [Test]
-        public void LogMessageReceived_WhenTypeNotException_ShouldNotCallPost()
-        {
-            var logMessage = "logMessage";
-            var stackTrace = "stackTrace";
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => true;
-            var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var webGLClientSettings = new WebGLClientSettingsRepository();
-            var sut = WebGLReporter.Create(
-                webGLClientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut.LogMessageReceived(logMessage, stackTrace, LogType.Log);
-
-            Assert.IsEmpty(fakeExceptionClient.Calls);
-        }
-
-        [Test]
-        public void LogMessageReceived_WhenShouldPostExceptionFalse_ShouldNotCallPost()
+        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
@@ -52,13 +31,14 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 gameObject
             );
 
+            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
         }
 
         [Test]
-        public void LogMessageReceived_WhenLogTypeExceptionAndShouldPostExceptionTrue_ShouldCallPostWithStackTraceAndOptions()
+        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsTrue_ShouldCallPostWithStackTraceAndOptions()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
@@ -72,6 +52,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 gameObject
             );
 
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
@@ -81,7 +62,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
-        public IEnumerator Post_WhenShouldPostExceptionFalse_ShouldNotCallPost()
+        public IEnumerator Post_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var exception = new Exception("BugSplat rocks!");
             var clientSettings = new WebGLClientSettingsRepository();
@@ -94,6 +75,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 gameObject
             );
 
+            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
             yield return sut.Post(exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
@@ -117,6 +99,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 gameObject
             );
 
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
             yield return sut.Post(exception);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
@@ -151,6 +134,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 gameObject
             );
 
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
             yield return sut.Post(exception, options);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
@@ -175,6 +159,8 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 fakeExceptionClient,
                 gameObject
             );
+
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
 
             var invoked = false;
             var completed = new Task<bool>(() => invoked = true);

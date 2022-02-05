@@ -17,30 +17,17 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         const int UnityLegacyCrashTypeId = 12;
         const int UnityCrashTypeId = 24;
 
+
         [Test]
-        public void LogMessageReceived_WhenTypeNotException_ShouldNotCallPost()
+        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
             var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => true;
+            clientSettings.PostExceptionsInEditor = false;
             var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
-
-            sut.LogMessageReceived(logMessage, stackTrace, LogType.Log);
-
-            Assert.IsEmpty(fakeExceptionClient.Calls);
-        }
-
-        [Test]
-        public void LogMessageReceived_WhenShouldPostExceptionFalse_ShouldNotCallPost()
-        {
-            var logMessage = "logMessage";
-            var stackTrace = "stackTrace";
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => false;
-            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
-            var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
 
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
@@ -48,7 +35,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [Test]
-        public void LogMessageReceived_WhenLogTypeExceptionAndShouldPostExceptionTrue_ShouldCallPostWithStackTraceAndOptions()
+        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsTrue_ShouldCallPostWithStackTraceAndOptions()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
@@ -57,6 +44,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
 
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
 
             sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
@@ -67,18 +55,20 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
-        public IEnumerator Post_WhenShouldPostExceptionFalse_ShouldNotCallPost()
+        public IEnumerator Post_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var exception = new Exception("BugSplat rocks!");
             var clientSettings = new WebGLClientSettingsRepository();
             clientSettings.ShouldPostException = (ex) => false;
             var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage());
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
 
             yield return sut.Post(exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
         }
+
 
         [UnityTest]
         public IEnumerator Post_WithoutOptions_ShouldCallPostWithExceptionAndDefaultedOptions()
@@ -94,6 +84,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             httpResponseMessage.Content = new StringContent(string.Empty);
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
 
             var completed = new Task<bool>(() => true);
             yield return sut.Post(exception, callback: () => completed.Start());
@@ -127,6 +118,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             httpResponseMessage.Content = new StringContent(string.Empty);
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
 
             var completed = new Task<bool>(() => true);
             yield return sut.Post(exception, options, () => completed.Start());
@@ -151,6 +143,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             httpResponseMessage.Content = new StringContent(string.Empty);
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient);
+            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
 
             var invoked = false;
             var completed = new Task<bool>(() => invoked = true);

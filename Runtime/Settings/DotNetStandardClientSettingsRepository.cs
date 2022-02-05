@@ -22,6 +22,8 @@ namespace BugSplatUnity.Runtime.Settings
 
         public bool CaptureScreenshots { get; set; } = false;
 
+        public bool PostExceptionsInEditor { get; set; } = true;
+
         public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
 
         public string Description

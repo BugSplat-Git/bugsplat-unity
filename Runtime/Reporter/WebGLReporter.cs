@@ -12,6 +12,8 @@ namespace BugSplatUnity.Runtime.Reporter
         public IClientSettingsRepository ClientSettings { get; set; }
         public IExceptionClient<IEnumerator> ExceptionClient { get; set; }
 
+        internal IReportUploadGuardService _reportUploadGuardService;
+
         public static WebGLReporter Create(
             IClientSettingsRepository clientSettings,
             IExceptionClient<IEnumerator> exceptionClient,
@@ -21,17 +23,13 @@ namespace BugSplatUnity.Runtime.Reporter
             var reporter = gameObject.AddComponent(typeof(WebGLReporter)) as WebGLReporter;
             reporter.ClientSettings = clientSettings;
             reporter.ExceptionClient = exceptionClient;
+            reporter._reportUploadGuardService = new ReportUploadGuardService(clientSettings);
             return reporter;
         }
 
         public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
         {
-            if (type != LogType.Exception)
-            {
-                return;
-            }
-
-            if (!ClientSettings.ShouldPostException(null))
+            if (!_reportUploadGuardService.ShouldPostLogMessage(type))
             {
                 return;
             }
@@ -49,7 +47,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action callback = null)
         {
-            if (!ClientSettings.ShouldPostException(ex))
+            if (!_reportUploadGuardService.ShouldPostException(ex))
             {
                 yield break;
             }
