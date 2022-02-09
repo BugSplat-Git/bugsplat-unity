@@ -23,21 +23,22 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public bool ShouldPostException(Exception exception)
         {
-            var shouldPostException = _clientSettingsRepository.ShouldPostException(exception);
-
-            if (Application.isEditor)
+            if (Application.isEditor && !_clientSettingsRepository.PostExceptionsInEditor)
             {
-                shouldPostException &= _clientSettingsRepository.PostExceptionsInEditor;
+                return false;
             }
 
-            return shouldPostException;
+            return _clientSettingsRepository.ShouldPostException(exception);
         }
 
         public bool ShouldPostLogMessage(LogType type)
         {
-            var shouldPostLogMessage = ShouldPostException(null);
-            shouldPostLogMessage &= (type == LogType.Exception);
-            return shouldPostLogMessage;
+            if (type != LogType.Exception)
+            {
+                return false;
+            }
+
+            return ShouldPostException(null);
         }
     }
 }
