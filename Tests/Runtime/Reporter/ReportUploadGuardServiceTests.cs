@@ -55,6 +55,26 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [Test]
+        public void ShouldPostException_WhenPostExceptionsInEditorFalse_WhenInEditor_ShouldNotCallClientSettingsRepositoryShouldPostException()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = false;
+
+            var called = false;
+            clientSettings.ShouldPostException = (Exception ex) =>
+            {
+                called = true;
+                return false;
+            };
+
+            var rugs = new ReportUploadGuardService(clientSettings);
+            var exception = new Exception();
+
+            rugs.ShouldPostException(exception);
+            Assert.IsFalse(called);
+        }
+
+        [Test]
         public void ShouldPostLogMessage_WhenLogTypeNotException_ShouldReturnFalse()
         {
             var clientSettings = new WebGLClientSettingsRepository();
@@ -76,6 +96,46 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var logType = LogType.Exception;
 
             Assert.IsTrue(rugs.ShouldPostLogMessage(logType));
+        }
+
+        [Test]
+        public void ShouldPostLogMessage_WhenLogTypeNotException_ShouldNotCallClientSettingsRepositoryShouldPostException()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            var rugs = new ReportUploadGuardService(clientSettings);
+            var exception = new Exception();
+            var logType = LogType.Error;
+
+
+            var called = false;
+            clientSettings.ShouldPostException = (Exception ex) =>
+            {
+                called = true;
+                return false;
+            };
+
+            rugs.ShouldPostLogMessage(logType);
+            Assert.IsFalse(called);
+        }
+
+        [Test]
+        public void ShouldPostLogMessage_WhenPostExceptionsInEditorTrue_WhenLogTypeException_ShouldCallClientSettingsRepositoryShouldPostException()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
+
+            var called = false;
+            clientSettings.ShouldPostException = (Exception ex) =>
+            {
+                called = true;
+                return false;
+            };
+
+            var rugs = new ReportUploadGuardService(clientSettings);
+            var logType = LogType.Exception;
+
+            rugs.ShouldPostLogMessage(logType);
+            Assert.IsTrue(called);
         }
     }
 }
