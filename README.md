@@ -1,18 +1,32 @@
-[![BugSplat](https://s3.amazonaws.com/bugsplat-public/npm/header.png)](https://www.bugsplat.com)
+[![bugsplat-github-banner-basic-outline](https://user-images.githubusercontent.com/20464226/149019306-3186103c-5315-4dad-a499-4fd1df408475.png)](https://bugsplat.com)
+<br/>
+# <div align="center">BugSplat</div> 
+### **<div align="center">Crash and error reporting built for busy developers.</div>**
+<div align="center">
+    <a href="https://twitter.com/BugSplatCo">
+        <img alt="Follow @bugsplatco on Twitter" src="https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social">
+    </a>
+    <a href="https://discord.gg/K4KjjRV5ve">
+        <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
+    </a>
+    <br/>
+    <a href="https://openupm.com/packages/com.bugsplat.unity/">
+        <img alt="BugSplatUnity on OpenUPM" src="https://img.shields.io/npm/v/com.bugsplat.unity?label=openupm&registry_uri=https://package.openupm.com">
+    </a>
+</div>
 
-[![openupm](https://img.shields.io/npm/v/com.bugsplat.unity?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.bugsplat.unity/)
+## 👋 Introduction
 
-## Introduction
 BugSplat's `com.bugsplat.unity` package provides crash and exception reporting for Unity projects. BugSplat provides you with invaluable insight into the issues tripping up your users. Our Unity integration collects screenshots, log files, exceptions, and Windows minidumps so that you can fix bugs and deliver a better user experience.
 
-## Prerequisites
 In order to use this package please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
 * [Log In](https://app.bugsplat.com/auth0/login) to your account
 
 Additionally, you can check out our [my-unity-crasher](https://github.com/BugSplat-Git/my-unity-crasher) sample that demonstrates how to use `com.bugsplat.unity`.
 
-## Installation
+## 🏗 Installation
+
 BugSplat's `com.bugsplat.unity` package can be added to your project via [OpenUPM](https://openupm.com/packages/com.bugsplat.unity/) or a URL to our git [repository](https://github.com/BugSplat-Git/bugsplat-unity.git).
 
 ### OpenUPM
@@ -29,7 +43,7 @@ Information on adding a Unity package via a git URL can be found [here](https://
 https://github.com/BugSplat-Git/bugsplat-unity.git
 ```
 
-## Sample
+## 🧑‍🏫 Sample
 
 After installing `com.bugsplat.unity` you'll have the opportunity to import a sample project that's fully configured to post error reports to BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
 
@@ -49,7 +63,7 @@ Click **Play** and click or tap one of the buttons to send an error report to Bu
 
 ![Running the Sample](https://bugsplat-public.s3.amazonaws.com/unity/sample-scene.png)
 
-## Usage
+## ⚙️ Configuration
 
 BugSplat's Unity integration is flexible and can be used in a variety of ways. The easiest way to get started is to attach the `BugSplatManager` Monobehaviour to a GameObject.
 
@@ -89,7 +103,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 
-## Configuring in Code
+### Configuring in Code
 If your application requires special configuration, you may optionally create your own script to manage and instantiate `BugSplat`. To do so, create a new script and attach it to a GameObject. In your script, add a using statement for BugSplatUnity.
 
 ```cs
@@ -124,7 +138,8 @@ BugSplatOptions bugSplatOptions;
 var bugsplat = BugSplat.CreateFromOptions(bugSplatOptions);
 ```
 
-## Posting an Exception
+## ⌨️ Usage
+
 First, find your instance of BugSplat. For example, using the BugSplatManager:
 
 ```cs
@@ -194,7 +209,7 @@ Once you've posted an exception or a minidump to BugSplat click the link in the 
 
 ![BugSplat crash page](https://bugsplat-public.s3.amazonaws.com/unity/my-unity-crasher.png)
 
-## UWP
+## 🌎 UWP
 
 In order to use BugSplat in a Universal Windows Platform application you will need to add some capabilities to the `Package.appxmanifest` file in the solution directory that Unity generates at build time.
 
@@ -226,7 +241,6 @@ Finally, ensure that your application has access to the file system. The followi
 
 ![Unity file system access](https://bugsplat-public.s3.amazonaws.com/unity/unity-file-system-access.png)
 
+## 🧑‍💻 Contributing
 
-## Contributing
-
-BugSplat ❤️s open source! If you feel that this integration can be improved, please open an [Issue](https://github.com/BugSplat-Git/bugsplat-unity/issues). If you have an awesome new feature you'd like to implement, we'd love to merge your [Pull Request](https://github.com/BugSplat-Git/bugsplat-unity/pulls). You can also reach out to us via an email to support@bugsplat.com or the in-app chat on bugsplat.com.
+BugSplat ❤️s open source! If you feel that this package can be improved, please open an [Issue](https://github.com/BugSplat-Git/bugsplat-unity/issues). If you have an awesome new feature you'd like to implement, we'd love to merge your [Pull Request](https://github.com/BugSplat-Git/bugsplat-unity/pulls). You can also send us an [email](mailto:support@bugsplat.com), join us on [Discord](https://discord.gg/K4KjjRV5ve), or message us via the in-app chat on [bugsplat.com](https://bugsplat.com).
