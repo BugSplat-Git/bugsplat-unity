@@ -1,8 +1,12 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using BugSplatDotNetStandard;
+using System.Collections.Generic;
+using System.Linq;
 
 public class BuildPostprocessors
 {
@@ -14,8 +18,10 @@ public class BuildPostprocessors
     /// BugSplat is configured to use the Unity symbol server which has private symbols containing file, function, and line information.
     /// </summary>
     [PostProcessBuild(1)]
-    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
+    public static async Task OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
     {
+        UnityEngine.Debug.Log("Running OnPostprocessBuild...");
+
         switch (target)
         {
             case BuildTarget.StandaloneWindows64: _platform = "x86_64"; break;
@@ -23,9 +29,12 @@ public class BuildPostprocessors
             default: return;
         }
 
+        UnityEngine.Debug.Log("Platform: " + _platform);
+        
         var projectDir = Path.GetDirectoryName(Application.dataPath);
-        var bugSplatDir = Path.Combine(projectDir, "Packages", "com.bugsplat.unity", "Editor");
-        var pluginsDir = Path.Combine(Path.Combine(projectDir, @"Assets\Plugins"), _platform);
+        var pluginsDir = Path.Combine(Path.Combine(projectDir, "Assets", "Plugins"), _platform);
+
+        UnityEngine.Debug.Log("Plugins directory: " + pluginsDir);
 
         if (!Directory.Exists(pluginsDir))
         {
@@ -33,24 +42,31 @@ public class BuildPostprocessors
             return;
         }
 
-        RunSendPdbs(pluginsDir, bugSplatDir);
+        await UploadSymbolFiles(pluginsDir);
     }
 
-    static void RunSendPdbs(string pluginsDir, string bugSplatDir)
+    static async Task UploadSymbolFiles(string pluginsDir)
     {
-        var sendPdbsPath = Path.Combine(bugSplatDir, "SendPdbs.exe");
-        var startInfo = new ProcessStartInfo(sendPdbsPath);
-        startInfo.Arguments = "/u fred@bugsplat.com"
-            + " /p Flintstone"
-            + " /b Fred"
-            + " /a " + Application.productName
-            + " /v " + Application.version
-            + " /d \"" + pluginsDir + "\""
-            + " /s";
+        var symbolFiles = new List<FileInfo>();
+        var dllFiles = Directory.GetFiles(pluginsDir, "*.dll").Select(file => new FileInfo(file));
+        var pdbFiles = Directory.GetFiles(pluginsDir, "*.pdb").Select(file => new FileInfo(file));
+        symbolFiles.AddRange(dllFiles);
+        symbolFiles.AddRange(pdbFiles);
 
-        using (var process = Process.Start(startInfo))
+        foreach(var symbolFile in symbolFiles)
         {
-            process.WaitForExit();
+            UnityEngine.Debug.Log("About to upload symbol file: " + symbolFile.FullName);
         }
+
+        UnityEngine.Debug.Log("Product Name: " + Application.productName);
+        UnityEngine.Debug.Log("Version: " + Application.version);
+
+        using var symbolUploader = SymbolUploader.CreateSymbolUploader("fred@bugsplat.com", "Flintstone");
+        var response = await symbolUploader.UploadSymbolFiles(
+            "Fred",
+            Application.productName,
+            Application.version,
+            symbolFiles
+        );
     }
 }
