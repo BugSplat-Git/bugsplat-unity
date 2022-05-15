@@ -7,6 +7,7 @@ using UnityEngine;
 using BugSplatDotNetStandard;
 using System.Collections.Generic;
 using System.Linq;
+using BugSplatUnity.Runtime.Client;
 
 public class BuildPostprocessors
 {
@@ -47,6 +48,14 @@ public class BuildPostprocessors
 
     static async Task UploadSymbolFiles(string pluginsDir)
     {
+        BugSplatOptions options = GetBugSplatOptions();
+
+        if (options == null)
+        {
+            UnityEngine.Debug.LogWarning("No BugSplatOptions ScriptableObject found! Plugin Symbol Files will not be sent.");
+            return;
+        }
+
         var symbolFiles = new List<FileInfo>();
         var dllFiles = Directory.GetFiles(pluginsDir, "*.dll").Select(file => new FileInfo(file));
         var pdbFiles = Directory.GetFiles(pluginsDir, "*.pdb").Select(file => new FileInfo(file));
@@ -58,15 +67,30 @@ public class BuildPostprocessors
             UnityEngine.Debug.Log("About to upload symbol file: " + symbolFile.FullName);
         }
 
-        UnityEngine.Debug.Log("Product Name: " + Application.productName);
-        UnityEngine.Debug.Log("Version: " + Application.version);
+        UnityEngine.Debug.Log("Product Name: " + options.Application);
+        UnityEngine.Debug.Log("Version: " + options.Version);
 
-        using var symbolUploader = SymbolUploader.CreateSymbolUploader("fred@bugsplat.com", "Flintstone");
+        using var symbolUploader = SymbolUploader.CreateSymbolUploader(options.Email, options.Key);
         var response = await symbolUploader.UploadSymbolFiles(
-            "Fred",
-            Application.productName,
-            Application.version,
+            options.Database,
+            options.Application,
+            options.Version,
             symbolFiles
         );
+    }
+
+    static BugSplatOptions GetBugSplatOptions()
+    {
+        string[] guids;
+
+        guids = AssetDatabase.FindAssets("t:BugSplatOptions");
+
+        if (guids.Length == 0)
+        {
+            return null;
+        }
+
+        string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+        return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
     }
 }
