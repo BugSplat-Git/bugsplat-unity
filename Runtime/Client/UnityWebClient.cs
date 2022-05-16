@@ -8,7 +8,7 @@ namespace BugSplatUnity.Runtime.Client
 {
     internal interface IDownloadHandler
     {
-        string text { get; }
+        string Text { get; }
     }
 
     internal interface IUnityWebRequest
@@ -16,8 +16,8 @@ namespace BugSplatUnity.Runtime.Client
         UnityWebRequestAsyncOperation SendWebRequest();
         bool Success { get; }
         string Error { get; }
-        long responseCode { get; }
-        IDownloadHandler downloadHandler { get; }
+        long ResponseCode { get; }
+        IDownloadHandler DownloadHandler { get; }
     }
 
     internal interface IUnityWebClient
@@ -42,8 +42,8 @@ namespace BugSplatUnity.Runtime.Client
         public bool Success => !_request.isHttpError && !_request.isNetworkError;
 #endif
         public string Error => _request.error;
-        public long responseCode => _request.responseCode;
-        public IDownloadHandler downloadHandler => new WrappedDownloadHandler(_request.downloadHandler);
+        public long ResponseCode => _request.responseCode;
+        public IDownloadHandler DownloadHandler => new WrappedDownloadHandler(_request.downloadHandler);
 
         private readonly UnityWebRequest _request;
 
@@ -60,7 +60,7 @@ namespace BugSplatUnity.Runtime.Client
 
     internal class WrappedDownloadHandler : IDownloadHandler
     {
-        public string text => _downloadHandler.text;
+        public string Text => _downloadHandler.text;
 
         private readonly DownloadHandler _downloadHandler;
 

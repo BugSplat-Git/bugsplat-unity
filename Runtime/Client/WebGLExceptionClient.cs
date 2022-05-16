@@ -58,7 +58,7 @@ namespace BugSplatUnity.Runtime.Client
                 yield break;
             }
 
-            Debug.Log($"BugSplat info: status {request.responseCode}\n {request.downloadHandler.text}");
+            Debug.Log($"BugSplat info: status {request.ResponseCode}\n {request.DownloadHandler.Text}");
         }
     }
 }

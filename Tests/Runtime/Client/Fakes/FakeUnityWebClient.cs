@@ -34,10 +34,10 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
 
     class FakeUnityWebRequest : IUnityWebRequest
     {
-        public UnityWebRequest.Result result { get; set; } = UnityWebRequest.Result.Success;
-        public string error { get; set; } = string.Empty;
-        public long responseCode { get; set; } = 200;
-        public IDownloadHandler downloadHandler { get; set; } = new FakeDownloadHandler(string.Empty);
+        public bool Success { get; set; } = true;
+        public string Error { get; set; } = string.Empty;
+        public long ResponseCode { get; set; } = 200;
+        public IDownloadHandler DownloadHandler { get; set; } = new FakeDownloadHandler(string.Empty);
 
         public UnityWebRequestAsyncOperation SendWebRequest()
         {
@@ -47,11 +47,11 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
 
     class FakeDownloadHandler : IDownloadHandler
     {
-        public string text { get; }
+        public string Text { get; }
 
-        public FakeDownloadHandler(string txt)
+        public FakeDownloadHandler(string text)
         {
-            text = txt;
+            Text = text;
         }
     }
 
