@@ -1,6 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using BugSplatDotNetStandard;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
@@ -21,25 +25,19 @@ public class BuildPostprocessors
     [PostProcessBuild(1)]
     public static async Task OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
     {
-        UnityEngine.Debug.Log("Running OnPostprocessBuild...");
-
         switch (target)
         {
             case BuildTarget.StandaloneWindows64: _platform = "x86_64"; break;
             case BuildTarget.StandaloneWindows: _platform = "x86"; break;
             default: return;
         }
-
-        UnityEngine.Debug.Log("Platform: " + _platform);
         
         var projectDir = Path.GetDirectoryName(Application.dataPath);
         var pluginsDir = Path.Combine(Path.Combine(projectDir, "Assets", "Plugins"), _platform);
 
-        UnityEngine.Debug.Log("Plugins directory: " + pluginsDir);
-
         if (!Directory.Exists(pluginsDir))
         {
-            UnityEngine.Debug.Log("Plugins directory doesn't exist, skipping SendPdbs...");
+            UnityEngine.Debug.Log("Plugins directory doesn't exist, skipping symbol uploads...");
             return;
         }
 
@@ -56,11 +54,10 @@ public class BuildPostprocessors
             return;
         }
 
-        var symbolFiles = new List<FileInfo>();
-        var dllFiles = Directory.GetFiles(pluginsDir, "*.dll").Select(file => new FileInfo(file));
-        var pdbFiles = Directory.GetFiles(pluginsDir, "*.pdb").Select(file => new FileInfo(file));
-        symbolFiles.AddRange(dllFiles);
-        symbolFiles.AddRange(pdbFiles);
+        var fileExtensions = new List<string>() { ".dll", ".pdb" };
+        var symbolFiles = Directory.GetFiles(pluginsDir, "*", SearchOption.AllDirectories)
+            .Select(file => new FileInfo(file))
+            .Where(fileInfo => fileExtensions.Any(ext => ext.Equals(fileInfo.Extension)));
 
         foreach(var symbolFile in symbolFiles)
         {
