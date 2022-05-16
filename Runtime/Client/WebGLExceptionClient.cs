@@ -1,5 +1,4 @@
-﻿using BugSplatDotNetStandard;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,7 +33,7 @@ namespace BugSplatUnity.Runtime.Client
 
         private IEnumerator PostException(string exception, IReportPostOptions options = null)
         {
-            options ??= new ReportPostOptions();
+            options = options ?? new ReportPostOptions();
 
             var url = $"https://{_database}.bugsplat.com/post/dotnetstandard/";
             var formData = new Dictionary<string, string>()
@@ -53,9 +52,9 @@ namespace BugSplatUnity.Runtime.Client
             var request = UnityWebClient.Post(url, formData);
             yield return request.SendWebRequest();
 
-            if (request.result != UnityWebRequest.Result.Success)
+            if (!request.Success)
             {
-                Debug.LogError($"BugSplat error: Could not post exception {request.error}");
+                Debug.LogError($"BugSplat error: Could not post exception {request.Error}");
                 yield break;
             }
 

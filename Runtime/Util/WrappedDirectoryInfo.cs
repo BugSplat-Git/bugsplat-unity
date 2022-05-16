@@ -6,17 +6,17 @@ namespace BugSplatUnity.Runtime.Util
 {
     internal interface IDirectoryInfoFactory
     {
-        public IDirectoryInfo CreateDirectoryInfo(string path);
+        IDirectoryInfo CreateDirectoryInfo(string path);
     }
 
     internal interface IDirectoryInfo
     {
-        public IDirectoryInfo[] GetDirectories();
-        public FileInfo[] GetFiles();
-        public bool Exists { get; }
-        public string FullName { get; }
-        public DateTime LastWriteTime { get; }
-        public string Name { get; }
+        IDirectoryInfo[] GetDirectories();
+        FileInfo[] GetFiles();
+        bool Exists { get; }
+        string FullName { get; }
+        DateTime LastWriteTime { get; }
+        string Name { get; }
     }
 
     class WrappedDirectoryInfo : IDirectoryInfo
