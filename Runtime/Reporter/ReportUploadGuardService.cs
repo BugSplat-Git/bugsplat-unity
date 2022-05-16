@@ -9,8 +9,8 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal interface IReportUploadGuardService
     {
-        public bool ShouldPostLogMessage(LogType type);
-        public bool ShouldPostException(Exception exception);
+        bool ShouldPostLogMessage(LogType type);
+        bool ShouldPostException(Exception exception);
     }
 
     internal class ReportUploadGuardService : IReportUploadGuardService

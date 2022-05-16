@@ -1,22 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine.Networking;
+#if UNITY_2020_1_OR_NEWER
 using static UnityEngine.Networking.UnityWebRequest;
+#endif
 
 namespace BugSplatUnity.Runtime.Client
 {
     internal interface IDownloadHandler
     {
-        string text { get; }
+        string Text { get; }
     }
 
     internal interface IUnityWebRequest
     {
         UnityWebRequestAsyncOperation SendWebRequest();
-        Result result { get; }
-        string error { get; }
-        long responseCode { get; }
-        IDownloadHandler downloadHandler { get; }
+        bool Success { get; }
+        string Error { get; }
+        long ResponseCode { get; }
+        IDownloadHandler DownloadHandler { get; }
     }
 
     internal interface IUnityWebClient
@@ -35,10 +36,14 @@ namespace BugSplatUnity.Runtime.Client
 
     internal class WrappedUnityWebRequest: IUnityWebRequest
     {
-        public Result result => _request.result;
-        public string error => _request.error;
-        public long responseCode => _request.responseCode;
-        public IDownloadHandler downloadHandler => new WrappedDownloadHandler(_request.downloadHandler);
+#if UNITY_2020_1_OR_NEWER
+        public bool Success => _request.result == UnityWebRequest.Result.Success;
+#else
+        public bool Success => !_request.isHttpError && !_request.isNetworkError;
+#endif
+        public string Error => _request.error;
+        public long ResponseCode => _request.responseCode;
+        public IDownloadHandler DownloadHandler => new WrappedDownloadHandler(_request.downloadHandler);
 
         private readonly UnityWebRequest _request;
 
@@ -55,7 +60,7 @@ namespace BugSplatUnity.Runtime.Client
 
     internal class WrappedDownloadHandler : IDownloadHandler
     {
-        public string text => _downloadHandler.text;
+        public string Text => _downloadHandler.text;
 
         private readonly DownloadHandler _downloadHandler;
 

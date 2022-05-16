@@ -79,7 +79,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator PostCrash(IDirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            options ??= new ReportPostOptions();
+            options = options ?? new ReportPostOptions();
 
             if (!crashFolder.Exists)
             {
@@ -143,7 +143,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-            options ??= new ReportPostOptions();
+            options = options ?? new ReportPostOptions();
             options.SetNullOrEmptyValues(_clientSettings);
 
             yield return Task.Run(

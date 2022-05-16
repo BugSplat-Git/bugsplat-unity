@@ -4,9 +4,10 @@
     "references": [
         "BugSplat.Unity.Runtime"
     ],
-    "includePlatforms": [
-        "Editor"
+    "optionalUnityReferences": [
+        "TestAssemblies"
     ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
