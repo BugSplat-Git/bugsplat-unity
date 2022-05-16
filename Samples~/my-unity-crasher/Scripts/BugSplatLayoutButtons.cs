@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +8,6 @@ public class BugSplatLayoutButtons : MonoBehaviour
     private readonly Color bugSplatGreen = new Color32(74, 235, 195, 255);
     private readonly Color bugSplatBlue = new Color32(58, 163, 255, 255);
     
-
     void Start()
     {
         var images = transform.GetComponentsInChildren<Image>();
