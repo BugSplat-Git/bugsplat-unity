@@ -28,7 +28,7 @@ public class BuildPostprocessors
             case BuildTarget.StandaloneWindows: _platform = "x86"; break;
             default: return;
         }
-        
+
         var projectDir = Path.GetDirectoryName(Application.dataPath);
         var pluginsDir = Path.Combine(Path.Combine(projectDir, "Assets", "Plugins"), _platform);
 
@@ -56,7 +56,7 @@ public class BuildPostprocessors
             .Select(file => new FileInfo(file))
             .Where(fileInfo => fileExtensions.Any(ext => ext.Equals(fileInfo.Extension)));
 
-        foreach(var symbolFile in symbolFiles)
+        foreach (var symbolFile in symbolFiles)
         {
             UnityEngine.Debug.Log("About to upload symbol file: " + symbolFile.FullName);
         }
@@ -64,13 +64,15 @@ public class BuildPostprocessors
         UnityEngine.Debug.Log("Product Name: " + options.Application);
         UnityEngine.Debug.Log("Version: " + options.Version);
 
-        var symbolUploader = SymbolUploader.CreateSymbolUploader(options.ClientId, options.ClientSecret);
-        var response = await symbolUploader.UploadSymbolFiles(
-            options.Database,
-            options.Application,
-            options.Version,
-            symbolFiles
-        );
+        using (var symbolUploader = SymbolUploader.CreateSymbolUploader(options.ClientId, options.ClientSecret))
+        {
+            var response = await symbolUploader.UploadSymbolFiles(
+                options.Database,
+                options.Application,
+                options.Version,
+                symbolFiles
+                );
+        }
     }
 
     static BugSplatOptions GetBugSplatOptions()

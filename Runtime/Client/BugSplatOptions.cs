@@ -45,10 +45,10 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
-		[Tooltip("Oath2 Application generated Client ID.")]
+		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page")]
 		public string ClientId;
 
-		[Tooltip("Oath2 Application generated Client Secret.")]
+		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
 		public string ClientSecret;
 	}
 }
