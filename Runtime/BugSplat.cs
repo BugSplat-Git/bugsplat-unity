@@ -78,7 +78,6 @@ namespace BugSplatUnity
         /// <summary>
         /// Determines whether BugSplat should post exceptions when user is in the Unity editor.
         /// </summary>
-        /// 
         public bool PostExceptionsInEditor
         {
             get
@@ -94,8 +93,6 @@ namespace BugSplatUnity
         /// <summary>
         /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
         /// </summary>
-        /// 
-        // TODO can we be more explicit that the Exception might be null with the Type here?
         public Func<Exception, bool> ShouldPostException
         {
             get

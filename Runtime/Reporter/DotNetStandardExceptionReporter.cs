@@ -72,7 +72,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 yield break;
             }
 
-            options ??= new ReportPostOptions();
+            options = options ?? new ReportPostOptions();
             options.SetNullOrEmptyValues(_clientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 

@@ -23,31 +23,6 @@ namespace Crasher
 #endif
         }
 
-        private void generateSampleStackFramesAndThrow()
-		{
-			sampleStackFrame0();
-		}
-
-		private void sampleStackFrame0()
-		{
-			sampleStackFrame1();
-		}
-
-		private void sampleStackFrame1()
-		{
-			sampleStackFrame2();
-		}
-
-		private void sampleStackFrame2()
-		{
-			throwException();
-		}
-
-		private void throwException()
-		{
-			throw new Exception("BugSplat rocks!");
-		}
-
 		public void Event_ForceCrash(ForcedCrashCategory category)
 		{
 			Utils.ForceCrash(category);
@@ -57,7 +32,7 @@ namespace Crasher
 		{
 			try
 			{
-				generateSampleStackFramesAndThrow();
+				GenerateSampleStackFramesAndThrow();
 			}
 			catch (Exception ex)
 			{
@@ -66,18 +41,43 @@ namespace Crasher
 					Description = "a new description"
 				};
 
-				static void callback()
-				{
-					Debug.Log($"Exception post callback!");
-				};
-
-				StartCoroutine(bugsplat.Post(ex, options, callback));
+				StartCoroutine(bugsplat.Post(ex, options, ExceptionCallback));
 			}
 		}
 
 		public void Event_ThrowException()
 		{
-			generateSampleStackFramesAndThrow();
+			GenerateSampleStackFramesAndThrow();
+		}
+
+		private void GenerateSampleStackFramesAndThrow()
+		{
+			SampleStackFrame0();
+		}
+
+		private void SampleStackFrame0()
+		{
+			SampleStackFrame1();
+		}
+
+		private void SampleStackFrame1()
+		{
+			SampleStackFrame2();
+		}
+
+		private void SampleStackFrame2()
+		{
+			ThrowException();
+		}
+
+		private void ThrowException()
+		{
+			throw new Exception("BugSplat rocks!");
+		}
+
+		static void ExceptionCallback()
+		{
+			Debug.Log($"Exception post callback!");
 		}
 	}
 }
