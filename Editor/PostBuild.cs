@@ -60,16 +60,19 @@ public class BuildPostprocessors
         {
             UnityEngine.Debug.Log("About to upload symbol file: " + symbolFile.FullName);
         }
+        
+        var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
+        var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
-        UnityEngine.Debug.Log("Product Name: " + options.Application);
-        UnityEngine.Debug.Log("Version: " + options.Version);
+        UnityEngine.Debug.Log("Product Name: " + application);
+        UnityEngine.Debug.Log("Version: " + version);
 
         using (var symbolUploader = SymbolUploader.CreateSymbolUploader(options.ClientId, options.ClientSecret))
         {
             var response = await symbolUploader.UploadSymbolFiles(
                 options.Database,
-                options.Application,
-                options.Version,
+                application,
+                version,
                 symbolFiles
                 );
         }
