@@ -8,9 +8,6 @@ using BugSplatDotNetStandard;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
-using BugSplatDotNetStandard;
-using System.Collections.Generic;
-using System.Linq;
 using BugSplatUnity.Runtime.Client;
 
 public class BuildPostprocessors
@@ -67,7 +64,7 @@ public class BuildPostprocessors
         UnityEngine.Debug.Log("Product Name: " + options.Application);
         UnityEngine.Debug.Log("Version: " + options.Version);
 
-        using var symbolUploader = SymbolUploader.CreateSymbolUploader(options.Email, options.Key);
+        var symbolUploader = SymbolUploader.CreateSymbolUploader(options.ClientId, options.ClientSecret);
         var response = await symbolUploader.UploadSymbolFiles(
             options.Database,
             options.Application,
