@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -43,38 +44,74 @@ public class BuildPostprocessors
 
     static async Task UploadSymbolFiles(string pluginsDir)
     {
-        BugSplatOptions options = GetBugSplatOptions();
+        var options = GetBugSplatOptions();
 
         if (options == null)
         {
-            UnityEngine.Debug.LogWarning("No BugSplatOptions ScriptableObject found! Plugin Symbol Files will not be sent.");
+            UnityEngine.Debug.LogWarning("No BugSplatOptions ScriptableObject found! Skipping symbol uploads...");
             return;
         }
 
-        var fileExtensions = new List<string>() { ".dll", ".pdb" };
+        var database = options.Database;
+        var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
+        var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+        var clientId = options.ClientId;
+        var clientSecret = options.ClientSecret;
+
+        if (string.IsNullOrEmpty(database))
+        {
+            UnityEngine.Debug.LogWarning("BugSplatOptions Database was not set! Skipping symbol uploads...");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(clientId))
+        {
+            UnityEngine.Debug.LogWarning("BugSplatOptions ClientID was not set! Skipping symbol uploads...");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(clientSecret))
+        {
+            UnityEngine.Debug.LogWarning("BugSplatOptions ClientSecret was not set! Skipping symbol uploads...");
+            return;
+        }
+
+        UnityEngine.Debug.Log($"BugSplat Database: {database}");
+        UnityEngine.Debug.Log($"BugSplat Application: ${application}");
+        UnityEngine.Debug.Log($"BugSplat Version: ${version}");
+
+        var fileExtensions = new List<string>() {
+            ".dll",
+            ".pdb"
+        };
         var symbolFiles = Directory.GetFiles(pluginsDir, "*", SearchOption.AllDirectories)
             .Select(file => new FileInfo(file))
             .Where(fileInfo => fileExtensions.Any(ext => ext.Equals(fileInfo.Extension)));
 
         foreach (var symbolFile in symbolFiles)
         {
-            UnityEngine.Debug.Log("About to upload symbol file: " + symbolFile.FullName);
+            UnityEngine.Debug.Log($"BugSplat found symbol file: ${symbolFile.FullName}");
         }
-        
-        var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
-        var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
-        UnityEngine.Debug.Log("Product Name: " + application);
-        UnityEngine.Debug.Log("Version: " + version);
+        UnityEngine.Debug.Log("About to upload symbol files to BugSplat...");
 
-        using (var symbolUploader = SymbolUploader.CreateSymbolUploader(options.ClientId, options.ClientSecret))
+        try
         {
-            var response = await symbolUploader.UploadSymbolFiles(
-                options.Database,
-                application,
-                version,
-                symbolFiles
+            using (var symbolUploader = SymbolUploader.CreateOAuth2SymbolUploader(clientId, clientSecret))
+            {
+                var response = await symbolUploader.UploadSymbolFiles(
+                    database,
+                    application,
+                    version,
+                    symbolFiles
                 );
+            }
+
+            UnityEngine.Debug.Log("BugSplat symbol upload completed successfully!");
+        }
+        catch(Exception ex)
+        {
+            UnityEngine.Debug.LogError(ex);
         }
     }
 
