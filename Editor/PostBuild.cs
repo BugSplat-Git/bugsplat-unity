@@ -90,7 +90,7 @@ public class BuildPostprocessors
 
         foreach (var symbolFile in symbolFiles)
         {
-            UnityEngine.Debug.Log($"BugSplat found symbol file: ${symbolFile.FullName}");
+            UnityEngine.Debug.Log($"BugSplat found symbol file: {symbolFile.FullName}");
         }
 
         UnityEngine.Debug.Log("About to upload symbol files to BugSplat...");
