@@ -7,7 +7,7 @@ public class BugSplatOptionsEditor : Editor
 {
     private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
     private const string integrationsURLFormat = "https://app.bugsplat.com/v2/settings/database/integrations{0}";
-    private const string integrationsText = "<color=#040404>To generate a ClientID and Secret, navigate to your <a>Integrations</a>.</color>";
+    private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
     private const string integrationsQueryString = "?database={0}";
     private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
 
@@ -16,8 +16,8 @@ public class BugSplatOptionsEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        var options = (target as BugSplatOptions);
-        var texture = (Texture2D)AssetDatabase.LoadAssetAtPath(logoPath, typeof(Texture2D));
+        var options = target as BugSplatOptions;
+        var texture = AssetDatabase.LoadAssetAtPath(logoPath, typeof(Texture2D)) as Texture2D;
         if (texture != null)
         {
             GUILayout.BeginHorizontal();
@@ -27,21 +27,25 @@ public class BugSplatOptionsEditor : Editor
             GUILayout.EndHorizontal();
         }
 
-        SerializedProperty iterator = serializedObject.GetIterator();
-
-        var enterChildren = true;
-        while (iterator.NextVisible(enterChildren))
+        var iterator = serializedObject.GetIterator();
+        var traverseChildren = true;
+        while (iterator.NextVisible(traverseChildren))
         {
-            enterChildren = false;
-            if (iterator.name == nameof(options.ClientId))
+            traverseChildren = false;
+            if (string.Equals(iterator.name, nameof(options.SymbolUploadClientId)))
             {
-                var queryString = options.Database != string.Empty
+                var queryString = !string.IsNullOrEmpty(options.Database)
                     ? string.Format(integrationsQueryString, options.Database)
                     : string.Empty;
-
                 var integrationsURL = string.Format(integrationsURLFormat, queryString);
-                GUIStyle style = new GUIStyle() { richText = true, wordWrap = true, };
-                style.margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom);
+
+                var style = new GUIStyle()
+                {
+                    richText = true,
+                    wordWrap = true,
+                    margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom)
+                };
+
                 if (GUILayout.Button(integrationsText, style))
                 {
                     Application.OpenURL(integrationsURL);

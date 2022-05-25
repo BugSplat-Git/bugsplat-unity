@@ -55,8 +55,8 @@ public class BuildPostprocessors
         var database = options.Database;
         var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
         var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
-        var clientId = options.ClientId;
-        var clientSecret = options.ClientSecret;
+        var clientId = options.SymbolUploadClientId;
+        var clientSecret = options.SymbolUploadClientSecret;
 
         if (string.IsNullOrEmpty(database))
         {
@@ -117,16 +117,14 @@ public class BuildPostprocessors
 
     static BugSplatOptions GetBugSplatOptions()
     {
-        string[] guids;
-
-        guids = AssetDatabase.FindAssets("t:BugSplatOptions");
+        var guids = AssetDatabase.FindAssets("t:BugSplatOptions");
 
         if (guids.Length == 0)
         {
             return null;
         }
 
-        string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+        var path = AssetDatabase.GUIDToAssetPath(guids[0]);
         return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
     }
 }

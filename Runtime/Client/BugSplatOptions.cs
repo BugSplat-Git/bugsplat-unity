@@ -46,9 +46,9 @@ namespace BugSplatUnity.Runtime.Client
 		public List<string> PersistentDataFileAttachmentPaths;
 
 		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page")]
-		public string ClientId;
+		public string SymbolUploadClientId;
 
 		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
-		public string ClientSecret;
+		public string SymbolUploadClientSecret;
 	}
 }
