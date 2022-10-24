@@ -148,8 +148,6 @@ public class BuildPostprocessors
 
 	private static void PostProcessIos(string pathToBuiltProject, BugSplatOptions options)
 	{
-		Debug.Log("PostProcessIos");
-
 		var projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
 
 		var project = new PBXProject();
@@ -172,7 +170,6 @@ public class BuildPostprocessors
 
 	private static void ModifyPlist(string projectPath, BugSplatOptions options)
 	{
-		Debug.Log("ModifyPlist");
 		var plistInfoFile = new PlistDocument();
 
 		var infoPlistPath = Path.Combine(projectPath, "Info.plist");
@@ -186,7 +183,6 @@ public class BuildPostprocessors
 
 	private static void AddBundle(string pathToBuiltProject, PBXProject project, string targetGuid)
 	{
-		Debug.Log("AddBundle");
 		const string frameworksFolderPath = "Frameworks";
 		const string bundleName = "HockeySDKResources.bundle";
 		var files = Directory.GetDirectories(Path.Combine(pathToBuiltProject,
