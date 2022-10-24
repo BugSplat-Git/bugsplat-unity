@@ -7,8 +7,7 @@ namespace BugSplatUnity.Runtime.Client
 	[CreateAssetMenu(menuName = "BugSplat Options")]
 	public class BugSplatOptions : ScriptableObject
 	{
-		[Header("Required")]
-		[Tooltip("The name of your BugSplat database.")]
+		[Header("Required")] [Tooltip("The name of your BugSplat database.")]
 		public string Database;
 
 		[Header("Optional")]
@@ -50,5 +49,11 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
 		public string SymbolUploadClientSecret;
+
+		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will use .NET handler.")]
+		public bool UseNativeCrashReportingForIos;
+
+		[Tooltip("Use crash reporting library for Android builds. If set to false, will use .NET handler.")]
+		public bool UseNativeCrashReportingForAndroid;
 	}
 }

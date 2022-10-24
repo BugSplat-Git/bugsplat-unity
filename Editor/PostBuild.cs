@@ -161,6 +161,7 @@ public class BuildPostprocessors
 #endif
 
 		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
+		project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
 
 		ModifyPlist(pathToBuiltProject, options);
 		AddBundle(pathToBuiltProject, project, targetGuid);

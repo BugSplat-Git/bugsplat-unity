@@ -9,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+#if UNITY_IOS && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
@@ -149,8 +152,8 @@ namespace BugSplatUnity
             }
         }
 
-        private readonly IClientSettingsRepository clientSettings;
-        private readonly IExceptionReporter exceptionReporter;
+        private IClientSettingsRepository clientSettings;
+        private IExceptionReporter exceptionReporter;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -162,10 +165,14 @@ namespace BugSplatUnity
         /// <param name="database">The BugSplat database for your organization</param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
+        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on IOS</param>
+        /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
         public BugSplat(
             string database,
             string application,
-            string version
+            string version,
+            bool useNativeLibIos, 
+            bool useNativeLibAndroid 
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -207,7 +214,25 @@ namespace BugSplatUnity
             );
             clientSettings = webGLClientSettings;
             exceptionReporter = webGLReporter;
+#elif UNITY_IOS && !UNITY_EDITOR
+            if (useNativeLibIos)
+            {
+                clientSettings= new DummyClientSettings();
+                exceptionReporter = new DummyExceptionReporter();
+                
+                _startBugSplat();
+            }
+            else
+            {
+                UseDotNetHandler(database, application, version);
+            }
 #else
+            UseDotNetHandler(database, application, version);
+#endif
+        }
+
+        private void UseDotNetHandler(string database, string application, string version)
+        {
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
             bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
             bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
@@ -217,7 +242,6 @@ namespace BugSplatUnity
 
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
-#endif
         }
 
         /// <summary>
@@ -229,7 +253,8 @@ namespace BugSplatUnity
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
             
-            var bugSplat = new BugSplat(options.Database, application, version);
+            var bugSplat = new BugSplat(options.Database, application, version, 
+                options.UseNativeCrashReportingForIos, options.UseNativeCrashReportingForAndroid);
 
             bugSplat.Description = options.Description;
             bugSplat.Email = options.Email;
@@ -330,5 +355,9 @@ namespace BugSplatUnity
             yield return null;
 #endif
         }
+#if UNITY_IOS && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern void _startBugSplat();
+#endif
     }
 }
