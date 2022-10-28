@@ -52,6 +52,9 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
+		
+		[Tooltip("Add a build script phase to XCode project to upload the Debug symbols to BugSplat.")]
+		public bool UploadDebugSymbolsForIos;
 
 		[Tooltip("Use crash reporting library for Android builds. If set to false, will use .NET handler.")]
 		public bool UseNativeCrashReportingForAndroid;
