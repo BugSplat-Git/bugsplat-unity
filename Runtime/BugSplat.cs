@@ -217,8 +217,8 @@ namespace BugSplatUnity
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
             {
-                clientSettings= new DummyClientSettings();
-                exceptionReporter = new DummyExceptionReporter();
+                clientSettings = new IOSClientSettings();
+                exceptionReporter = new IOSExceptionReporter();
                 
                 _startBugSplat();
             }

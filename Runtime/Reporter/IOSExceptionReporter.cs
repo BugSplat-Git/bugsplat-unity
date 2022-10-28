@@ -4,7 +4,7 @@ using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using UnityEngine;
 
-public class DummyExceptionReporter : IExceptionReporter
+public class IOSExceptionReporter : IExceptionReporter
 {
 	public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
 	{

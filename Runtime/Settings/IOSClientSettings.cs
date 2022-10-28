@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using BugSplatUnity.Runtime.Settings;
 
-public class DummyClientSettings : IClientSettingsRepository
+public class IOSClientSettings : IClientSettingsRepository
 {
 	public List<FileInfo> Attachments { get; } = new List<FileInfo>();
 	public bool CaptureEditorLog { get; set; }
