@@ -226,6 +226,19 @@ namespace BugSplatUnity
             {
                 UseDotNetHandler(database, application, version);
             }
+#elif UNITY_ANDROID
+            if (useNativeLibAndroid)
+            {
+                clientSettings = new AndroidClientSettings();
+                exceptionReporter = new AndroidExceptionReporter();
+                
+                var javaClass = new AndroidJavaClass("com.ninevastudios.bugsplatunitylib.BugSplatBridge");
+                javaClass.CallStatic("initBugSplat", Application.identifier, database, application, version);
+            }
+            else
+            {
+                UseDotNetHandler(database, application, version);
+            }
 #else
             UseDotNetHandler(database, application, version);
 #endif
