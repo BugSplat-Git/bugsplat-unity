@@ -232,8 +232,11 @@ namespace BugSplatUnity
                 clientSettings = new AndroidClientSettings();
                 exceptionReporter = new AndroidExceptionReporter();
                 
+                var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                
                 var javaClass = new AndroidJavaClass("com.ninevastudios.bugsplatunitylib.BugSplatBridge");
-                javaClass.CallStatic("initBugSplat", Application.identifier, database, application, version);
+                javaClass.CallStatic("initBugSplat", activity, database, application, version);
             }
             else
             {
