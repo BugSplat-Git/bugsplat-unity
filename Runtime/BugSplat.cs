@@ -226,7 +226,7 @@ namespace BugSplatUnity
             {
                 UseDotNetHandler(database, application, version);
             }
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
                 clientSettings = new AndroidClientSettings();
