@@ -8,7 +8,9 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
+#if UNITY_IOS
 using UnityEditor.iOS.Xcode;
+#endif
 
 public class BuildPostprocessors
 {
@@ -30,9 +32,10 @@ public class BuildPostprocessors
 				"No BugSplatOptions ScriptableObject found! Skipping build post-process tasks...");
 			return;
 		}
-
+#if UNITY_IOS
 		if (target == BuildTarget.iOS)
 			PostProcessIos(pathToBuiltProject, options);
+#endif
 
 		await UploadSymbolFiles(target, options);
 	}
@@ -145,7 +148,8 @@ public class BuildPostprocessors
 		var path = AssetDatabase.GUIDToAssetPath(guids[0]);
 		return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
 	}
-
+	
+#if UNITY_IOS
 	private static void PostProcessIos(string pathToBuiltProject, BugSplatOptions options)
 	{
 		var projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
@@ -221,4 +225,5 @@ public class BuildPostprocessors
 		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)) && upload)
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 	}
+#endif
 }
