@@ -216,32 +216,20 @@ namespace BugSplatUnity
             exceptionReporter = webGLReporter;
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
-            {
-                clientSettings = new IOSClientSettings();
-                exceptionReporter = new IOSExceptionReporter();
-                
                 _startBugSplat();
-            }
-            else
-            {
-                UseDotNetHandler(database, application, version);
-            }
+
+            UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
-                clientSettings = new AndroidClientSettings();
-                exceptionReporter = new AndroidExceptionReporter();
-                
                 var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
                 var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
                 
                 var javaClass = new AndroidJavaClass("com.ninevastudios.bugsplatunitylib.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
             }
-            else
-            {
-                UseDotNetHandler(database, application, version);
-            }
+
+            UseDotNetHandler(database, application, version);
 #else
             UseDotNetHandler(database, application, version);
 #endif
@@ -249,9 +237,12 @@ namespace BugSplatUnity
 
         private void UseDotNetHandler(string database, string application, string version)
         {
-            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
-            bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
-            bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
+            {
+                MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
+                ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
+            };
+            
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
