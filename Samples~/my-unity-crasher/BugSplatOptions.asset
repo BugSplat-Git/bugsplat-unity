@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 485e0e2b32558c54fb70b32dea6b7c38, type: 3}
   m_Name: BugSplatOptions
   m_EditorClassIdentifier: 
-  Database: fred
-  Application: 
-  Version: 
+  Database: unity_plugin_test
+  Application: BugSplatDemo
+  Version: 1.0 (3)
   Description: the default description
   Email: fred@bugsplat.com
   Key: the key!
@@ -24,3 +24,8 @@ MonoBehaviour:
   CaptureScreenshots: 1
   PostExceptionsInEditor: 1
   PersistentDataFileAttachmentPaths: []
+  SymbolUploadClientId: 
+  SymbolUploadClientSecret: 
+  UseNativeCrashReportingForIos: 1
+  UploadDebugSymbolsForIos: 1
+  UseNativeCrashReportingForAndroid: 1

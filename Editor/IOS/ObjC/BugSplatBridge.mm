@@ -25,4 +25,9 @@ extern "C" {
 	void _startBugSplat() {
 		[[BugsplatStartupManager sharedManager] start];
 	}
+
+    void _crashNativeIos() {
+        char *ptr = 0;
+        *ptr += 1;
+    }
 }
