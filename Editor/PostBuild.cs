@@ -54,7 +54,7 @@ public class BuildPostprocessors
 		}
 
 		var projectDir = Path.GetDirectoryName(Application.dataPath);
-		if (projectDir == null)
+		if (string.IsNullOrEmpty(projectDir))
 		{
 			Debug.LogWarning($"Could not find data path directory {Application.dataPath}, skipping symbol uploads...");
 			return;
