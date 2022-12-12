@@ -30,4 +30,8 @@ extern "C" {
         char *ptr = 0;
         *ptr += 1;
     }
+
+	char* _getBuildNumber() {
+		return createCStringFrom([[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
+	}
 }

@@ -218,6 +218,7 @@ namespace BugSplatUnity
             if (useNativeLibIos)
                 _startBugSplat();
 
+            version = $"{Application.version} ({_getBuildNumber()})";
             UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
@@ -365,6 +366,9 @@ namespace BugSplatUnity
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplat();
+        
+        [DllImport("__Internal")]
+        static extern string _getBuildNumber();
 #endif
     }
 }
