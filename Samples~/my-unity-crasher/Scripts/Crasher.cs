@@ -4,7 +4,7 @@ using UnityEngine.Diagnostics;
 using BugSplat = BugSplatUnity.BugSplat;
 using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || (UNITY_IOS && !UNITY_EDITOR)
 using System.Runtime.InteropServices;
 #endif
 
@@ -26,6 +26,13 @@ namespace Crasher
 		public void Event_ForceCrash(ForcedCrashCategory category)
 		{
 			Utils.ForceCrash(category);
+		}
+		
+		public void Event_NativeCrashIos()
+		{
+#if UNITY_IOS && !UNITY_EDITOR
+			_crashNativeIos();
+#endif
 		}
 
 		public void Event_CatchExceptionThenPostNewBugSplat()
@@ -79,6 +86,11 @@ namespace Crasher
 		{
 			Debug.Log($"Exception post callback!");
 		}
+		
+#if UNITY_IOS && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern void _crashNativeIos();
+#endif
 	}
 }
 

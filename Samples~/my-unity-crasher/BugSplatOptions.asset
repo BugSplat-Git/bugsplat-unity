@@ -24,3 +24,8 @@ MonoBehaviour:
   CaptureScreenshots: 1
   PostExceptionsInEditor: 1
   PersistentDataFileAttachmentPaths: []
+  SymbolUploadClientId: 
+  SymbolUploadClientSecret: 
+  UseNativeCrashReportingForIos: 1
+  UploadDebugSymbolsForIos: 1
+  UseNativeCrashReportingForAndroid: 1
