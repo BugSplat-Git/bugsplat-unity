@@ -78,6 +78,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             clientSettings.Description = "BugSplat rocks!";
             clientSettings.Email = "fred@bugsplat.com";
             clientSettings.Key = "key";
+            clientSettings.Notes = "notes";
             clientSettings.User = "fred";
             clientSettings.ShouldPostException = (ex) => true;
             var httpResponseMessage = new HttpResponseMessage();
@@ -95,6 +96,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.AreEqual(clientSettings.Description, fakeExceptionClient.Calls[0].Options.Description);
             Assert.AreEqual(clientSettings.Email, fakeExceptionClient.Calls[0].Options.Email);
             Assert.AreEqual(clientSettings.Key, fakeExceptionClient.Calls[0].Options.Key);
+            Assert.AreEqual(clientSettings.Notes, fakeExceptionClient.Calls[0].Options.Notes);
             Assert.AreEqual(clientSettings.User, fakeExceptionClient.Calls[0].Options.User);
             Assert.AreEqual(UnityCrashTypeId, fakeExceptionClient.Calls[0].Options.CrashTypeId);
         }
@@ -107,12 +109,14 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             clientSettings.Description = "BugSplat rocks!";
             clientSettings.Email = "fred@bugsplat.com";
             clientSettings.Key = "key";
+            clientSettings.Notes = "notes";
             clientSettings.User = "fred";
             clientSettings.ShouldPostException = (ex) => true;
             var options = new ReportPostOptions();
             options.Description = "new description";
             options.Email = "barney@bugsplat.com";
             options.Key = "new key";
+            options.Notes = "new notes";
             options.User = "barney";
             var httpResponseMessage = new HttpResponseMessage();
             httpResponseMessage.Content = new StringContent(string.Empty);
@@ -129,6 +133,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.AreEqual(options.Description, fakeExceptionClient.Calls[0].Options.Description);
             Assert.AreEqual(options.Email, fakeExceptionClient.Calls[0].Options.Email);
             Assert.AreEqual(options.Key, fakeExceptionClient.Calls[0].Options.Key);
+            Assert.AreEqual(options.Notes, fakeExceptionClient.Calls[0].Options.Notes);
             Assert.AreEqual(options.User, fakeExceptionClient.Calls[0].Options.User);
             Assert.AreEqual(UnityCrashTypeId, fakeExceptionClient.Calls[0].Options.CrashTypeId);
         }

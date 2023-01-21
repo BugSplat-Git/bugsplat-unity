@@ -15,6 +15,7 @@ namespace BugSplatUnity.Runtime.Settings
         string Description { get; set; }
         string Email { get; set; }
         string Key { get; set; }
+        string Notes { get; set; }
         string User { get; set; }
     }
 }
