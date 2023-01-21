@@ -18,6 +18,7 @@ MonoBehaviour:
   Description: the default description
   Email: fred@bugsplat.com
   Key: the key!
+  Notes: the notes!
   User: Fred
   CaptureEditorLog: 1
   CapturePlayerLog: 1

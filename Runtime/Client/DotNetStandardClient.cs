@@ -38,6 +38,7 @@ namespace BugSplatUnity.Runtime.Client
             exceptionPostOptions.Description = options.Description;
             exceptionPostOptions.Email = options.Email;
             exceptionPostOptions.Key = options.Key;
+            exceptionPostOptions.Notes = options.Notes;
             exceptionPostOptions.User = options.User;
             exceptionPostOptions.ExceptionType = (BugSplatDotNetStandard.BugSplat.ExceptionTypeId)options.CrashTypeId;
             return exceptionPostOptions;
@@ -51,6 +52,7 @@ namespace BugSplatUnity.Runtime.Client
             minidumpPostOptions.Description = options.Description;
             minidumpPostOptions.Email = options.Email;
             minidumpPostOptions.Key = options.Key;
+            minidumpPostOptions.Notes = options.Notes;
             minidumpPostOptions.User = options.User;
             minidumpPostOptions.MinidumpType = (BugSplatDotNetStandard.BugSplat.MinidumpTypeId)options.CrashTypeId;
             return minidumpPostOptions;

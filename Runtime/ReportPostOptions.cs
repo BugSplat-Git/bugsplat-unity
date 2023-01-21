@@ -12,6 +12,7 @@ namespace BugSplatUnity
         string Description { get; set; }
         string Email { get; set; }
         string Key { get; set; }
+        string Notes { get; set; }
         string User { get; set; }
         int CrashTypeId { get; set; }
     }
@@ -30,6 +31,7 @@ namespace BugSplatUnity
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }
+        public string Notes { get; set; }
         public string User { get; set; }
         public int CrashTypeId { get; set; }
     }

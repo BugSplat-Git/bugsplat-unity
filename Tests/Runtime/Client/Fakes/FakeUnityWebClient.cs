@@ -62,6 +62,7 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }
+        public string Notes { get; set; }
         public string User { get; set; }
         public int CrashTypeId { get; set; }
     }
