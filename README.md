@@ -198,7 +198,7 @@ StartCoroutine(bugsplat.Post(ex, options, callback));
 
 ### Preventing Repeated Reports
 
-By default BugSplat prevents reports from being sent at a rate greater than 1 per every 3 seconds. You can override the default crash report throttling implementation by setting `ShouldPostException` on your BugSplat instance. To override `ShouldPostException`, assign the property a new `Func<Exception, bool>` value. Be sure your new implementation can handle null!
+By default BugSplat prevents reports from being sent at a rate greater than 1 per every 3 seconds. You can override the default crash report throttling implementation by setting `ShouldPostException` on your BugSplat instance. To override `ShouldPostException`, assign the property a new `Func<Exception, bool>` value. Be sure your new implementation can handle a null value for `Exception`!
 
 The following example demonstrates how you could implement your own time-based report throttling mechanism:
 
