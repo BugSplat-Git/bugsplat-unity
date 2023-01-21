@@ -273,8 +273,13 @@ namespace BugSplatUnity
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
             
-            var bugSplat = new BugSplat(options.Database, application, version, 
-                options.UseNativeCrashReportingForIos, options.UseNativeCrashReportingForAndroid);
+            var bugSplat = new BugSplat(
+                options.Database,
+                application,
+                version, 
+                options.UseNativeCrashReportingForIos,
+                options.UseNativeCrashReportingForAndroid
+            );
 
             bugSplat.Description = options.Description;
             bugSplat.Email = options.Email;
