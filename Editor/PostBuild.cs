@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
+
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
 #endif
@@ -35,6 +36,9 @@ public class BuildPostprocessors
 #if UNITY_IOS
 		if (target == BuildTarget.iOS)
 			PostProcessIos(pathToBuiltProject, options);
+#elif UNITY_ANDROID
+		if (target == BuildTarget.Android)
+			UploadSymbolsAndroid(pathToBuiltProject, options);
 #endif
 
 		await UploadSymbolFiles(target, options);
@@ -148,7 +152,7 @@ public class BuildPostprocessors
 		var path = AssetDatabase.GUIDToAssetPath(guids[0]);
 		return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
 	}
-	
+
 #if UNITY_IOS
 	private static void PostProcessIos(string pathToBuiltProject, BugSplatOptions options)
 	{
@@ -225,5 +229,44 @@ public class BuildPostprocessors
 		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)) && upload)
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 	}
+#endif
+
+#if UNITY_ANDROID
+
+	private static void UploadSymbolsAndroid(string pathToBuiltProject, BugSplatOptions options)
+	{
+		if (!options.UploadDebugSymbolsForAndroid)
+			return;
+
+		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+		if (buildDir == null)
+		{
+			Debug.LogWarning("Could not find build directory. Will not upload android debug symbols.");
+			return;
+		}
+
+		var pattern = $"{PlayerSettings.bundleVersion}-v{PlayerSettings.Android.bundleVersionCode}.symbols";
+		Debug.Log($"BugSplat. Looking for android symbols archive, containing \"{pattern}\" in filename.");
+
+		var hasFoundFile = false;
+		foreach (var file in Directory.GetFiles(buildDir, "*.zip"))
+		{
+			if (file.Contains(pattern))
+			{
+				hasFoundFile = true;
+				ProcessSymbolsArchive(file, options);
+			}
+		}
+
+		if (!hasFoundFile)
+			Debug.LogWarning("BugSplat. Could not find generated symbols archive. " +
+			                 "Please, make sure that \"Create symbols.zip\" is selected in BuildSettings->Android.");
+	}
+
+	private static void ProcessSymbolsArchive(string filePath, BugSplatOptions options)
+	{
+		Debug.Log("BugSplat. Attempting to upload symbols from file: " + filePath);
+	}
+
 #endif
 }
