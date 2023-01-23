@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
+using Debug = UnityEngine.Debug;
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -266,6 +268,23 @@ public class BuildPostprocessors
 	private static void ProcessSymbolsArchive(string filePath, BugSplatOptions options)
 	{
 		Debug.Log("BugSplat. Attempting to upload symbols from file: " + filePath);
+
+		var psi = new ProcessStartInfo
+		{
+			FileName = "D:\\Projects\\bugsplat-unity-package\\Editor\\EditorResources\\upload-android.sh",
+			UseShellExecute = false,
+			RedirectStandardOutput = true,
+			Arguments = $"{filePath} {options.SymbolUploadClientId} {options.SymbolUploadClientSecret} " +
+			            $"{options.Database} {options.Application} {PlayerSettings.bundleVersion}"
+		};
+
+		var process = Process.Start(psi);
+		if (process != null)
+		{
+			var strOutput = process.StandardOutput.ReadToEnd(); 
+			process.WaitForExit(); 
+			Debug.Log(strOutput);
+		}
 	}
 
 #endif
