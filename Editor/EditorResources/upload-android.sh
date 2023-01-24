@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -z "$6" ]; then
   echo "Not enough arguments provided."
@@ -16,21 +16,25 @@ export WORK_DIR="$PWD"
 
 echo "${WORK_DIR}"
 
-export FILES_DIR="${WORK_DIR}/tmp/files"
+LOGIN_URL="https://app.bugsplat.com/oauth2/authorize"
 
-rm -rf "${FILES_DIR}"
-mkdir -p "${FILES_DIR}"
+curl -i --data-urlencode "client_id=${CLIENT_ID}" --data-urlencode "client_secret=${CLIENT_SECRET}" --data-urlencode "grant_type=client_credentals" --data-urlencode "scope=restricted" ${LOGIN_URL}
 
-unzip "${ZIP_FILE}" -d "${FILES_DIR}"
+#export FILES_DIR="${WORK_DIR}/tmp/files"
 
-UPLOAD_URL="https://${DATABASE}.bugsplat.com/post/android/symbols"
+#rm -rf "${FILES_DIR}"
+#mkdir -p "${FILES_DIR}"
 
-cd "${FILES_DIR}"
+#unzip "${ZIP_FILE}" -d "${FILES_DIR}"
 
-find . -name "*.so" -print0 | while read -d $'\0' FILE
-do
-echo "Uploading ${FILE} to ${UPLOAD_URL}"
-curl -i -F file=@"${FILE}" -F appName="${APP_NAME}" -F appVersion="${APP_VERSION}" -F database="${DATABASE}" $UPLOAD_URL -F client_id="${CLIENT_ID}" -F client_secret="${CLIENT_SECRET}" -F grant_type="client_credentals"; 
-done
+#UPLOAD_URL="https://${DATABASE}.bugsplat.com/post/android/symbols"
+
+#cd "${FILES_DIR}"
+
+#find . -name "*.so" -print0 | while read -d $'\0' FILE
+#do
+#echo "Uploading ${FILE} to ${UPLOAD_URL}"
+#curl -i -F file=@"${FILE}" -F appName="${APP_NAME}" -F appVersion="${APP_VERSION}" -F database="${DATABASE}" $UPLOAD_URL; 
+#done
 
 exit 0
