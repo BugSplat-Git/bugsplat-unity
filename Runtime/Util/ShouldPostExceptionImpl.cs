@@ -9,13 +9,15 @@ namespace BugSplatUnity.Runtime.Util
 
         public static bool DefaultShouldPostExceptionImpl(Exception ex = null)
         {
-            if (lastPost + TimeSpan.FromSeconds(10) > DateTime.Now)
+            var now = DateTime.Now;
+
+            if (lastPost + TimeSpan.FromSeconds(60) > now)
             {
                 Debug.Log("BugSplat info: Report rate-limiting triggered, skipping report...");
                 return false;
             }
 
-            lastPost = DateTime.Now;
+            lastPost = now;
             return true;
         }
     }

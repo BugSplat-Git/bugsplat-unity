@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 
 namespace Crasher
 {
-	public class Crasher : MonoBehaviour
+	public class ErrorGenerator : MonoBehaviour
 	{
 		BugSplat bugsplat;
 		
@@ -82,7 +82,7 @@ namespace Crasher
 			throw new Exception("BugSplat rocks!");
 		}
 
-		static void ExceptionCallback()
+        static void ExceptionCallback()
 		{
 			Debug.Log($"Exception post callback!");
 		}

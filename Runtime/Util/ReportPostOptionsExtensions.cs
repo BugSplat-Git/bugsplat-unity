@@ -26,6 +26,11 @@ namespace BugSplatUnity.Runtime.Util
                 options.Key = clientSettings.Key;
             }
 
+            if (string.IsNullOrEmpty(options.Notes))
+            {
+                options.Notes = clientSettings.Notes;
+            }
+
             if (string.IsNullOrEmpty(options.User))
             {
                 options.User = clientSettings.User;

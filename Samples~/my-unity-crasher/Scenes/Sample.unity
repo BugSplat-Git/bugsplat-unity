@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4439403, g: 0.4931519, b: 0.5722083, a: 1}
+  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2060,6 +2060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1878188389}
   - component: {fileID: 1878188390}
+  - component: {fileID: 1878188391}
   m_Layer: 0
   m_Name: BugSplat
   m_TagString: Untagged
@@ -2097,6 +2098,18 @@ MonoBehaviour:
   bugSplatOptions: {fileID: 11400000, guid: 861ef6c238c58f6498c529be76aabac2, type: 2}
   dontDestroyManagerOnSceneLoad: 1
   registerLogMessageRecieved: 1
+--- !u!114 &1878188391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1878188388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c327f6c82a52e94c873a7ea60fd8e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2022727938
 GameObject:
   m_ObjectHideFlags: 0

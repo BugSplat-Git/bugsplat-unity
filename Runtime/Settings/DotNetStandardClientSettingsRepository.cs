@@ -62,6 +62,18 @@ namespace BugSplatUnity.Runtime.Settings
             }
         }
 
+        public string Notes
+        {
+            get
+            {
+                return _bugsplat.Notes;
+            }
+            set
+            {
+                _bugsplat.Notes = value;
+            }
+        }
+
         public string User
         {
             get

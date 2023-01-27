@@ -141,6 +141,17 @@ namespace BugSplatUnity
             }
         }
 
+        // <summary>
+        /// A general purpose field that can be overridden by call to Post. 
+        /// </summary>
+        public string Notes
+        {
+            set
+            {
+                clientSettings.Notes = value;
+            }
+        }
+
         /// <summary>
         /// A default user that can be overridden by call to Post
         /// </summary>
@@ -191,6 +202,7 @@ namespace BugSplatUnity
             }
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
+            
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
             bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
             bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
@@ -261,12 +273,18 @@ namespace BugSplatUnity
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
             
-            var bugSplat = new BugSplat(options.Database, application, version, 
-                options.UseNativeCrashReportingForIos, options.UseNativeCrashReportingForAndroid);
+            var bugSplat = new BugSplat(
+                options.Database,
+                application,
+                version, 
+                options.UseNativeCrashReportingForIos,
+                options.UseNativeCrashReportingForAndroid
+            );
 
             bugSplat.Description = options.Description;
             bugSplat.Email = options.Email;
             bugSplat.Key = options.Key;
+            bugSplat.Notes = options.Notes;
             bugSplat.User = options.User;
             bugSplat.CaptureEditorLog = options.CaptureEditorLog;
             bugSplat.CapturePlayerLog = options.CapturePlayerLog;
