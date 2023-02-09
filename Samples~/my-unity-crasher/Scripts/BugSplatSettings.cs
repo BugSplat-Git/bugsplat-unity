@@ -23,7 +23,7 @@ public class BugSplatSettings : MonoBehaviour
             var now = DateTime.Now;
 
             // Set to a short TimeSpan for demonstration purposes
-            // In production BugSplat recommends 60 seconds between posts
+            // In production BugSplat recommends 10 seconds between posts
             if (now - lastPost < TimeSpan.FromSeconds(3))
             {
                 Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
