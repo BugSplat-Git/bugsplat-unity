@@ -59,7 +59,7 @@ Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **B
 
 ![Configuring BugSplat](https://bugsplat-public.s3.amazonaws.com/unity/bugsplat-manager.png)
 
-Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard] (https://app.bugsplat.com/v2/dashboard) and ensure that you have the correct database selected.
+Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure that you have the correct database selected.
 
 ![Running the Sample](https://bugsplat-public.s3.amazonaws.com/unity/sample-scene.png)
 
