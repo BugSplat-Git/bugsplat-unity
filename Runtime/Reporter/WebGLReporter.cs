@@ -38,6 +38,7 @@ namespace BugSplatUnity.Runtime.Reporter
             options.Description = ClientSettings.Description;
             options.Email = ClientSettings.Email;
             options.Key = ClientSettings.Key;
+            options.Notes = ClientSettings.Notes;
             options.User = ClientSettings.User;
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";

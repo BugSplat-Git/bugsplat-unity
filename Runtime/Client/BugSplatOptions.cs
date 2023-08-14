@@ -25,7 +25,10 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("A default key that can be overridden by call to Post.")]
 		public string Key;
 
-		[Tooltip("A default user that can be overridden by call to Post")]
+        [Tooltip("A default general purpose field that can be overridden by call to Post.")]
+        public string Notes;
+
+        [Tooltip("A default user that can be overridden by call to Post")]
 		public string User;
 
 		[Tooltip("Upload Editor.log when Post is called")]
