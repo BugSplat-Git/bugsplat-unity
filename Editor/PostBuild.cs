@@ -11,6 +11,8 @@ using UnityEditor.Callbacks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
 using Debug = UnityEngine.Debug;
+using BugSplatDotNetStandard.Api;
+using BugSplatDotNetStandard.Http;
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -67,7 +69,7 @@ public class BuildPostprocessors
 			PostProcessIos(pathToBuiltProject, options);
 #elif UNITY_ANDROID
 		if (target == BuildTarget.Android)
-			UploadSymbolsAndroid(pathToBuiltProject, options);
+			await UploadSymbolsAndroid(pathToBuiltProject, options);
 #endif
 
 		await UploadSymbolFiles(target, options);
@@ -261,7 +263,7 @@ public class BuildPostprocessors
 #endif
 
 #if UNITY_ANDROID
-	private static void UploadSymbolsAndroid(string pathToBuiltProject, BugSplatOptions options)
+	private static async Task UploadSymbolsAndroid(string pathToBuiltProject, BugSplatOptions options)
 	{
 		if (!options.UploadDebugSymbolsForAndroid)
 		{
@@ -287,7 +289,7 @@ public class BuildPostprocessors
 		foreach (var file in Directory.GetFiles(buildDir, pattern))
 		{
 			hasFoundFile = true;
-			ProcessSymbolsArchive(file, options);
+			await ProcessSymbolsArchive(file, options);
 		}
 
 		if (!hasFoundFile)
@@ -296,7 +298,7 @@ public class BuildPostprocessors
 		}
 	}
 
-	private static void ProcessSymbolsArchive(string filePath, BugSplatOptions options)
+	private static async Task ProcessSymbolsArchive(string filePath, BugSplatOptions options)
 	{
 		string symbolsUnzipPath = Path.Combine(Path.GetDirectoryName(filePath), "symbols");
 
@@ -316,78 +318,63 @@ public class BuildPostprocessors
 			return;
 		}
 
-		DumpSymbols(symbolsUnzipPath, options, dumpExitCode =>
-		{
-			if (dumpExitCode != 0)
-			{
-				Debug.LogError("BugSplat. Could not dump symbols.");
-				return;
-			}
+		var androidBinaries = Directory.GetFiles(symbolsUnzipPath, "*", SearchOption.AllDirectories)
+			.Select(file => new FileInfo(file))
+			.Where(fileInfo => fileInfo.Extension.Equals(".so"))
+			.ToList();
 
-			UploadSymbols(symbolsUnzipPath, options, uploadExitCode =>
+		var oauth2ApiClient = OAuth2ApiClient.Create(options.SymbolUploadClientId, options.SymbolUploadClientSecret);
+		var androidClient = await AndroidClient.Create(options.Database, oauth2ApiClient);
+
+		foreach (var binaryFile in androidBinaries)
+		{
+			var uploadResponse = await androidClient.UploadBinaryFile(binaryFile);
+			using (var downloadStream = await uploadResponse.Content.ReadAsStreamAsync())
 			{
-				if (uploadExitCode != 0)
+				using(var symFile = File.Create(Path.ChangeExtension(binaryFile.FullName, ".sym")))
 				{
-					Debug.LogError("BugSplat. Could not upload symbols.");
+					downloadStream.Seek(0, SeekOrigin.Begin);
+					downloadStream.CopyTo(symFile);
 				}
-
-				// Clean up generated debug symbols
-				Directory.Delete(symbolsUnzipPath);
-
-				Debug.Log("BugSplat. Symbols uploading completed.");
-			});
-		});
-	}
-
-	private static void DumpSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
-	{
-		var dumpSymProcessInfo = new ProcessStartInfo
-		{
-			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetDumpSymName())),
-			UseShellExecute = false,
-			RedirectStandardOutput = true,
-			Arguments = $"-b {options.Database} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} -f \"**/*.so\" -d {artifactsDirPath}"
-		};
-
-		var dumpSymProcess = Process.Start(dumpSymProcessInfo);
-		if (dumpSymProcess == null)
-		{
-			onCompleted(-1);
-			return;
+			}
 		}
 
-		Debug.Log(dumpSymProcess.StandardOutput.ReadToEnd());
+		var androidSymbols = Directory.GetFiles(symbolsUnzipPath, "*", SearchOption.AllDirectories)
+			.Select(file => new FileInfo(file))
+			.Where(fileInfo => fileInfo.Extension.Equals(".sym"))
+			.ToList();
 
-		dumpSymProcess.WaitForExit();
+		foreach (var sym in androidSymbols)
+		{
+			Debug.Log($"BugSplat found symbol file: {sym.FullName}");
+		}
 
-		onCompleted(dumpSymProcess.ExitCode);
-	}
-
-	private static void UploadSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
-	{
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
-		var symUploadProcessInfo = new ProcessStartInfo
+		try
 		{
-			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetSymUploaderName())),
-			UseShellExecute = false,
-			RedirectStandardOutput = true,
-			Arguments = $"-b {options.Database} -a {options.Application} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} " +
-							$"-v {version} -f \"**/*.sym\" -d {artifactsDirPath}"
-		};
+			using (var symbolUploader = SymbolUploader.CreateOAuth2SymbolUploader(options.SymbolUploadClientId, options.SymbolUploadClientSecret))
+			{
+				var responseMessages = await symbolUploader.UploadSymbolFiles(
+					options.Database,
+					options.Application,
+					version,
+					androidSymbols
+				);
 
-		var uploadSymProcess = Process.Start(symUploadProcessInfo);
-		if (uploadSymProcess == null)
+				if (responseMessages[0].IsSuccessStatusCode)
+					Debug.Log("BugSplat symbol upload completed successfully!");
+				else
+					Debug.LogError("BugSplat symbol upload failed. " + responseMessages[0]);
+			}
+		}
+		catch (Exception ex)
 		{
-			onCompleted(-1);
-			return;
+			Debug.LogError(ex);
 		}
 
-		Debug.Log(uploadSymProcess.StandardOutput.ReadToEnd());
-
-		uploadSymProcess.WaitForExit();
-
-		onCompleted(uploadSymProcess.ExitCode);
+		// Clean up generated debug symbols
+		Directory.Delete(symbolsUnzipPath);
 	}
 #endif
 }
