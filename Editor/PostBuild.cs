@@ -60,10 +60,10 @@ public class BuildPostprocessors
 
 		if (options == null)
 		{
-			Debug.LogWarning(
-				"No BugSplatOptions ScriptableObject found! Skipping build post-process tasks...");
+			Debug.LogWarning("No BugSplatOptions ScriptableObject found! Skipping build post-process tasks...");
 			return;
 		}
+
 #if UNITY_IOS
 		if (target == BuildTarget.iOS)
 			PostProcessIos(pathToBuiltProject, options);
@@ -282,6 +282,8 @@ public class BuildPostprocessors
 			return;
 		}
 
+		Debug.Log("BugSplat. Starting symbol upload.");
+
 		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
 		if (buildDir == null)
 		{
@@ -369,9 +371,9 @@ public class BuildPostprocessors
 				);
 
 				if (responseMessages[0].IsSuccessStatusCode)
-					Debug.Log("BugSplat symbol upload completed successfully!");
+					Debug.Log("BugSplat. Symbol upload completed successfully!");
 				else
-					Debug.LogError("BugSplat symbol upload failed. " + responseMessages[0]);
+					Debug.LogError("BugSplat. Symbol upload failed. " + responseMessages[0]);
 			}
 		}
 		catch (Exception ex)
@@ -380,7 +382,7 @@ public class BuildPostprocessors
 		}
 
 		// Clean up generated debug symbols
-		Directory.Delete(symbolsUnzipPath);
+		Directory.Delete(symbolsUnzipPath, true);
 	}
 #endif
 }
