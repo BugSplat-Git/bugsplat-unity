@@ -270,9 +270,15 @@ public class BuildPostprocessors
 			return;
 		}
 
+		if (EditorUserBuildSettings.exportAsGoogleAndroidProject)
+		{
+			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Export Project\" is enabled in BuildSettings->Android.");
+			return;
+		}
+
 		if (EditorUserBuildSettings.androidCreateSymbols == AndroidCreateSymbols.Disabled)
 		{
-			Debug.LogWarning("BugSplat. \"Create symbols.zip\" is not configured in BuildSettings->Android. Skipping symbols uploading...");
+			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Create symbols.zip\" is not configured in BuildSettings->Android.");
 			return;
 		}
 
