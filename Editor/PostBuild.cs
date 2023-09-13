@@ -18,6 +18,10 @@ using BugSplatDotNetStandard.Http;
 using UnityEditor.iOS.Xcode;
 #endif
 
+#if UNITY_EDITOR_WIN
+using UnityEditor.WindowsStandalone;
+#endif
+
 public class BuildPostprocessors
 {
 	static string _platform;
@@ -70,22 +74,18 @@ public class BuildPostprocessors
 #elif UNITY_ANDROID
 		if (target == BuildTarget.Android)
 			UploadSymbolsAndroid(pathToBuiltProject, options);
+#elif UNITY_EDITOR_WIN
+		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+			UploadSymbolFilesWin(target, options);
 #endif
-
-		await UploadSymbolFiles(target, options);
 	}
 
-	private static async Task UploadSymbolFiles(BuildTarget target, BugSplatOptions options)
+	private static void UploadSymbolFilesWin(BuildTarget target, BugSplatOptions options)
 	{
-		switch (target)
+		if (UserBuildSettings.copyPDBFiles)
 		{
-			case BuildTarget.StandaloneWindows64:
-				_platform = "x86_64";
-				break;
-			case BuildTarget.StandaloneWindows:
-				_platform = "x86";
-				break;
-			default: return;
+			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
+			return;
 		}
 
 		var projectDir = Path.GetDirectoryName(Application.dataPath);
@@ -95,80 +95,18 @@ public class BuildPostprocessors
 			return;
 		}
 
-		var pluginsDir = Path.Combine(Path.Combine(projectDir, "Assets", "Plugins"), _platform);
-
-		if (!Directory.Exists(pluginsDir))
+		return;
+		
+		// TODO: figure out proper path for build dir
+		UploadSymbols(projectDir, "**/*.pdb", options, uploadExitCode =>
 		{
-			Debug.LogWarning("Plugins directory doesn't exist, skipping symbol uploads...");
-			return;
-		}
-
-		var database = options.Database;
-		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
-		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
-		var clientId = options.SymbolUploadClientId;
-		var clientSecret = options.SymbolUploadClientSecret;
-
-		if (string.IsNullOrEmpty(database))
-		{
-			Debug.LogWarning("BugSplatOptions Database was not set! Skipping symbol uploads...");
-			return;
-		}
-
-		if (string.IsNullOrEmpty(clientId))
-		{
-			Debug.LogWarning("BugSplatOptions ClientID was not set! Skipping symbol uploads...");
-			return;
-		}
-
-		if (string.IsNullOrEmpty(clientSecret))
-		{
-			Debug.LogWarning("BugSplatOptions ClientSecret was not set! Skipping symbol uploads...");
-			return;
-		}
-
-		Debug.Log($"BugSplat Database: {database}");
-		Debug.Log($"BugSplat Application: ${application}");
-		Debug.Log($"BugSplat Version: ${version}");
-
-		var fileExtensions = new List<string>()
-		{
-			".dll",
-			".pdb"
-		};
-		var symbolFiles = Directory.GetFiles(pluginsDir, "*", SearchOption.AllDirectories)
-			.Select(file => new FileInfo(file))
-			.Where(fileInfo => fileExtensions.Any(ext => ext.Equals(fileInfo.Extension)))
-			.ToList();
-
-		foreach (var symbolFile in symbolFiles)
-		{
-			Debug.Log($"BugSplat found symbol file: {symbolFile.FullName}");
-		}
-
-		Debug.Log("About to upload symbol files to BugSplat...");
-
-		try
-		{
-			using (var symbolUploader = SymbolUploader.CreateOAuth2SymbolUploader(clientId, clientSecret))
+			if (uploadExitCode != 0)
 			{
-				var responseMessages = await symbolUploader.UploadSymbolFiles(
-					database,
-					application,
-					version,
-					symbolFiles
-				);
-
-				if (responseMessages[0].IsSuccessStatusCode)
-					Debug.Log("BugSplat symbol upload completed successfully!");
-				else
-					Debug.LogError("BugSplat symbol upload failed. " + responseMessages[0]);
+				Debug.LogError("BugSplat. Could not upload symbols.");
 			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError(ex);
-		}
+
+			Debug.Log("BugSplat. Symbols uploading completed.");
+		});
 	}
 
 	private static BugSplatOptions GetBugSplatOptions()
@@ -338,7 +276,7 @@ public class BuildPostprocessors
 				return;
 			}
 
-			UploadSymbols(symbolsUnzipPath, options, uploadExitCode =>
+			UploadSymbols(symbolsUnzipPath, "**/*.sym", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -377,7 +315,7 @@ public class BuildPostprocessors
 		onCompleted(dumpSymProcess.ExitCode);
 	}
 
-	private static void UploadSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
+	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
@@ -388,7 +326,7 @@ public class BuildPostprocessors
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
 			Arguments = $"-b {options.Database} -a {application} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} " +
-				$"-v {version} -f \"**/*.sym\" -d {artifactsDirPath}"
+				$"-v {version} -f \"{globPattern}\" -d {artifactsDirPath}"
 		};
 
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
