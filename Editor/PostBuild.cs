@@ -380,13 +380,14 @@ public class BuildPostprocessors
 	private static void UploadSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
 	{
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
 
 		var symUploadProcessInfo = new ProcessStartInfo
 		{
 			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetSymUploaderName())),
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"-b {options.Database} -a {options.Application} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} " +
+			Arguments = $"-b {options.Database} -a {application} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} " +
 				$"-v {version} -f \"**/*.sym\" -d {artifactsDirPath}"
 		};
 
