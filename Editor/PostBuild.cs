@@ -58,7 +58,7 @@ public class BuildPostprocessors
 	/// BugSplat is configured to use the Unity symbol server which has private symbols containing file, function, and line information.
 	/// </summary>
 	[PostProcessBuild(1)]
-	public static async Task OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
+	public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
 	{
 		var options = GetBugSplatOptions();
 
