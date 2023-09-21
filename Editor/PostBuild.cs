@@ -80,6 +80,7 @@ public class BuildPostprocessors
 #endif
 	}
 
+#if UNITY_EDITOR_WIN
 	private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 	{
 		if (!UserBuildSettings.copyPDBFiles)
@@ -99,6 +100,7 @@ public class BuildPostprocessors
 			Debug.Log("BugSplat. Symbols uploading completed.");
 		});
 	}
+#endif
 
 	private static BugSplatOptions GetBugSplatOptions()
 	{
