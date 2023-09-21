@@ -76,33 +76,24 @@ public class BuildPostprocessors
 			UploadSymbolsAndroid(pathToBuiltProject, options);
 #elif UNITY_EDITOR_WIN
 		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
-			UploadSymbolFilesWin(target, options);
+			UploadSymbolFilesWin(pathToBuiltProject, options);
 #endif
 	}
 
-	private static void UploadSymbolFilesWin(BuildTarget target, BugSplatOptions options)
+	private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 	{
-		if (UserBuildSettings.copyPDBFiles)
+		if (!UserBuildSettings.copyPDBFiles)
 		{
 			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
 			return;
 		}
 
-		var projectDir = Path.GetDirectoryName(Application.dataPath);
-		if (string.IsNullOrEmpty(projectDir))
-		{
-			Debug.LogWarning($"Could not find data path directory {Application.dataPath}, skipping symbol uploads...");
-			return;
-		}
-
-		return;
-		
-		// TODO: figure out proper path for build dir
-		UploadSymbols(projectDir, "**/*.pdb", options, uploadExitCode =>
+		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/*.pdb", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
 				Debug.LogError("BugSplat. Could not upload symbols.");
+				return;
 			}
 
 			Debug.Log("BugSplat. Symbols uploading completed.");
@@ -291,6 +282,8 @@ public class BuildPostprocessors
 		});
 	}
 
+#endif
+
 	private static void DumpSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
 	{
 		var dumpSymProcessInfo = new ProcessStartInfo
@@ -342,5 +335,4 @@ public class BuildPostprocessors
 
 		onCompleted(uploadSymProcess.ExitCode);
 	}
-#endif
 }
