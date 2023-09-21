@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 namespace BugSplatUnity.Runtime.Client
 {
@@ -53,13 +52,16 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
 		public string SymbolUploadClientSecret;
 
-		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will use .NET handler.")]
+		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
-		
+
 		[Tooltip("Add a build script phase to XCode project to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForIos;
 
-		[Tooltip("Use crash reporting library for Android builds. If set to false, will use .NET handler.")]
+		[Tooltip("Use crash reporting library for Android builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForAndroid;
+
+		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
+		public bool UploadDebugSymbolsForAndroid;
 	}
 }
