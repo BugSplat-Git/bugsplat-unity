@@ -88,7 +88,7 @@ public class BuildPostprocessors
 			return;
 		}
 
-		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/*.pdb", options, uploadExitCode =>
+		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/*.{pdb,dll,exe}", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
