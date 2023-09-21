@@ -1,9 +1,9 @@
 {
     "name": "com.bugsplat.unity",
-    "version": "2.4.1",
+    "version": "2.5.0",
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
-    "unity": "2019.4",
+    "unity": "2021.3",
     "keywords": [
         "bugsplat",
         "crash",
