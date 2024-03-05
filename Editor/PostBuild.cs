@@ -293,7 +293,7 @@ public class BuildPostprocessors
 			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetDumpSymName())),
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"-b {options.Database} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} -f \"**/*.so\" -d {artifactsDirPath}"
+			Arguments = $"--files \"**/*.so\" --directory \"{artifactsDirPath}\""
 		};
 
 		var dumpSymProcess = Process.Start(dumpSymProcessInfo);
@@ -312,6 +312,20 @@ public class BuildPostprocessors
 
 	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
+		if (string.IsNullOrEmpty(options.SymbolUploadClientId))
+		{
+			Debug.LogError("BugSplat. SymbolUploadClientId is not set in BugSplatOptions. Will not upload symbols.");
+			onCompleted(-1);
+			return;
+		}
+
+		if (string.IsNullOrEmpty(options.SymbolUploadClientSecret))
+		{
+			Debug.LogError("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions. Will not upload symbols.");
+			onCompleted(-1);
+			return;
+		}
+
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
 
@@ -320,8 +334,8 @@ public class BuildPostprocessors
 			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetSymUploaderName())),
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"-b {options.Database} -a {application} -i {options.SymbolUploadClientId} -s {options.SymbolUploadClientSecret} " +
-				$"-v {version} -f \"{globPattern}\" -d {artifactsDirPath}"
+			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {options.SymbolUploadClientId} --clientSecret {options.SymbolUploadClientSecret} " +
+				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
 
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
