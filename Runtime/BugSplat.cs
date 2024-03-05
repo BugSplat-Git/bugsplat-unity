@@ -215,7 +215,6 @@ namespace BugSplatUnity
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
-            // TODO BG is instantiating a game object like this safe?
             var gameObject = new GameObject();
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
@@ -256,9 +255,10 @@ namespace BugSplatUnity
                 ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
             };
             
+            var gameObject = new GameObject();
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
+            var dotNetStandardExceptionReporter = DotNetStandardExceptionReporter.Create(dotNetStandardClientSettings, dotNetStandardClient, gameObject);
 
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
