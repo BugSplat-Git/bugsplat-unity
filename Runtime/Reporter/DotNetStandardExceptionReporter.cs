@@ -14,21 +14,24 @@ using System.Runtime.InteropServices;
 
 namespace BugSplatUnity.Runtime.Reporter
 {
-    internal class DotNetStandardExceptionReporter: IExceptionReporter
+    internal class DotNetStandardExceptionReporter : MonoBehaviour, IExceptionReporter
     {
-        private readonly IClientSettingsRepository _clientSettings;
-        private readonly IExceptionClient<Task<HttpResponseMessage>> _exceptionClient;
+        public IClientSettingsRepository ClientSettings;
+        public  IExceptionClient<Task<HttpResponseMessage>> ExceptionClient;
 
         internal IReportUploadGuardService _reportUploadGuardService;
 
-        public DotNetStandardExceptionReporter(
+        public static DotNetStandardExceptionReporter Create(
             IClientSettingsRepository clientSettings,
-            IExceptionClient<Task<HttpResponseMessage>> exceptionClient
+            IExceptionClient<Task<HttpResponseMessage>> exceptionClient,
+            GameObject gameObject
         )
         {
-            _clientSettings = clientSettings;
-            _exceptionClient = exceptionClient;
-            _reportUploadGuardService = new ReportUploadGuardService(clientSettings);
+            var reporter = gameObject.AddComponent(typeof(DotNetStandardExceptionReporter)) as DotNetStandardExceptionReporter;
+            reporter.ClientSettings = clientSettings;
+            reporter.ExceptionClient = exceptionClient;
+            reporter._reportUploadGuardService = new ReportUploadGuardService(clientSettings);
+            return reporter;
         }
 
         public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
@@ -39,30 +42,11 @@ namespace BugSplatUnity.Runtime.Reporter
             }
 
             var options = new ReportPostOptions();
-            options.SetNullOrEmptyValues(_clientSettings);
+            options.SetNullOrEmptyValues(ClientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
-            try
-            {
-                _exceptionClient
-                    .Post(stackTrace, options)
-                    .ContinueWith(
-                        async task =>
-                        {
-                            var result = await task;
-                            var status = result.StatusCode;
-                            var contents = await result.Content.ReadAsStringAsync();
-                            Debug.Log($"BugSplat info: status {status}\n {contents}");
-                            // TODO can we return the response here?
-                            callback?.Invoke();
-                        }
-                    );
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"BugSplat error: {ex}");
-            }
+            StartCoroutine(Post(stackTrace, options, callback));
         }
 
         public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
@@ -72,11 +56,18 @@ namespace BugSplatUnity.Runtime.Reporter
                 yield break;
             }
 
+            yield return Post(exception.ToString(), options, callback);
+        }
+
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
+        {
+            Debug.Log("About to post exception to BugSplat");
+
             options = options ?? new ReportPostOptions();
-            options.SetNullOrEmptyValues(_clientSettings);
+            options.SetNullOrEmptyValues(ClientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
-            if (_clientSettings.CaptureEditorLog)
+            if (ClientSettings.CaptureEditorLog)
             {
 #if UNITY_EDITOR_WIN
                 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -119,7 +110,7 @@ namespace BugSplatUnity.Runtime.Reporter
 #endif
             }
 
-            if (_clientSettings.CapturePlayerLog)
+            if (ClientSettings.CapturePlayerLog)
             {
 #if  UNITY_STANDALONE_WIN
                 var localLowId = new Guid("A520A1A4-1780-4FF6-BD18-167343C5AF16");
@@ -175,7 +166,7 @@ namespace BugSplatUnity.Runtime.Reporter
 #endif
             }
 
-            if (_clientSettings.CaptureScreenshots)
+            if (ClientSettings.CaptureScreenshots)
             {
                 // There isn't really a safe way to do this
                 // Serializing the image to disk potentially litters the file system
@@ -199,7 +190,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var result = await _exceptionClient.Post(exception, options);
+                        var result = await ExceptionClient.Post(stackTrace, options);
                         var status = result.StatusCode;
                         var contents = await result.Content.ReadAsStringAsync();
                         Debug.Log($"BugSplat info: status {status}\n {contents}");

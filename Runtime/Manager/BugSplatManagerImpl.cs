@@ -12,14 +12,14 @@ namespace BugSplatUnity.Runtime.Manager
 		public BugSplat BugSplat { get; private set; }
 
 		private BugSplatOptions bugSplatOptions;
-		private bool registerLogMessageRecieved;
+		private bool registerLogMessageReceived;
 		private bool dontDestroyManagerOnSceneLoad;
 		private GameObject managerGameObject;
 
-		public BugSplatManagerImpl(BugSplatOptions bugSplatOptions, bool registerLogMessageRecieved, bool dontDestroyManagerOnSceneLoad, GameObject managerGameObject)
+		public BugSplatManagerImpl(BugSplatOptions bugSplatOptions, bool registerLogMessageReceived, bool dontDestroyManagerOnSceneLoad, GameObject managerGameObject)
 		{
 			this.bugSplatOptions = bugSplatOptions;
-			this.registerLogMessageRecieved = registerLogMessageRecieved;
+			this.registerLogMessageReceived = registerLogMessageReceived;
 			this.dontDestroyManagerOnSceneLoad = dontDestroyManagerOnSceneLoad;
 			this.managerGameObject = managerGameObject;
 		}
@@ -33,7 +33,7 @@ namespace BugSplatUnity.Runtime.Manager
 
 			BugSplat = BugSplat.CreateFromOptions(bugSplatOptions);
 
-			if (registerLogMessageRecieved)
+			if (registerLogMessageReceived)
 			{
 				Application.logMessageReceived += BugSplat.LogMessageReceived;
 			}
