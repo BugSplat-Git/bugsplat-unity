@@ -201,21 +201,21 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-#if UNITY_STANDALONE_WIN || UNITY_WSA
-            
+            var gameObject = new GameObject();
+
+#if UNITY_STANDALONE_WIN || UNITY_WSA           
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
             bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
             bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
+            var dotNetStandardExceptionReporter = DotNetStandardExceptionReporter.Create(dotNetStandardClientSettings, dotNetStandardClient, gameObject);
             var windowsReporter = new WindowsReporter(dotNetStandardClientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
 
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
-            var gameObject = new GameObject();
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
             var webGLReporter = WebGLReporter.Create(
@@ -241,21 +241,19 @@ namespace BugSplatUnity
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
             }
 
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, gameObject);
 #else
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, gameObject);
 #endif
         }
 
-        private void UseDotNetHandler(string database, string application, string version)
+        private void UseDotNetHandler(string database, string application, string version, GameObject gameObject)
         {
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
             {
                 MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
                 ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
             };
-            
-            var gameObject = new GameObject();
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = DotNetStandardExceptionReporter.Create(dotNetStandardClientSettings, dotNetStandardClient, gameObject);
