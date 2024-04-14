@@ -26,14 +26,10 @@ public class BuildPostprocessors
 {
 	static string _platform;
 
-	const string SymUploaderWindows = "symbol-upload-win.exe";
+	const string SymUploaderWindows = "symbol-upload-windows.exe";
 	const string SymUploaderMacOS = "symbol-upload-macos";
 	const string SymUploaderLinux = "symbol-upload-linux";
 
-	const string DumpSymWindows = "android-dump-syms-win.exe";
-	const string DumpSymMacOS = "android-dump-syms-macos";
-	const string DumpSymLinux = "android-dump-syms-linux";
-	
 	internal static string GetSymUploaderName() =>
 		Application.platform switch
 		{
@@ -41,15 +37,6 @@ public class BuildPostprocessors
 			RuntimePlatform.OSXEditor => SymUploaderMacOS,
 			RuntimePlatform.LinuxEditor => SymUploaderLinux,
 			_ => throw new InvalidOperationException($"BugSplat. Failed to obtain symbol uploader for {Application.platform}")
-		};
-	
-	internal static string GetDumpSymName() =>
-		Application.platform switch
-		{
-			RuntimePlatform.WindowsEditor => DumpSymWindows,
-			RuntimePlatform.OSXEditor => DumpSymMacOS,
-			RuntimePlatform.LinuxEditor => DumpSymLinux,
-			_ => throw new InvalidOperationException($"BugSplat. Failed to obtain dump symbols tool for {Application.platform}")
 		};
 
 	/// <summary>
@@ -257,58 +244,20 @@ public class BuildPostprocessors
 			return;
 		}
 
-		DumpSymbols(symbolsUnzipPath, options, dumpExitCode =>
+		UploadSymbols(symbolsUnzipPath, "**/*.so", options, uploadExitCode =>
 		{
-			if (dumpExitCode != 0)
+			if (uploadExitCode != 0)
 			{
-				Debug.LogError("BugSplat. Could not dump symbols.");
-
-				// Clean up generated debug symbols
-				Directory.Delete(symbolsUnzipPath, true);
-
-				return;
+				Debug.LogError("BugSplat. Could not upload symbols.");
 			}
 
-			UploadSymbols(symbolsUnzipPath, "**/*.sym", options, uploadExitCode =>
-			{
-				if (uploadExitCode != 0)
-				{
-					Debug.LogError("BugSplat. Could not upload symbols.");
-				}
+			// Clean up generated debug symbols
+			Directory.Delete(symbolsUnzipPath, true);
 
-				// Clean up generated debug symbols
-				Directory.Delete(symbolsUnzipPath, true);
-
-				Debug.Log("BugSplat. Symbols uploading completed.");
-			});
+			Debug.Log("BugSplat. Symbols uploading completed.");
 		});
 	}
-
 #endif
-
-	private static void DumpSymbols(string artifactsDirPath, BugSplatOptions options, Action<int> onCompleted)
-	{
-		var dumpSymProcessInfo = new ProcessStartInfo
-		{
-			FileName = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetDumpSymName())),
-			UseShellExecute = false,
-			RedirectStandardOutput = true,
-			Arguments = $"--files \"**/*.so\" --directory \"{artifactsDirPath}\""
-		};
-
-		var dumpSymProcess = Process.Start(dumpSymProcessInfo);
-		if (dumpSymProcess == null)
-		{
-			onCompleted(-1);
-			return;
-		}
-
-		Debug.Log(dumpSymProcess.StandardOutput.ReadToEnd());
-
-		dumpSymProcess.WaitForExit();
-
-		onCompleted(dumpSymProcess.ExitCode);
-	}
 
 	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
@@ -335,7 +284,7 @@ public class BuildPostprocessors
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
 			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {options.SymbolUploadClientId} --clientSecret {options.SymbolUploadClientSecret} " +
-				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
+				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\" --dumpSyms"
 		};
 
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
