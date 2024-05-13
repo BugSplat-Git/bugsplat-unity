@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
 {
-    class FakeDotNetExceptionClient : IExceptionClient<Task<HttpResponseMessage>>
+    class FakeDotNetExceptionClient : IDotNetStandardExceptionClient
     {
         public List<FakeExceptionClientPostCall> Calls { get; } = new List<FakeExceptionClientPostCall>();
 
@@ -43,7 +43,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
         }
     }
 
-    public class FakeWebGLExceptionClient : IExceptionClient<IEnumerator>
+    public class FakeWebGLExceptionClient : IWebGlExceptionClient
     {
         public List<FakeExceptionClientPostCall> Calls { get; } = new List<FakeExceptionClientPostCall>();
 

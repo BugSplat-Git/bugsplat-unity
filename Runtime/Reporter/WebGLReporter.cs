@@ -10,13 +10,13 @@ namespace BugSplatUnity.Runtime.Reporter
     internal class WebGLReporter : MonoBehaviour, IExceptionReporter
     {
         public IClientSettingsRepository ClientSettings { get; set; }
-        public IExceptionClient<IEnumerator> ExceptionClient { get; set; }
+        public IWebGlExceptionClient ExceptionClient { get; set; }
 
         internal IReportUploadGuardService _reportUploadGuardService;
 
         public static WebGLReporter Create(
             IClientSettingsRepository clientSettings,
-            IExceptionClient<IEnumerator> exceptionClient,
+            IWebGlExceptionClient exceptionClient,
             GameObject gameObject
         )
         {
@@ -27,26 +27,28 @@ namespace BugSplatUnity.Runtime.Reporter
             return reporter;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
             if (!_reportUploadGuardService.ShouldPostLogMessage(type))
             {
                 return;
             }
 
-            var options = new ReportPostOptions();
-            options.Description = ClientSettings.Description;
-            options.Email = ClientSettings.Email;
-            options.Key = ClientSettings.Key;
-            options.Notes = ClientSettings.Notes;
-            options.User = ClientSettings.User;
-            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
+            var options = new ReportPostOptions
+            {
+                Description = ClientSettings.Description,
+                Email = ClientSettings.Email,
+                Key = ClientSettings.Key,
+                Notes = ClientSettings.Notes,
+                User = ClientSettings.User,
+                CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy
+            };
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             StartCoroutine(Post(stackTrace, options, callback));
         }
 
-        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action callback = null)
+        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             if (!_reportUploadGuardService.ShouldPostException(ex))
             {
@@ -60,7 +62,7 @@ namespace BugSplatUnity.Runtime.Reporter
             yield return Post(ex.ToString(), options, callback);
         }
 
-        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             if (ClientSettings.CaptureEditorLog)
             {
@@ -83,9 +85,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 Debug.Log("BugSplat info: CaptureScreenshots is not implemented on this platform");
             }
 
-            yield return ExceptionClient.Post(stackTrace, options);
-
-            callback?.Invoke();
+            yield return ExceptionClient.Post(stackTrace, options, callback);
         }
     }
 }
