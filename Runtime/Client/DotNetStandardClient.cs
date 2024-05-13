@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace BugSplatUnity.Runtime.Client
 {
-    internal class DotNetStandardClient : INativeCrashReportClient, IExceptionClient<Task<HttpResponseMessage>>
+    internal interface IDotNetStandardExceptionClient
+    {
+        Task<HttpResponseMessage> Post(string stackTrace, IReportPostOptions options = null);
+        Task<HttpResponseMessage> Post(Exception ex, IReportPostOptions options = null);
+        Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, IReportPostOptions options = null);
+    }
+
+    internal class DotNetStandardClient : INativeCrashReportClient, IDotNetStandardExceptionClient
     {
         private readonly BugSplatDotNetStandard.BugSplat _bugsplat;
 
