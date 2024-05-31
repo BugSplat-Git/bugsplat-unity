@@ -5,7 +5,7 @@ namespace BugSplatUnity.Runtime.Util
 {
     public static class ShouldPostExceptionImpl
     {
-        private static DateTime lastPost;
+        private static DateTime lastPost = new DateTime(0);
 
         public static bool DefaultShouldPostExceptionImpl(Exception ex = null)
         {
