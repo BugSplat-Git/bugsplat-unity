@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Util;
+using System.Collections.Generic;
 
 #if UNITY_STANDALONE_WIN
 using System.Runtime.InteropServices;
@@ -81,6 +82,8 @@ namespace BugSplatUnity.Runtime.Reporter
             options.SetNullOrEmptyValues(ClientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
+            var tempFiles = new List<FileInfo>();
+
             if (ClientSettings.CaptureEditorLog)
             {
 #if UNITY_EDITOR_WIN
@@ -89,7 +92,10 @@ namespace BugSplatUnity.Runtime.Reporter
                 var editorLogFileInfo = new FileInfo(editorLogFilePath);
                 if (editorLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                    // Copy to a temp file to avoid sharing exception
+                    var tempFile = CopyToTempFile(editorLogFileInfo);
+                    options.AdditionalAttachments.Add(tempFile);
+                    tempFiles.Add(tempFile);
                 }
                 else
                 {
@@ -133,7 +139,10 @@ namespace BugSplatUnity.Runtime.Reporter
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                    // Copy to a temp file to avoid sharing exception
+                    var tempFile = CopyToTempFile(playerLogFileInfo);
+                    options.AdditionalAttachments.Add(tempFile);
+                    tempFiles.Add(tempFile);
                 }
                 else
                 {
@@ -229,8 +238,26 @@ namespace BugSplatUnity.Runtime.Reporter
                             Message = $"BugSplat upload failed with exception: {ex}",
                         });
                     }
+                    finally {
+                        DeleteTempFiles(tempFiles);
+                    }
                 }
             );
+        }
+
+        private FileInfo CopyToTempFile(FileInfo fileToCopy) {
+            var tempFile = new FileInfo(Path.Combine(fileToCopy.Directory.FullName, $"{Guid.NewGuid()}.log"));
+            File.Copy(fileToCopy.FullName, tempFile.FullName);
+            return tempFile;
+        }
+
+        private void DeleteTempFiles(IEnumerable<FileInfo> tempFiles)
+        {
+            foreach (var tempFile in tempFiles) {
+                if (tempFile.Exists) {
+                    tempFile.Delete();
+                }
+            }
         }
 
         private byte[] CaptureInMemoryPngScreenshot()
