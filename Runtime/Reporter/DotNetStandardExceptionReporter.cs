@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Util;
+using System.Collections.Generic;
 
 #if UNITY_STANDALONE_WIN
 using System.Runtime.InteropServices;
@@ -17,13 +18,13 @@ namespace BugSplatUnity.Runtime.Reporter
     internal class DotNetStandardExceptionReporter : MonoBehaviour, IExceptionReporter
     {
         public IClientSettingsRepository ClientSettings;
-        public  IExceptionClient<Task<HttpResponseMessage>> ExceptionClient;
+        public IDotNetStandardExceptionClient ExceptionClient;
 
         internal IReportUploadGuardService _reportUploadGuardService;
 
         public static DotNetStandardExceptionReporter Create(
             IClientSettingsRepository clientSettings,
-            IExceptionClient<Task<HttpResponseMessage>> exceptionClient,
+            IDotNetStandardExceptionClient exceptionClient,
             GameObject gameObject
         )
         {
@@ -34,10 +35,16 @@ namespace BugSplatUnity.Runtime.Reporter
             return reporter;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
+        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
             if (!_reportUploadGuardService.ShouldPostLogMessage(type))
             {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped due to ShouldPostLogMessage check.",
+                });
                 return;
             }
 
@@ -49,23 +56,33 @@ namespace BugSplatUnity.Runtime.Reporter
             StartCoroutine(Post(stackTrace, options, callback));
         }
 
-        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
+        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
+            var stackTrace = exception.ToString();
+            
             if (!_reportUploadGuardService.ShouldPostException(exception))
             {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped due to ShouldPostException check.",
+                });
                 yield break;
             }
 
-            yield return Post(exception.ToString(), options, callback);
+            yield return Post(stackTrace, options, callback);
         }
 
-        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             Debug.Log("About to post exception to BugSplat");
 
             options = options ?? new ReportPostOptions();
             options.SetNullOrEmptyValues(ClientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+
+            var tempFiles = new List<FileInfo>();
 
             if (ClientSettings.CaptureEditorLog)
             {
@@ -75,7 +92,10 @@ namespace BugSplatUnity.Runtime.Reporter
                 var editorLogFileInfo = new FileInfo(editorLogFilePath);
                 if (editorLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                    // Copy to a temp file to avoid sharing exception
+                    var tempFile = CopyToTempFile(editorLogFileInfo);
+                    options.AdditionalAttachments.Add(tempFile);
+                    tempFiles.Add(tempFile);
                 }
                 else
                 {
@@ -119,7 +139,10 @@ namespace BugSplatUnity.Runtime.Reporter
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                    // Copy to a temp file to avoid sharing exception
+                    var tempFile = CopyToTempFile(playerLogFileInfo);
+                    options.AdditionalAttachments.Add(tempFile);
+                    tempFiles.Add(tempFile);
                 }
                 else
                 {
@@ -193,16 +216,48 @@ namespace BugSplatUnity.Runtime.Reporter
                         var result = await ExceptionClient.Post(stackTrace, options);
                         var status = result.StatusCode;
                         var contents = await result.Content.ReadAsStringAsync();
+                        var uploaded = status == System.Net.HttpStatusCode.OK;
+                        var message = uploaded ? "Crash successfully uploaded to BugSplat!" : $"BugSplat upload failed with code {status}";
+                        var response = JsonUtility.FromJson<BugSplatResponse>(contents);
                         Debug.Log($"BugSplat info: status {status}\n {contents}");
-                        // TODO can we return the response here?
-                        callback?.Invoke();
+                        callback?.Invoke(new ExceptionReporterPostResult()
+                        {
+                            Uploaded = uploaded,
+                            Exception = stackTrace,
+                            Message = message,
+                            Response = response
+                        });
                     }
                     catch (Exception ex)
                     {
                         Debug.LogError($"BugSplat error: {ex}");
+                        callback?.Invoke(new ExceptionReporterPostResult()
+                        {
+                            Uploaded = false,
+                            Exception = stackTrace,
+                            Message = $"BugSplat upload failed with exception: {ex}",
+                        });
+                    }
+                    finally {
+                        DeleteTempFiles(tempFiles);
                     }
                 }
             );
+        }
+
+        private FileInfo CopyToTempFile(FileInfo fileToCopy) {
+            var tempFile = new FileInfo(Path.Combine(fileToCopy.Directory.FullName, $"{Guid.NewGuid()}.log"));
+            File.Copy(fileToCopy.FullName, tempFile.FullName);
+            return tempFile;
+        }
+
+        private void DeleteTempFiles(IEnumerable<FileInfo> tempFiles)
+        {
+            foreach (var tempFile in tempFiles) {
+                if (tempFile.Exists) {
+                    tempFile.Delete();
+                }
+            }
         }
 
         private byte[] CaptureInMemoryPngScreenshot()
