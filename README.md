@@ -204,7 +204,7 @@ BugSplat can be configured to upload Windows minidumps created by the `UnityCras
 
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. Once configured, plugins will be uploaded automatically the next time you build your project.
 
-### Minidumps
+### Minidumps (Crashes)
 
 The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used to upload minidumps to BugSplat. We recommend running `PostMostRecentCrash` when your game launches.
 
@@ -233,7 +233,7 @@ To use BugSplat in a Universal Windows Platform application, you will need to ad
 
 Reporting exceptions, crashes, and uploading log files requires the `Internet (Client)` capability.
 
-### Minidumps
+### Minidumps (Crashes)
 
 We found that restricted capabilities were required in order to generate minidumps. Please see this Microsoft [document](https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps) that describes how to configure your system to generate minidumps for UWP native crashes.
 
