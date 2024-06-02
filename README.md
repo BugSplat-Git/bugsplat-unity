@@ -177,7 +177,7 @@ By default, BugSplat prevents reports from being sent at a rate greater than 1 p
 The following example demonstrates how you could implement your own time-based report throttling mechanism:
 
 ```cs
-var lastPost = DateTime.Now;
+var lastPost = new DateTime(0);
 
 bugsplat.ShouldPostException = (ex) =>
 {
