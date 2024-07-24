@@ -1,6 +1,7 @@
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -199,11 +200,12 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-#if UNITY_STANDALONE_WIN || UNITY_WSA 
-            // TODO BG test on Windows          
-            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
-            bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
-            bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+#if UNITY_STANDALONE_WIN || UNITY_WSA        
+            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
+            {
+                MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
+                ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
+            };
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
@@ -262,24 +264,27 @@ namespace BugSplatUnity
         {
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
-            
+
+
             var bugSplat = new BugSplat(
                 options.Database,
                 application,
-                version, 
+                version,
+
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid
-            );
-
-            bugSplat.Description = options.Description;
-            bugSplat.Email = options.Email;
-            bugSplat.Key = options.Key;
-            bugSplat.Notes = options.Notes;
-            bugSplat.User = options.User;
-            bugSplat.CaptureEditorLog = options.CaptureEditorLog;
-            bugSplat.CapturePlayerLog = options.CapturePlayerLog;
-            bugSplat.CaptureScreenshots = options.CaptureScreenshots;
-            bugSplat.PostExceptionsInEditor = options.PostExceptionsInEditor;
+            )
+            {
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                Notes = options.Notes,
+                User = options.User,
+                CaptureEditorLog = options.CaptureEditorLog,
+                CapturePlayerLog = options.CapturePlayerLog,
+                CaptureScreenshots = options.CaptureScreenshots,
+                PostExceptionsInEditor = options.PostExceptionsInEditor
+            };
 
             if (options.PersistentDataFileAttachmentPaths != null)
 			{
