@@ -1,6 +1,4 @@
-﻿using BugSplatUnity.Runtime.Client;
-using BugSplatUnity.Runtime.Reporter;
-using BugSplatUnity.Runtime.Util;
+﻿using BugSplatUnity.Runtime.Reporter;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +19,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
             _result = result;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
+        public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
             Calls.LogMessageReceived.Add(
                 new FakeDotNetStandardExceptionReporterLogMessageReceivedCall()
@@ -31,10 +29,11 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
                     Type = type
                 }
             );
-            callback?.Invoke();
+            callback?.Invoke(new ExceptionReporterPostResult());
+            yield return null;
         }
 
-        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
+        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             Calls.Post.Add(
                 new FakeDotNetStandardExceptionReporterPostCall()
@@ -43,15 +42,15 @@ namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
                     Options = options
                 }
             );
+            callback?.Invoke(new ExceptionReporterPostResult());
             yield return null;
-            callback?.Invoke();
         }
 
         public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             Calls.Post.Add(
                 new FakeDotNetStandardExceptionReporterPostCall()
-                { 
+                {
                     Minidump = minidump,
                     Options = options
                 }

@@ -6,11 +6,11 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal interface IExceptionReporter
     {
-        void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null);
+        IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null);
         IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null);
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BugSplatResponse
     {
         public string status;

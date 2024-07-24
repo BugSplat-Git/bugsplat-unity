@@ -1,8 +1,5 @@
 using BugSplatUnity.Runtime.Reporter;
-using BugSplatUnity.Runtime.Settings;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BugSplatUnity.RuntimeTests.Reporter.Fakes
