@@ -4,6 +4,7 @@ using UnityEngine.Diagnostics;
 using BugSplat = BugSplatUnity.BugSplat;
 using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
+using BugSplatUnity.Runtime.Reporter;
 #if UNITY_STANDALONE_WIN || (UNITY_IOS && !UNITY_EDITOR)
 using System.Runtime.InteropServices;
 #endif
@@ -13,6 +14,7 @@ namespace Crasher
 	public class ErrorGenerator : MonoBehaviour
 	{
 		BugSplat bugsplat;
+		private string infoUrl = "";
 		
 		void Start()
 		{
@@ -22,6 +24,15 @@ namespace Crasher
             StartCoroutine(bugsplat.PostMostRecentCrash());
 #endif
         }
+
+		void Update()
+		{
+			if (!string.IsNullOrEmpty(infoUrl))
+			{
+				Application.OpenURL(infoUrl);
+				infoUrl = "";
+			}
+		}
 
 		public void Event_ForceCrash(ForcedCrashCategory category)
 		{
@@ -82,9 +93,19 @@ namespace Crasher
 			throw new Exception("BugSplat rocks!");
 		}
 
-        static void ExceptionCallback()
+        void ExceptionCallback(ExceptionReporterPostResult result)
 		{
-			Debug.Log($"Exception post callback!");
+			Debug.Log($"Exception post callback result: {result.Message}");
+
+			if (result.Response == null) {
+				return;
+			}
+
+			Debug.Log($"BugSplat Status: {result.Response.status}");
+			Debug.Log($"BugSplat Crash ID: {result.Response.crashId}");
+			Debug.Log($"BugSplat Support URL: {result.Response.infoUrl}");
+
+			infoUrl = result.Response.infoUrl;
 		}
 		
 #if UNITY_IOS && !UNITY_EDITOR
