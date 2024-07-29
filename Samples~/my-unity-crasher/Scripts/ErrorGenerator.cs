@@ -91,8 +91,6 @@ namespace Crasher
 			Process.Start("open", escaped);
 #elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
 			Process.Start("xdg-open", escaped);
-#elif UNITY_WEBGL
-			Application.OpenURL(url);
 #else
 			UnityEngine.Debug.Log($"OpenUrl unsupported platform: {Application.platform}");
 #endif
