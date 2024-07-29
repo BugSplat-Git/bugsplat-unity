@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using BugSplatUnity.Runtime.Reporter;
 using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Client
 {
-    internal class WebGLExceptionClient : IExceptionClient<IEnumerator>
+    internal interface IWebGlExceptionClient
+    {
+        IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null);
+        IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null);
+    }
+
+    internal class WebGLExceptionClient : IWebGlExceptionClient
     {
         private readonly string _database;
         private readonly string _application;
@@ -20,17 +27,17 @@ namespace BugSplatUnity.Runtime.Client
             _version = version;
         }
 
-        public IEnumerator Post(string stackTrace, IReportPostOptions options = null)
+        public IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            return PostException(stackTrace, options);
+            return PostException(stackTrace, options, callback);
         }
 
-        public IEnumerator Post(Exception ex, IReportPostOptions options = null)
+        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            return PostException(ex.ToString(), options);
+            return PostException(ex.ToString(), options, callback);
         }
 
-        private IEnumerator PostException(string exception, IReportPostOptions options = null)
+        private IEnumerator PostException(string exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             options = options ?? new ReportPostOptions();
 
@@ -45,19 +52,37 @@ namespace BugSplatUnity.Runtime.Client
                 { "appKey", options.Key },
                 { "user", options.User },
                 { "callstack", exception },
-                { "crashTypeId", $"{(int)options.CrashTypeId}" }
+                { "crashTypeId", $"{options.CrashTypeId}" }
             };
 
             var request = UnityWebClient.Post(url, formData);
             yield return request.SendWebRequest();
 
+            var responseCode = request.ResponseCode;
+
             if (!request.Success)
             {
                 Debug.LogError($"BugSplat error: Could not post exception {request.Error}");
+
+                callback?.Invoke(new ExceptionReporterPostResult() {
+                    Uploaded = false,
+                    Exception = exception,
+                    Message = $"BugSplat upload failed with code {responseCode}"
+                });
+
                 yield break;
             }
 
-            Debug.Log($"BugSplat info: status {request.ResponseCode}\n {request.DownloadHandler.Text}");
+            var responseText = request.DownloadHandler.Text;
+            var response = JsonUtility.FromJson<BugSplatResponse>(responseText);
+            Debug.Log($"BugSplat info: status {responseCode}\n {responseText}");
+
+            callback?.Invoke(new ExceptionReporterPostResult() {
+                Uploaded = true,
+                Exception = exception,
+                Message =  "Crash successfully uploaded to BugSplat!",
+                Response = response
+            });
         }
     }
 }

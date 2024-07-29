@@ -7,85 +7,82 @@ using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Reporter
 {
-    internal class WebGLReporter : MonoBehaviour, IExceptionReporter
+    internal class WebGLReporter : IExceptionReporter
     {
-        public IClientSettingsRepository ClientSettings { get; set; }
-        public IExceptionClient<IEnumerator> ExceptionClient { get; set; }
+        private IClientSettingsRepository clientSettings;
+        private IWebGlExceptionClient exceptionClient;
 
-        internal IReportUploadGuardService _reportUploadGuardService;
+        internal IReportUploadGuardService reportUploadGuardService;
 
-        public static WebGLReporter Create(
+        public WebGLReporter(
             IClientSettingsRepository clientSettings,
-            IExceptionClient<IEnumerator> exceptionClient,
-            GameObject gameObject
+            IWebGlExceptionClient exceptionClient
         )
         {
-            var reporter = gameObject.AddComponent(typeof(WebGLReporter)) as WebGLReporter;
-            reporter.ClientSettings = clientSettings;
-            reporter.ExceptionClient = exceptionClient;
-            reporter._reportUploadGuardService = new ReportUploadGuardService(clientSettings);
-            return reporter;
+            this.clientSettings = clientSettings;
+            this.exceptionClient = exceptionClient;
+            reportUploadGuardService = new ReportUploadGuardService(clientSettings);
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action callback = null)
+        public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
-            if (!_reportUploadGuardService.ShouldPostLogMessage(type))
+            if (!reportUploadGuardService.ShouldPostLogMessage(type))
             {
-                return;
+                yield break;
             }
 
-            var options = new ReportPostOptions();
-            options.Description = ClientSettings.Description;
-            options.Email = ClientSettings.Email;
-            options.Key = ClientSettings.Key;
-            options.Notes = ClientSettings.Notes;
-            options.User = ClientSettings.User;
-            options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
+            var options = new ReportPostOptions
+            {
+                Description = clientSettings.Description,
+                Email = clientSettings.Email,
+                Key = clientSettings.Key,
+                Notes = clientSettings.Notes,
+                User = clientSettings.User,
+                CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy
+            };
             stackTrace = $"{logMessage}\n{stackTrace}";
 
-            StartCoroutine(Post(stackTrace, options, callback));
+            yield return Post(stackTrace, options, callback);
         }
 
-        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action callback = null)
+        public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            if (!_reportUploadGuardService.ShouldPostException(ex))
+            if (!reportUploadGuardService.ShouldPostException(ex))
             {
                 yield break;
             }
 
             options = options ?? new ReportPostOptions();
-            options.SetNullOrEmptyValues(ClientSettings);
+            options.SetNullOrEmptyValues(clientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
             yield return Post(ex.ToString(), options, callback);
         }
 
-        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action callback = null)
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            if (ClientSettings.CaptureEditorLog)
+            if (clientSettings.CaptureEditorLog)
             {
                 // TODO BG support this
                 // https://github.com/BugSplat-Git/bugsplat-unity/issues/33
                 Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
             }
 
-            if (ClientSettings.CapturePlayerLog)
+            if (clientSettings.CapturePlayerLog)
             {
                 // TODO BG support this
                 // https://github.com/BugSplat-Git/bugsplat-unity/issues/32
                 Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
             }
 
-            if (ClientSettings.CaptureScreenshots)
+            if (clientSettings.CaptureScreenshots)
             {
                 // TODO BG support this
                 // https://github.com/BugSplat-Git/bugsplat-unity/issues/34
                 Debug.Log("BugSplat info: CaptureScreenshots is not implemented on this platform");
             }
 
-            yield return ExceptionClient.Post(stackTrace, options);
-
-            callback?.Invoke();
+            yield return exceptionClient.Post(stackTrace, options, callback);
         }
     }
 }

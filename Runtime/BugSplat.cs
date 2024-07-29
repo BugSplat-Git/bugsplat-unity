@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 #if UNITY_IOS && !UNITY_EDITOR
@@ -201,28 +200,23 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            var gameObject = new GameObject();
-
-#if UNITY_STANDALONE_WIN || UNITY_WSA           
-            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version);
-            bugsplat.MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows;
-            bugsplat.ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
+#if UNITY_STANDALONE_WIN || UNITY_WSA        
+            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
+            {
+                MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
+                ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
+            };
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = DotNetStandardExceptionReporter.Create(dotNetStandardClientSettings, dotNetStandardClient, gameObject);
+            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
             var windowsReporter = new WindowsReporter(dotNetStandardClientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
-
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
 #elif UNITY_WEBGL
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
-            var webGLReporter = WebGLReporter.Create(
-                webGLClientSettings,
-                webGLExceptionClient,
-                gameObject
-            );
+            var webGLReporter = new WebGLReporter(webGLClientSettings, webGLExceptionClient);
             clientSettings = webGLClientSettings;
             exceptionReporter = webGLReporter;
 #elif UNITY_IOS && !UNITY_EDITOR
@@ -241,13 +235,13 @@ namespace BugSplatUnity
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
             }
 
-            UseDotNetHandler(database, application, version, gameObject);
+            UseDotNetHandler(database, application, version);
 #else
-            UseDotNetHandler(database, application, version, gameObject);
+            UseDotNetHandler(database, application, version);
 #endif
         }
 
-        private void UseDotNetHandler(string database, string application, string version, GameObject gameObject)
+        private void UseDotNetHandler(string database, string application, string version)
         {
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
             {
@@ -256,7 +250,7 @@ namespace BugSplatUnity
             };
             var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = DotNetStandardExceptionReporter.Create(dotNetStandardClientSettings, dotNetStandardClient, gameObject);
+            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
 
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
@@ -270,24 +264,27 @@ namespace BugSplatUnity
         {
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
-            
+
+
             var bugSplat = new BugSplat(
                 options.Database,
                 application,
-                version, 
+                version,
+
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid
-            );
-
-            bugSplat.Description = options.Description;
-            bugSplat.Email = options.Email;
-            bugSplat.Key = options.Key;
-            bugSplat.Notes = options.Notes;
-            bugSplat.User = options.User;
-            bugSplat.CaptureEditorLog = options.CaptureEditorLog;
-            bugSplat.CapturePlayerLog = options.CapturePlayerLog;
-            bugSplat.CaptureScreenshots = options.CaptureScreenshots;
-            bugSplat.PostExceptionsInEditor = options.PostExceptionsInEditor;
+            )
+            {
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                Notes = options.Notes,
+                User = options.User,
+                CaptureEditorLog = options.CaptureEditorLog,
+                CapturePlayerLog = options.CapturePlayerLog,
+                CaptureScreenshots = options.CaptureScreenshots,
+                PostExceptionsInEditor = options.PostExceptionsInEditor
+            };
 
             if (options.PersistentDataFileAttachmentPaths != null)
 			{
@@ -309,9 +306,9 @@ namespace BugSplatUnity
         /// <param name="logMessage">logMessage provided by logMessageReceived event that will be used as post description</param>
         /// <param name="stackTrace">stackTrace provided by logMessageReceived event</param>
         /// <param name="type">type provided by logMessageReceived event</param>
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type)
+        public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type)
         {
-            exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
+            yield return exceptionReporter.LogMessageReceived(logMessage, stackTrace, type);
         }
 
         /// <summary>
@@ -320,7 +317,7 @@ namespace BugSplatUnity
         /// <param name="exception">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
-        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action callback = null)
+        public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             return exceptionReporter.Post(exception, options, callback);
         }

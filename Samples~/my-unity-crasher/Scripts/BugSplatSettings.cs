@@ -1,7 +1,6 @@
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Manager;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -17,14 +16,14 @@ public class BugSplatSettings : MonoBehaviour
         bugsplat.Description = "Overridden description from BugSplatSettings.";
         bugsplat.Notes = GetSystemInfo();
 
-        var lastPost = DateTime.Now;
+        var lastPost = new DateTime(0);
         bugsplat.ShouldPostException = (ex) =>
         {
             var now = DateTime.Now;
 
-            // Set to a short TimeSpan for demonstration purposes
-            // In production BugSplat recommends 10 seconds between posts
-            if (now - lastPost < TimeSpan.FromSeconds(3))
+            // Set to a long TimeSpan for demonstration purposes
+            // In production BugSplat recommends 3 seconds between posts
+            if (now - lastPost < TimeSpan.FromSeconds(7))
             {
                 Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
                 return false;
@@ -45,12 +44,14 @@ public class BugSplatSettings : MonoBehaviour
 
     private string GetSystemInfo()
     {
-        var info = new Dictionary<string, string>();
-        info.Add("OS", SystemInfo.operatingSystem);
-        info.Add("CPU", SystemInfo.processorType);
-        info.Add("MEMORY", $"{SystemInfo.systemMemorySize} MB");
-        info.Add("GPU", SystemInfo.graphicsDeviceName);
-        info.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
+        var info = new Dictionary<string, string>
+        {
+            { "OS", SystemInfo.operatingSystem },
+            { "CPU", SystemInfo.processorType },
+            { "MEMORY", $"{SystemInfo.systemMemorySize} MB" },
+            { "GPU", SystemInfo.graphicsDeviceName },
+            { "GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB" }
+        };
 
         var sections = info.Select(section => $"{section.Key}: {section.Value}");
         return string.Join(Environment.NewLine, sections);
