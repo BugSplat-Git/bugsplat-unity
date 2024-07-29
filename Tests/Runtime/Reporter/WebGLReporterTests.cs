@@ -16,44 +16,46 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         const int UnityLegacyCrashTypeId = 12;
         const int UnityCrashTypeId = 24;
 
-        [Test]
-        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
+        [UnityTest]
+        public IEnumerator LogMessageReceived_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => false;
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => false
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
-            sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeFalseReportUploadGuardService()
+            };
+            yield return sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
         }
 
-        [Test]
-        public void LogMessageReceived_WhenReportUploadGuardServiceReturnsTrue_ShouldCallPostWithStackTraceAndOptions()
+        [UnityTest]
+        public IEnumerator LogMessageReceived_WhenReportUploadGuardServiceReturnsTrue_ShouldCallPostWithStackTraceAndOptions()
         {
             var logMessage = "logMessage";
             var stackTrace = "stackTrace";
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => true;
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => true
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
-            sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
+            yield return sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
             Assert.NotNull(fakeExceptionClient.Calls[0].Options);
@@ -65,17 +67,18 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public IEnumerator Post_WhenReportUploadGuardServiceReturnsFalse_ShouldNotCallPost()
         {
             var exception = new Exception("BugSplat rocks!");
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => false;
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => false
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeFalseReportUploadGuardService();
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeFalseReportUploadGuardService()
+            };
             yield return sut.Post(exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
@@ -85,21 +88,22 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public IEnumerator Post_WithoutOptions_ShouldCallPostWithExceptionAndDefaultedOptions()
         {
             var exception = new Exception("BugSplat rocks!");
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.Description = "BugSplat rocks!";
-            clientSettings.Email = "fred@bugsplat.com";
-            clientSettings.Key = "key";
-            clientSettings.User = "fred";
-            clientSettings.ShouldPostException = (ex) => true;
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                Description = "BugSplat rocks!",
+                Email = "fred@bugsplat.com",
+                Key = "key",
+                User = "fred",
+                ShouldPostException = (ex) => true
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
             yield return sut.Post(exception);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
@@ -115,26 +119,29 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public IEnumerator Post_WithOptions_ShouldCallPostWithExceptionAndOverriddenOptions()
         {
             var exception = new Exception("BugSplat rocks!");
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.Description = "BugSplat rocks!";
-            clientSettings.Email = "fred@bugsplat.com";
-            clientSettings.Key = "key";
-            clientSettings.User = "fred";
-            clientSettings.ShouldPostException = (ex) => true;
-            var options = new ReportPostOptions();
-            options.Description = "new description";
-            options.Email = "barney@bugsplat.com";
-            options.Key = "new key";
-            options.User = "barney";
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                Description = "BugSplat rocks!",
+                Email = "fred@bugsplat.com",
+                Key = "key",
+                User = "fred",
+                ShouldPostException = (ex) => true
+            };
+            var options = new ReportPostOptions
+            {
+                Description = "new description",
+                Email = "barney@bugsplat.com",
+                Key = "new key",
+                User = "barney"
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
             yield return sut.Post(exception, options);
 
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
@@ -150,21 +157,22 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public IEnumerator Post_WithCallback_ShouldInvokeCallback()
         {
             var exception = new Exception("BugSplat rocks!");
-            var clientSettings = new WebGLClientSettingsRepository();
-            clientSettings.ShouldPostException = (ex) => true;
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => true
+            };
             var fakeExceptionClient = new FakeWebGLExceptionClient();
-            var gameObject = new GameObject();
-            var sut = WebGLReporter.Create(
+            var sut = new WebGLReporter(
                 clientSettings,
-                fakeExceptionClient,
-                gameObject
-            );
-
-            sut._reportUploadGuardService = new FakeTrueReportUploadGuardService();
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
 
             var invoked = false;
             var completed = new Task<bool>(() => invoked = true);
-            yield return sut.Post(exception, callback: () => completed.Start());
+            yield return sut.Post(exception, callback: (_) => completed.Start());
             yield return completed.AsCoroutine();
 
             Assert.IsTrue(invoked);

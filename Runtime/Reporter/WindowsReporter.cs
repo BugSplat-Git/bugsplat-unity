@@ -39,9 +39,9 @@ namespace BugSplatUnity.Runtime.Reporter
             _nativeCrashReportClient = nativeCrashReportClient;
         }
 
-        public void LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
+        public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
-           _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type, callback);
+           yield return _exceptionReporter.LogMessageReceived(logMessage, stackTrace, type, callback);
         }
 
         public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)

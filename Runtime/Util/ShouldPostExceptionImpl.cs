@@ -11,7 +11,7 @@ namespace BugSplatUnity.Runtime.Util
         {
             var now = DateTime.Now;
 
-            if (lastPost + TimeSpan.FromSeconds(10) > now)
+            if (lastPost + TimeSpan.FromSeconds(3) > now)
             {
                 Debug.Log("BugSplat info: Report rate-limiting triggered, skipping report...");
                 return false;

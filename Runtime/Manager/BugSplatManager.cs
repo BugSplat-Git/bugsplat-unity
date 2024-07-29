@@ -1,3 +1,4 @@
+using System;
 using BugSplatUnity.Runtime.Client;
 using UnityEngine;
 
@@ -15,15 +16,30 @@ namespace BugSplatUnity.Runtime.Manager
 
 		[SerializeField]
 		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization.")]
-		private bool registerLogMessageRecieved;
+		private bool registerLogMessageReceived = true;
 
-		private BugSplatManagerImpl _impl;
-		public BugSplat BugSplat => _impl.BugSplat;
+		private BugSplatRef bugsplatRef;
+		public BugSplat BugSplat => bugsplatRef.BugSplat;
 
 		private void Awake()
 		{
-			_impl = new BugSplatManagerImpl(bugSplatOptions, registerLogMessageRecieved, dontDestroyManagerOnSceneLoad, gameObject);
-			_impl.Instantiate();
+			if (bugSplatOptions == null)
+			{
+				throw new ArgumentException("BugSplat error: BugSplatOptions is null! BugSplat will not be initialized.");
+			}
+
+			var bugsplat = BugSplat.CreateFromOptions(bugSplatOptions);
+			bugsplatRef = new BugSplatRef(bugsplat);
+
+			if (registerLogMessageReceived)
+			{
+				Application.logMessageReceived += (logMessage, stackTrace, type) => StartCoroutine(bugsplat.LogMessageReceived(logMessage, stackTrace, type));
+			}
+			
+			if (dontDestroyManagerOnSceneLoad)
+			{
+                DontDestroyOnLoad(this);
+			}
 		}
 	}
 }
