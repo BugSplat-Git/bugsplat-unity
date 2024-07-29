@@ -29,12 +29,12 @@ namespace BugSplatUnity.Runtime.Client
 
         public IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            return PostException(stackTrace, options);
+            return PostException(stackTrace, options, callback);
         }
 
         public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
-            return PostException(ex.ToString(), options);
+            return PostException(ex.ToString(), options, callback);
         }
 
         private IEnumerator PostException(string exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
