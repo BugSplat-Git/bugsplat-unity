@@ -253,9 +253,9 @@ private void OpenUrl(string url)
 }
 ```
 
-When an exception occurs a page similar to the following will open in the users browser on Windows, macOS, and Linux.
+When an exception occurs, a page similar to the following will open in the user's browser on Windows, macOS, and Linux.
 
-TODO BG
+<img width="1086" alt="image" src="https://github.com/user-attachments/assets/3a3d6f82-e3bf-42bc-ae7f-582ba35cd499">
 
 More information on support responses can be found [here](https://docs.bugsplat.com/introduction/production/setting-up-custom-support-responses).
 
