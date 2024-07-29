@@ -83,13 +83,14 @@ namespace Crasher
 
 		private void OpenUrl(string url)
 		{
+			var escaped = url.Replace("?", "\\?").Replace("&", "\\&").Replace(" ", "%20").Replace("!", "\\!");
+
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN || UNITY_WSA
 			Process.Start(url);
 #elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-			var escaped = url.Replace("?", "\\?").Replace("&", "\\&").Replace(" ", "%20");
 			Process.Start("open", escaped);
 #elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-			Process.Start("xdg-open", url);
+			Process.Start("xdg-open", escaped);
 #elif UNITY_WEBGL
 			Application.OpenURL(url);
 #else
