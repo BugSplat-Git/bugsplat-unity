@@ -16,6 +16,14 @@ namespace BugSplatUnity.Runtime.Settings
             }
         }
 
+        public Dictionary<string, string> Attributes
+        {
+            get
+            {
+                return _bugsplat.Attributes;
+            }
+        }
+
         public bool CaptureEditorLog { get; set; } = false;
 
         public bool CapturePlayerLog { get; set; } = true;

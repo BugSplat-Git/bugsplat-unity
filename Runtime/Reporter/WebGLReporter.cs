@@ -40,6 +40,12 @@ namespace BugSplatUnity.Runtime.Reporter
                 User = clientSettings.User,
                 CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy
             };
+
+            foreach (var attribute in clientSettings.Attributes)
+            {
+                options.AdditionalAttributes.TryAdd(attribute.Key, attribute.Value);
+            }
+
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             yield return Post(stackTrace, options, callback);
@@ -59,7 +65,7 @@ namespace BugSplatUnity.Runtime.Reporter
             yield return Post(ex.ToString(), options, callback);
         }
 
-        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
+    private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             if (clientSettings.CaptureEditorLog)
             {

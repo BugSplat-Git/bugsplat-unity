@@ -46,6 +46,9 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
+		[Tooltip("Attributes to attach to reports")]
+		public Dictionary<string, string> Attributes;
+
 		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page")]
 		public string SymbolUploadClientId;
 

@@ -33,6 +33,17 @@ namespace BugSplatUnity
         }
 
         /// <summary>
+        /// A dictionary of key values pairs to be added every time Post is called
+        /// </summary>
+        public Dictionary<string, string> Attributes
+        {
+            get
+            {
+                return clientSettings.Attributes;
+            }
+        }
+
+        /// <summary>
         /// Upload Editor.log when Post is called
         /// </summary>
         public bool CaptureEditorLog

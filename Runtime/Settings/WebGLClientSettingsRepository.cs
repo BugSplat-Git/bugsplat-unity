@@ -10,6 +10,7 @@ namespace BugSplatUnity.Runtime.Settings
         // TODO BG what do we do about attachments here...
         // https://github.com/BugSplat-Git/bugsplat-unity/issues/37
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
+        public Dictionary<string, string> Attributes { get; } = new Dictionary<string, string>();
         public bool CaptureEditorLog { get; set; } = false;
         public bool CapturePlayerLog { get; set; } = false;
         public bool CaptureScreenshots { get; set; } = false;

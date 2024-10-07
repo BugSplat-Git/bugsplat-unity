@@ -13,8 +13,13 @@ public class BugSplatSettings : MonoBehaviour
     void Start()
     {
         bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+        bugsplat.Attributes.Add("OS", SystemInfo.operatingSystem);
+        bugsplat.Attributes.Add("CPU", SystemInfo.processorType);
+        bugsplat.Attributes.Add("MEMORY", $"{SystemInfo.systemMemorySize} MB");
+        bugsplat.Attributes.Add("GPU", SystemInfo.graphicsDeviceName);
+        bugsplat.Attributes.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
         bugsplat.Description = "Overridden description from BugSplatSettings.";
-        bugsplat.Notes = GetSystemInfo();
+        bugsplat.Notes = "Overridden notes field from BugSplatSettings.";
 
         var lastPost = new DateTime(0);
         bugsplat.ShouldPostException = (ex) =>
@@ -39,21 +44,5 @@ public class BugSplatSettings : MonoBehaviour
     void Update()
     {
         
-    }
-
-
-    private string GetSystemInfo()
-    {
-        var info = new Dictionary<string, string>
-        {
-            { "OS", SystemInfo.operatingSystem },
-            { "CPU", SystemInfo.processorType },
-            { "MEMORY", $"{SystemInfo.systemMemorySize} MB" },
-            { "GPU", SystemInfo.graphicsDeviceName },
-            { "GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB" }
-        };
-
-        var sections = info.Select(section => $"{section.Key}: {section.Value}");
-        return string.Join(Environment.NewLine, sections);
     }
 }
