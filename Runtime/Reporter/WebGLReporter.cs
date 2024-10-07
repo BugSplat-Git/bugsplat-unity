@@ -65,7 +65,7 @@ namespace BugSplatUnity.Runtime.Reporter
             yield return Post(ex.ToString(), options, callback);
         }
 
-    private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
+        private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             if (clientSettings.CaptureEditorLog)
             {
