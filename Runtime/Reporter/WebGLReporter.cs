@@ -40,6 +40,12 @@ namespace BugSplatUnity.Runtime.Reporter
                 User = clientSettings.User,
                 CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy
             };
+
+            foreach (var attribute in clientSettings.Attributes)
+            {
+                options.AdditionalAttributes.TryAdd(attribute.Key, attribute.Value);
+            }
+
             stackTrace = $"{logMessage}\n{stackTrace}";
 
             yield return Post(stackTrace, options, callback);

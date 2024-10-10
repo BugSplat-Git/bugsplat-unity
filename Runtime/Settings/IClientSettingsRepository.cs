@@ -7,6 +7,7 @@ namespace BugSplatUnity.Runtime.Settings
     internal interface IClientSettingsRepository
     {
         List<FileInfo> Attachments { get; }
+        Dictionary<string, string> Attributes { get; }
         bool CaptureEditorLog { get; set; }
         bool CapturePlayerLog { get; set; }
         bool CaptureScreenshots { get; set; }

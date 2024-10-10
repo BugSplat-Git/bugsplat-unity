@@ -9,6 +9,7 @@ namespace BugSplatUnity
     {
         List<FileInfo> AdditionalAttachments { get; }
         List<FormDataParam> AdditionalFormDataParams { get; }
+        Dictionary<string, string> AdditionalAttributes { get; }
         string Description { get; set; }
         string Email { get; set; }
         string Key { get; set; }
@@ -28,6 +29,7 @@ namespace BugSplatUnity
     {
         public List<FileInfo> AdditionalAttachments { get; } = new List<FileInfo>();
         public List<FormDataParam> AdditionalFormDataParams { get; } = new List<FormDataParam>();
+        public Dictionary<string, string> AdditionalAttributes { get; } = new Dictionary<string, string>();
         public string Description { get; set; }
         public string Email { get; set; }
         public string Key { get; set; }

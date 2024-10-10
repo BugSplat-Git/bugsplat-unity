@@ -52,7 +52,8 @@ namespace BugSplatUnity.Runtime.Client
                 { "appKey", options.Key },
                 { "user", options.User },
                 { "callstack", exception },
-                { "crashTypeId", $"{options.CrashTypeId}" }
+                { "crashTypeId", $"{options.CrashTypeId}" },
+                { "attributes", JsonUtility.ToJson(options.AdditionalAttributes) }
             };
 
             var request = UnityWebClient.Post(url, formData);

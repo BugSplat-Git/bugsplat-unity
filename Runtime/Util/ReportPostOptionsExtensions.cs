@@ -1,4 +1,5 @@
 ﻿using BugSplatUnity.Runtime.Settings;
+using System.Collections.Generic;
 
 namespace BugSplatUnity.Runtime.Util
 {
@@ -9,6 +10,11 @@ namespace BugSplatUnity.Runtime.Util
             if (clientSettings.Attachments?.Count != 0)
             {
                 options.AdditionalAttachments.AddRange(clientSettings.Attachments);
+            }
+
+            foreach (var attribute in clientSettings.Attributes)
+            {
+                options.AdditionalAttributes.TryAdd(attribute.Key, attribute.Value);
             }
 
             if (string.IsNullOrEmpty(options.Description))
