@@ -33,13 +33,23 @@ namespace BugSplatUnity.Runtime.Manager
 
 			if (registerLogMessageReceived)
 			{
-				Application.logMessageReceived += (logMessage, stackTrace, type) => StartCoroutine(bugsplat.LogMessageReceived(logMessage, stackTrace, type));
+				Application.logMessageReceived += LogMessageReceivedHandler;
 			}
-			
+
 			if (dontDestroyManagerOnSceneLoad)
 			{
-                DontDestroyOnLoad(this);
+				DontDestroyOnLoad(this);
 			}
+		}
+
+		private void OnDestroy()
+		{
+			Application.logMessageReceived -= LogMessageReceivedHandler;
+		}
+
+		void LogMessageReceivedHandler(string logMessage, string stackTrace, LogType type)
+		{
+			StartCoroutine(bugsplatRef.BugSplat.LogMessageReceived(logMessage, stackTrace, type));
 		}
 	}
 }
