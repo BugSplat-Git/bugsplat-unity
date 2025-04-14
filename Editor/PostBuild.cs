@@ -9,10 +9,13 @@ using BugSplatDotNetStandard;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using Unity.Android.Types;
 using BugSplatUnity.Runtime.Client;
 using Debug = UnityEngine.Debug;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
+using Unity.Android.Gradle;
+using UserBuildSettings = UnityEditor.Android.UserBuildSettings;
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -70,7 +73,7 @@ public class BuildPostprocessors
 #if UNITY_EDITOR_WIN
 	private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 	{
-		if (!UserBuildSettings.copyPDBFiles)
+		if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
 		{
 			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
 			return;
@@ -194,9 +197,9 @@ public class BuildPostprocessors
 			return;
 		}
 
-		if (EditorUserBuildSettings.androidCreateSymbols == AndroidCreateSymbols.Disabled)
+		if (UserBuildSettings.DebugSymbols.level == DebugSymbolLevel.None)
 		{
-			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Create symbols.zip\" is not configured in BuildSettings->Android.");
+			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Debug Symbols\" is set to None in BuildSettings->Android.");
 			return;
 		}
 
@@ -287,10 +290,10 @@ public class BuildPostprocessors
 				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
 		
-		if (Application.platform == RuntimePlatform.Android) {
-			symUploadProcessInfo.Arguments += "--dumpSyms";
+		if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android) {
+			symUploadProcessInfo.Arguments += " --dumpSyms";
 		};
-
+		
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
 		if (uploadSymProcess == null)
 		{
