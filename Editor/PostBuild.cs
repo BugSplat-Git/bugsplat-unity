@@ -284,7 +284,11 @@ public class BuildPostprocessors
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
 			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {options.SymbolUploadClientId} --clientSecret {options.SymbolUploadClientSecret} " +
-				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\" --dumpSyms"
+				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
+		};
+		
+		if (Application.platform == RuntimePlatform.Android) {
+			symUploadProcessInfo.Arguments += "--dumpSyms";
 		};
 
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
