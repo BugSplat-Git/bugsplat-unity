@@ -115,7 +115,7 @@ You can use the `Notes` field to capture arbitrary data such as system informati
 ```cs
 void Start()
 {
-    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;\
+    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
     bugsplat.Notes = GetSystemInfo();
 }
 
@@ -196,6 +196,36 @@ bugsplat.ShouldPostException = (ex) =>
 };
 ```
 
+### Windows Minidumps (Crashes)
+
+BugSplat can be configured to upload Windows minidumps created by the `UnityCrashHandler`. BugSplat will automatically pull Unity Player symbols from the [Unity Symbol Server](https://docs.unity3d.com/Manual/WindowsDebugging.html).
+
+The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used to upload minidumps to BugSplat. We recommend running `PostAllCrashes` when your game launches.
+
+```cs
+void Start()
+{
+    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+    StartCoroutine(bugsplat.PostAllCrashes());
+}
+
+```
+
+Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identical to the `ExceptionPostOptions` example listed above.
+
+You can generate a test crash on Windows with any of the following methods.
+
+```cs
+Utils.ForceCrash(ForcedCrashCategory.Abort);
+Utils.ForceCrash(ForcedCrashCategory.AccessViolation);
+Utils.ForceCrash(ForcedCrashCategory.FatalError);
+Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
+```
+
+### Windows Symbols
+
+To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+
 ### Support Response
 
 BugSplat has the ability to display a support response to users who encounter a crash. You can show your users a generalized support response for all crashes, or a custom support response that corresponds to the type of crash that occurred. Defining a support response allows you to alert users that bug has been fixed in a new version, or that they need to update their graphics drivers.
@@ -258,65 +288,6 @@ When an exception occurs, a page similar to the following will open in the user'
 <img width="1086" alt="image" src="https://github.com/user-attachments/assets/3a3d6f82-e3bf-42bc-ae7f-582ba35cd499">
 
 More information on support responses can be found [here](https://docs.bugsplat.com/introduction/production/setting-up-custom-support-responses).
-
-## 🪟 Windows
-
-BugSplat can be configured to upload Windows minidumps created by the `UnityCrashHandler`. BugSplat will automatically pull Unity Player symbols from the [Unity Symbol Server](https://docs.unity3d.com/Manual/WindowsDebugging.html). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
-
-### Symbols
-
-To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. Once configured, plugins will be uploaded automatically the next time you build your project.
-
-### Minidumps (Crashes)
-
-The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used to upload minidumps to BugSplat. We recommend running `PostMostRecentCrash` when your game launches.
-
-```cs
-StartCoroutine(bugsplat.PostCrash(new FileInfo("/path/to/crash/folder")));
-StartCoroutine(bugsplat.PostMostRecentCrash());
-StartCoroutine(bugsplat.PostAllCrashes());
-```
-
-Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identical to the `ExceptionPostOptions` example listed above.
-
-You can generate a test crash on Windows with any of the following methods.
-
-```cs
-Utils.ForceCrash(ForcedCrashCategory.Abort);
-Utils.ForceCrash(ForcedCrashCategory.AccessViolation);
-Utils.ForceCrash(ForcedCrashCategory.FatalError);
-Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
-```
-
-## 🌎 UWP
-
-To use BugSplat in a Universal Windows Platform application, you will need to add some capabilities to the `Package.appxmanifest` file in the solution directory that Unity generates at build time.
-
-### Capabilities
-
-Reporting exceptions, crashes, and uploading log files requires the `Internet (Client)` capability.
-
-### Minidumps (Crashes)
-
-We found that restricted capabilities were required in order to generate minidumps. Please see this Microsoft [document](https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps) that describes how to configure your system to generate minidumps for UWP native crashes.
-
-To upload minidumps from `%LOCALAPPDATA%\CrashDumps` you will also need to add the `broadFileSystemAccess` restricted capability. To add access to the file system you will need to add the following to your `Package.appxmanifest`:
-
-```xml
-<Package xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" ... >
-```
-
-Under the `Capabilities` section add the `broadFileSystemAccess` capability:
-
-```xml
-<Capabilities>
-    <rescap:Capability Name="broadFileSystemAccess" />
-</Capabilities>
-```
-
-Finally, ensure that your application has access to the file system. The following is a snippet illustrating where this is set for our [my-unity-crasher](https://github.com/BugSplat-Git/my-unity-crasher) sample:
-
-![Unity file system access](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/17e21073-8992-4ef3-88ca-e024486ebc9f)
 
 ## 🤖 Android
 
