@@ -275,7 +275,7 @@ public class BuildPostprocessors
 
 		if (string.IsNullOrEmpty(options.SymbolUploadClientSecret))
 		{
-			Debug.LogWarning("BugSplat.SymbolUploadClientSecret is not set in BugSplatOptions. Skipping symbol uploads");
+			Debug.LogWarning("BugSplat.SymbolUploadClientSecret is not set in BugSplatOptions. Skipping symbol uploads...");
 			onCompleted(0);
 			return;
 		}
