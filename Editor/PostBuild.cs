@@ -280,10 +280,10 @@ public class BuildPostprocessors
 		var symbolUploadPath = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetSymUploaderName()));
 		if (!File.Exists(symbolUploadPath))
 		{
-            DownloadSymbolUpload(symbolUploadPath);
+			DownloadSymbolUpload(symbolUploadPath);
 		}
 
-        var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
 
 		var symUploadProcessInfo = new ProcessStartInfo
@@ -294,11 +294,12 @@ public class BuildPostprocessors
 			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {options.SymbolUploadClientId} --clientSecret {options.SymbolUploadClientSecret} " +
 				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
-		
-		if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android) {
+
+		if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
+		{
 			symUploadProcessInfo.Arguments += " --dumpSyms";
-		};
-		
+		}
+
 		var uploadSymProcess = Process.Start(symUploadProcessInfo);
 		if (uploadSymProcess == null)
 		{
@@ -318,67 +319,67 @@ public class BuildPostprocessors
 		var varient = Path.GetFileName(destinationPath);
 		var fileUrl = $"https://app.bugsplat.com/download/{varient}";
 
-        try
-        {
-            using (var client = new WebClient())
-            {
-                Debug.Log($"BugSplat. Downloading {varient} to {destinationPath}");
+		try
+		{
+			using (var client = new WebClient())
+			{
+				Debug.Log($"BugSplat. Downloading {varient} to {destinationPath}");
 
-                client.DownloadFile(fileUrl, destinationPath);
+				client.DownloadFile(fileUrl, destinationPath);
 
-                if (File.Exists(destinationPath))
-                {
-                    Debug.Log($"BugSplat. {varient} downloaded successfully to {destinationPath}");
-                }
+				if (File.Exists(destinationPath))
+				{
+					Debug.Log($"BugSplat. {varient} downloaded successfully to {destinationPath}");
+				}
 				else
 				{
-                    Debug.LogError($"BugSplat. Could not download {varient}");
+					Debug.LogError($"BugSplat. Could not download {varient}");
 				}
-            }
-        }
-        catch (WebException ex)
-        {
-            Debug.LogError($"BugSplat. Failed to download file from {fileUrl}. Error: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"BugSplat. Unexpected error during file download. Error: {ex.Message}");
-        }
+			}
+		}
+		catch (WebException ex)
+		{
+			Debug.LogError($"BugSplat. Failed to download file from {fileUrl}. Error: {ex.Message}");
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"BugSplat. Unexpected error during file download. Error: {ex.Message}");
+		}
 
-        if (Application.platform == RuntimePlatform.WindowsEditor)
+		if (Application.platform == RuntimePlatform.WindowsEditor)
 		{
 			return;
 		}
 
-        try
-        {
-            var absolutePath = Path.GetFullPath(destinationPath);
+		try
+		{
+			var absolutePath = Path.GetFullPath(destinationPath);
 
-            // Run chmod +x to make the file executable
-            var process = new Process();
-            process.StartInfo.FileName = "chmod";
-            process.StartInfo.Arguments = $"+x \"{absolutePath}\"";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.Start();
+			// Run chmod +x to make the file executable
+			var process = new Process();
+			process.StartInfo.FileName = "chmod";
+			process.StartInfo.Arguments = $"+x \"{absolutePath}\"";
+			process.StartInfo.UseShellExecute = false;
+			process.StartInfo.RedirectStandardOutput = true;
+			process.StartInfo.RedirectStandardError = true;
+			process.Start();
 
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+			var output = process.StandardOutput.ReadToEnd();
+			var error = process.StandardError.ReadToEnd();
+			process.WaitForExit();
 
-            if (process.ExitCode == 0)
-            {
-                Debug.Log($"PostBuild: Successfully made {destinationPath} executable. Output: {output}");
-            }
-            else
-            {
-                Debug.LogError($"PostBuild: Failed to make {destinationPath} executable. Error: {error}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"PostBuild: Error setting executable permission for {destinationPath}. Error: {ex.Message}");
-        }
-    }
+			if (process.ExitCode == 0)
+			{
+				Debug.Log($"PostBuild: Successfully made {destinationPath} executable. Output: {output}");
+			}
+			else
+			{
+				Debug.LogError($"PostBuild: Failed to make {destinationPath} executable. Error: {error}");
+			}
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"PostBuild: Error setting executable permission for {destinationPath}. Error: {ex.Message}");
+		}
+	}
 }
