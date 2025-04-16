@@ -275,6 +275,11 @@ public class BuildPostprocessors
 			return;
 		}
 
+		// TODO BG platform specific check if symbol-upload exists
+		// If not download it
+		// Make it executable?
+
+
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
 
