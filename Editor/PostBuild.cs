@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,11 +13,6 @@ using BugSplatUnity.Runtime.Client;
 using Debug = UnityEngine.Debug;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
-#if UNITY_ANDROID
-using Unity.Android.Types;
-using Unity.Android.Gradle;
-using UserBuildSettings = UnityEditor.Android.UserBuildSettings;
-#endif
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -199,7 +194,7 @@ public class BuildPostprocessors
 			return;
 		}
 
-		if (UserBuildSettings.DebugSymbols.level == DebugSymbolLevel.None)
+		if (UnityEditor.Android.UserBuildSettings.DebugSymbols.level == Unity.Android.Types.DebugSymbolLevel.None)
 		{
 			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Debug Symbols\" is set to None in BuildSettings->Android.");
 			return;
@@ -268,14 +263,14 @@ public class BuildPostprocessors
 	{
 		if (string.IsNullOrEmpty(options.SymbolUploadClientId))
 		{
-			Debug.LogWarning("BugSplat.SymbolUploadClientId is not set in BugSplatOptions. Skipping symbol uploads...");
+			Debug.LogWarning("BugSplat. SymbolUploadClientId is not set in BugSplatOptions. Skipping symbol uploads...");
 			onCompleted(0);
 			return;
 		}
 
 		if (string.IsNullOrEmpty(options.SymbolUploadClientSecret))
 		{
-			Debug.LogWarning("BugSplat.SymbolUploadClientSecret is not set in BugSplatOptions. Skipping symbol uploads...");
+			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions. Skipping symbol uploads");
 			onCompleted(0);
 			return;
 		}
