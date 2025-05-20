@@ -4,6 +4,10 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
+#if !UNITY_2022_1_OR_NEWER
+using BugSplatUnity.Runtime.Util.Extensions;
+#endif
+
 namespace BugSplatUnity.Runtime.Client
 {
     internal interface IDotNetStandardExceptionClient

@@ -1,6 +1,10 @@
 ﻿using BugSplatUnity.Runtime.Settings;
 using System.Collections.Generic;
 
+#if !UNITY_2022_1_OR_NEWER
+using BugSplatUnity.Runtime.Util.Extensions;
+#endif
+
 namespace BugSplatUnity.Runtime.Util
 {
     internal static class ReportPostOptionsExtensions

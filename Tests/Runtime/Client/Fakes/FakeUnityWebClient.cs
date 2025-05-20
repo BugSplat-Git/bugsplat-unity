@@ -65,5 +65,7 @@ namespace BugSplatUnity.RuntimeTests.Client.Fakes
         public string Notes { get; set; }
         public string User { get; set; }
         public int CrashTypeId { get; set; }
+
+        public Dictionary<string, string> AdditionalAttributes => new Dictionary<string,string>();
     }
 }
