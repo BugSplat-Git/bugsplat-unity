@@ -28,8 +28,9 @@ namespace BugSplatUnity.Runtime.Manager
 				throw new ArgumentException("BugSplat error: BugSplatOptions is null! BugSplat will not be initialized.");
 			}
 
-			var bugsplat = BugSplat.CreateFromOptions(bugSplatOptions);
-			bugsplatRef = new BugSplatRef(bugsplat);
+                        var bugsplat = BugSplat.CreateFromOptions(bugSplatOptions);
+                        BugSplat.Instance = bugsplat;
+                        bugsplatRef = new BugSplatRef(bugsplat);
 
 			if (registerLogMessageReceived)
 			{

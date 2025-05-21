@@ -1,5 +1,4 @@
 using BugSplatUnity;
-using BugSplatUnity.Runtime.Manager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +11,7 @@ public class BugSplatSettings : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+        bugsplat = BugSplat.Instance;
         bugsplat.Attributes.Add("OS", SystemInfo.operatingSystem);
         bugsplat.Attributes.Add("CPU", SystemInfo.processorType);
         bugsplat.Attributes.Add("MEMORY", $"{SystemInfo.systemMemorySize} MB");
