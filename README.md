@@ -52,7 +52,7 @@ To import the sample, click the carrot next to **Samples** to reveal the **my-un
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **BugSplatOptions** object. Click BugSplatOptions and replace the database value with your BugSplat database.
+Next, open **Tools > BugSplat > Options** and replace the database value with your BugSplat database.
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
@@ -72,7 +72,7 @@ BugSplat's Unity integration is flexible and can be used in various ways. The ea
 
 ![BugSplat Manager](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ef5240a6-9676-43c6-a482-51216cb34401)
 
-`BugSplatManager` needs to be initialized with a `BugSplatOptions` serialized object. A new instance of `BugSplatOptions` can be created through the Asset Create menu.
+`BugSplatManager` will automatically use the options configured via **Tools > BugSplat > Options**.
 
 ![BugSplat Create Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec402d1-4b8a-49cf-96e9-00d951717771)
 
@@ -80,20 +80,20 @@ Configure fields as appropriate. Note that if Application or Version are left em
 
 ![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
 
-Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
-
 ![BugSplat Manager Configured](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/67bed7b5-e2a9-4f52-b5bb-bdc8eebd35a0)
 
 ## ⌨️ Usage
 
-If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#windows) from native crashes.
+If you're using `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#windows) from native crashes.
+
+The options set in **Tools > BugSplat > Options** are loaded automatically at startup and used to create the global `BugSplat.Instance`.
 
 ### Adding Metadata
 
-First, find your instance of `BugSplat`. The following is an example of how to find an instance of `BugSplat` via `BugSplatManager`:
+First, access the global `BugSplat` instance:
 
 ```cs
-var bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+var bugsplat = BugSplat.Instance;
 ```
 
 You can extend `BugSplat` by setting the following properties:
@@ -115,7 +115,7 @@ You can use the `Notes` field to capture arbitrary data such as system informati
 ```cs
 void Start()
 {
-    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+    bugsplat = BugSplat.Instance;
     bugsplat.Notes = GetSystemInfo();
 }
 
@@ -205,7 +205,7 @@ The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used
 ```cs
 void Start()
 {
-    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+    bugsplat = BugSplat.Instance;
     StartCoroutine(bugsplat.PostAllCrashes());
 }
 
@@ -224,7 +224,7 @@ Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
 
 ### Windows Symbols
 
-To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret via **Tools > BugSplat > Options**. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 ### Support Response
 
