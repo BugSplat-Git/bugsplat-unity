@@ -74,7 +74,7 @@ For best results, BugSplat recommends building with the `IL2CPP` backend. The `M
 
 To optimize your game for crash reporting, open `Player Settings` (`Edit > Player Settings`). Navigate to the `Configuration` section. For `Scripting Backend` choose `IL2CPP` and for `IL2CPP StackTrace Information` choose `Method Name, File Name, and Line Number`.
 
-TODO BG image
+![Unity Player Settings](https://github.com/user-attachments/assets/ed459d7e-8580-4e8d-b6aa-386ecaa51a56)
 
 ## ⚙️ Configuration
 
