@@ -43,6 +43,8 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 ## 🧑‍🏫 Sample
 
+> [!TIP] BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings ) section.
+
 After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
 
 To import the sample, click the carrot next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
@@ -65,6 +67,14 @@ Click **Play** and click or tap one of the buttons to send an error report to Bu
 Navigate to the [Crashes](https://app.bugsplat.com/v2/crashes) page, and click the value in the ID column to see the details of your report, including the call stack, log file, and screenshot of your app when the error occurred.
 
 ![BugSplat Crash Page](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/f108d7e9-ee90-4a09-a7b4-8a9b5d764942)
+
+## 🧰 Player Settings
+
+For best results, BugSplat recommends building with the `IL2CPP` backend. The `Mono` backend is supported, but has several limitations. With `IL2CPP`, BugSplat can capture fully symbolicated C# exception traces in production, as well as native crashes that contain call stacks mapped back to their original C# function names, file names, and line numbers.
+
+To optimize your game for crash reporting, open `Player Settings` (`Edit > Player Settings`). Navigate to the `Configuration` section. For `Scripting Backend` choose `IL2CPP` and for `IL2CPP StackTrace Information` choose `Method Name, File Name, and Line Number`.
+
+TODO BG image
 
 ## ⚙️ Configuration
 
@@ -172,7 +182,7 @@ StartCoroutine(bugsplat.Post(ex, options, callback));
 
 ### Preventing Repeated Reports
 
-By default, BugSplat prevents reports from being sent at a rate greater than 1 per every 60 seconds. You can override the default crash report throttling implementation by setting `ShouldPostException` on your BugSplat instance. To override `ShouldPostException`, assign the property a new `Func<Exception, bool>` value. Be sure your new implementation can handle a null value for `Exception`!
+By default, BugSplat prevents reports from being sent at a rate greater than 1 per every 3 seconds. You can override the default crash report throttling implementation by setting `ShouldPostException` on your BugSplat instance. To override `ShouldPostException`, assign the property a new `Func<Exception, bool>` value. Be sure your new implementation can handle a null value for `Exception`!
 
 The following example demonstrates how you could implement your own time-based report throttling mechanism:
 
@@ -225,6 +235,8 @@ Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
 ### Windows Symbols
 
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+
+For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents.
 
 ### Support Response
 

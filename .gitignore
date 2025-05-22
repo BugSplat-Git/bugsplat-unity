@@ -1,4 +1,7 @@
 .DS_Store
 symbol-upload-macos
+symbol-upload-macos.meta
 symbol-upload-linux
+symbol-upload-linux.meta
 symbol-upload-windows.exe
+symbol-upload-windows.exe.meta
