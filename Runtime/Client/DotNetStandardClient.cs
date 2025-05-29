@@ -43,6 +43,7 @@ namespace BugSplatUnity.Runtime.Client
 
         private ExceptionPostOptions CreateExceptionPostOptions(IReportPostOptions options)
         {
+            options ??= new ReportPostOptions();
             var exceptionPostOptions = new ExceptionPostOptions();
             
             foreach (var attribute in options.AdditionalAttributes) 
@@ -63,6 +64,7 @@ namespace BugSplatUnity.Runtime.Client
 
         private MinidumpPostOptions CreateMinidumpPostOptions(IReportPostOptions options)
         {
+            options ??= new ReportPostOptions();
             var minidumpPostOptions = new MinidumpPostOptions();
             
             foreach (var attribute in options.AdditionalAttributes) 
