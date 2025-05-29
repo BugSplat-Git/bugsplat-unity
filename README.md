@@ -47,7 +47,7 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
 
-To import the sample, click the carrot next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
+To import the sample, click the caret next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
 
 ![Importing the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/b7a39388-eb76-413a-a92f-72fd39c9a7d6)
 
@@ -78,7 +78,7 @@ To optimize your game for crash reporting, open `Player Settings` (`Edit > Playe
 
 ## ⚙️ Configuration
 
-BugSplat's Unity integration is flexible and can be used in various ways. The easiest way to get started is to attach the `BugSplatManager` Monobehaviour to a GameObject.
+BugSplat's Unity integration is flexible and can be used in various ways. The easiest way to get started is to attach the `BugSplatManager` MonoBehaviour to a GameObject.
 
 ![BugSplat Manager](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ef5240a6-9676-43c6-a482-51216cb34401)
 
@@ -86,7 +86,7 @@ BugSplat's Unity integration is flexible and can be used in various ways. The ea
 
 ![BugSplat Create Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec402d1-4b8a-49cf-96e9-00d951717771)
 
-Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will  default these values to `Application.productName` and `Application.version`, respectively.
+Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will default these values to `Application.productName` and `Application.version`, respectively.
 
 ![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
 
@@ -326,7 +326,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | Setting | Description |
 | --------------- | --------------- |
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
-| RegisterLogMessageRecieved | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
+| RegisterLogMessageReceived | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
 
 ### BugSplat Options
 
