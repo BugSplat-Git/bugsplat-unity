@@ -43,7 +43,8 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 ## 🧑‍🏫 Sample
 
-> [!TIP] BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings ) section.
+> [!TIP]
+> BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings ) section.
 
 After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
 
