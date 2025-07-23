@@ -30,6 +30,8 @@ namespace BugSplatUnity.Runtime.Settings
 
         public bool CaptureScreenshots { get; set; } = false;
 
+        public int LogFileMaxSizeMB { get; set; } = 10;
+
         public bool PostExceptionsInEditor { get; set; } = true;
 
         public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;

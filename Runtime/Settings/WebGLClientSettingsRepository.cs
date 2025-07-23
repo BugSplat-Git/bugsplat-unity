@@ -5,6 +5,7 @@ using System.IO;
 
 namespace BugSplatUnity.Runtime.Settings
 {
+#if UNITY_WEBGL
     internal class WebGLClientSettingsRepository : IClientSettingsRepository
     {
         // TODO BG what do we do about attachments here...
@@ -22,4 +23,5 @@ namespace BugSplatUnity.Runtime.Settings
         public string Notes { get; set; }
         public string User { get; set; }
     }
+#endif
 }

@@ -151,6 +151,21 @@ namespace BugSplatUnity
             }
         }
 
+        /// <summary>
+        /// BugSplat truncates log files to this size in MB. Default is 10 MB.
+        /// </summary>
+        public int LogFileMaxSizeMB
+        {
+            get
+            {
+                return clientSettings.LogFileMaxSizeMB;
+            }
+            set
+            {
+                clientSettings.LogFileMaxSizeMB = value;
+            }
+        }
+
         // <summary>
         /// A general purpose field that can be overridden by call to Post. 
         /// </summary>
@@ -281,7 +296,6 @@ namespace BugSplatUnity
                 options.Database,
                 application,
                 version,
-
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid
             )
@@ -294,6 +308,7 @@ namespace BugSplatUnity
                 CaptureEditorLog = options.CaptureEditorLog,
                 CapturePlayerLog = options.CapturePlayerLog,
                 CaptureScreenshots = options.CaptureScreenshots,
+                LogFileMaxSizeMB = options.LogFileMaxSizeMB,
                 PostExceptionsInEditor = options.PostExceptionsInEditor
             };
 
@@ -304,6 +319,18 @@ namespace BugSplatUnity
                     var trimmedFilePath = filePath.TrimStart('/', '\\');
                     var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
                     var fileInfo = new FileInfo(fullFilePath);
+                    var sizeLimit = 100 * 1024 * 1024; // 100 MB
+                    if (!fileInfo.Exists)
+                    {
+                        Debug.LogWarning($"Persistent data file attachment does not exist at {fileInfo.FullName}, skipping...");
+                        continue;
+                    }
+                    if (fileInfo.Length > sizeLimit)
+                    {
+                        Debug.LogWarning($"Persistent data file attachment {fileInfo.FullName} size limit exceeded. Limit is {sizeLimit}, size was {fileInfo.Length}. Skipping...");
+                        continue;
+                    }
+
                     bugSplat.Attachments.Add(fileInfo);
                 }
             }

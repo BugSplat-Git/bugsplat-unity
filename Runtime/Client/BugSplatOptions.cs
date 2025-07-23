@@ -37,7 +37,10 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Upload Player.log when Post is called")]
 		public bool CapturePlayerLog;
 
-		[Tooltip("Take a screenshot and upload it when Post is called")]
+        [Tooltip("Maximum size of the log files to upload in MB. Defaults to 10MB if not set.")]
+		public int LogFileMaxSizeMB = 10;
+
+        [Tooltip("Take a screenshot and upload it when Post is called")]
 		public bool CaptureScreenshots;
 
 		[Tooltip("Should BugSplat upload exceptions when in editor")]
