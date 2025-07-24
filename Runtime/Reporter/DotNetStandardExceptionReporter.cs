@@ -90,10 +90,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var editorLogFileInfo = new FileInfo(editorLogFilePath);
                 if (editorLogFileInfo.Exists)
                 {
-                    // Copy to a temp file to avoid sharing exception
-                    var tempFile = CopyToTempFile(editorLogFileInfo);
-                    options.AdditionalAttachments.Add(tempFile);
-                    tempFiles.Add(tempFile);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
@@ -137,10 +143,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {
-                    // Copy to a temp file to avoid sharing exception
-                    var tempFile = CopyToTempFile(playerLogFileInfo);
-                    options.AdditionalAttachments.Add(tempFile);
-                    tempFiles.Add(tempFile);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
@@ -244,21 +256,59 @@ namespace BugSplatUnity.Runtime.Reporter
             );
         }
 
-        private FileInfo CopyToTempFile(FileInfo fileToCopy)
+        // Copy to a temp file to avoid sharing exception
+        private FileInfo CopyLogTailToTempFile(FileInfo logFileInfo, int tailMaxSizeMB)
         {
-            var tempFile = new FileInfo(Path.Combine(fileToCopy.Directory.FullName, $"{Guid.NewGuid()}.log"));
-            File.Copy(fileToCopy.FullName, tempFile.FullName);
-            return tempFile;
+            if (logFileInfo == null || !logFileInfo.Exists)
+            {
+                Debug.LogError($"Log file does not exist at {logFileInfo.FullName}, skipping...");
+                return null;
+            }
+
+            var maxBytesToCopy = (long)tailMaxSizeMB * 1024 * 1024;
+            var tempDir = Path.GetTempPath();
+            var tempFileInfo = new FileInfo(Path.Combine(tempDir, "bugsplat-unity", $"{Guid.NewGuid()}", logFileInfo.Name));
+
+            Directory.CreateDirectory(tempFileInfo.Directory.FullName);
+
+            try
+            {
+                using (var sourceStream = new FileStream(logFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var destStream = new FileStream(tempFileInfo.FullName, FileMode.Create, FileAccess.Write))
+                {
+                    if (sourceStream.Length > maxBytesToCopy)
+                    {
+                        sourceStream.Seek(-maxBytesToCopy, SeekOrigin.End); // Start from the last 10MB
+                    }
+
+                    sourceStream.CopyTo(destStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                return null;
+            }
+
+            return tempFileInfo;
         }
 
         private void DeleteTempFiles(IEnumerable<FileInfo> tempFiles)
         {
-            foreach (var tempFile in tempFiles)
+            try
             {
-                if (tempFile.Exists)
+                foreach (var tempFile in tempFiles)
                 {
-                    tempFile.Delete();
+                    if (tempFile.Exists)
+                    {
+                        tempFile.Delete();
+                        tempFile.Directory.Delete();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(new Exception("Could not delete temp files", ex));
             }
         }
 

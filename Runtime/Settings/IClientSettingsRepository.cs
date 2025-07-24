@@ -12,6 +12,9 @@ namespace BugSplatUnity.Runtime.Settings
         bool CapturePlayerLog { get; set; }
         bool CaptureScreenshots { get; set; }
         bool PostExceptionsInEditor { get; set; }
+#if !UNITY_WEBGL
+        int LogFileMaxSizeMB { get; set; }
+#endif
         Func<Exception, bool> ShouldPostException { get; set; }
         string Description { get; set; }
         string Email { get; set; }
