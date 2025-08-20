@@ -376,7 +376,7 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Post a specifc crash to BugSplat and will skip crashes that have already been posted 
+        /// Post a specific crash to BugSplat and will skip crashes that have already been posted 
         /// </summary>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
