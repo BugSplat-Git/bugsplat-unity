@@ -2,7 +2,6 @@ using System;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 using BugSplat = BugSplatUnity.BugSplat;
-using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using System.Diagnostics;
@@ -19,7 +18,7 @@ namespace Crasher
 		
 		void Start()
 		{
-			bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+                        bugsplat = BugSplat.Instance;
 			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
 #if UNITY_STANDALONE_WIN
             StartCoroutine(bugsplat.PostMostRecentCrash());
