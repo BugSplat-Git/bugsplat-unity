@@ -263,16 +263,28 @@ public class BuildPostprocessors
 
 	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
-		if (string.IsNullOrEmpty(options.SymbolUploadClientId))
+		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
+		if (string.IsNullOrEmpty(clientId))
 		{
-			Debug.LogWarning("BugSplat. SymbolUploadClientId is not set in BugSplatOptions. Skipping symbol uploads...");
+			clientId = options.SymbolUploadClientId;
+		}
+		
+		if (string.IsNullOrEmpty(clientId))
+		{
+			Debug.LogWarning("BugSplat: SymbolUploadClientId is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_ID. Skipping symbol uploads.");
 			onCompleted(0);
 			return;
 		}
 
-		if (string.IsNullOrEmpty(options.SymbolUploadClientSecret))
+		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
+		if (string.IsNullOrEmpty(clientSecret))
 		{
-			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions. Skipping symbol uploads");
+			clientSecret = options.SymbolUploadClientSecret;
+		}
+
+		if (string.IsNullOrEmpty(clientSecret))
+		{
+			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_SECRET. Skipping symbol uploads");
 			onCompleted(0);
 			return;
 		}
@@ -291,7 +303,7 @@ public class BuildPostprocessors
 			FileName = symbolUploadPath,
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {options.SymbolUploadClientId} --clientSecret {options.SymbolUploadClientSecret} " +
+			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {clientId} --clientSecret {clientSecret} " +
 				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
 
