@@ -51,13 +51,13 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("Attributes to attach to reports")]
 		public Dictionary<string, string> Attributes;
-
+		
 		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page")]
 		public string SymbolUploadClientId;
 
 		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
 		public string SymbolUploadClientSecret;
-
+		
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
 
