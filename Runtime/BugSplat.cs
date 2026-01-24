@@ -22,6 +22,11 @@ namespace BugSplatUnity
     public class BugSplat
     {
         /// <summary>
+        /// Global instance of BugSplat.
+        /// </summary>
+        public static BugSplat Instance { get; internal set; }
+
+        /// <summary>
         /// A list of files to be uploaded every time Post is called
         /// </summary>
         public List<FileInfo> Attachments
@@ -265,6 +270,8 @@ namespace BugSplatUnity
 #else
             UseDotNetHandler(database, application, version);
 #endif
+
+            Instance = this;
         }
 
         private void UseDotNetHandler(string database, string application, string version)
@@ -313,11 +320,11 @@ namespace BugSplatUnity
             };
 
             if (options.PersistentDataFileAttachmentPaths != null)
-			{
+            {
                 foreach (var filePath in options.PersistentDataFileAttachmentPaths)
                 {
                     var trimmedFilePath = filePath.TrimStart('/', '\\');
-                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath);
                     var fileInfo = new FileInfo(fullFilePath);
                     var sizeLimit = 100 * 1024 * 1024; // 100 MB
                     if (!fileInfo.Exists)
@@ -334,6 +341,8 @@ namespace BugSplatUnity
                     bugSplat.Attachments.Add(fileInfo);
                 }
             }
+
+            Instance = bugSplat;
 
             return bugSplat;
         }
