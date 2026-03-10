@@ -190,6 +190,7 @@ namespace BugSplatUnity
 
         private IClientSettingsRepository clientSettings;
         private IExceptionReporter exceptionReporter;
+        private DotNetStandardClient feedbackClient;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -239,6 +240,7 @@ namespace BugSplatUnity
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = windowsReporter;
             nativeCrashReporter = windowsReporter;
+            feedbackClient = dotNetStandardClient;
 #elif UNITY_WEBGL
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
@@ -280,6 +282,7 @@ namespace BugSplatUnity
 
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
+            feedbackClient = dotNetStandardClient;
         }
 
         /// <summary>
@@ -403,6 +406,38 @@ namespace BugSplatUnity
             Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
             yield return null;
 #endif
+        }
+
+        /// <summary>
+        /// Post user feedback to BugSplat
+        /// </summary>
+        /// <param name="title">The feedback title, used as the stack key for grouping</param>
+        /// <param name="description">Additional feedback context</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        /// <param name="callback">Optional callback invoked with the result</param>
+        public IEnumerator PostFeedback(string title, string description = "", IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
+        {
+            if (feedbackClient == null)
+            {
+                Debug.LogError("BugSplat error: PostFeedback is not supported on this platform");
+                yield break;
+            }
+
+            var task = feedbackClient.PostFeedback(title, description, options);
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (task.IsFaulted)
+            {
+                Debug.LogError($"BugSplat error posting feedback: {task.Exception?.Message}");
+                callback?.Invoke(null);
+            }
+            else
+            {
+                callback?.Invoke(task.Result);
+            }
         }
 
         public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
