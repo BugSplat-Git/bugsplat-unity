@@ -6,7 +6,6 @@ using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using System.Diagnostics;
-using System.Net.Http;
 #if UNITY_STANDALONE_WIN || (UNITY_IOS && !UNITY_EDITOR)
 using System.Runtime.InteropServices;
 #endif
@@ -79,11 +78,15 @@ namespace Crasher
 
 		public void Event_LeaveFeedback()
 		{
-			StartCoroutine(bugsplat.PostFeedback(
-				"User Feedback",
-				"Feedback submitted from Unity sample",
-				callback: FeedbackCallback
-			));
+			var popup = FindFirstObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
+			if (popup != null)
+			{
+				popup.Show();
+			}
+			else
+			{
+				UnityEngine.Debug.LogError("[BugSplat] FeedbackPopup not found in scene");
+			}
 		}
 
 		private void GenerateSampleStackFramesAndThrow()
@@ -124,18 +127,6 @@ namespace Crasher
 		private void ThrowException()
 		{
 			throw new Exception("BugSplat rocks!");
-		}
-
-        void FeedbackCallback(HttpResponseMessage response)
-		{
-			if (response.IsSuccessStatusCode)
-			{
-				UnityEngine.Debug.Log("[BugSplat] Feedback submitted successfully");
-			}
-			else
-			{
-				UnityEngine.Debug.LogError($"[BugSplat] Feedback submission failed: {response.StatusCode}");
-			}
 		}
 
         void ExceptionCallback(ExceptionReporterPostResult result)
