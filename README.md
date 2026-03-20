@@ -104,7 +104,7 @@ If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically 
 First, find your instance of `BugSplat`. The following is an example of how to find an instance of `BugSplat` via `BugSplatManager`:
 
 ```cs
-var bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+var bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
 ```
 
 You can extend `BugSplat` by setting the following properties:
@@ -126,7 +126,7 @@ You can use the `Notes` field to capture arbitrary data such as system informati
 ```cs
 void Start()
 {
-    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+    bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
     bugsplat.Notes = GetSystemInfo();
 }
 
@@ -216,7 +216,7 @@ The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used
 ```cs
 void Start()
 {
-    bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+    bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
     StartCoroutine(bugsplat.PostAllCrashes());
 }
 

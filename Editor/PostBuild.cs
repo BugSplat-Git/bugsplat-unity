@@ -112,12 +112,7 @@ public class BuildPostprocessors
 		var project = new PBXProject();
 		project.ReadFromString(File.ReadAllText(projectPath));
 
-#if UNITY_2019_3_OR_NEWER
 		var targetGuid = project.GetUnityFrameworkTargetGuid();
-#else
-		var targetName = PBXProject.GetUnityTargetName();
-		var targetGuid = project.TargetGuidByName(targetName);
-#endif
 
 		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
 		project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
