@@ -190,7 +190,7 @@ namespace BugSplatUnity
 
         private IClientSettingsRepository clientSettings;
         private IExceptionReporter exceptionReporter;
-        private DotNetStandardClient feedbackClient;
+        private IDotNetStandardFeedbackClient feedbackClient;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -432,6 +432,11 @@ namespace BugSplatUnity
             if (task.IsFaulted)
             {
                 Debug.LogError($"BugSplat error posting feedback: {task.Exception?.Message}");
+                callback?.Invoke(null);
+            }
+            else if (task.IsCanceled)
+            {
+                Debug.LogError("BugSplat error: PostFeedback task was canceled");
                 callback?.Invoke(null);
             }
             else

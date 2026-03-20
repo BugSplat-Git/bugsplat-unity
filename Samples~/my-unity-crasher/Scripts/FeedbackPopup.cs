@@ -1,6 +1,7 @@
+using System.IO;
+using System.Net.Http;
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Manager;
-using System.Net.Http;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,10 +38,10 @@ namespace Crasher
             if (includeLogsToggle.isOn)
             {
                 var logPath = Application.consoleLogPath;
-                if (!string.IsNullOrEmpty(logPath) && System.IO.File.Exists(logPath))
+                if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
                 {
                     var options = new ReportPostOptions();
-                    options.AdditionalAttachments.Add(new System.IO.FileInfo(logPath));
+                    options.AdditionalAttachments.Add(new FileInfo(logPath));
                     StartCoroutine(bugsplat.PostFeedback(title, description, options, FeedbackCallback));
                     popupPanel.SetActive(false);
                     return;
@@ -58,6 +59,12 @@ namespace Crasher
 
         private void FeedbackCallback(HttpResponseMessage response)
         {
+            if (response == null)
+            {
+                Debug.LogError("[BugSplat] Feedback submission failed");
+                return;
+            }
+
             if (response.IsSuccessStatusCode)
             {
                 Debug.Log("[BugSplat] Feedback submitted successfully");
