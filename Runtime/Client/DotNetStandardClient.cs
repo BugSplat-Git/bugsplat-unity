@@ -4,10 +4,6 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-#if !UNITY_2022_1_OR_NEWER
-using BugSplatUnity.Runtime.Util.Extensions;
-#endif
-
 namespace BugSplatUnity.Runtime.Client
 {
     internal interface IDotNetStandardExceptionClient
@@ -17,7 +13,12 @@ namespace BugSplatUnity.Runtime.Client
         Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, IReportPostOptions options = null);
     }
 
-    internal class DotNetStandardClient : INativeCrashReportClient, IDotNetStandardExceptionClient
+    internal interface IDotNetStandardFeedbackClient
+    {
+        Task<HttpResponseMessage> PostFeedback(string title, string description, IReportPostOptions options = null);
+    }
+
+    internal class DotNetStandardClient : INativeCrashReportClient, IDotNetStandardExceptionClient, IDotNetStandardFeedbackClient
     {
         private readonly BugSplatDotNetStandard.BugSplat _bugsplat;
 
@@ -64,8 +65,8 @@ namespace BugSplatUnity.Runtime.Client
         private MinidumpPostOptions CreateMinidumpPostOptions(IReportPostOptions options)
         {
             var minidumpPostOptions = new MinidumpPostOptions();
-            
-            foreach (var attribute in options.AdditionalAttributes) 
+
+            foreach (var attribute in options.AdditionalAttributes)
             {
                 minidumpPostOptions.Attributes.TryAdd(attribute.Key, attribute.Value);
             }
@@ -79,6 +80,31 @@ namespace BugSplatUnity.Runtime.Client
             minidumpPostOptions.User = options.User;
             minidumpPostOptions.MinidumpType = (BugSplatDotNetStandard.BugSplat.MinidumpTypeId)options.CrashTypeId;
             return minidumpPostOptions;
+        }
+
+        public Task<HttpResponseMessage> PostFeedback(string title, string description, IReportPostOptions options = null)
+        {
+            var feedbackOptions = options != null ? CreateFeedbackPostOptions(options) : null;
+            return _bugsplat.PostFeedback(title, description, feedbackOptions);
+        }
+
+        private FeedbackPostOptions CreateFeedbackPostOptions(IReportPostOptions options)
+        {
+            var feedbackPostOptions = new FeedbackPostOptions();
+
+            foreach (var attribute in options.AdditionalAttributes)
+            {
+                feedbackPostOptions.Attributes.TryAdd(attribute.Key, attribute.Value);
+            }
+
+            feedbackPostOptions.Attachments.AddRange(options.AdditionalAttachments);
+            feedbackPostOptions.FormDataParams.AddRange(options.AdditionalFormDataParams);
+            feedbackPostOptions.Description = options.Description;
+            feedbackPostOptions.Email = options.Email;
+            feedbackPostOptions.Key = options.Key;
+            feedbackPostOptions.Notes = options.Notes;
+            feedbackPostOptions.User = options.User;
+            return feedbackPostOptions;
         }
     }
 }

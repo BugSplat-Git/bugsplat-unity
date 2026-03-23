@@ -5,10 +5,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-#if !UNITY_2022_1_OR_NEWER
-using BugSplatUnity.Runtime.Util.Extensions;
-#endif
-
 namespace BugSplatUnity.Runtime.Reporter
 {
     internal class WebGLReporter : IExceptionReporter

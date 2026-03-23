@@ -19,7 +19,7 @@ namespace Crasher
 		
 		void Start()
 		{
-			bugsplat = FindObjectOfType<BugSplatManager>().BugSplat;
+			bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
 			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
 #if UNITY_STANDALONE_WIN
             StartCoroutine(bugsplat.PostMostRecentCrash());
@@ -74,6 +74,19 @@ namespace Crasher
 		public void Event_ThrowException()
 		{
 			GenerateSampleStackFramesAndThrow();
+		}
+
+		public void Event_LeaveFeedback()
+		{
+			var popup = FindFirstObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
+			if (popup != null)
+			{
+				popup.Show();
+			}
+			else
+			{
+				UnityEngine.Debug.LogError("[BugSplat] FeedbackPopup not found in scene");
+			}
 		}
 
 		private void GenerateSampleStackFramesAndThrow()

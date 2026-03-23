@@ -3,7 +3,7 @@
     "version": "3.2.2",
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
-    "unity": "2021.3",
+    "unity": "6000.0",
     "keywords": [
         "bugsplat",
         "crash",
