@@ -1,4 +1,4 @@
-﻿using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Settings;
 using System;
 using System.Collections;
@@ -111,7 +111,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var editorLogFileInfo = new FileInfo(editorLogFilePath);
                 if (editorLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
@@ -123,7 +132,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var editorLogFileInfo = new FileInfo(editorLogFilePath);
                 if (editorLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
@@ -164,7 +182,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
@@ -172,15 +199,24 @@ namespace BugSplatUnity.Runtime.Reporter
                 }
 #elif UNITY_STANDALONE_LINUX
                 var home = Environment.GetEnvironmentVariable("HOME");
-                var editorLogFilePath = Path.Combine(home, ".config", "unity3d", Application.companyName, Application.productName, "Player.log");
-                var editorLogFileInfo = new FileInfo(editorLogFilePath);
-                if (editorLogFileInfo.Exists)
+                var playerLogFilePath = Path.Combine(home, ".config", "unity3d", Application.companyName, Application.productName, "Player.log");
+                var playerLogFileInfo = new FileInfo(playerLogFilePath);
+                if (playerLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(editorLogFileInfo);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
-                    Debug.Log($"BugSplat info: Could not find {editorLogFileInfo.FullName}, skipping...");
+                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
                 }
 #elif UNITY_WSA
                 var tempState = Application.temporaryCachePath;
@@ -188,7 +224,16 @@ namespace BugSplatUnity.Runtime.Reporter
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {
-                    options.AdditionalAttachments.Add(playerLogFileInfo);
+                    try
+                    {
+                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
+                        options.AdditionalAttachments.Add(tempFile);
+                        tempFiles.Add(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                    }
                 }
                 else
                 {
