@@ -31,7 +31,14 @@ namespace Crasher
 
         private void OnSubmit()
         {
-            var bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
+            var manager = FindFirstObjectByType<BugSplatManager>();
+            if (manager == null || manager.BugSplat == null)
+            {
+                Debug.LogError("[BugSplat] BugSplatManager not found in scene. Feedback cannot be submitted.");
+                return;
+            }
+
+            var bugsplat = manager.BugSplat;
             var title = string.IsNullOrEmpty(titleInput.text) ? "User Feedback" : titleInput.text;
             var description = descriptionInput.text;
 
@@ -78,6 +85,7 @@ namespace Crasher
         private void BuildUI()
         {
             var canvasGo = new GameObject("FeedbackCanvas");
+            canvasGo.transform.SetParent(this.transform, false);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
@@ -118,7 +126,7 @@ namespace Crasher
             SetTopAnchored(titleLabel, cursor, 20, pad);
             cursor -= 20 + 4;
 
-            titleInput = CreateInputField("TitleInput", box.transform, "Enter a title...", 0, 36);
+            titleInput = CreateInputField("TitleInput", box.transform, "Enter a title...", 36);
             SetTopAnchored(titleInput.gameObject, cursor, 36, pad);
             cursor -= 36 + 14;
 
@@ -128,7 +136,7 @@ namespace Crasher
             SetTopAnchored(descLabel, cursor, 20, pad);
             cursor -= 20 + 4;
 
-            descriptionInput = CreateInputField("DescInput", box.transform, "Describe your feedback...", 0, 80);
+            descriptionInput = CreateInputField("DescInput", box.transform, "Describe your feedback...", 80);
             SetTopAnchored(descriptionInput.gameObject, cursor, 80, pad);
             descriptionInput.lineType = TMP_InputField.LineType.MultiLineNewline;
             cursor -= 80 + 12;
@@ -232,7 +240,7 @@ namespace Crasher
             rect.sizeDelta = new Vector2(-horizontalPad * 2, height);
         }
 
-        private TMP_InputField CreateInputField(string name, Transform parent, string placeholder, float yPos, float height)
+        private TMP_InputField CreateInputField(string name, Transform parent, string placeholder, float height)
         {
             var go = CreateElement(name, parent);
 

@@ -190,7 +190,7 @@ namespace BugSplatUnity
 
         private IClientSettingsRepository clientSettings;
         private IExceptionReporter exceptionReporter;
-        private IDotNetStandardFeedbackClient feedbackClient;
+        internal IDotNetStandardFeedbackClient feedbackClient;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -420,6 +420,14 @@ namespace BugSplatUnity
             if (feedbackClient == null)
             {
                 Debug.LogError("BugSplat error: PostFeedback is not supported on this platform");
+                callback?.Invoke(null);
+                yield break;
+            }
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Debug.LogError("BugSplat error: PostFeedback title must not be null, empty, or whitespace");
+                callback?.Invoke(null);
                 yield break;
             }
 
@@ -431,7 +439,7 @@ namespace BugSplatUnity
 
             if (task.IsFaulted)
             {
-                Debug.LogError($"BugSplat error posting feedback: {task.Exception?.Message}");
+                Debug.LogError($"BugSplat error posting feedback: {task.Exception?.GetBaseException()}");
                 callback?.Invoke(null);
             }
             else if (task.IsCanceled)
