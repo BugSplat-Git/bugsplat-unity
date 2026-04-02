@@ -1,0 +1,1050 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/runner/Library/Developer/Xcode/DerivedData/BugSplat-adejpcoboxmctqgjpdfwvfqncvtm/Build/Intermediates.noindex/ArchiveIntermediates/BugSplatMac/InstallationBuildProductsLocation/Library/Frameworks/BugSplat.framework/Versions/A/BugSplat'
+relocations:
+  - { offset: 0xF80E3, size: 0x8, addend: 0x0, symName: _BugSplatVersionString, symObjAddr: 0x0, symBinAddr: 0x32BF0, symSize: 0x0 }
+  - { offset: 0xF8118, size: 0x8, addend: 0x0, symName: _BugSplatVersionNumber, symObjAddr: 0x30, symBinAddr: 0x32C20, symSize: 0x0 }
+  - { offset: 0xF8155, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment initWithFilename:attachmentData:contentType:]', symObjAddr: 0x0, symBinAddr: 0xF98, symSize: 0xBC }
+  - { offset: 0xF81D3, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment initWithFilename:attachmentData:contentType:]', symObjAddr: 0x0, symBinAddr: 0xF98, symSize: 0xBC }
+  - { offset: 0xF823A, size: 0x8, addend: 0x0, symName: '+[BugSplatAttachment supportsSecureCoding]', symObjAddr: 0xBC, symBinAddr: 0x1054, symSize: 0x8 }
+  - { offset: 0xF826D, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment encodeWithCoder:]', symObjAddr: 0xC4, symBinAddr: 0x105C, symSize: 0xC4 }
+  - { offset: 0xF82B0, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment initWithCoder:]', symObjAddr: 0x188, symBinAddr: 0x1120, symSize: 0x124 }
+  - { offset: 0xF82F7, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment filename]', symObjAddr: 0x2AC, symBinAddr: 0x1244, symSize: 0x8 }
+  - { offset: 0xF832E, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment setFilename:]', symObjAddr: 0x2B4, symBinAddr: 0x124C, symSize: 0xC }
+  - { offset: 0xF836F, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment attachmentData]', symObjAddr: 0x2C0, symBinAddr: 0x1258, symSize: 0x8 }
+  - { offset: 0xF83A6, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment setAttachmentData:]', symObjAddr: 0x2C8, symBinAddr: 0x1260, symSize: 0xC }
+  - { offset: 0xF83E7, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment contentType]', symObjAddr: 0x2D4, symBinAddr: 0x126C, symSize: 0x8 }
+  - { offset: 0xF841E, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment setContentType:]', symObjAddr: 0x2DC, symBinAddr: 0x1274, symSize: 0xC }
+  - { offset: 0xF845F, size: 0x8, addend: 0x0, symName: '-[BugSplatAttachment .cxx_destruct]', symObjAddr: 0x2E8, symBinAddr: 0x1280, symSize: 0x3C }
+  - { offset: 0xF852A, size: 0x8, addend: 0x0, symName: '+[NSArray(XMLArrayUtility) validTokenPairRanges:]', symObjAddr: 0x0, symBinAddr: 0x12BC, symSize: 0x1E0 }
+  - { offset: 0xF8539, size: 0x8, addend: 0x0, symName: '+[NSArray(XMLArrayUtility) validTokenPairRanges:]', symObjAddr: 0x0, symBinAddr: 0x12BC, symSize: 0x1E0 }
+  - { offset: 0xF85D3, size: 0x8, addend: 0x0, symName: '___49+[NSArray(XMLArrayUtility) validTokenPairRanges:]_block_invoke', symObjAddr: 0x1E0, symBinAddr: 0x149C, symSize: 0x90 }
+  - { offset: 0xF861E, size: 0x8, addend: 0x0, symName: '-[NSString(XMLStringUtility) stringByEscapingXMLCharactersIgnoringCDataAndComments]', symObjAddr: 0x270, symBinAddr: 0x152C, symSize: 0x12C }
+  - { offset: 0xF86E6, size: 0x8, addend: 0x0, symName: '-[NSString(XMLStringUtility) stringByEscapingSpecialXMLCharacters]', symObjAddr: 0x39C, symBinAddr: 0x1658, symSize: 0x510 }
+  - { offset: 0xF882E, size: 0x8, addend: 0x0, symName: '___66-[NSString(XMLStringUtility) stringByEscapingSpecialXMLCharacters]_block_invoke', symObjAddr: 0x8AC, symBinAddr: 0x1B68, symSize: 0x84 }
+  - { offset: 0xF889D, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x930, symBinAddr: 0x1BEC, symSize: 0x8 }
+  - { offset: 0xF88C4, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x938, symBinAddr: 0x1BF4, symSize: 0x8 }
+  - { offset: 0xF88E3, size: 0x8, addend: 0x0, symName: '-[NSString(XMLStringUtility) stringByXMLEscapingWithExclusionRanges:]', symObjAddr: 0x940, symBinAddr: 0x1BFC, symSize: 0x288 }
+  - { offset: 0xF89D6, size: 0x8, addend: 0x0, symName: '-[NSString(XMLStringUtility) tokenPairRangesForStartToken:endToken:error:]', symObjAddr: 0xBC8, symBinAddr: 0x1E84, symSize: 0x1CC }
+  - { offset: 0xF8B08, size: 0x8, addend: 0x0, symName: '-[NSString(XMLStringUtility) isValidXMLEntity]', symObjAddr: 0xD94, symBinAddr: 0x2050, symSize: 0x88 }
+  - { offset: 0xF8D72, size: 0x8, addend: 0x0, symName: '+[BugSplat shared]', symObjAddr: 0x0, symBinAddr: 0x20D8, symSize: 0x30 }
+  - { offset: 0xF8D8C, size: 0x8, addend: 0x0, symName: _kBugSplatUserDefaultsUserName, symObjAddr: 0x6FB0, symBinAddr: 0x402A8, symSize: 0x0 }
+  - { offset: 0xF8DAC, size: 0x8, addend: 0x0, symName: _kBugSplatUserDefaultsUserEmail, symObjAddr: 0x6FB8, symBinAddr: 0x402B0, symSize: 0x0 }
+  - { offset: 0xF8DC2, size: 0x8, addend: 0x0, symName: _kBugSplatUserDefaultsAlwaysSend, symObjAddr: 0x6FC0, symBinAddr: 0x402B8, symSize: 0x0 }
+  - { offset: 0xF8DCC, size: 0x8, addend: 0x0, symName: '+[BugSplat shared]', symObjAddr: 0x0, symBinAddr: 0x20D8, symSize: 0x30 }
+  - { offset: 0xF8DF6, size: 0x8, addend: 0x0, symName: _shared.sharedInstance, symObjAddr: 0x17B38, symBinAddr: 0x4DE10, symSize: 0x0 }
+  - { offset: 0xF8E0C, size: 0x8, addend: 0x0, symName: _shared.pred, symObjAddr: 0x17B40, symBinAddr: 0x4DE18, symSize: 0x0 }
+  - { offset: 0xF922B, size: 0x8, addend: 0x0, symName: '+[BugSplat shared].cold.1', symObjAddr: 0x4E4C, symBinAddr: 0x2B8B8, symSize: 0x14 }
+  - { offset: 0xF9247, size: 0x8, addend: 0x0, symName: '+[BugSplat shared].cold.1', symObjAddr: 0x4E4C, symBinAddr: 0x2B8B8, symSize: 0x14 }
+  - { offset: 0xF9259, size: 0x8, addend: 0x0, symName: '___18+[BugSplat shared]_block_invoke', symObjAddr: 0x30, symBinAddr: 0x2108, symSize: 0x2C }
+  - { offset: 0xF9280, size: 0x8, addend: 0x0, symName: '-[BugSplat init]', symObjAddr: 0x5C, symBinAddr: 0x2134, symSize: 0x158 }
+  - { offset: 0xF92F6, size: 0x8, addend: 0x0, symName: '-[BugSplat initForTestingWithCrashReporter:crashStorage:userDefaults:bundle:]', symObjAddr: 0x1B4, symBinAddr: 0x228C, symSize: 0x13C }
+  - { offset: 0xF936D, size: 0x8, addend: 0x0, symName: '-[BugSplat crashReporter]', symObjAddr: 0x2F0, symBinAddr: 0x23C8, symSize: 0x4 }
+  - { offset: 0xF93A2, size: 0x8, addend: 0x0, symName: '-[BugSplat start]', symObjAddr: 0x2F4, symBinAddr: 0x23CC, symSize: 0x350 }
+  - { offset: 0xF94AD, size: 0x8, addend: 0x0, symName: '-[BugSplat handleNewCrashFromPLCrashReporter]', symObjAddr: 0x644, symBinAddr: 0x271C, symSize: 0xECC }
+  - { offset: 0xF979B, size: 0x8, addend: 0x0, symName: '-[BugSplat processPendingCrashReports]', symObjAddr: 0x1510, symBinAddr: 0x35E8, symSize: 0x2BC }
+  - { offset: 0xF98B8, size: 0x8, addend: 0x0, symName: '-[BugSplat shouldSendCrashSilently:]', symObjAddr: 0x17CC, symBinAddr: 0x38A4, symSize: 0x1B4 }
+  - { offset: 0xF9969, size: 0x8, addend: 0x0, symName: '-[BugSplat submitCrashSilentlyWithFilename:crashReportText:metadata:]', symObjAddr: 0x1980, symBinAddr: 0x3A58, symSize: 0x10C }
+  - { offset: 0xF99D0, size: 0x8, addend: 0x0, symName: '-[BugSplat getPendingCrashFiles]', symObjAddr: 0x1A8C, symBinAddr: 0x3B64, symSize: 0x230 }
+  - { offset: 0xF9AAE, size: 0x8, addend: 0x0, symName: '-[BugSplat showCrashReportDialogForFilename:crashReportText:metadata:]', symObjAddr: 0x1CBC, symBinAddr: 0x3D94, symSize: 0x1D8 }
+  - { offset: 0xF9B68, size: 0x8, addend: 0x0, symName: '___70-[BugSplat showCrashReportDialogForFilename:crashReportText:metadata:]_block_invoke', symObjAddr: 0x1E94, symBinAddr: 0x3F6C, symSize: 0x3C4 }
+  - { offset: 0xF9C1F, size: 0x8, addend: 0x0, symName: '___70-[BugSplat showCrashReportDialogForFilename:crashReportText:metadata:]_block_invoke_2', symObjAddr: 0x2258, symBinAddr: 0x4330, symSize: 0x284 }
+  - { offset: 0xF9D2C, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48s56s, symObjAddr: 0x24DC, symBinAddr: 0x45B4, symSize: 0x38 }
+  - { offset: 0xF9D55, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48s56s, symObjAddr: 0x2514, symBinAddr: 0x45EC, symSize: 0x38 }
+  - { offset: 0xF9D74, size: 0x8, addend: 0x0, symName: '-[BugSplat submitPersistedCrashReportWithFilename:crashReportText:metadata:userName:userEmail:comments:isInteractive:]', symObjAddr: 0x254C, symBinAddr: 0x4624, symSize: 0x53C }
+  - { offset: 0xF9EA5, size: 0x8, addend: 0x0, symName: '___118-[BugSplat submitPersistedCrashReportWithFilename:crashReportText:metadata:userName:userEmail:comments:isInteractive:]_block_invoke', symObjAddr: 0x2A88, symBinAddr: 0x4B60, symSize: 0x348 }
+  - { offset: 0xFA050, size: 0x8, addend: 0x0, symName: '___118-[BugSplat submitPersistedCrashReportWithFilename:crashReportText:metadata:userName:userEmail:comments:isInteractive:]_block_invoke_2', symObjAddr: 0x2DD0, symBinAddr: 0x4EA8, symSize: 0x8 }
+  - { offset: 0xFA08E, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40w, symObjAddr: 0x2DE8, symBinAddr: 0x4EB0, symSize: 0x30 }
+  - { offset: 0xFA0B7, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40w, symObjAddr: 0x2E18, symBinAddr: 0x4EE0, symSize: 0x28 }
+  - { offset: 0xFA0D6, size: 0x8, addend: 0x0, symName: '-[BugSplat postFeedback:description:userName:userEmail:appKey:attachments:completion:]', symObjAddr: 0x2E40, symBinAddr: 0x4F08, symSize: 0x2A8 }
+  - { offset: 0xFA192, size: 0x8, addend: 0x0, symName: '-[BugSplat bundle]', symObjAddr: 0x30E8, symBinAddr: 0x51B0, symSize: 0xA8 }
+  - { offset: 0xFA1CA, size: 0x8, addend: 0x0, symName: '-[BugSplat bundleProtocol]', symObjAddr: 0x3190, symBinAddr: 0x5258, symSize: 0x5C }
+  - { offset: 0xFA202, size: 0x8, addend: 0x0, symName: '-[BugSplat bugSplatDatabase]', symObjAddr: 0x31EC, symBinAddr: 0x52B4, symSize: 0x68 }
+  - { offset: 0xFA23A, size: 0x8, addend: 0x0, symName: '-[BugSplat setBugSplatDatabase:]', symObjAddr: 0x3254, symBinAddr: 0x531C, symSize: 0x38 }
+  - { offset: 0xFA27F, size: 0x8, addend: 0x0, symName: '-[BugSplat applicationName]', symObjAddr: 0x328C, symBinAddr: 0x5354, symSize: 0x8 }
+  - { offset: 0xFA2B7, size: 0x8, addend: 0x0, symName: '-[BugSplat setApplicationName:]', symObjAddr: 0x3294, symBinAddr: 0x535C, symSize: 0x38 }
+  - { offset: 0xFA2FC, size: 0x8, addend: 0x0, symName: '-[BugSplat applicationVersion]', symObjAddr: 0x32CC, symBinAddr: 0x5394, symSize: 0x8 }
+  - { offset: 0xFA334, size: 0x8, addend: 0x0, symName: '-[BugSplat setApplicationVersion:]', symObjAddr: 0x32D4, symBinAddr: 0x539C, symSize: 0x38 }
+  - { offset: 0xFA379, size: 0x8, addend: 0x0, symName: '-[BugSplat resolvedApplicationName]', symObjAddr: 0x330C, symBinAddr: 0x53D4, symSize: 0xE4 }
+  - { offset: 0xFA3D3, size: 0x8, addend: 0x0, symName: '-[BugSplat resolvedApplicationVersion]', symObjAddr: 0x33F0, symBinAddr: 0x54B8, symSize: 0x110 }
+  - { offset: 0xFA42D, size: 0x8, addend: 0x0, symName: '-[BugSplat userName]', symObjAddr: 0x3500, symBinAddr: 0x55C8, symSize: 0x4C }
+  - { offset: 0xFA465, size: 0x8, addend: 0x0, symName: '-[BugSplat setUserName:]', symObjAddr: 0x354C, symBinAddr: 0x5614, symSize: 0x68 }
+  - { offset: 0xFA4AA, size: 0x8, addend: 0x0, symName: '-[BugSplat userEmail]', symObjAddr: 0x35B4, symBinAddr: 0x567C, symSize: 0x4C }
+  - { offset: 0xFA4E2, size: 0x8, addend: 0x0, symName: '-[BugSplat setUserEmail:]', symObjAddr: 0x3600, symBinAddr: 0x56C8, symSize: 0x68 }
+  - { offset: 0xFA527, size: 0x8, addend: 0x0, symName: '-[BugSplat setAppKey:]', symObjAddr: 0x3668, symBinAddr: 0x5730, symSize: 0x38 }
+  - { offset: 0xFA56C, size: 0x8, addend: 0x0, symName: '-[BugSplat setNotes:]', symObjAddr: 0x36A0, symBinAddr: 0x5768, symSize: 0x38 }
+  - { offset: 0xFA5B1, size: 0x8, addend: 0x0, symName: '-[BugSplat setValue:forAttribute:]', symObjAddr: 0x36D8, symBinAddr: 0x57A0, symSize: 0x154 }
+  - { offset: 0xFA62A, size: 0x8, addend: 0x0, symName: '-[BugSplat updateCrashReporterCustomData]', symObjAddr: 0x382C, symBinAddr: 0x58F4, symSize: 0x364 }
+  - { offset: 0xFA6AD, size: 0x8, addend: 0x0, symName: '-[BugSplat markCrashAsSubmittedWithComments:userName:userEmail:forCrashFilename:]', symObjAddr: 0x3B90, symBinAddr: 0x5C58, symSize: 0x1F0 }
+  - { offset: 0xFA785, size: 0x8, addend: 0x0, symName: '-[BugSplat crashesDirectoryPath]', symObjAddr: 0x3D80, symBinAddr: 0x5E48, symSize: 0x118 }
+  - { offset: 0xFA86D, size: 0x8, addend: 0x0, symName: '-[BugSplat persistAttachments:forCrashFilename:]', symObjAddr: 0x3E98, symBinAddr: 0x5F60, symSize: 0x260 }
+  - { offset: 0xFA97F, size: 0x8, addend: 0x0, symName: '-[BugSplat loadPersistedAttachmentsForCrashFilename:]', symObjAddr: 0x40F8, symBinAddr: 0x61C0, symSize: 0x474 }
+  - { offset: 0xFAB0C, size: 0x8, addend: 0x0, symName: '-[BugSplat cleanupCrashReportWithFilename:]', symObjAddr: 0x456C, symBinAddr: 0x6634, symSize: 0x418 }
+  - { offset: 0xFAC8A, size: 0x8, addend: 0x0, symName: '-[BugSplat cleanupAllPendingCrashReports]', symObjAddr: 0x4984, symBinAddr: 0x6A4C, symSize: 0x1C4 }
+  - { offset: 0xFAD3C, size: 0x8, addend: 0x0, symName: '-[BugSplat delegate]', symObjAddr: 0x4B48, symBinAddr: 0x6C10, symSize: 0x18 }
+  - { offset: 0xFAD73, size: 0x8, addend: 0x0, symName: '-[BugSplat setDelegate:]', symObjAddr: 0x4B60, symBinAddr: 0x6C28, symSize: 0xC }
+  - { offset: 0xFADB4, size: 0x8, addend: 0x0, symName: '-[BugSplat appKey]', symObjAddr: 0x4B6C, symBinAddr: 0x6C34, symSize: 0x8 }
+  - { offset: 0xFADEB, size: 0x8, addend: 0x0, symName: '-[BugSplat notes]', symObjAddr: 0x4B74, symBinAddr: 0x6C3C, symSize: 0x8 }
+  - { offset: 0xFAE22, size: 0x8, addend: 0x0, symName: '-[BugSplat autoSubmitCrashReport]', symObjAddr: 0x4B7C, symBinAddr: 0x6C44, symSize: 0x8 }
+  - { offset: 0xFAE59, size: 0x8, addend: 0x0, symName: '-[BugSplat setAutoSubmitCrashReport:]', symObjAddr: 0x4B84, symBinAddr: 0x6C4C, symSize: 0x8 }
+  - { offset: 0xFAE94, size: 0x8, addend: 0x0, symName: '-[BugSplat bannerImage]', symObjAddr: 0x4B8C, symBinAddr: 0x6C54, symSize: 0x8 }
+  - { offset: 0xFAECB, size: 0x8, addend: 0x0, symName: '-[BugSplat setBannerImage:]', symObjAddr: 0x4B94, symBinAddr: 0x6C5C, symSize: 0xC }
+  - { offset: 0xFAF0C, size: 0x8, addend: 0x0, symName: '-[BugSplat askUserDetails]', symObjAddr: 0x4BA0, symBinAddr: 0x6C68, symSize: 0x8 }
+  - { offset: 0xFAF43, size: 0x8, addend: 0x0, symName: '-[BugSplat setAskUserDetails:]', symObjAddr: 0x4BA8, symBinAddr: 0x6C70, symSize: 0x8 }
+  - { offset: 0xFAF7E, size: 0x8, addend: 0x0, symName: '-[BugSplat persistUserDetails]', symObjAddr: 0x4BB0, symBinAddr: 0x6C78, symSize: 0x8 }
+  - { offset: 0xFAFB6, size: 0x8, addend: 0x0, symName: '-[BugSplat setPersistUserDetails:]', symObjAddr: 0x4BB8, symBinAddr: 0x6C80, symSize: 0x8 }
+  - { offset: 0xFAFF2, size: 0x8, addend: 0x0, symName: '-[BugSplat expirationTimeInterval]', symObjAddr: 0x4BC0, symBinAddr: 0x6C88, symSize: 0x8 }
+  - { offset: 0xFB028, size: 0x8, addend: 0x0, symName: '-[BugSplat setExpirationTimeInterval:]', symObjAddr: 0x4BC8, symBinAddr: 0x6C90, symSize: 0x8 }
+  - { offset: 0xFB067, size: 0x8, addend: 0x0, symName: '-[BugSplat presentModally]', symObjAddr: 0x4BD0, symBinAddr: 0x6C98, symSize: 0x8 }
+  - { offset: 0xFB09F, size: 0x8, addend: 0x0, symName: '-[BugSplat setPresentModally:]', symObjAddr: 0x4BD8, symBinAddr: 0x6CA0, symSize: 0x8 }
+  - { offset: 0xFB0DB, size: 0x8, addend: 0x0, symName: '-[BugSplat isStartInvoked]', symObjAddr: 0x4BE0, symBinAddr: 0x6CA8, symSize: 0xC }
+  - { offset: 0xFB112, size: 0x8, addend: 0x0, symName: '-[BugSplat setIsStartInvoked:]', symObjAddr: 0x4BEC, symBinAddr: 0x6CB4, symSize: 0x8 }
+  - { offset: 0xFB14F, size: 0x8, addend: 0x0, symName: '-[BugSplat sendingInProgress]', symObjAddr: 0x4BF4, symBinAddr: 0x6CBC, symSize: 0xC }
+  - { offset: 0xFB186, size: 0x8, addend: 0x0, symName: '-[BugSplat setSendingInProgress:]', symObjAddr: 0x4C00, symBinAddr: 0x6CC8, symSize: 0x8 }
+  - { offset: 0xFB1C3, size: 0x8, addend: 0x0, symName: '-[BugSplat attributes]', symObjAddr: 0x4C08, symBinAddr: 0x6CD0, symSize: 0x8 }
+  - { offset: 0xFB1FA, size: 0x8, addend: 0x0, symName: '-[BugSplat setAttributes:]', symObjAddr: 0x4C10, symBinAddr: 0x6CD8, symSize: 0xC }
+  - { offset: 0xFB23B, size: 0x8, addend: 0x0, symName: '-[BugSplat crashReporterInternal]', symObjAddr: 0x4C1C, symBinAddr: 0x6CE4, symSize: 0x8 }
+  - { offset: 0xFB272, size: 0x8, addend: 0x0, symName: '-[BugSplat setCrashReporterInternal:]', symObjAddr: 0x4C24, symBinAddr: 0x6CEC, symSize: 0xC }
+  - { offset: 0xFB2B3, size: 0x8, addend: 0x0, symName: '-[BugSplat crashStorageInternal]', symObjAddr: 0x4C30, symBinAddr: 0x6CF8, symSize: 0x8 }
+  - { offset: 0xFB2EA, size: 0x8, addend: 0x0, symName: '-[BugSplat setCrashStorageInternal:]', symObjAddr: 0x4C38, symBinAddr: 0x6D00, symSize: 0xC }
+  - { offset: 0xFB32B, size: 0x8, addend: 0x0, symName: '-[BugSplat userDefaultsInternal]', symObjAddr: 0x4C44, symBinAddr: 0x6D0C, symSize: 0x8 }
+  - { offset: 0xFB362, size: 0x8, addend: 0x0, symName: '-[BugSplat setUserDefaultsInternal:]', symObjAddr: 0x4C4C, symBinAddr: 0x6D14, symSize: 0xC }
+  - { offset: 0xFB3A3, size: 0x8, addend: 0x0, symName: '-[BugSplat bundleInternal]', symObjAddr: 0x4C58, symBinAddr: 0x6D20, symSize: 0x8 }
+  - { offset: 0xFB3DA, size: 0x8, addend: 0x0, symName: '-[BugSplat setBundleInternal:]', symObjAddr: 0x4C60, symBinAddr: 0x6D28, symSize: 0xC }
+  - { offset: 0xFB41B, size: 0x8, addend: 0x0, symName: '-[BugSplat uploadService]', symObjAddr: 0x4C6C, symBinAddr: 0x6D34, symSize: 0x8 }
+  - { offset: 0xFB452, size: 0x8, addend: 0x0, symName: '-[BugSplat setUploadService:]', symObjAddr: 0x4C74, symBinAddr: 0x6D3C, symSize: 0xC }
+  - { offset: 0xFB493, size: 0x8, addend: 0x0, symName: '-[BugSplat currentCrashFilename]', symObjAddr: 0x4C80, symBinAddr: 0x6D48, symSize: 0x8 }
+  - { offset: 0xFB4CA, size: 0x8, addend: 0x0, symName: '-[BugSplat setCurrentCrashFilename:]', symObjAddr: 0x4C88, symBinAddr: 0x6D50, symSize: 0x8 }
+  - { offset: 0xFB509, size: 0x8, addend: 0x0, symName: '-[BugSplat isTestInstance]', symObjAddr: 0x4C90, symBinAddr: 0x6D58, symSize: 0x8 }
+  - { offset: 0xFB540, size: 0x8, addend: 0x0, symName: '-[BugSplat setIsTestInstance:]', symObjAddr: 0x4C98, symBinAddr: 0x6D60, symSize: 0x8 }
+  - { offset: 0xFB57B, size: 0x8, addend: 0x0, symName: '-[BugSplat crashReportWindow]', symObjAddr: 0x4CA0, symBinAddr: 0x6D68, symSize: 0x8 }
+  - { offset: 0xFB5B2, size: 0x8, addend: 0x0, symName: '-[BugSplat setCrashReportWindow:]', symObjAddr: 0x4CA8, symBinAddr: 0x6D70, symSize: 0xC }
+  - { offset: 0xFB5F3, size: 0x8, addend: 0x0, symName: '-[BugSplat .cxx_destruct]', symObjAddr: 0x4CB4, symBinAddr: 0x6D7C, symSize: 0xC8 }
+  - { offset: 0xFB626, size: 0x8, addend: 0x0, symName: '+[BugSplat(Testing) testInstanceWithCrashReporter:crashStorage:userDefaults:bundle:]', symObjAddr: 0x4D7C, symBinAddr: 0x6E44, symSize: 0xB0 }
+  - { offset: 0xFB69E, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) setUploadServiceForTesting:]', symObjAddr: 0x4E2C, symBinAddr: 0x6EF4, symSize: 0x4 }
+  - { offset: 0xFB6DF, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) isStartInvoked]', symObjAddr: 0x4E30, symBinAddr: 0x6EF8, symSize: 0x8 }
+  - { offset: 0xFB717, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) isSendingInProgress]', symObjAddr: 0x4E38, symBinAddr: 0x6F00, symSize: 0x4 }
+  - { offset: 0xFB74D, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) currentCrashFilename]', symObjAddr: 0x4E3C, symBinAddr: 0x6F04, symSize: 0x8 }
+  - { offset: 0xFB785, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) crashReporter]', symObjAddr: 0x4E44, symBinAddr: 0x6F0C, symSize: 0x4 }
+  - { offset: 0xFB7BB, size: 0x8, addend: 0x0, symName: '-[BugSplat(Testing) crashStorage]', symObjAddr: 0x4E48, symBinAddr: 0x6F10, symSize: 0x4 }
+  - { offset: 0xFBDAF, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata database]', symObjAddr: 0x0, symBinAddr: 0x6F14, symSize: 0x8 }
+  - { offset: 0xFBDC9, size: 0x8, addend: 0x0, symName: _BugSplatUploadErrorDomain, symObjAddr: 0x4990, symBinAddr: 0x403C0, symSize: 0x0 }
+  - { offset: 0xFC01C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata database]', symObjAddr: 0x0, symBinAddr: 0x6F14, symSize: 0x8 }
+  - { offset: 0xFC053, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setDatabase:]', symObjAddr: 0x8, symBinAddr: 0x6F1C, symSize: 0x8 }
+  - { offset: 0xFC092, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata applicationName]', symObjAddr: 0x10, symBinAddr: 0x6F24, symSize: 0x8 }
+  - { offset: 0xFC0C9, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setApplicationName:]', symObjAddr: 0x18, symBinAddr: 0x6F2C, symSize: 0x8 }
+  - { offset: 0xFC108, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata applicationVersion]', symObjAddr: 0x20, symBinAddr: 0x6F34, symSize: 0x8 }
+  - { offset: 0xFC13F, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setApplicationVersion:]', symObjAddr: 0x28, symBinAddr: 0x6F3C, symSize: 0x8 }
+  - { offset: 0xFC17E, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata userName]', symObjAddr: 0x30, symBinAddr: 0x6F44, symSize: 0x8 }
+  - { offset: 0xFC1B5, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setUserName:]', symObjAddr: 0x38, symBinAddr: 0x6F4C, symSize: 0x8 }
+  - { offset: 0xFC1F4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata userEmail]', symObjAddr: 0x40, symBinAddr: 0x6F54, symSize: 0x8 }
+  - { offset: 0xFC22B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setUserEmail:]', symObjAddr: 0x48, symBinAddr: 0x6F5C, symSize: 0x8 }
+  - { offset: 0xFC26A, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata userDescription]', symObjAddr: 0x50, symBinAddr: 0x6F64, symSize: 0x8 }
+  - { offset: 0xFC2A1, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setUserDescription:]', symObjAddr: 0x58, symBinAddr: 0x6F6C, symSize: 0x8 }
+  - { offset: 0xFC2E0, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata applicationLog]', symObjAddr: 0x60, symBinAddr: 0x6F74, symSize: 0x8 }
+  - { offset: 0xFC317, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setApplicationLog:]', symObjAddr: 0x68, symBinAddr: 0x6F7C, symSize: 0x8 }
+  - { offset: 0xFC356, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata applicationKey]', symObjAddr: 0x70, symBinAddr: 0x6F84, symSize: 0x8 }
+  - { offset: 0xFC38D, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setApplicationKey:]', symObjAddr: 0x78, symBinAddr: 0x6F8C, symSize: 0x8 }
+  - { offset: 0xFC3CC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata notes]', symObjAddr: 0x80, symBinAddr: 0x6F94, symSize: 0x8 }
+  - { offset: 0xFC403, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setNotes:]', symObjAddr: 0x88, symBinAddr: 0x6F9C, symSize: 0x8 }
+  - { offset: 0xFC442, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata attributes]', symObjAddr: 0x90, symBinAddr: 0x6FA4, symSize: 0x8 }
+  - { offset: 0xFC479, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setAttributes:]', symObjAddr: 0x98, symBinAddr: 0x6FAC, symSize: 0x8 }
+  - { offset: 0xFC4B8, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata crashTime]', symObjAddr: 0xA0, symBinAddr: 0x6FB4, symSize: 0x8 }
+  - { offset: 0xFC4EF, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setCrashTime:]', symObjAddr: 0xA8, symBinAddr: 0x6FBC, symSize: 0x8 }
+  - { offset: 0xFC52E, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata crashTypeId]', symObjAddr: 0xB0, symBinAddr: 0x6FC4, symSize: 0x8 }
+  - { offset: 0xFC565, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata setCrashTypeId:]', symObjAddr: 0xB8, symBinAddr: 0x6FCC, symSize: 0x8 }
+  - { offset: 0xFC5A4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashMetadata .cxx_destruct]', symObjAddr: 0xC0, symBinAddr: 0x6FD4, symSize: 0xA8 }
+  - { offset: 0xFC5D7, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService initWithDatabase:applicationName:applicationVersion:]', symObjAddr: 0x168, symBinAddr: 0x707C, symSize: 0xF4 }
+  - { offset: 0xFC65E, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService initWithDatabase:applicationName:applicationVersion:urlSession:]', symObjAddr: 0x25C, symBinAddr: 0x7170, symSize: 0x10C }
+  - { offset: 0xFC6D5, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService dealloc]', symObjAddr: 0x368, symBinAddr: 0x727C, symSize: 0x48 }
+  - { offset: 0xFC708, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService uploadCrashReport:crashFilename:attachments:metadata:completion:]', symObjAddr: 0x3B0, symBinAddr: 0x72C4, symSize: 0x85C }
+  - { offset: 0xFC95A, size: 0x8, addend: 0x0, symName: '___89-[BugSplatUploadService uploadCrashReport:crashFilename:attachments:metadata:completion:]_block_invoke', symObjAddr: 0xC0C, symBinAddr: 0x7B20, symSize: 0x160 }
+  - { offset: 0xFCA49, size: 0x8, addend: 0x0, symName: '___89-[BugSplatUploadService uploadCrashReport:crashFilename:attachments:metadata:completion:]_block_invoke_2', symObjAddr: 0xD6C, symBinAddr: 0x7C80, symSize: 0x4C }
+  - { offset: 0xFCB31, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40s48s56s64s72s80s88b, symObjAddr: 0xDB8, symBinAddr: 0x7CCC, symSize: 0x64 }
+  - { offset: 0xFCB5A, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s48s56s64s72s80s88s, symObjAddr: 0xE1C, symBinAddr: 0x7D30, symSize: 0x58 }
+  - { offset: 0xFCB79, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService uploadFeedback:description:attachments:metadata:completion:]', symObjAddr: 0xE74, symBinAddr: 0x7D88, symSize: 0x8F8 }
+  - { offset: 0xFCDE9, size: 0x8, addend: 0x0, symName: '___84-[BugSplatUploadService uploadFeedback:description:attachments:metadata:completion:]_block_invoke', symObjAddr: 0x176C, symBinAddr: 0x8680, symSize: 0x4 }
+  - { offset: 0xFCE1C, size: 0x8, addend: 0x0, symName: '___84-[BugSplatUploadService uploadFeedback:description:attachments:metadata:completion:]_block_invoke_2', symObjAddr: 0x1770, symBinAddr: 0x8684, symSize: 0x158 }
+  - { offset: 0xFCEFF, size: 0x8, addend: 0x0, symName: '___84-[BugSplatUploadService uploadFeedback:description:attachments:metadata:completion:]_block_invoke_3', symObjAddr: 0x18C8, symBinAddr: 0x87DC, symSize: 0xC0 }
+  - { offset: 0xFCFDA, size: 0x8, addend: 0x0, symName: '___84-[BugSplatUploadService uploadFeedback:description:attachments:metadata:completion:]_block_invoke_4', symObjAddr: 0x1988, symBinAddr: 0x889C, symSize: 0x3C }
+  - { offset: 0xFD05B, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32b, symObjAddr: 0x19C4, symBinAddr: 0x88D8, symSize: 0x10 }
+  - { offset: 0xFD084, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService cancelUpload]', symObjAddr: 0x19DC, symBinAddr: 0x88E8, symSize: 0x40 }
+  - { offset: 0xFD0B8, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]', symObjAddr: 0x1A1C, symBinAddr: 0x8928, symSize: 0x2E8 }
+  - { offset: 0xFD1B5, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke', symObjAddr: 0x1D04, symBinAddr: 0x8C10, symSize: 0x4D4 }
+  - { offset: 0xFD357, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke_2', symObjAddr: 0x21D8, symBinAddr: 0x90E4, symSize: 0x14 }
+  - { offset: 0xFD3B9, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s40b, symObjAddr: 0x21EC, symBinAddr: 0x90F8, symSize: 0x34 }
+  - { offset: 0xFD3E2, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s40s, symObjAddr: 0x2220, symBinAddr: 0x912C, symSize: 0x28 }
+  - { offset: 0xFD401, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke.128', symObjAddr: 0x2248, symBinAddr: 0x9154, symSize: 0x14 }
+  - { offset: 0xFD463, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke_2.131', symObjAddr: 0x225C, symBinAddr: 0x9168, symSize: 0x14 }
+  - { offset: 0xFD4C5, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke_3', symObjAddr: 0x2270, symBinAddr: 0x917C, symSize: 0x14 }
+  - { offset: 0xFD527, size: 0x8, addend: 0x0, symName: '___103-[BugSplatUploadService getPresignedURLForDatabase:applicationName:applicationVersion:size:completion:]_block_invoke_4', symObjAddr: 0x2284, symBinAddr: 0x9190, symSize: 0x4C }
+  - { offset: 0xFD597, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService uploadData:toPresignedURL:completion:]', symObjAddr: 0x22D0, symBinAddr: 0x91DC, symSize: 0x28C }
+  - { offset: 0xFD661, size: 0x8, addend: 0x0, symName: '___62-[BugSplatUploadService uploadData:toPresignedURL:completion:]_block_invoke', symObjAddr: 0x255C, symBinAddr: 0x9468, symSize: 0x264 }
+  - { offset: 0xFD745, size: 0x8, addend: 0x0, symName: '___62-[BugSplatUploadService uploadData:toPresignedURL:completion:]_block_invoke_2', symObjAddr: 0x27C0, symBinAddr: 0x96CC, symSize: 0x14 }
+  - { offset: 0xFD7A7, size: 0x8, addend: 0x0, symName: '___62-[BugSplatUploadService uploadData:toPresignedURL:completion:]_block_invoke_3', symObjAddr: 0x27D4, symBinAddr: 0x96E0, symSize: 0x14 }
+  - { offset: 0xFD809, size: 0x8, addend: 0x0, symName: '___62-[BugSplatUploadService uploadData:toPresignedURL:completion:]_block_invoke_4', symObjAddr: 0x27E8, symBinAddr: 0x96F4, symSize: 0x14 }
+  - { offset: 0xFD860, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService commitUploadWithS3Key:md5Hash:database:applicationName:applicationVersion:metadata:completion:]', symObjAddr: 0x27FC, symBinAddr: 0x9708, symSize: 0x7E4 }
+  - { offset: 0xFD9B1, size: 0x8, addend: 0x0, symName: '___119-[BugSplatUploadService commitUploadWithS3Key:md5Hash:database:applicationName:applicationVersion:metadata:completion:]_block_invoke', symObjAddr: 0x2FE0, symBinAddr: 0x9EEC, symSize: 0x38C }
+  - { offset: 0xFDB11, size: 0x8, addend: 0x0, symName: '___119-[BugSplatUploadService commitUploadWithS3Key:md5Hash:database:applicationName:applicationVersion:metadata:completion:]_block_invoke_2', symObjAddr: 0x336C, symBinAddr: 0xA278, symSize: 0x18 }
+  - { offset: 0xFDB79, size: 0x8, addend: 0x0, symName: '___119-[BugSplatUploadService commitUploadWithS3Key:md5Hash:database:applicationName:applicationVersion:metadata:completion:]_block_invoke_3', symObjAddr: 0x3384, symBinAddr: 0xA290, symSize: 0x18 }
+  - { offset: 0xFDBE1, size: 0x8, addend: 0x0, symName: '___119-[BugSplatUploadService commitUploadWithS3Key:md5Hash:database:applicationName:applicationVersion:metadata:completion:]_block_invoke_4', symObjAddr: 0x339C, symBinAddr: 0xA2A8, symSize: 0x18 }
+  - { offset: 0xFDC49, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService urlEncode:]', symObjAddr: 0x33B4, symBinAddr: 0xA2C0, symSize: 0x74 }
+  - { offset: 0xFDC8E, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService appendFormField:value:boundary:toData:]', symObjAddr: 0x3428, symBinAddr: 0xA334, symSize: 0x174 }
+  - { offset: 0xFDD02, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService appendFileField:filename:contentType:data:boundary:toData:]', symObjAddr: 0x359C, symBinAddr: 0xA4A8, symSize: 0x1F8 }
+  - { offset: 0xFDD98, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService database]', symObjAddr: 0x3794, symBinAddr: 0xA6A0, symSize: 0x8 }
+  - { offset: 0xFDDCF, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService setDatabase:]', symObjAddr: 0x379C, symBinAddr: 0xA6A8, symSize: 0x8 }
+  - { offset: 0xFDE0E, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService applicationName]', symObjAddr: 0x37A4, symBinAddr: 0xA6B0, symSize: 0x8 }
+  - { offset: 0xFDE45, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService setApplicationName:]', symObjAddr: 0x37AC, symBinAddr: 0xA6B8, symSize: 0x8 }
+  - { offset: 0xFDE84, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService applicationVersion]', symObjAddr: 0x37B4, symBinAddr: 0xA6C0, symSize: 0x8 }
+  - { offset: 0xFDEBB, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService setApplicationVersion:]', symObjAddr: 0x37BC, symBinAddr: 0xA6C8, symSize: 0x8 }
+  - { offset: 0xFDEFA, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService urlSession]', symObjAddr: 0x37C4, symBinAddr: 0xA6D0, symSize: 0x8 }
+  - { offset: 0xFDF31, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService setUrlSession:]', symObjAddr: 0x37CC, symBinAddr: 0xA6D8, symSize: 0xC }
+  - { offset: 0xFDF72, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService currentTask]', symObjAddr: 0x37D8, symBinAddr: 0xA6E4, symSize: 0x8 }
+  - { offset: 0xFDFA9, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService setCurrentTask:]', symObjAddr: 0x37E0, symBinAddr: 0xA6EC, symSize: 0xC }
+  - { offset: 0xFDFEA, size: 0x8, addend: 0x0, symName: '-[BugSplatUploadService .cxx_destruct]', symObjAddr: 0x37EC, symBinAddr: 0xA6F8, symSize: 0x54 }
+  - { offset: 0xFED05, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow init]', symObjAddr: 0x0, symBinAddr: 0xA74C, symSize: 0xA8 }
+  - { offset: 0xFF1C8, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow init]', symObjAddr: 0x0, symBinAddr: 0xA74C, symSize: 0xA8 }
+  - { offset: 0xFF20F, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setupUI]', symObjAddr: 0xA8, symBinAddr: 0xA7F4, symSize: 0xB24 }
+  - { offset: 0xFF262, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setupUserFieldsContainer:]', symObjAddr: 0xBCC, symBinAddr: 0xB318, symSize: 0xC38 }
+  - { offset: 0xFF2B5, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setupCommentsContainer:]', symObjAddr: 0x1804, symBinAddr: 0xBF50, symSize: 0xB9C }
+  - { offset: 0xFF319, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setupDetailsContainer:]', symObjAddr: 0x23A0, symBinAddr: 0xCAEC, symSize: 0x84C }
+  - { offset: 0xFF35E, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setupButtonsContainer:]', symObjAddr: 0x2BEC, symBinAddr: 0xD338, symSize: 0x9B8 }
+  - { offset: 0xFF3A3, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow createLabelWithText:]', symObjAddr: 0x35A4, symBinAddr: 0xDCF0, symSize: 0xBC }
+  - { offset: 0xFF3F9, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow createButtonWithTitle:action:]', symObjAddr: 0x3660, symBinAddr: 0xDDAC, symSize: 0x88 }
+  - { offset: 0xFF464, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow updateUI]', symObjAddr: 0x36E8, symBinAddr: 0xDE34, symSize: 0x2E0 }
+  - { offset: 0xFF498, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow createDefaultBugSplatLogo]', symObjAddr: 0x39C8, symBinAddr: 0xE114, symSize: 0x98 }
+  - { offset: 0xFF4F2, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow createProgrammaticBugSplatLogo]', symObjAddr: 0x3A60, symBinAddr: 0xE1AC, symSize: 0x2D0 }
+  - { offset: 0xFF618, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow updatePlaceholderVisibility]', symObjAddr: 0x3D30, symBinAddr: 0xE47C, symSize: 0x80 }
+  - { offset: 0xFF65D, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow showWithCompletion:]', symObjAddr: 0x3DB0, symBinAddr: 0xE4FC, symSize: 0x188 }
+  - { offset: 0xFF6C4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow showModalWithCompletion:]', symObjAddr: 0x3F38, symBinAddr: 0xE684, symSize: 0x180 }
+  - { offset: 0xFF72B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow prewarmAnimationLayers]', symObjAddr: 0x40B8, symBinAddr: 0xE804, symSize: 0xD8 }
+  - { offset: 0xFF75F, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow sendClicked:]', symObjAddr: 0x4190, symBinAddr: 0xE8DC, symSize: 0x198 }
+  - { offset: 0xFF7FB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow cancelClicked:]', symObjAddr: 0x4328, symBinAddr: 0xEA74, symSize: 0xA0 }
+  - { offset: 0xFF861, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow placeholderClicked:]', symObjAddr: 0x43C8, symBinAddr: 0xEB14, symSize: 0x58 }
+  - { offset: 0xFF8A2, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow showDetailsClicked:]', symObjAddr: 0x4420, symBinAddr: 0xEB6C, symSize: 0x110 }
+  - { offset: 0xFF916, size: 0x8, addend: 0x0, symName: '___48-[BugSplatCrashReportWindow showDetailsClicked:]_block_invoke', symObjAddr: 0x4530, symBinAddr: 0xEC7C, symSize: 0x19C }
+  - { offset: 0xFF9BC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow textStorage:didProcessEditing:range:changeInLength:]', symObjAddr: 0x46DC, symBinAddr: 0xEE18, symSize: 0x4 }
+  - { offset: 0xFFA22, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow applicationName]', symObjAddr: 0x46E0, symBinAddr: 0xEE1C, symSize: 0x10 }
+  - { offset: 0xFFA59, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setApplicationName:]', symObjAddr: 0x46F0, symBinAddr: 0xEE2C, symSize: 0xC }
+  - { offset: 0xFFA98, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow bannerImage]', symObjAddr: 0x46FC, symBinAddr: 0xEE38, symSize: 0x10 }
+  - { offset: 0xFFACF, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setBannerImage:]', symObjAddr: 0x470C, symBinAddr: 0xEE48, symSize: 0x14 }
+  - { offset: 0xFFB10, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow crashReportText]', symObjAddr: 0x4720, symBinAddr: 0xEE5C, symSize: 0x10 }
+  - { offset: 0xFFB47, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCrashReportText:]', symObjAddr: 0x4730, symBinAddr: 0xEE6C, symSize: 0xC }
+  - { offset: 0xFFB86, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow askUserDetails]', symObjAddr: 0x473C, symBinAddr: 0xEE78, symSize: 0x10 }
+  - { offset: 0xFFBBD, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setAskUserDetails:]', symObjAddr: 0x474C, symBinAddr: 0xEE88, symSize: 0x10 }
+  - { offset: 0xFFBF8, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow prefillUserName]', symObjAddr: 0x475C, symBinAddr: 0xEE98, symSize: 0x10 }
+  - { offset: 0xFFC2F, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setPrefillUserName:]', symObjAddr: 0x476C, symBinAddr: 0xEEA8, symSize: 0xC }
+  - { offset: 0xFFC6E, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow prefillUserEmail]', symObjAddr: 0x4778, symBinAddr: 0xEEB4, symSize: 0x10 }
+  - { offset: 0xFFCA5, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setPrefillUserEmail:]', symObjAddr: 0x4788, symBinAddr: 0xEEC4, symSize: 0xC }
+  - { offset: 0xFFCE4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow mainStackView]', symObjAddr: 0x4794, symBinAddr: 0xEED0, symSize: 0x10 }
+  - { offset: 0xFFD1B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setMainStackView:]', symObjAddr: 0x47A4, symBinAddr: 0xEEE0, symSize: 0x14 }
+  - { offset: 0xFFD5C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow bannerImageView]', symObjAddr: 0x47B8, symBinAddr: 0xEEF4, symSize: 0x10 }
+  - { offset: 0xFFD93, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setBannerImageView:]', symObjAddr: 0x47C8, symBinAddr: 0xEF04, symSize: 0x14 }
+  - { offset: 0xFFDD4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow messageLabel]', symObjAddr: 0x47DC, symBinAddr: 0xEF18, symSize: 0x10 }
+  - { offset: 0xFFE0B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setMessageLabel:]', symObjAddr: 0x47EC, symBinAddr: 0xEF28, symSize: 0x14 }
+  - { offset: 0xFFE4C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow userFieldsContainer]', symObjAddr: 0x4800, symBinAddr: 0xEF3C, symSize: 0x10 }
+  - { offset: 0xFFE83, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setUserFieldsContainer:]', symObjAddr: 0x4810, symBinAddr: 0xEF4C, symSize: 0x14 }
+  - { offset: 0xFFEC4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow nameLabel]', symObjAddr: 0x4824, symBinAddr: 0xEF60, symSize: 0x10 }
+  - { offset: 0xFFEFB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setNameLabel:]', symObjAddr: 0x4834, symBinAddr: 0xEF70, symSize: 0x14 }
+  - { offset: 0xFFF3C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow nameField]', symObjAddr: 0x4848, symBinAddr: 0xEF84, symSize: 0x10 }
+  - { offset: 0xFFF73, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setNameField:]', symObjAddr: 0x4858, symBinAddr: 0xEF94, symSize: 0x14 }
+  - { offset: 0xFFFB4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow emailLabel]', symObjAddr: 0x486C, symBinAddr: 0xEFA8, symSize: 0x10 }
+  - { offset: 0xFFFEB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setEmailLabel:]', symObjAddr: 0x487C, symBinAddr: 0xEFB8, symSize: 0x14 }
+  - { offset: 0x10002C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow emailField]', symObjAddr: 0x4890, symBinAddr: 0xEFCC, symSize: 0x10 }
+  - { offset: 0x100063, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setEmailField:]', symObjAddr: 0x48A0, symBinAddr: 0xEFDC, symSize: 0x14 }
+  - { offset: 0x1000A4, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow commentsContainer]', symObjAddr: 0x48B4, symBinAddr: 0xEFF0, symSize: 0x10 }
+  - { offset: 0x1000DB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCommentsContainer:]', symObjAddr: 0x48C4, symBinAddr: 0xF000, symSize: 0x14 }
+  - { offset: 0x10011C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow commentsLabel]', symObjAddr: 0x48D8, symBinAddr: 0xF014, symSize: 0x10 }
+  - { offset: 0x100153, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCommentsLabel:]', symObjAddr: 0x48E8, symBinAddr: 0xF024, symSize: 0x14 }
+  - { offset: 0x100194, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow commentsScrollView]', symObjAddr: 0x48FC, symBinAddr: 0xF038, symSize: 0x10 }
+  - { offset: 0x1001CB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCommentsScrollView:]', symObjAddr: 0x490C, symBinAddr: 0xF048, symSize: 0x14 }
+  - { offset: 0x10020C, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow commentsTextView]', symObjAddr: 0x4920, symBinAddr: 0xF05C, symSize: 0x10 }
+  - { offset: 0x100243, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCommentsTextView:]', symObjAddr: 0x4930, symBinAddr: 0xF06C, symSize: 0x14 }
+  - { offset: 0x100284, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow commentsPlaceholder]', symObjAddr: 0x4944, symBinAddr: 0xF080, symSize: 0x10 }
+  - { offset: 0x1002BB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCommentsPlaceholder:]', symObjAddr: 0x4954, symBinAddr: 0xF090, symSize: 0x14 }
+  - { offset: 0x1002FC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow detailsContainer]', symObjAddr: 0x4968, symBinAddr: 0xF0A4, symSize: 0x10 }
+  - { offset: 0x100333, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setDetailsContainer:]', symObjAddr: 0x4978, symBinAddr: 0xF0B4, symSize: 0x14 }
+  - { offset: 0x100374, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow detailsScrollView]', symObjAddr: 0x498C, symBinAddr: 0xF0C8, symSize: 0x10 }
+  - { offset: 0x1003AB, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setDetailsScrollView:]', symObjAddr: 0x499C, symBinAddr: 0xF0D8, symSize: 0x14 }
+  - { offset: 0x1003EC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow detailsTextView]', symObjAddr: 0x49B0, symBinAddr: 0xF0EC, symSize: 0x10 }
+  - { offset: 0x100423, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setDetailsTextView:]', symObjAddr: 0x49C0, symBinAddr: 0xF0FC, symSize: 0x14 }
+  - { offset: 0x100464, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow buttonsContainer]', symObjAddr: 0x49D4, symBinAddr: 0xF110, symSize: 0x10 }
+  - { offset: 0x10049B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setButtonsContainer:]', symObjAddr: 0x49E4, symBinAddr: 0xF120, symSize: 0x14 }
+  - { offset: 0x1004DC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow showDetailsButton]', symObjAddr: 0x49F8, symBinAddr: 0xF134, symSize: 0x10 }
+  - { offset: 0x100513, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setShowDetailsButton:]', symObjAddr: 0x4A08, symBinAddr: 0xF144, symSize: 0x14 }
+  - { offset: 0x100554, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow cancelButton]', symObjAddr: 0x4A1C, symBinAddr: 0xF158, symSize: 0x10 }
+  - { offset: 0x10058B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCancelButton:]', symObjAddr: 0x4A2C, symBinAddr: 0xF168, symSize: 0x14 }
+  - { offset: 0x1005CC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow sendButton]', symObjAddr: 0x4A40, symBinAddr: 0xF17C, symSize: 0x10 }
+  - { offset: 0x100603, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setSendButton:]', symObjAddr: 0x4A50, symBinAddr: 0xF18C, symSize: 0x14 }
+  - { offset: 0x100644, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow footerLabel]', symObjAddr: 0x4A64, symBinAddr: 0xF1A0, symSize: 0x10 }
+  - { offset: 0x10067B, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setFooterLabel:]', symObjAddr: 0x4A74, symBinAddr: 0xF1B0, symSize: 0x14 }
+  - { offset: 0x1006BC, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow completion]', symObjAddr: 0x4A88, symBinAddr: 0xF1C4, symSize: 0x10 }
+  - { offset: 0x1006F3, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setCompletion:]', symObjAddr: 0x4A98, symBinAddr: 0xF1D4, symSize: 0xC }
+  - { offset: 0x100732, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow detailsHeightConstraint]', symObjAddr: 0x4AA4, symBinAddr: 0xF1E0, symSize: 0x10 }
+  - { offset: 0x100769, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow setDetailsHeightConstraint:]', symObjAddr: 0x4AB4, symBinAddr: 0xF1F0, symSize: 0x14 }
+  - { offset: 0x1007AA, size: 0x8, addend: 0x0, symName: '-[BugSplatCrashReportWindow .cxx_destruct]', symObjAddr: 0x4AC8, symBinAddr: 0xF204, symSize: 0x248 }
+  - { offset: 0x100985, size: 0x8, addend: 0x0, symName: '+[BugSplatZipEntry entryWithFilename:data:]', symObjAddr: 0x0, symBinAddr: 0xF44C, symSize: 0x78 }
+  - { offset: 0x100A10, size: 0x8, addend: 0x0, symName: '+[BugSplatZipEntry entryWithFilename:data:]', symObjAddr: 0x0, symBinAddr: 0xF44C, symSize: 0x78 }
+  - { offset: 0x100A73, size: 0x8, addend: 0x0, symName: '-[BugSplatZipEntry filename]', symObjAddr: 0x78, symBinAddr: 0xF4C4, symSize: 0x8 }
+  - { offset: 0x100AAA, size: 0x8, addend: 0x0, symName: '-[BugSplatZipEntry setFilename:]', symObjAddr: 0x80, symBinAddr: 0xF4CC, symSize: 0x8 }
+  - { offset: 0x100AE9, size: 0x8, addend: 0x0, symName: '-[BugSplatZipEntry data]', symObjAddr: 0x88, symBinAddr: 0xF4D4, symSize: 0x8 }
+  - { offset: 0x100B20, size: 0x8, addend: 0x0, symName: '-[BugSplatZipEntry setData:]', symObjAddr: 0x90, symBinAddr: 0xF4DC, symSize: 0xC }
+  - { offset: 0x100B61, size: 0x8, addend: 0x0, symName: '-[BugSplatZipEntry .cxx_destruct]', symObjAddr: 0x9C, symBinAddr: 0xF4E8, symSize: 0x30 }
+  - { offset: 0x100B94, size: 0x8, addend: 0x0, symName: '+[BugSplatZipHelper zipData:withFilename:]', symObjAddr: 0xCC, symBinAddr: 0xF518, symSize: 0x11C }
+  - { offset: 0x100BFB, size: 0x8, addend: 0x0, symName: '+[BugSplatZipHelper zipEntries:]', symObjAddr: 0x1E8, symBinAddr: 0xF634, symSize: 0x910 }
+  - { offset: 0x100FA2, size: 0x8, addend: 0x0, symName: '+[BugSplatZipHelper deflateData:]', symObjAddr: 0xAF8, symBinAddr: 0xFF44, symSize: 0x150 }
+  - { offset: 0x1010E0, size: 0x8, addend: 0x0, symName: '+[BugSplatZipHelper getDOSTime:date:]', symObjAddr: 0xC48, symBinAddr: 0x10094, symSize: 0xF0 }
+  - { offset: 0x10114F, size: 0x8, addend: 0x0, symName: '+[BugSplatZipHelper md5HashOfData:]', symObjAddr: 0xD38, symBinAddr: 0x10184, symSize: 0xF8 }
+  - { offset: 0x1012E9, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashReporterException, symObjAddr: 0x78, symBinAddr: 0x4DCD8, symSize: 0x0 }
+  - { offset: 0x101362, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashReporterErrorDomain, symObjAddr: 0x80, symBinAddr: 0x4DCE0, symSize: 0x0 }
+  - { offset: 0x10139A, size: 0x8, addend: 0x0, symName: __Z22shared_handler_contextv, symObjAddr: 0x0, symBinAddr: 0x1027C, symSize: 0x30 }
+  - { offset: 0x1013A8, size: 0x8, addend: 0x0, symName: __Z22shared_handler_contextv, symObjAddr: 0x0, symBinAddr: 0x1027C, symSize: 0x30 }
+  - { offset: 0x1013D2, size: 0x8, addend: 0x0, symName: __MergedGlobals, symObjAddr: 0x14888, symBinAddr: 0x4DE28, symSize: 0x0 }
+  - { offset: 0x103B50, size: 0x8, addend: 0x0, symName: __ZL13sharedHandler, symObjAddr: 0x14880, symBinAddr: 0x4DE20, symSize: 0x0 }
+  - { offset: 0x103BB6, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashSignalHandler registerHandlerWithSignal:error:]', symObjAddr: 0x53C, symBinAddr: 0x107B8, symSize: 0x1A8 }
+  - { offset: 0x103BE2, size: 0x8, addend: 0x0, symName: '__ZZ64-[BugSplatPLCrashSignalHandler registerHandlerWithSignal:error:]E16registerHandlers', symObjAddr: 0xC88, symBinAddr: 0x4DCE8, symSize: 0x0 }
+  - { offset: 0x1040BC, size: 0x8, addend: 0x0, symName: __Z22shared_handler_contextv.cold.1, symObjAddr: 0xB04, symBinAddr: 0x2B8CC, symSize: 0x8C }
+  - { offset: 0x1043E1, size: 0x8, addend: 0x0, symName: __ZN22shared_handler_contextD1Ev, symObjAddr: 0x30, symBinAddr: 0x102AC, symSize: 0x28 }
+  - { offset: 0x10447F, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI29plcrash_signal_handler_actionED2Ev, symObjAddr: 0xA3C, symBinAddr: 0x10CB8, symSize: 0x64 }
+  - { offset: 0x10472B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI28plcrash_signal_user_callbackED2Ev, symObjAddr: 0xAA0, symBinAddr: 0x10D1C, symSize: 0x64 }
+  - { offset: 0x1049D7, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_signal_handler, symObjAddr: 0x58, symBinAddr: 0x102D4, symSize: 0x38 }
+  - { offset: 0x104A59, size: 0x8, addend: 0x0, symName: __ZL26internal_callback_iteratoriP9__siginfoP17__darwin_ucontextPv, symObjAddr: 0x90, symBinAddr: 0x1030C, symSize: 0xE0 }
+  - { offset: 0x104EA4, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashSignalHandlerForward, symObjAddr: 0x170, symBinAddr: 0x103EC, symSize: 0x20 }
+  - { offset: 0x104EED, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashSignalHandler initialize]', symObjAddr: 0x190, symBinAddr: 0x1040C, symSize: 0x5C }
+  - { offset: 0x104F20, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashSignalHandler sharedHandler]', symObjAddr: 0x1EC, symBinAddr: 0x10468, symSize: 0xC }
+  - { offset: 0x104FE3, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashSignalHandler resetHandlers]', symObjAddr: 0x1F8, symBinAddr: 0x10474, symSize: 0xD4 }
+  - { offset: 0x10543F, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI29plcrash_signal_handler_actionE18nasync_remove_nodeEPNS4_4nodeE, symObjAddr: 0x2CC, symBinAddr: 0x10548, symSize: 0xFC }
+  - { offset: 0x1058FC, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI28plcrash_signal_user_callbackE18nasync_remove_nodeEPNS4_4nodeE, symObjAddr: 0x3C8, symBinAddr: 0x10644, symSize: 0xF4 }
+  - { offset: 0x105FA0, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashSignalHandler init]', symObjAddr: 0x4BC, symBinAddr: 0x10738, symSize: 0x80 }
+  - { offset: 0x10605A, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI28plcrash_signal_user_callbackE13nasync_appendES3_, symObjAddr: 0x7D0, symBinAddr: 0x10A4C, symSize: 0xAC }
+  - { offset: 0x1065C8, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI29plcrash_signal_handler_actionE13nasync_appendES3_, symObjAddr: 0x87C, symBinAddr: 0x10AF8, symSize: 0xB0 }
+  - { offset: 0x1069C9, size: 0x8, addend: 0x0, symName: __ZL24previous_action_callbackiP9__siginfoP17__darwin_ucontextPvP28PLCrashSignalHandlerCallback, symObjAddr: 0x6E4, symBinAddr: 0x10960, symSize: 0xEC }
+  - { offset: 0x106E1C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashSignalHandler registerHandlerForSignal:callback:context:error:]', symObjAddr: 0x92C, symBinAddr: 0x10BA8, symSize: 0x54 }
+  - { offset: 0x106ED4, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listI28plcrash_signal_user_callbackE14nasync_prependES3_, symObjAddr: 0x980, symBinAddr: 0x10BFC, symSize: 0xBC }
+  - { offset: 0x1088EA, size: 0x8, addend: 0x0, symName: _BugSplatplframe_strerror, symObjAddr: 0x0, symBinAddr: 0x10D80, symSize: 0x24 }
+  - { offset: 0x1089CC, size: 0x8, addend: 0x0, symName: _BugSplatplframe_strerror, symObjAddr: 0x0, symBinAddr: 0x10D80, symSize: 0x24 }
+  - { offset: 0x108CFB, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_init, symObjAddr: 0x24, symBinAddr: 0x10DA4, symSize: 0x58 }
+  - { offset: 0x108E51, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_thread_init, symObjAddr: 0x7C, symBinAddr: 0x10DFC, symSize: 0x4C }
+  - { offset: 0x108F3F, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_next_with_readers, symObjAddr: 0xC8, symBinAddr: 0x10E48, symSize: 0x108 }
+  - { offset: 0x10909B, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_next, symObjAddr: 0x1D0, symBinAddr: 0x10F50, symSize: 0x10 }
+  - { offset: 0x1090ED, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_get_reg, symObjAddr: 0x1E0, symBinAddr: 0x10F60, symSize: 0x58 }
+  - { offset: 0x10916D, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_get_regname, symObjAddr: 0x238, symBinAddr: 0x10FB8, symSize: 0x8 }
+  - { offset: 0x1091DE, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_get_regcount, symObjAddr: 0x240, symBinAddr: 0x10FC0, symSize: 0x8 }
+  - { offset: 0x109229, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_free, symObjAddr: 0x248, symBinAddr: 0x10FC8, symSize: 0x24 }
+  - { offset: 0x109388, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_init, symObjAddr: 0x0, symBinAddr: 0x10FEC, symSize: 0x3E4 }
+  - { offset: 0x1095BE, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_init, symObjAddr: 0x0, symBinAddr: 0x10FEC, symSize: 0x3E4 }
+  - { offset: 0x109B17, size: 0x8, addend: 0x0, symName: _plprotobuf_cbinary_data_nsstring_init, symObjAddr: 0x3E4, symBinAddr: 0x113D0, symSize: 0x44 }
+  - { offset: 0x109C40, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_set_exception, symObjAddr: 0x428, symBinAddr: 0x11414, symSize: 0x220 }
+  - { offset: 0x109D20, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_set_exception.cold.2, symObjAddr: 0x188C, symBinAddr: 0x2B980, symSize: 0x28 }
+  - { offset: 0x109D38, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_set_exception.cold.1, symObjAddr: 0x1864, symBinAddr: 0x2B958, symSize: 0x28 }
+  - { offset: 0x109D9A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_set_custom_data, symObjAddr: 0x648, symBinAddr: 0x11634, symSize: 0x7C }
+  - { offset: 0x109E3B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_close, symObjAddr: 0x6C4, symBinAddr: 0x116B0, symSize: 0x8 }
+  - { offset: 0x109E68, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_free, symObjAddr: 0x6CC, symBinAddr: 0x116B8, symSize: 0xEC }
+  - { offset: 0x10A098, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_log_writer_write, symObjAddr: 0x7B8, symBinAddr: 0x117A4, symSize: 0x494 }
+  - { offset: 0x10AE16, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_report_info, symObjAddr: 0xC4C, symBinAddr: 0x11C38, symSize: 0x68 }
+  - { offset: 0x10AF04, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_system_info, symObjAddr: 0xCB4, symBinAddr: 0x11CA0, symSize: 0xCC }
+  - { offset: 0x10B043, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_machine_info, symObjAddr: 0xD80, symBinAddr: 0x11D6C, symSize: 0xC4 }
+  - { offset: 0x10B17B, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_app_info, symObjAddr: 0xE44, symBinAddr: 0x11E30, symSize: 0x78 }
+  - { offset: 0x10B269, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_process_info, symObjAddr: 0xEBC, symBinAddr: 0x11EA8, symSize: 0x120 }
+  - { offset: 0x10B458, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_thread, symObjAddr: 0xFDC, symBinAddr: 0x11FC8, symSize: 0x278 }
+  - { offset: 0x10B9F4, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_binary_image, symObjAddr: 0x1254, symBinAddr: 0x12240, symSize: 0x134 }
+  - { offset: 0x10BC29, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_exception, symObjAddr: 0x1388, symBinAddr: 0x12374, symSize: 0x104 }
+  - { offset: 0x10BDC8, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_signal, symObjAddr: 0x148C, symBinAddr: 0x12478, symSize: 0x164 }
+  - { offset: 0x10BDD3, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_signal, symObjAddr: 0x148C, symBinAddr: 0x12478, symSize: 0x164 }
+  - { offset: 0x10BFFF, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_processor_info, symObjAddr: 0x15F0, symBinAddr: 0x125DC, symSize: 0x74 }
+  - { offset: 0x10C4EF, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_thread_frame, symObjAddr: 0x1664, symBinAddr: 0x12650, symSize: 0x108 }
+  - { offset: 0x10C6AB, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_exception.cold.1, symObjAddr: 0x18B4, symBinAddr: 0x2B9A8, symSize: 0x28 }
+  - { offset: 0x10C6EC, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_mach_signal, symObjAddr: 0x17D4, symBinAddr: 0x127C0, symSize: 0x90 }
+  - { offset: 0x10C890, size: 0x8, addend: 0x0, symName: _plcrash_writer_write_thread_frame_symbol_cb, symObjAddr: 0x176C, symBinAddr: 0x12758, symSize: 0x68 }
+  - { offset: 0x10D2C3, size: 0x8, addend: 0x0, symName: _plcr_swap16, symObjAddr: 0x0, symBinAddr: 0x12850, symSize: 0x8 }
+  - { offset: 0x10D2DD, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_byteorder_swapped, symObjAddr: 0x4E0, symBinAddr: 0x405B0, symSize: 0x0 }
+  - { offset: 0x10D396, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_byteorder_direct, symObjAddr: 0x4F8, symBinAddr: 0x405C8, symSize: 0x0 }
+  - { offset: 0x10D41C, size: 0x8, addend: 0x0, symName: _plcr_swap16, symObjAddr: 0x0, symBinAddr: 0x12850, symSize: 0x8 }
+  - { offset: 0x10D447, size: 0x8, addend: 0x0, symName: _plcr_swap32, symObjAddr: 0x8, symBinAddr: 0x12858, symSize: 0x8 }
+  - { offset: 0x10D472, size: 0x8, addend: 0x0, symName: _plcr_swap64, symObjAddr: 0x10, symBinAddr: 0x12860, symSize: 0x8 }
+  - { offset: 0x10D49D, size: 0x8, addend: 0x0, symName: _plcr_nswap16, symObjAddr: 0x18, symBinAddr: 0x12868, symSize: 0x4 }
+  - { offset: 0x10D4C6, size: 0x8, addend: 0x0, symName: _plcr_nswap32, symObjAddr: 0x1C, symBinAddr: 0x1286C, symSize: 0x4 }
+  - { offset: 0x10D4EF, size: 0x8, addend: 0x0, symName: _plcr_nswap64, symObjAddr: 0x20, symBinAddr: 0x12870, symSize: 0x4 }
+  - { offset: 0x10D518, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_byteorder_little_endian, symObjAddr: 0x24, symBinAddr: 0x12874, symSize: 0xC }
+  - { offset: 0x10D532, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_byteorder_big_endian, symObjAddr: 0x30, symBinAddr: 0x12880, symSize: 0xC }
+  - { offset: 0x10D54C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_strerror, symObjAddr: 0x3C, symBinAddr: 0x1288C, symSize: 0x24 }
+  - { offset: 0x10D577, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_address_apply_offset, symObjAddr: 0x60, symBinAddr: 0x128B0, symSize: 0x40 }
+  - { offset: 0x10D5A6, size: 0x8, addend: 0x0, symName: _BugSplatpl_mach_thread_self, symObjAddr: 0xA0, symBinAddr: 0x128F0, symSize: 0x38 }
+  - { offset: 0x10D6E8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_task_memcpy, symObjAddr: 0xD8, symBinAddr: 0x12928, symSize: 0x78 }
+  - { offset: 0x10D7F8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_task_read_uint8, symObjAddr: 0x150, symBinAddr: 0x129A0, symSize: 0x8 }
+  - { offset: 0x10D880, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_task_read_uint16, symObjAddr: 0x158, symBinAddr: 0x129A8, symSize: 0x54 }
+  - { offset: 0x10D943, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_task_read_uint32, symObjAddr: 0x1AC, symBinAddr: 0x129FC, symSize: 0x54 }
+  - { offset: 0x10DA06, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_task_read_uint64, symObjAddr: 0x200, symBinAddr: 0x12A50, symSize: 0x54 }
+  - { offset: 0x10DAC9, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_strcmp, symObjAddr: 0x254, symBinAddr: 0x12AA4, symSize: 0x28 }
+  - { offset: 0x10DB07, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_strncmp, symObjAddr: 0x27C, symBinAddr: 0x12ACC, symSize: 0x44 }
+  - { offset: 0x10DB54, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_memcpy, symObjAddr: 0x2C0, symBinAddr: 0x12B10, symSize: 0x20 }
+  - { offset: 0x10DB98, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_memcpy, symObjAddr: 0x2C0, symBinAddr: 0x12B10, symSize: 0x20 }
+  - { offset: 0x10DBB2, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_memset, symObjAddr: 0x2E0, symBinAddr: 0x12B30, symSize: 0xC }
+  - { offset: 0x10DC09, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_memset, symObjAddr: 0x2E0, symBinAddr: 0x12B30, symSize: 0xC }
+  - { offset: 0x10DC27, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_writen, symObjAddr: 0x2EC, symBinAddr: 0x12B3C, symSize: 0x78 }
+  - { offset: 0x10DD3B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_file_init, symObjAddr: 0x364, symBinAddr: 0x12BB4, symSize: 0x10 }
+  - { offset: 0x10DDE0, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_file_write, symObjAddr: 0x374, symBinAddr: 0x12BC4, symSize: 0xD0 }
+  - { offset: 0x10DEAC, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_file_flush, symObjAddr: 0x444, symBinAddr: 0x12C94, symSize: 0x4C }
+  - { offset: 0x10DF80, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_file_close, symObjAddr: 0x490, symBinAddr: 0x12CE0, symSize: 0x50 }
+  - { offset: 0x10E0FB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_writer_pack, symObjAddr: 0x0, symBinAddr: 0x12D30, symSize: 0x524 }
+  - { offset: 0x10E397, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_writer_pack, symObjAddr: 0x0, symBinAddr: 0x12D30, symSize: 0x524 }
+  - { offset: 0x10E758, size: 0x8, addend: 0x0, symName: _uint64_pack, symObjAddr: 0x524, symBinAddr: 0x13254, symSize: 0x114 }
+  - { offset: 0x10E763, size: 0x8, addend: 0x0, symName: _uint64_pack, symObjAddr: 0x524, symBinAddr: 0x13254, symSize: 0x114 }
+  - { offset: 0x10E9B8, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporter initialize]', symObjAddr: 0x0, symBinAddr: 0x13368, symSize: 0x74 }
+  - { offset: 0x10EA36, size: 0x8, addend: 0x0, symName: _sharedReporter, symObjAddr: 0xFAF0, symBinAddr: 0x4DE90, symSize: 0x0 }
+  - { offset: 0x10ED65, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporter sharedReporter]', symObjAddr: 0x158, symBinAddr: 0x134C0, symSize: 0x30 }
+  - { offset: 0x10ED91, size: 0x8, addend: 0x0, symName: _sharedReporter.onceLock, symObjAddr: 0xFAF8, symBinAddr: 0x4DE98, symSize: 0x0 }
+  - { offset: 0x10EDF4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter enableCrashReporterAndReturnError:]', symObjAddr: 0x464, symBinAddr: 0x137CC, symSize: 0x390 }
+  - { offset: 0x10EE20, size: 0x8, addend: 0x0, symName: '_enableCrashReporterAndReturnError:.enforceOne', symObjAddr: 0xFB00, symBinAddr: 0x4DEA0, symSize: 0x0 }
+  - { offset: 0x10EF72, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportWithThread:exception:error:]', symObjAddr: 0xA20, symBinAddr: 0x13D88, symSize: 0x43C }
+  - { offset: 0x10F48C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) initWithBundle:configuration:]', symObjAddr: 0x126C, symBinAddr: 0x145D4, symSize: 0x248 }
+  - { offset: 0x10F6CD, size: 0x8, addend: 0x0, symName: _shared_image_list, symObjAddr: 0xFAE0, symBinAddr: 0x4DE80, symSize: 0x0 }
+  - { offset: 0x10F710, size: 0x8, addend: 0x0, symName: _signal_handler_context, symObjAddr: 0xFB08, symBinAddr: 0x4DEA8, symSize: 0x0 }
+  - { offset: 0x10FA05, size: 0x8, addend: 0x0, symName: _image_add_callback, symObjAddr: 0x74, symBinAddr: 0x133DC, symSize: 0xD4 }
+  - { offset: 0x10FB5D, size: 0x8, addend: 0x0, symName: _monitored_signals, symObjAddr: 0x2068, symBinAddr: 0x32CC0, symSize: 0x0 }
+  - { offset: 0x10FB73, size: 0x8, addend: 0x0, symName: _uncaught_exception_handler, symObjAddr: 0x9D8, symBinAddr: 0x13D40, symSize: 0x34 }
+  - { offset: 0x10FB97, size: 0x8, addend: 0x0, symName: _uncaught_exception_handler.exception_is_handled, symObjAddr: 0xFD20, symBinAddr: 0x4E0C0, symSize: 0x0 }
+  - { offset: 0x10FBC4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportWithThread:]', symObjAddr: 0xA0C, symBinAddr: 0x13D74, symSize: 0x8 }
+  - { offset: 0x10FBE8, size: 0x8, addend: 0x0, symName: _crashCallbacks.1, symObjAddr: 0xFD10, symBinAddr: 0x4E0B0, symSize: 0x0 }
+  - { offset: 0x10FBF3, size: 0x8, addend: 0x0, symName: _crashCallbacks.2, symObjAddr: 0xFD18, symBinAddr: 0x4E0B8, symSize: 0x0 }
+  - { offset: 0x1100E5, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporter initialize]', symObjAddr: 0x0, symBinAddr: 0x13368, symSize: 0x74 }
+  - { offset: 0x1102F3, size: 0x8, addend: 0x0, symName: _image_remove_callback, symObjAddr: 0x148, symBinAddr: 0x134B0, symSize: 0x10 }
+  - { offset: 0x1103E6, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporter sharedReporter].cold.1', symObjAddr: 0x197C, symBinAddr: 0x2B9D0, symSize: 0x14 }
+  - { offset: 0x110402, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporter sharedReporter].cold.1', symObjAddr: 0x197C, symBinAddr: 0x2B9D0, symSize: 0x14 }
+  - { offset: 0x110415, size: 0x8, addend: 0x0, symName: '___41+[BugSplatPLCrashReporter sharedReporter]_block_invoke', symObjAddr: 0x188, symBinAddr: 0x134F0, symSize: 0xA8 }
+  - { offset: 0x11043E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter init]', symObjAddr: 0x230, symBinAddr: 0x13598, symSize: 0x50 }
+  - { offset: 0x110476, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter initWithConfiguration:]', symObjAddr: 0x280, symBinAddr: 0x135E8, symSize: 0x74 }
+  - { offset: 0x1104BF, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter hasPendingCrashReport]', symObjAddr: 0x2F4, symBinAddr: 0x1365C, symSize: 0x74 }
+  - { offset: 0x1104F7, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter loadPendingCrashReportData]', symObjAddr: 0x368, symBinAddr: 0x136D0, symSize: 0x8 }
+  - { offset: 0x11052D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter loadPendingCrashReportDataAndReturnError:]', symObjAddr: 0x370, symBinAddr: 0x136D8, symSize: 0x68 }
+  - { offset: 0x110576, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter purgePendingCrashReport]', symObjAddr: 0x3D8, symBinAddr: 0x13740, symSize: 0x8 }
+  - { offset: 0x1105AC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter purgePendingCrashReportAndReturnError:]', symObjAddr: 0x3E0, symBinAddr: 0x13748, symSize: 0x7C }
+  - { offset: 0x1105F5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter enableCrashReporter]', symObjAddr: 0x45C, symBinAddr: 0x137C4, symSize: 0x8 }
+  - { offset: 0x11090F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter enableCrashReporterAndReturnError:].cold.2', symObjAddr: 0x19B8, symBinAddr: 0x2BA0C, symSize: 0x28 }
+  - { offset: 0x110927, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter enableCrashReporterAndReturnError:].cold.1', symObjAddr: 0x1990, symBinAddr: 0x2B9E4, symSize: 0x28 }
+  - { offset: 0x11093F, size: 0x8, addend: 0x0, symName: _signal_handler_callback, symObjAddr: 0x7F4, symBinAddr: 0x13B5C, symSize: 0xD0 }
+  - { offset: 0x110CCB, size: 0x8, addend: 0x0, symName: _plcrash_write_report, symObjAddr: 0x1870, symBinAddr: 0x14BD8, symSize: 0xF4 }
+  - { offset: 0x110E0C, size: 0x8, addend: 0x0, symName: _mach_exception_callback, symObjAddr: 0x8C4, symBinAddr: 0x13C2C, symSize: 0x114 }
+  - { offset: 0x1110FF, size: 0x8, addend: 0x0, symName: _uncaught_exception_handler.cold.1, symObjAddr: 0x19E0, symBinAddr: 0x2BA34, symSize: 0x1C }
+  - { offset: 0x111117, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportWithThread:]', symObjAddr: 0xA0C, symBinAddr: 0x13D74, symSize: 0x8 }
+  - { offset: 0x11115C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportWithThread:error:]', symObjAddr: 0xA14, symBinAddr: 0x13D7C, symSize: 0xC }
+  - { offset: 0x111431, size: 0x8, addend: 0x0, symName: _plcr_live_report_callback, symObjAddr: 0xE5C, symBinAddr: 0x141C4, symSize: 0x48 }
+  - { offset: 0x11149C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReport]', symObjAddr: 0xEA4, symBinAddr: 0x1420C, symSize: 0x8 }
+  - { offset: 0x1114D2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportAndReturnError:]', symObjAddr: 0xEAC, symBinAddr: 0x14214, symSize: 0xC }
+  - { offset: 0x111519, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter generateLiveReportWithException:error:]', symObjAddr: 0xEB8, symBinAddr: 0x14220, symSize: 0x64 }
+  - { offset: 0x111581, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter setCrashCallbacks:]', symObjAddr: 0xF1C, symBinAddr: 0x14284, symSize: 0x68 }
+  - { offset: 0x1115C9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter setCustomData:]', symObjAddr: 0xF84, symBinAddr: 0x142EC, symSize: 0x48 }
+  - { offset: 0x1115D4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter setCrashCallbacks:].cold.1', symObjAddr: 0x19FC, symBinAddr: 0x2BA50, symSize: 0x28 }
+  - { offset: 0x1115EC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter setCustomData:]', symObjAddr: 0xF84, symBinAddr: 0x142EC, symSize: 0x48 }
+  - { offset: 0x111647, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter crashReportPath]', symObjAddr: 0xFCC, symBinAddr: 0x14334, symSize: 0x4C }
+  - { offset: 0x11167F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter customData]', symObjAddr: 0x1018, symBinAddr: 0x14380, symSize: 0x8 }
+  - { offset: 0x1116B6, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter .cxx_destruct]', symObjAddr: 0x1020, symBinAddr: 0x14388, symSize: 0x78 }
+  - { offset: 0x1116EA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) initWithApplicationIdentifier:appVersion:appMarketingVersion:configuration:]', symObjAddr: 0x1098, symBinAddr: 0x14400, symSize: 0x1D4 }
+  - { offset: 0x11181A, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) enableMachExceptionServerWithPreviousPortSet:callback:context:error:]', symObjAddr: 0x14B4, symBinAddr: 0x1481C, symSize: 0x1C4 }
+  - { offset: 0x111950, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) mapToAsyncSymbolicationStrategy:]', symObjAddr: 0x1678, symBinAddr: 0x149E0, symSize: 0x8 }
+  - { offset: 0x1119A1, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) populateCrashReportDirectoryAndReturnError:]', symObjAddr: 0x1680, symBinAddr: 0x149E8, symSize: 0x19C }
+  - { offset: 0x111A0C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) crashReportDirectory]', symObjAddr: 0x181C, symBinAddr: 0x14B84, symSize: 0x8 }
+  - { offset: 0x111A44, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporter(PrivateMethods) queuedCrashReportDirectory]', symObjAddr: 0x1824, symBinAddr: 0x14B8C, symSize: 0x4C }
+  - { offset: 0x111A99, size: 0x8, addend: 0x0, symName: _mach_exception_callback_live_cb, symObjAddr: 0x1964, symBinAddr: 0x14CCC, symSize: 0x18 }
+  - { offset: 0x112312, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport initWithData:error:]', symObjAddr: 0x0, symBinAddr: 0x14CE4, symSize: 0x394 }
+  - { offset: 0x1133BC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport initWithData:error:]', symObjAddr: 0x0, symBinAddr: 0x14CE4, symSize: 0x394 }
+  - { offset: 0x113589, size: 0x8, addend: 0x0, symName: _populate_nserror, symObjAddr: 0x394, symBinAddr: 0x15078, symSize: 0x94 }
+  - { offset: 0x1135E5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport dealloc]', symObjAddr: 0x428, symBinAddr: 0x1510C, symSize: 0x74 }
+  - { offset: 0x1136EE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport imageForAddress:]', symObjAddr: 0x49C, symBinAddr: 0x15180, symSize: 0x138 }
+  - { offset: 0x113763, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport hasMachineInfo]', symObjAddr: 0x5D4, symBinAddr: 0x152B8, symSize: 0x10 }
+  - { offset: 0x11379B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport hasProcessInfo]', symObjAddr: 0x5E4, symBinAddr: 0x152C8, symSize: 0x10 }
+  - { offset: 0x1137D3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport hasExceptionInfo]', symObjAddr: 0x5F4, symBinAddr: 0x152D8, symSize: 0x10 }
+  - { offset: 0x11380B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport systemInfo]', symObjAddr: 0x604, symBinAddr: 0x152E8, symSize: 0x8 }
+  - { offset: 0x113843, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport machineInfo]', symObjAddr: 0x60C, symBinAddr: 0x152F0, symSize: 0x8 }
+  - { offset: 0x11387B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport applicationInfo]', symObjAddr: 0x614, symBinAddr: 0x152F8, symSize: 0x8 }
+  - { offset: 0x1138B3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport processInfo]', symObjAddr: 0x61C, symBinAddr: 0x15300, symSize: 0x8 }
+  - { offset: 0x1138EB, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport signalInfo]', symObjAddr: 0x624, symBinAddr: 0x15308, symSize: 0x8 }
+  - { offset: 0x113923, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport machExceptionInfo]', symObjAddr: 0x62C, symBinAddr: 0x15310, symSize: 0x8 }
+  - { offset: 0x11395B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport threads]', symObjAddr: 0x634, symBinAddr: 0x15318, symSize: 0x8 }
+  - { offset: 0x113993, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport images]', symObjAddr: 0x63C, symBinAddr: 0x15320, symSize: 0x8 }
+  - { offset: 0x1139CB, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport exceptionInfo]', symObjAddr: 0x644, symBinAddr: 0x15328, symSize: 0x8 }
+  - { offset: 0x113A03, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport uuidRef]', symObjAddr: 0x64C, symBinAddr: 0x15330, symSize: 0x8 }
+  - { offset: 0x113A3B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport customData]', symObjAddr: 0x654, symBinAddr: 0x15338, symSize: 0x8 }
+  - { offset: 0x113A72, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport .cxx_destruct]', symObjAddr: 0x65C, symBinAddr: 0x15340, symSize: 0x90 }
+  - { offset: 0x113AA5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) decodeCrashData:error:]', symObjAddr: 0x6EC, symBinAddr: 0x153D0, symSize: 0x210 }
+  - { offset: 0x113BCF, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractSystemInfo:processorInfo:error:]', symObjAddr: 0x8FC, symBinAddr: 0x155E0, symSize: 0x1D4 }
+  - { offset: 0x113C7F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractProcessorInfo:error:]', symObjAddr: 0xAD0, symBinAddr: 0x157B4, symSize: 0xA8 }
+  - { offset: 0x113CF8, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) synthesizeProcessorInfoFromArchitecture:error:]', symObjAddr: 0xB78, symBinAddr: 0x1585C, symSize: 0xC4 }
+  - { offset: 0x113D93, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractMachineInfo:error:]', symObjAddr: 0xC3C, symBinAddr: 0x15920, symSize: 0x118 }
+  - { offset: 0x113E32, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractApplicationInfo:error:]', symObjAddr: 0xD54, symBinAddr: 0x15A38, symSize: 0x170 }
+  - { offset: 0x113EDE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractProcessInfo:error:]', symObjAddr: 0xEC4, symBinAddr: 0x15BA8, symSize: 0x19C }
+  - { offset: 0x113FBD, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractSymbolInfo:error:]', symObjAddr: 0x1060, symBinAddr: 0x15D44, symSize: 0xE0 }
+  - { offset: 0x114047, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractStackFrameInfo:error:]', symObjAddr: 0x1140, symBinAddr: 0x15E24, symSize: 0x160 }
+  - { offset: 0x1140E6, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractThreadInfo:error:]', symObjAddr: 0x12A0, symBinAddr: 0x15F84, symSize: 0x2A8 }
+  - { offset: 0x114285, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractImageInfo:error:]', symObjAddr: 0x1548, symBinAddr: 0x1622C, symSize: 0x21C }
+  - { offset: 0x114397, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractExceptionInfo:error:]', symObjAddr: 0x1764, symBinAddr: 0x16448, symSize: 0x1FC }
+  - { offset: 0x1143A2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractImageInfo:error:].cold.1', symObjAddr: 0x1BEC, symBinAddr: 0x2BA78, symSize: 0x28 }
+  - { offset: 0x1143BA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractExceptionInfo:error:]', symObjAddr: 0x1764, symBinAddr: 0x16448, symSize: 0x1FC }
+  - { offset: 0x1144BB, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractSignalInfo:error:]', symObjAddr: 0x1960, symBinAddr: 0x16644, symSize: 0x13C }
+  - { offset: 0x114556, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReport(PrivateMethods) extractMachExceptionInfo:error:]', symObjAddr: 0x1A9C, symBinAddr: 0x16780, symSize: 0x150 }
+  - { offset: 0x1149BB, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo initWithOperatingSystem:operatingSystemVersion:architecture:timestamp:]', symObjAddr: 0x0, symBinAddr: 0x168D0, symSize: 0x14 }
+  - { offset: 0x1149D5, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashReportHostOperatingSystem, symObjAddr: 0x298C, symBinAddr: 0x4E0C4, symSize: 0x0 }
+  - { offset: 0x114A24, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashReportHostArchitecture, symObjAddr: 0x1B4, symBinAddr: 0x4DD28, symSize: 0x0 }
+  - { offset: 0x114C34, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo initWithOperatingSystem:operatingSystemVersion:architecture:timestamp:]', symObjAddr: 0x0, symBinAddr: 0x168D0, symSize: 0x14 }
+  - { offset: 0x114CA7, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo initWithOperatingSystem:operatingSystemVersion:operatingSystemBuild:architecture:timestamp:]', symObjAddr: 0x14, symBinAddr: 0x168E4, symSize: 0xC }
+  - { offset: 0x114D26, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo initWithOperatingSystem:operatingSystemVersion:operatingSystemBuild:architecture:processorInfo:timestamp:]', symObjAddr: 0x20, symBinAddr: 0x168F0, symSize: 0x11C }
+  - { offset: 0x114DBD, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo operatingSystem]', symObjAddr: 0x13C, symBinAddr: 0x16A0C, symSize: 0x8 }
+  - { offset: 0x114DF4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo operatingSystemVersion]', symObjAddr: 0x144, symBinAddr: 0x16A14, symSize: 0x8 }
+  - { offset: 0x114E2B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo operatingSystemBuild]', symObjAddr: 0x14C, symBinAddr: 0x16A1C, symSize: 0x8 }
+  - { offset: 0x114E62, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo architecture]', symObjAddr: 0x154, symBinAddr: 0x16A24, symSize: 0x8 }
+  - { offset: 0x114E99, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo timestamp]', symObjAddr: 0x15C, symBinAddr: 0x16A2C, symSize: 0x8 }
+  - { offset: 0x114ED0, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo processorInfo]', symObjAddr: 0x164, symBinAddr: 0x16A34, symSize: 0x8 }
+  - { offset: 0x114F07, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSystemInfo .cxx_destruct]', symObjAddr: 0x16C, symBinAddr: 0x16A3C, symSize: 0x48 }
+  - { offset: 0x114FAC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo initWithApplicationIdentifier:applicationVersion:applicationMarketingVersion:]', symObjAddr: 0x0, symBinAddr: 0x16A84, symSize: 0xE0 }
+  - { offset: 0x115083, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo initWithApplicationIdentifier:applicationVersion:applicationMarketingVersion:]', symObjAddr: 0x0, symBinAddr: 0x16A84, symSize: 0xE0 }
+  - { offset: 0x1150EA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo applicationIdentifier]', symObjAddr: 0xE0, symBinAddr: 0x16B64, symSize: 0x8 }
+  - { offset: 0x115121, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo applicationVersion]', symObjAddr: 0xE8, symBinAddr: 0x16B6C, symSize: 0x8 }
+  - { offset: 0x115158, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo applicationMarketingVersion]', symObjAddr: 0xF0, symBinAddr: 0x16B74, symSize: 0x8 }
+  - { offset: 0x11518F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportApplicationInfo .cxx_destruct]', symObjAddr: 0xF8, symBinAddr: 0x16B7C, symSize: 0x3C }
+  - { offset: 0x11522D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo initWithThreadNumber:stackFrames:crashed:registers:]', symObjAddr: 0x0, symBinAddr: 0x16BB8, symSize: 0xCC }
+  - { offset: 0x115342, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo initWithThreadNumber:stackFrames:crashed:registers:]', symObjAddr: 0x0, symBinAddr: 0x16BB8, symSize: 0xCC }
+  - { offset: 0x1153B9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo threadNumber]', symObjAddr: 0xCC, symBinAddr: 0x16C84, symSize: 0x8 }
+  - { offset: 0x1153F0, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo stackFrames]', symObjAddr: 0xD4, symBinAddr: 0x16C8C, symSize: 0x8 }
+  - { offset: 0x115427, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo crashed]', symObjAddr: 0xDC, symBinAddr: 0x16C94, symSize: 0x8 }
+  - { offset: 0x11545E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo registers]', symObjAddr: 0xE4, symBinAddr: 0x16C9C, symSize: 0x8 }
+  - { offset: 0x115495, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportThreadInfo .cxx_destruct]', symObjAddr: 0xEC, symBinAddr: 0x16CA4, symSize: 0x30 }
+  - { offset: 0x115533, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo initWithCodeType:baseAddress:size:name:uuid:]', symObjAddr: 0x0, symBinAddr: 0x16CD4, symSize: 0x178 }
+  - { offset: 0x1156E5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo initWithCodeType:baseAddress:size:name:uuid:]', symObjAddr: 0x0, symBinAddr: 0x16CD4, symSize: 0x178 }
+  - { offset: 0x115834, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo codeType]', symObjAddr: 0x178, symBinAddr: 0x16E4C, symSize: 0x8 }
+  - { offset: 0x11586B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo imageBaseAddress]', symObjAddr: 0x180, symBinAddr: 0x16E54, symSize: 0x8 }
+  - { offset: 0x1158A2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo imageSize]', symObjAddr: 0x188, symBinAddr: 0x16E5C, symSize: 0x8 }
+  - { offset: 0x1158D9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo imageName]', symObjAddr: 0x190, symBinAddr: 0x16E64, symSize: 0x8 }
+  - { offset: 0x115910, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo hasImageUUID]', symObjAddr: 0x198, symBinAddr: 0x16E6C, symSize: 0x8 }
+  - { offset: 0x115947, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo imageUUID]', symObjAddr: 0x1A0, symBinAddr: 0x16E74, symSize: 0x8 }
+  - { offset: 0x11597E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportBinaryImageInfo .cxx_destruct]', symObjAddr: 0x1A8, symBinAddr: 0x16E7C, symSize: 0x3C }
+  - { offset: 0x115A9C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo initWithExceptionName:reason:]', symObjAddr: 0x0, symBinAddr: 0x16EB8, symSize: 0x8 }
+  - { offset: 0x115B98, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo initWithExceptionName:reason:]', symObjAddr: 0x0, symBinAddr: 0x16EB8, symSize: 0x8 }
+  - { offset: 0x115BE9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo initWithExceptionName:reason:stackFrames:]', symObjAddr: 0x8, symBinAddr: 0x16EC0, symSize: 0xE0 }
+  - { offset: 0x115C50, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo exceptionName]', symObjAddr: 0xE8, symBinAddr: 0x16FA0, symSize: 0x8 }
+  - { offset: 0x115C87, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo exceptionReason]', symObjAddr: 0xF0, symBinAddr: 0x16FA8, symSize: 0x8 }
+  - { offset: 0x115CBE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo stackFrames]', symObjAddr: 0xF8, symBinAddr: 0x16FB0, symSize: 0x8 }
+  - { offset: 0x115CF5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportExceptionInfo .cxx_destruct]', symObjAddr: 0x100, symBinAddr: 0x16FB8, symSize: 0x3C }
+  - { offset: 0x115D92, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_signal_sigcode, symObjAddr: 0x0, symBinAddr: 0x16FF4, symSize: 0x44 }
+  - { offset: 0x115DBA, size: 0x8, addend: 0x0, symName: _signal_codes, symObjAddr: 0x88, symBinAddr: 0x40650, symSize: 0x0 }
+  - { offset: 0x115E1F, size: 0x8, addend: 0x0, symName: _signal_names, symObjAddr: 0x268, symBinAddr: 0x40830, symSize: 0x0 }
+  - { offset: 0x115E56, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_signal_sigcode, symObjAddr: 0x0, symBinAddr: 0x16FF4, symSize: 0x44 }
+  - { offset: 0x115EAE, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_signal_signame, symObjAddr: 0x44, symBinAddr: 0x17038, symSize: 0x44 }
+  - { offset: 0x115F25, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo initWithSignalName:code:address:]', symObjAddr: 0x0, symBinAddr: 0x1707C, symSize: 0xBC }
+  - { offset: 0x11600D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo initWithSignalName:code:address:]', symObjAddr: 0x0, symBinAddr: 0x1707C, symSize: 0xBC }
+  - { offset: 0x116074, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo name]', symObjAddr: 0xBC, symBinAddr: 0x17138, symSize: 0x8 }
+  - { offset: 0x1160AB, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo code]', symObjAddr: 0xC4, symBinAddr: 0x17140, symSize: 0x8 }
+  - { offset: 0x1160E2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo address]', symObjAddr: 0xCC, symBinAddr: 0x17148, symSize: 0x8 }
+  - { offset: 0x116119, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSignalInfo .cxx_destruct]', symObjAddr: 0xD4, symBinAddr: 0x17150, symSize: 0x30 }
+  - { offset: 0x1161B7, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo initWithProcessName:processID:processPath:processStartTime:parentProcessName:parentProcessID:native:]', symObjAddr: 0x0, symBinAddr: 0x17180, symSize: 0x140 }
+  - { offset: 0x116344, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo initWithProcessName:processID:processPath:processStartTime:parentProcessName:parentProcessID:native:]', symObjAddr: 0x0, symBinAddr: 0x17180, symSize: 0x140 }
+  - { offset: 0x1163E7, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo processName]', symObjAddr: 0x140, symBinAddr: 0x172C0, symSize: 0x8 }
+  - { offset: 0x11641E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo processID]', symObjAddr: 0x148, symBinAddr: 0x172C8, symSize: 0x8 }
+  - { offset: 0x116455, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo processPath]', symObjAddr: 0x150, symBinAddr: 0x172D0, symSize: 0x8 }
+  - { offset: 0x11648C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo processStartTime]', symObjAddr: 0x158, symBinAddr: 0x172D8, symSize: 0x8 }
+  - { offset: 0x1164C3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo parentProcessName]', symObjAddr: 0x160, symBinAddr: 0x172E0, symSize: 0x8 }
+  - { offset: 0x1164FA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo parentProcessID]', symObjAddr: 0x168, symBinAddr: 0x172E8, symSize: 0x8 }
+  - { offset: 0x116531, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo native]', symObjAddr: 0x170, symBinAddr: 0x172F0, symSize: 0x8 }
+  - { offset: 0x116568, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessInfo .cxx_destruct]', symObjAddr: 0x178, symBinAddr: 0x172F8, symSize: 0x48 }
+  - { offset: 0x116606, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReportTextFormatter stringValueForCrashReport:withTextFormat:]', symObjAddr: 0x0, symBinAddr: 0x17340, symSize: 0x16E8 }
+  - { offset: 0x116614, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReportTextFormatter(PrivateMethods) formatStackFrame:frameIndex:report:lp64:]', symObjAddr: 0x1810, symBinAddr: 0x18B50, symSize: 0x39C }
+  - { offset: 0x116A5D, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReportTextFormatter stringValueForCrashReport:withTextFormat:]', symObjAddr: 0x0, symBinAddr: 0x17340, symSize: 0x16E8 }
+  - { offset: 0x116E51, size: 0x8, addend: 0x0, symName: _binaryImageSort, symObjAddr: 0x16E8, symBinAddr: 0x18A28, symSize: 0x5C }
+  - { offset: 0x116EBE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportTextFormatter initWithTextFormat:stringEncoding:]', symObjAddr: 0x1744, symBinAddr: 0x18A84, symSize: 0x70 }
+  - { offset: 0x116F18, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportTextFormatter formatReport:error:]', symObjAddr: 0x17B4, symBinAddr: 0x18AF4, symSize: 0x5C }
+  - { offset: 0x1177A3, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_image_list_init, symObjAddr: 0x0, symBinAddr: 0x18EEC, symSize: 0x68 }
+  - { offset: 0x118DC8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_image_list_init, symObjAddr: 0x0, symBinAddr: 0x18EEC, symSize: 0x68 }
+  - { offset: 0x11915F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_image_list_free, symObjAddr: 0x68, symBinAddr: 0x18F54, symSize: 0x98 }
+  - { offset: 0x11941B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listIP19plcrash_async_imageED2Ev, symObjAddr: 0x454, symBinAddr: 0x19340, symSize: 0x64 }
+  - { offset: 0x1196C7, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_image_list_append, symObjAddr: 0x100, symBinAddr: 0x18FEC, symSize: 0x6C }
+  - { offset: 0x1197D1, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listIP19plcrash_async_imageE13nasync_appendES4_, symObjAddr: 0x16C, symBinAddr: 0x19058, symSize: 0x98 }
+  - { offset: 0x119C81, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_image_list_remove, symObjAddr: 0x204, symBinAddr: 0x190F0, symSize: 0x78 }
+  - { offset: 0x119E77, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async10async_listIP19plcrash_async_imageE18nasync_remove_nodeEPNS5_4nodeE, symObjAddr: 0x27C, symBinAddr: 0x19168, symSize: 0xFC }
+  - { offset: 0x11A38F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_image_list_set_reading, symObjAddr: 0x378, symBinAddr: 0x19264, symSize: 0x20 }
+  - { offset: 0x11A51E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_image_containing_address, symObjAddr: 0x398, symBinAddr: 0x19284, symSize: 0x7C }
+  - { offset: 0x11A699, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_image_list_next, symObjAddr: 0x414, symBinAddr: 0x19300, symSize: 0x40 }
+  - { offset: 0x11B7F2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessorInfo initWithTypeEncoding:type:subtype:]', symObjAddr: 0x0, symBinAddr: 0x193A4, symSize: 0x74 }
+  - { offset: 0x11B8C8, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessorInfo initWithTypeEncoding:type:subtype:]', symObjAddr: 0x0, symBinAddr: 0x193A4, symSize: 0x74 }
+  - { offset: 0x11B92F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessorInfo typeEncoding]', symObjAddr: 0x74, symBinAddr: 0x19418, symSize: 0x8 }
+  - { offset: 0x11B966, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessorInfo type]', symObjAddr: 0x7C, symBinAddr: 0x19420, symSize: 0x8 }
+  - { offset: 0x11B99D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportProcessorInfo subtype]', symObjAddr: 0x84, symBinAddr: 0x19428, symSize: 0x8 }
+  - { offset: 0x11BA46, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo initWithModelName:processorInfo:processorCount:logicalProcessorCount:]', symObjAddr: 0x0, symBinAddr: 0x19430, symSize: 0xC8 }
+  - { offset: 0x11BBAE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo initWithModelName:processorInfo:processorCount:logicalProcessorCount:]', symObjAddr: 0x0, symBinAddr: 0x19430, symSize: 0xC8 }
+  - { offset: 0x11BC25, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo modelName]', symObjAddr: 0xC8, symBinAddr: 0x194F8, symSize: 0x8 }
+  - { offset: 0x11BC5C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo processorInfo]', symObjAddr: 0xD0, symBinAddr: 0x19500, symSize: 0x8 }
+  - { offset: 0x11BC93, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo processorCount]', symObjAddr: 0xD8, symBinAddr: 0x19508, symSize: 0x8 }
+  - { offset: 0x11BCCA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo logicalProcessorCount]', symObjAddr: 0xE0, symBinAddr: 0x19510, symSize: 0x8 }
+  - { offset: 0x11BD01, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachineInfo .cxx_destruct]', symObjAddr: 0xE8, symBinAddr: 0x19518, symSize: 0x30 }
+  - { offset: 0x11BD9E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_sysctl_string, symObjAddr: 0x0, symBinAddr: 0x19548, symSize: 0xB8 }
+  - { offset: 0x11BE35, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_sysctl_string, symObjAddr: 0x0, symBinAddr: 0x19548, symSize: 0xB8 }
+  - { offset: 0x11BFCF, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_sysctl_int, symObjAddr: 0xB8, symBinAddr: 0x19600, symSize: 0x38 }
+  - { offset: 0x11C04C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_sysctl_valid_utf8_bytes_max, symObjAddr: 0xF0, symBinAddr: 0x19638, symSize: 0xD4 }
+  - { offset: 0x11C102, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_sysctl_valid_utf8_bytes, symObjAddr: 0x1C4, symBinAddr: 0x1970C, symSize: 0x28 }
+  - { offset: 0x11C1E2, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_current, symObjAddr: 0x0, symBinAddr: 0x19734, symSize: 0x90 }
+  - { offset: 0x11C212, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_current_stub, symObjAddr: 0x0, symBinAddr: 0x197C4, symSize: 0x6C }
+  - { offset: 0x11C281, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_current_stub, symObjAddr: 0x0, symBinAddr: 0x197C4, symSize: 0x6C }
+  - { offset: 0x11C73D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_populate_error, symObjAddr: 0x0, symBinAddr: 0x19830, symSize: 0xC8 }
+  - { offset: 0x11C773, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_populate_error, symObjAddr: 0x0, symBinAddr: 0x19830, symSize: 0xC8 }
+  - { offset: 0x11C7DA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_populate_mach_error, symObjAddr: 0xC8, symBinAddr: 0x198F8, symSize: 0x90 }
+  - { offset: 0x11C85B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_populate_posix_error, symObjAddr: 0x158, symBinAddr: 0x19988, symSize: 0x90 }
+  - { offset: 0x11CADD, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_macho_init, symObjAddr: 0x0, symBinAddr: 0x19A18, symSize: 0x2D4 }
+  - { offset: 0x11CF92, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_macho_init, symObjAddr: 0x0, symBinAddr: 0x19A18, symSize: 0x2D4 }
+  - { offset: 0x11D34B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_next_command, symObjAddr: 0x394, symBinAddr: 0x19DAC, symSize: 0x100 }
+  - { offset: 0x11D4CB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_next_command_type, symObjAddr: 0x2D4, symBinAddr: 0x19CEC, symSize: 0x5C }
+  - { offset: 0x11D531, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_byteorder, symObjAddr: 0x330, symBinAddr: 0x19D48, symSize: 0x8 }
+  - { offset: 0x11D55C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_header, symObjAddr: 0x338, symBinAddr: 0x19D50, symSize: 0x8 }
+  - { offset: 0x11D587, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_header_size, symObjAddr: 0x340, symBinAddr: 0x19D58, symSize: 0x8 }
+  - { offset: 0x11D5B2, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_contains_address, symObjAddr: 0x348, symBinAddr: 0x19D60, symSize: 0x2C }
+  - { offset: 0x11D5EB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_cpu_type, symObjAddr: 0x374, symBinAddr: 0x19D8C, symSize: 0x10 }
+  - { offset: 0x11D624, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_cpu_subtype, symObjAddr: 0x384, symBinAddr: 0x19D9C, symSize: 0x10 }
+  - { offset: 0x11D67E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_find_command, symObjAddr: 0x494, symBinAddr: 0x19EAC, symSize: 0x7C }
+  - { offset: 0x11D720, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_find_segment_cmd, symObjAddr: 0x510, symBinAddr: 0x19F28, symSize: 0x88 }
+  - { offset: 0x11D7EA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_map_segment, symObjAddr: 0x598, symBinAddr: 0x19FB0, symSize: 0x120 }
+  - { offset: 0x11DC8D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_map_section, symObjAddr: 0x6B8, symBinAddr: 0x1A0D0, symSize: 0x178 }
+  - { offset: 0x11DFDA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_find_symbol_by_name, symObjAddr: 0x830, symBinAddr: 0x1A248, symSize: 0x120 }
+  - { offset: 0x11E1DA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_symtab_reader_init, symObjAddr: 0x950, symBinAddr: 0x1A368, symSize: 0x20C }
+  - { offset: 0x11E480, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_symtab_reader_read, symObjAddr: 0xB5C, symBinAddr: 0x1A574, symSize: 0xBC }
+  - { offset: 0x11E54A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_symtab_reader_symbol_name, symObjAddr: 0xC18, symBinAddr: 0x1A630, symSize: 0x64 }
+  - { offset: 0x11E5B0, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_symtab_reader_free, symObjAddr: 0xC7C, symBinAddr: 0x1A694, symSize: 0x8 }
+  - { offset: 0x11E5F3, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_mapped_segment_free, symObjAddr: 0xC84, symBinAddr: 0x1A69C, symSize: 0x4 }
+  - { offset: 0x11E613, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_mapped_segment_free, symObjAddr: 0xC84, symBinAddr: 0x1A69C, symSize: 0x4 }
+  - { offset: 0x11E627, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_find_symbol_by_pc, symObjAddr: 0xC88, symBinAddr: 0x1A6A0, symSize: 0x16C }
+  - { offset: 0x11E81E, size: 0x8, addend: 0x0, symName: _plcrash_async_macho_find_best_symbol, symObjAddr: 0xDF4, symBinAddr: 0x1A80C, symSize: 0x108 }
+  - { offset: 0x11E90C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_nasync_macho_free, symObjAddr: 0xEFC, symBinAddr: 0x1A914, symSize: 0x48 }
+  - { offset: 0x11EC4D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_init, symObjAddr: 0x0, symBinAddr: 0x1A95C, symSize: 0x238 }
+  - { offset: 0x11EE77, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_init, symObjAddr: 0x0, symBinAddr: 0x1A95C, symSize: 0x238 }
+  - { offset: 0x11F24C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_base_address, symObjAddr: 0x238, symBinAddr: 0x1AB94, symSize: 0x8 }
+  - { offset: 0x11F279, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_length, symObjAddr: 0x240, symBinAddr: 0x1AB9C, symSize: 0x8 }
+  - { offset: 0x11F2A6, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_task, symObjAddr: 0x248, symBinAddr: 0x1ABA4, symSize: 0x8 }
+  - { offset: 0x11F2D3, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_verify_local_pointer, symObjAddr: 0x250, symBinAddr: 0x1ABAC, symSize: 0x64 }
+  - { offset: 0x11F32F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_remap_address, symObjAddr: 0x2B4, symBinAddr: 0x1AC10, symSize: 0x38 }
+  - { offset: 0x11F494, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_read_uint8, symObjAddr: 0x2EC, symBinAddr: 0x1AC48, symSize: 0x60 }
+  - { offset: 0x11F571, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_read_uint16, symObjAddr: 0x34C, symBinAddr: 0x1ACA8, symSize: 0x74 }
+  - { offset: 0x11F66B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_read_uint32, symObjAddr: 0x3C0, symBinAddr: 0x1AD1C, symSize: 0x74 }
+  - { offset: 0x11F765, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_read_uint64, symObjAddr: 0x434, symBinAddr: 0x1AD90, symSize: 0x74 }
+  - { offset: 0x11F85F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mobject_free, symObjAddr: 0x4A8, symBinAddr: 0x1AE04, symSize: 0x40 }
+  - { offset: 0x11FA2E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_objc_cache_init, symObjAddr: 0x0, symBinAddr: 0x1AE44, symSize: 0x3C }
+  - { offset: 0x11FE32, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_objc_cache_init, symObjAddr: 0x0, symBinAddr: 0x1AE44, symSize: 0x3C }
+  - { offset: 0x11FFBA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_objc_cache_free, symObjAddr: 0x3C, symBinAddr: 0x1AE80, symSize: 0x48 }
+  - { offset: 0x120031, size: 0x8, addend: 0x0, symName: __ZL20free_mapped_sectionsP24plcrash_async_objc_cache, symObjAddr: 0x84, symBinAddr: 0x1AEC8, symSize: 0xDC }
+  - { offset: 0x12015A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_objc_find_method, symObjAddr: 0x160, symBinAddr: 0x1AFA4, symSize: 0x80 }
+  - { offset: 0x120246, size: 0x8, addend: 0x0, symName: __ZL24plcrash_async_objc_parseP19plcrash_async_machoP24plcrash_async_objc_cachePFvbP26plcrash_async_macho_stringS4_yPvES5_, symObjAddr: 0x1E0, symBinAddr: 0x1B024, symSize: 0x760 }
+  - { offset: 0x12181D, size: 0x8, addend: 0x0, symName: __ZL25pl_async_parse_obj1_classP19plcrash_async_machoP14pl_objc1_classbPFvbP26plcrash_async_macho_stringS4_yPvES5_, symObjAddr: 0x99C, symBinAddr: 0x1B7E0, symSize: 0x1FC }
+  - { offset: 0x121B54, size: 0x8, addend: 0x0, symName: __ZL12map_sectionsP19plcrash_async_machoP24plcrash_async_objc_cache, symObjAddr: 0xB98, symBinAddr: 0x1B9DC, symSize: 0x180 }
+  - { offset: 0x121CE9, size: 0x8, addend: 0x0, symName: __ZL39pl_async_objc_parse_objc2_class_methodsI17pl_objc2_class_6425pl_objc2_class_data_ro_6425pl_objc2_class_data_rw_64yE15plcrash_error_tP19plcrash_async_machoP24plcrash_async_objc_cachePT_bPFvbP26plcrash_async_macho_stringSB_yPvESC_, symObjAddr: 0xD18, symBinAddr: 0x1BB5C, symSize: 0xA4 }
+  - { offset: 0x121E96, size: 0x8, addend: 0x0, symName: __ZL31pl_async_objc_parse_objc2_classI17pl_objc2_class_6425pl_objc2_class_data_ro_6425pl_objc2_class_data_rw_64yE15plcrash_error_tP19plcrash_async_machoP24plcrash_async_objc_cachePT_P26plcrash_async_macho_stringPT0_, symObjAddr: 0xE50, symBinAddr: 0x1BC94, symSize: 0x204 }
+  - { offset: 0x122302, size: 0x8, addend: 0x0, symName: __ZL37pl_async_objc_parse_objc2_method_listP19plcrash_async_machoP24plcrash_async_objc_cacheP26plcrash_async_macho_stringbyPFvbS4_S4_yPvES5_, symObjAddr: 0x1054, symBinAddr: 0x1BE98, symSize: 0x260 }
+  - { offset: 0x1227E9, size: 0x8, addend: 0x0, symName: __ZL39pl_async_objc_parse_objc2_class_methodsI17pl_objc2_class_3225pl_objc2_class_data_ro_3225pl_objc2_class_data_rw_32jE15plcrash_error_tP19plcrash_async_machoP24plcrash_async_objc_cachePT_bPFvbP26plcrash_async_macho_stringSB_yPvESC_, symObjAddr: 0x1358, symBinAddr: 0x1C19C, symSize: 0xA4 }
+  - { offset: 0x122992, size: 0x8, addend: 0x0, symName: __ZL31pl_async_objc_parse_objc2_classI17pl_objc2_class_3225pl_objc2_class_data_ro_3225pl_objc2_class_data_rw_32jE15plcrash_error_tP19plcrash_async_machoP24plcrash_async_objc_cachePT_P26plcrash_async_macho_stringPT0_, symObjAddr: 0x13FC, symBinAddr: 0x1C240, symSize: 0x204 }
+  - { offset: 0x122DF8, size: 0x8, addend: 0x0, symName: __ZL41pl_async_objc_find_method_search_callbackbP26plcrash_async_macho_stringS0_yPv, symObjAddr: 0x940, symBinAddr: 0x1B784, symSize: 0x20 }
+  - { offset: 0x122E68, size: 0x8, addend: 0x0, symName: __ZL39pl_async_objc_find_method_call_callbackbP26plcrash_async_macho_stringS0_yPv, symObjAddr: 0x960, symBinAddr: 0x1B7A4, symSize: 0x3C }
+  - { offset: 0x122F12, size: 0x8, addend: 0x0, symName: __ZL16map_data_sectionP19plcrash_async_machoPPKcS2_P21plcrash_async_mobject, symObjAddr: 0xDBC, symBinAddr: 0x1BC00, symSize: 0x94 }
+  - { offset: 0x123084, size: 0x8, addend: 0x0, symName: __ZL9cache_setP24plcrash_async_objc_cacheyy, symObjAddr: 0x12B4, symBinAddr: 0x1C0F8, symSize: 0xA4 }
+  - { offset: 0x12351D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_symbol_cache_init, symObjAddr: 0x0, symBinAddr: 0x1C444, symSize: 0x4 }
+  - { offset: 0x123598, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_symbol_cache_init, symObjAddr: 0x0, symBinAddr: 0x1C444, symSize: 0x4 }
+  - { offset: 0x1235C4, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_symbol_cache_init, symObjAddr: 0x0, symBinAddr: 0x1C444, symSize: 0x4 }
+  - { offset: 0x1239EC, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_symbol_cache_free, symObjAddr: 0x4, symBinAddr: 0x1C448, symSize: 0x4 }
+  - { offset: 0x123A14, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_symbol_cache_free, symObjAddr: 0x4, symBinAddr: 0x1C448, symSize: 0x4 }
+  - { offset: 0x123A36, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_find_symbol, symObjAddr: 0x8, symBinAddr: 0x1C44C, symSize: 0x118 }
+  - { offset: 0x123C80, size: 0x8, addend: 0x0, symName: _macho_symbol_callback, symObjAddr: 0x120, symBinAddr: 0x1C564, symSize: 0x60 }
+  - { offset: 0x123D50, size: 0x8, addend: 0x0, symName: _objc_symbol_callback, symObjAddr: 0x180, symBinAddr: 0x1C5C4, symSize: 0x198 }
+  - { offset: 0x1241D0, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_string_init, symObjAddr: 0x0, symBinAddr: 0x1C75C, symSize: 0x10 }
+  - { offset: 0x12422B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_string_init, symObjAddr: 0x0, symBinAddr: 0x1C75C, symSize: 0x10 }
+  - { offset: 0x124272, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_string_get_length, symObjAddr: 0x10, symBinAddr: 0x1C76C, symSize: 0x30 }
+  - { offset: 0x1242D4, size: 0x8, addend: 0x0, symName: _plcrash_async_macho_string_read, symObjAddr: 0x40, symBinAddr: 0x1C79C, symSize: 0xE8 }
+  - { offset: 0x124579, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_string_get_pointer, symObjAddr: 0x128, symBinAddr: 0x1C884, symSize: 0x48 }
+  - { offset: 0x1245F7, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_macho_string_free, symObjAddr: 0x170, symBinAddr: 0x1C8CC, symSize: 0x18 }
+  - { offset: 0x1248F4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportStackFrameInfo initWithInstructionPointer:symbolInfo:]', symObjAddr: 0x0, symBinAddr: 0x1C8E4, symSize: 0x90 }
+  - { offset: 0x1249FF, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportStackFrameInfo initWithInstructionPointer:symbolInfo:]', symObjAddr: 0x0, symBinAddr: 0x1C8E4, symSize: 0x90 }
+  - { offset: 0x124A56, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportStackFrameInfo instructionPointer]', symObjAddr: 0x90, symBinAddr: 0x1C974, symSize: 0x8 }
+  - { offset: 0x124A8D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportStackFrameInfo symbolInfo]', symObjAddr: 0x98, symBinAddr: 0x1C97C, symSize: 0x8 }
+  - { offset: 0x124AC4, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportStackFrameInfo .cxx_destruct]', symObjAddr: 0xA0, symBinAddr: 0x1C984, symSize: 0xC }
+  - { offset: 0x124B62, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportRegisterInfo initWithRegisterName:registerValue:]', symObjAddr: 0x0, symBinAddr: 0x1C990, symSize: 0x90 }
+  - { offset: 0x124C2E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportRegisterInfo initWithRegisterName:registerValue:]', symObjAddr: 0x0, symBinAddr: 0x1C990, symSize: 0x90 }
+  - { offset: 0x124C85, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportRegisterInfo registerName]', symObjAddr: 0x90, symBinAddr: 0x1CA20, symSize: 0x8 }
+  - { offset: 0x124CBC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportRegisterInfo registerValue]', symObjAddr: 0x98, symBinAddr: 0x1CA28, symSize: 0x8 }
+  - { offset: 0x124CF3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportRegisterInfo .cxx_destruct]', symObjAddr: 0xA0, symBinAddr: 0x1CA30, symSize: 0xC }
+  - { offset: 0x124D91, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo initWithSymbolName:startAddress:endAddress:]', symObjAddr: 0x0, symBinAddr: 0x1CA3C, symSize: 0x9C }
+  - { offset: 0x124E78, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo initWithSymbolName:startAddress:endAddress:]', symObjAddr: 0x0, symBinAddr: 0x1CA3C, symSize: 0x9C }
+  - { offset: 0x124EDF, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo symbolName]', symObjAddr: 0x9C, symBinAddr: 0x1CAD8, symSize: 0x8 }
+  - { offset: 0x124F16, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo startAddress]', symObjAddr: 0xA4, symBinAddr: 0x1CAE0, symSize: 0x8 }
+  - { offset: 0x124F4D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo endAddress]', symObjAddr: 0xAC, symBinAddr: 0x1CAE8, symSize: 0x8 }
+  - { offset: 0x124F84, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportSymbolInfo .cxx_destruct]', symObjAddr: 0xB4, symBinAddr: 0x1CAF0, symSize: 0xC }
+  - { offset: 0x125022, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer initWithCallBack:context:error:]', symObjAddr: 0x0, symBinAddr: 0x1CAFC, symSize: 0x2DC }
+  - { offset: 0x125030, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer dealloc]', symObjAddr: 0x8DC, symBinAddr: 0x1D3D8, symSize: 0x1C4 }
+  - { offset: 0x12553D, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer initWithCallBack:context:error:]', symObjAddr: 0x0, symBinAddr: 0x1CAFC, symSize: 0x2DC }
+  - { offset: 0x125D0A, size: 0x8, addend: 0x0, symName: _exception_server_thread, symObjAddr: 0x2DC, symBinAddr: 0x1CDD8, symSize: 0x1E8 }
+  - { offset: 0x1261D6, size: 0x8, addend: 0x0, symName: _exception_server_reply, symObjAddr: 0xAA0, symBinAddr: 0x1D59C, symSize: 0x70 }
+  - { offset: 0x126299, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer serverThread]', symObjAddr: 0x4C4, symBinAddr: 0x1CFC0, symSize: 0x64 }
+  - { offset: 0x12631F, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer serverThread].cold.1', symObjAddr: 0xB10, symBinAddr: 0x2BAA0, symSize: 0x80 }
+  - { offset: 0x126337, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer copySendRightForServerAndReturningError:]', symObjAddr: 0x528, symBinAddr: 0x1D024, symSize: 0x84 }
+  - { offset: 0x1263E5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionServer exceptionPortWithMask:error:]', symObjAddr: 0x5AC, symBinAddr: 0x1D0A8, symSize: 0x78 }
+  - { offset: 0x1264B3, size: 0x8, addend: 0x0, symName: _BugSplatPLCrashMachExceptionForward, symObjAddr: 0x624, symBinAddr: 0x1D120, symSize: 0x2B8 }
+  - { offset: 0x126E32, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_frame_ptr, symObjAddr: 0x0, symBinAddr: 0x1D60C, symSize: 0x154 }
+  - { offset: 0x126F03, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_frame_ptr, symObjAddr: 0x0, symBinAddr: 0x1D60C, symSize: 0x154 }
+  - { offset: 0x1275E9, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_init, symObjAddr: 0x0, symBinAddr: 0x1D760, symSize: 0x7C }
+  - { offset: 0x1276A7, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_init, symObjAddr: 0x0, symBinAddr: 0x1D760, symSize: 0x7C }
+  - { offset: 0x1276CE, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_clear_all_regs, symObjAddr: 0x7C, symBinAddr: 0x1D7DC, symSize: 0x8 }
+  - { offset: 0x127932, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_mcontext_init, symObjAddr: 0x84, symBinAddr: 0x1D7E4, symSize: 0x7C }
+  - { offset: 0x1279CC, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_mach_thread_init, symObjAddr: 0x100, symBinAddr: 0x1D860, symSize: 0x70 }
+  - { offset: 0x127AB3, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_copy, symObjAddr: 0x170, symBinAddr: 0x1D8D0, symSize: 0x8 }
+  - { offset: 0x127B0D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_has_reg, symObjAddr: 0x178, symBinAddr: 0x1D8D8, symSize: 0x10 }
+  - { offset: 0x127B46, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_clear_reg, symObjAddr: 0x188, symBinAddr: 0x1D8E8, symSize: 0x18 }
+  - { offset: 0x127B7C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_stack_direction, symObjAddr: 0x1A0, symBinAddr: 0x1D900, symSize: 0x8 }
+  - { offset: 0x127BA9, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_greg_size, symObjAddr: 0x1A8, symBinAddr: 0x1D908, symSize: 0x8 }
+  - { offset: 0x127D64, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_compact_unwind, symObjAddr: 0x0, symBinAddr: 0x1D910, symSize: 0x1AC }
+  - { offset: 0x127E6A, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_compact_unwind, symObjAddr: 0x0, symBinAddr: 0x1D910, symSize: 0x1AC }
+  - { offset: 0x128A6E, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_version, symObjAddr: 0x0, symBinAddr: 0x1DABC, symSize: 0xC }
+  - { offset: 0x128A88, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_empty_string, symObjAddr: 0x4CCE, symBinAddr: 0x32E3E, symSize: 0x0 }
+  - { offset: 0x128ABD, size: 0x8, addend: 0x0, symName: _protobuf_c__allocator, symObjAddr: 0x5158, symBinAddr: 0x4DD90, symSize: 0x0 }
+  - { offset: 0x1290C2, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_version, symObjAddr: 0x0, symBinAddr: 0x1DABC, symSize: 0xC }
+  - { offset: 0x1290DC, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_version_number, symObjAddr: 0xC, symBinAddr: 0x1DAC8, symSize: 0xC }
+  - { offset: 0x12913E, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_buffer_simple_append, symObjAddr: 0x18, symBinAddr: 0x1DAD4, symSize: 0xD8 }
+  - { offset: 0x1294AA, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_get_packed_size, symObjAddr: 0xF0, symBinAddr: 0x1DBAC, symSize: 0x62C }
+  - { offset: 0x129903, size: 0x8, addend: 0x0, symName: _required_field_get_packed_size, symObjAddr: 0x71C, symBinAddr: 0x1E1D8, symSize: 0x2D8 }
+  - { offset: 0x12990E, size: 0x8, addend: 0x0, symName: _required_field_get_packed_size, symObjAddr: 0x71C, symBinAddr: 0x1E1D8, symSize: 0x2D8 }
+  - { offset: 0x129B5E, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack, symObjAddr: 0x9F4, symBinAddr: 0x1E4B0, symSize: 0x6DC }
+  - { offset: 0x129B69, size: 0x8, addend: 0x0, symName: _field_is_zeroish, symObjAddr: 0x3F10, symBinAddr: 0x219CC, symSize: 0xC0 }
+  - { offset: 0x129BC8, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_get_packed_size.cold.1, symObjAddr: 0x4834, symBinAddr: 0x2BB20, symSize: 0x28 }
+  - { offset: 0x129BE0, size: 0x8, addend: 0x0, symName: _required_field_get_packed_size.cold.1, symObjAddr: 0x485C, symBinAddr: 0x2BB48, symSize: 0x28 }
+  - { offset: 0x129F54, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack, symObjAddr: 0x9F4, symBinAddr: 0x1E4B0, symSize: 0x6DC }
+  - { offset: 0x12A41D, size: 0x8, addend: 0x0, symName: _required_field_pack, symObjAddr: 0x10D0, symBinAddr: 0x1EB8C, symSize: 0x42C }
+  - { offset: 0x12A428, size: 0x8, addend: 0x0, symName: _required_field_pack, symObjAddr: 0x10D0, symBinAddr: 0x1EB8C, symSize: 0x42C }
+  - { offset: 0x12A776, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer, symObjAddr: 0x14FC, symBinAddr: 0x1EFB8, symSize: 0x964 }
+  - { offset: 0x12A781, size: 0x8, addend: 0x0, symName: _tag_pack, symObjAddr: 0x3FD0, symBinAddr: 0x21A8C, symSize: 0x94 }
+  - { offset: 0x12A864, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack.cold.2, symObjAddr: 0x48AC, symBinAddr: 0x2BB98, symSize: 0x28 }
+  - { offset: 0x12A893, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack.cold.1, symObjAddr: 0x4884, symBinAddr: 0x2BB70, symSize: 0x28 }
+  - { offset: 0x12A8AB, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack.cold.4, symObjAddr: 0x48FC, symBinAddr: 0x2BBE8, symSize: 0x24 }
+  - { offset: 0x12A8F1, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack.cold.3, symObjAddr: 0x48D4, symBinAddr: 0x2BBC0, symSize: 0x28 }
+  - { offset: 0x12AA41, size: 0x8, addend: 0x0, symName: _required_field_pack.cold.1, symObjAddr: 0x4920, symBinAddr: 0x2BC0C, symSize: 0x28 }
+  - { offset: 0x12ADC0, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer, symObjAddr: 0x14FC, symBinAddr: 0x1EFB8, symSize: 0x964 }
+  - { offset: 0x12B621, size: 0x8, addend: 0x0, symName: _required_field_pack_to_buffer, symObjAddr: 0x1E60, symBinAddr: 0x1F91C, symSize: 0x564 }
+  - { offset: 0x12B62C, size: 0x8, addend: 0x0, symName: _required_field_pack_to_buffer, symObjAddr: 0x1E60, symBinAddr: 0x1F91C, symSize: 0x564 }
+  - { offset: 0x12BA46, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack, symObjAddr: 0x23C4, symBinAddr: 0x1FE80, symSize: 0x1220 }
+  - { offset: 0x12BA51, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer.cold.2, symObjAddr: 0x4970, symBinAddr: 0x2BC5C, symSize: 0x28 }
+  - { offset: 0x12BA80, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer.cold.1, symObjAddr: 0x4948, symBinAddr: 0x2BC34, symSize: 0x28 }
+  - { offset: 0x12BAB8, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer.cold.3, symObjAddr: 0x4998, symBinAddr: 0x2BC84, symSize: 0x28 }
+  - { offset: 0x12BAFE, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_pack_to_buffer.cold.4, symObjAddr: 0x49C0, symBinAddr: 0x2BCAC, symSize: 0x28 }
+  - { offset: 0x12BB44, size: 0x8, addend: 0x0, symName: _required_field_pack_to_buffer.cold.1, symObjAddr: 0x4A0C, symBinAddr: 0x2BCD4, symSize: 0x28 }
+  - { offset: 0x12C215, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack, symObjAddr: 0x23C4, symBinAddr: 0x1FE80, symSize: 0x1220 }
+  - { offset: 0x12D090, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_init, symObjAddr: 0x35E4, symBinAddr: 0x210A0, symSize: 0xC }
+  - { offset: 0x12D09B, size: 0x8, addend: 0x0, symName: _parse_required_member, symObjAddr: 0x4178, symBinAddr: 0x21B20, symSize: 0x2F0 }
+  - { offset: 0x12D450, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_free_unpacked, symObjAddr: 0x35F0, symBinAddr: 0x210AC, symSize: 0x278 }
+  - { offset: 0x12D733, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_check, symObjAddr: 0x3868, symBinAddr: 0x21324, symSize: 0x1E0 }
+  - { offset: 0x12D73E, size: 0x8, addend: 0x0, symName: _parse_uint64, symObjAddr: 0x4468, symBinAddr: 0x21E10, symSize: 0x94 }
+  - { offset: 0x12D7DE, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack.cold.1, symObjAddr: 0x4A34, symBinAddr: 0x2BCFC, symSize: 0x28 }
+  - { offset: 0x12D7F6, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack.cold.3, symObjAddr: 0x4A80, symBinAddr: 0x2BD24, symSize: 0x28 }
+  - { offset: 0x12D823, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack.cold.8, symObjAddr: 0x4B3C, symBinAddr: 0x2BD74, symSize: 0x28 }
+  - { offset: 0x12D8A8, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_unpack.cold.4, symObjAddr: 0x4AA8, symBinAddr: 0x2BD4C, symSize: 0x28 }
+  - { offset: 0x12D919, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_init, symObjAddr: 0x35E4, symBinAddr: 0x210A0, symSize: 0xC }
+  - { offset: 0x12D957, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_free_unpacked.cold.1, symObjAddr: 0x4B64, symBinAddr: 0x2BD9C, symSize: 0x28 }
+  - { offset: 0x12D96F, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_check, symObjAddr: 0x3868, symBinAddr: 0x21324, symSize: 0x1E0 }
+  - { offset: 0x12DB58, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_invoke_internal, symObjAddr: 0x3A48, symBinAddr: 0x21504, symSize: 0x34 }
+  - { offset: 0x12DBF2, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_generated_init, symObjAddr: 0x3A7C, symBinAddr: 0x21538, symSize: 0x40 }
+  - { offset: 0x12DBFD, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_invoke_internal.cold.1, symObjAddr: 0x4B8C, symBinAddr: 0x2BDC4, symSize: 0x28 }
+  - { offset: 0x12DC15, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_generated_init, symObjAddr: 0x3A7C, symBinAddr: 0x21538, symSize: 0x40 }
+  - { offset: 0x12DC63, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_destroy, symObjAddr: 0x3ABC, symBinAddr: 0x21578, symSize: 0x8 }
+  - { offset: 0x12DC6E, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_generated_init.cold.1, symObjAddr: 0x4BB4, symBinAddr: 0x2BDEC, symSize: 0x28 }
+  - { offset: 0x12DC86, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_destroy, symObjAddr: 0x3ABC, symBinAddr: 0x21578, symSize: 0x8 }
+  - { offset: 0x12DCC2, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_enum_descriptor_get_value_by_name, symObjAddr: 0x3AC4, symBinAddr: 0x21580, symSize: 0xD4 }
+  - { offset: 0x12DD8E, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_enum_descriptor_get_value, symObjAddr: 0x3B98, symBinAddr: 0x21654, symSize: 0xD4 }
+  - { offset: 0x12DE53, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_descriptor_get_field_by_name, symObjAddr: 0x3C6C, symBinAddr: 0x21728, symSize: 0xE0 }
+  - { offset: 0x12DF21, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_descriptor_get_field, symObjAddr: 0x3D4C, symBinAddr: 0x21808, symSize: 0xD4 }
+  - { offset: 0x12DFE6, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_service_descriptor_get_method_by_name, symObjAddr: 0x3E20, symBinAddr: 0x218DC, symSize: 0xE0 }
+  - { offset: 0x12E0C1, size: 0x8, addend: 0x0, symName: _system_alloc, symObjAddr: 0x3F00, symBinAddr: 0x219BC, symSize: 0x8 }
+  - { offset: 0x12E121, size: 0x8, addend: 0x0, symName: _system_free, symObjAddr: 0x3F08, symBinAddr: 0x219C4, symSize: 0x8 }
+  - { offset: 0x12E1CB, size: 0x8, addend: 0x0, symName: _merge_messages, symObjAddr: 0x44FC, symBinAddr: 0x21EA4, symSize: 0x338 }
+  - { offset: 0x12E55C, size: 0x8, addend: 0x0, symName: _BugSplatprotobuf_c_message_get_packed_size.cold.1, symObjAddr: 0x4834, symBinAddr: 0x2BB20, symSize: 0x28 }
+  - { offset: 0x12E591, size: 0x8, addend: 0x0, symName: _OUTLINED_FUNCTION_0, symObjAddr: 0x4C24, symBinAddr: 0x221DC, symSize: 0x8 }
+  - { offset: 0x12E907, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_reader_init, symObjAddr: 0x0, symBinAddr: 0x221E4, symSize: 0xB8 }
+  - { offset: 0x12EA44, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_reader_init, symObjAddr: 0x0, symBinAddr: 0x221E4, symSize: 0xB8 }
+  - { offset: 0x12ECAB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_reader_find_pc, symObjAddr: 0xB8, symBinAddr: 0x2229C, symSize: 0x470 }
+  - { offset: 0x12F28D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_reader_free, symObjAddr: 0x528, symBinAddr: 0x2270C, symSize: 0x4 }
+  - { offset: 0x12F2B4, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_register_encode, symObjAddr: 0x52C, symBinAddr: 0x22710, symSize: 0x160 }
+  - { offset: 0x12F36B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_register_decode, symObjAddr: 0x68C, symBinAddr: 0x22870, symSize: 0x23C }
+  - { offset: 0x12F436, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_init, symObjAddr: 0x8C8, symBinAddr: 0x22AAC, symSize: 0x484 }
+  - { offset: 0x12F6F6, size: 0x8, addend: 0x0, symName: _plcrash_async_map_register_name, symObjAddr: 0xD4C, symBinAddr: 0x22F30, symSize: 0x60 }
+  - { offset: 0x12F741, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_type, symObjAddr: 0xDAC, symBinAddr: 0x22F90, symSize: 0x8 }
+  - { offset: 0x12F760, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_stack_offset, symObjAddr: 0xDB4, symBinAddr: 0x22F98, symSize: 0x8 }
+  - { offset: 0x12F78D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_stack_adjustment, symObjAddr: 0xDBC, symBinAddr: 0x22FA0, symSize: 0x8 }
+  - { offset: 0x12F7BA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_return_address_register, symObjAddr: 0xDC4, symBinAddr: 0x22FA8, symSize: 0x8 }
+  - { offset: 0x12F7E7, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_register_count, symObjAddr: 0xDCC, symBinAddr: 0x22FB0, symSize: 0x8 }
+  - { offset: 0x12F806, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_register_list, symObjAddr: 0xDD4, symBinAddr: 0x22FB8, symSize: 0x18 }
+  - { offset: 0x12F944, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_apply, symObjAddr: 0xDEC, symBinAddr: 0x22FD0, symSize: 0x300 }
+  - { offset: 0x13013B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_cfe_entry_free, symObjAddr: 0x10EC, symBinAddr: 0x232D0, symSize: 0x4 }
+  - { offset: 0x130418, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async37plcrash_async_dwarf_read_task_sleb128EjyxPxPy, symObjAddr: 0x0, symBinAddr: 0x232D4, symSize: 0xA4 }
+  - { offset: 0x1307F7, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async37plcrash_async_dwarf_read_task_sleb128EjyxPxPy, symObjAddr: 0x0, symBinAddr: 0x232D4, symSize: 0xA4 }
+  - { offset: 0x130927, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async32plcrash_async_dwarf_read_sleb128EP21plcrash_async_mobjectyxPxPy, symObjAddr: 0xA4, symBinAddr: 0x23378, symSize: 0xE4 }
+  - { offset: 0x130A0E, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async37plcrash_async_dwarf_read_task_uleb128EjyxPyS2_, symObjAddr: 0x188, symBinAddr: 0x2345C, symSize: 0xA4 }
+  - { offset: 0x130B3E, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async32plcrash_async_dwarf_read_uleb128EP21plcrash_async_mobjectyxPyS4_, symObjAddr: 0x22C, symBinAddr: 0x23500, symSize: 0xC8 }
+  - { offset: 0x130F81, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjEC2EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x2F4, symBinAddr: 0x235C8, symSize: 0x18 }
+  - { offset: 0x130FD6, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjEC1EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x30C, symBinAddr: 0x235E0, symSize: 0x18 }
+  - { offset: 0x131011, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjEC1EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x30C, symBinAddr: 0x235E0, symSize: 0x18 }
+  - { offset: 0x131034, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjE22set_frame_section_baseEjj, symObjAddr: 0x324, symBinAddr: 0x235F8, symSize: 0x10 }
+  - { offset: 0x131079, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjE13set_text_baseEj, symObjAddr: 0x334, symBinAddr: 0x23608, symSize: 0x10 }
+  - { offset: 0x1310AF, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjE13set_data_baseEj, symObjAddr: 0x344, symBinAddr: 0x23618, symSize: 0x10 }
+  - { offset: 0x1310E5, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjE13set_func_baseEj, symObjAddr: 0x354, symBinAddr: 0x23628, symSize: 0x10 }
+  - { offset: 0x13111B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIjE4readEP21plcrash_async_mobjectyxNS1_8DW_EH_PEEPjPm, symObjAddr: 0x364, symBinAddr: 0x23638, symSize: 0x2EC }
+  - { offset: 0x13152C, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyEC2EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x650, symBinAddr: 0x23924, symSize: 0x18 }
+  - { offset: 0x131581, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyEC1EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x668, symBinAddr: 0x2393C, symSize: 0x18 }
+  - { offset: 0x1315BC, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyEC1EPK31BugSplatplcrash_async_byteorder, symObjAddr: 0x668, symBinAddr: 0x2393C, symSize: 0x18 }
+  - { offset: 0x1315DF, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyE22set_frame_section_baseEyy, symObjAddr: 0x680, symBinAddr: 0x23954, symSize: 0x10 }
+  - { offset: 0x131624, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyE13set_text_baseEy, symObjAddr: 0x690, symBinAddr: 0x23964, symSize: 0x10 }
+  - { offset: 0x13165A, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyE13set_data_baseEy, symObjAddr: 0x6A0, symBinAddr: 0x23974, symSize: 0x10 }
+  - { offset: 0x131690, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyE13set_func_baseEy, symObjAddr: 0x6B0, symBinAddr: 0x23984, symSize: 0x10 }
+  - { offset: 0x1316C6, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async16gnu_ehptr_readerIyE4readEP21plcrash_async_mobjectyxNS1_8DW_EH_PEEPyPm, symObjAddr: 0x6C0, symBinAddr: 0x23994, symSize: 0x30C }
+  - { offset: 0x13326F, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_fde_info_initIjEE15plcrash_error_tPNS1_28plcrash_async_dwarf_fde_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyb, symObjAddr: 0x0, symBinAddr: 0x23CA0, symSize: 0x220 }
+  - { offset: 0x133296, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async34plcrash_async_dwarf_read_uintmax64IyEE15plcrash_error_tP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyxhPT_, symObjAddr: 0x220, symBinAddr: 0x23EC0, symSize: 0xB0 }
+  - { offset: 0x1333BE, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_fde_info_initIjEE15plcrash_error_tPNS1_28plcrash_async_dwarf_fde_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyb, symObjAddr: 0x0, symBinAddr: 0x23CA0, symSize: 0x220 }
+  - { offset: 0x1338ED, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_fde_info_initIyEE15plcrash_error_tPNS1_28plcrash_async_dwarf_fde_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyb, symObjAddr: 0x2D0, symBinAddr: 0x23F70, symSize: 0x218 }
+  - { offset: 0x133CFD, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async48plcrash_async_dwarf_fde_info_instructions_offsetEPNS1_28plcrash_async_dwarf_fde_infoE, symObjAddr: 0x4E8, symBinAddr: 0x24188, symSize: 0x8 }
+  - { offset: 0x133D2C, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async48plcrash_async_dwarf_fde_info_instructions_lengthEPNS1_28plcrash_async_dwarf_fde_infoE, symObjAddr: 0x4F0, symBinAddr: 0x24190, symSize: 0x8 }
+  - { offset: 0x133D5B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_fde_info_freeEPNS1_28plcrash_async_dwarf_fde_infoE, symObjAddr: 0x4F8, symBinAddr: 0x24198, symSize: 0x4 }
+  - { offset: 0x1356B9, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_cie_info_initIjEE15plcrash_error_tPNS1_28plcrash_async_dwarf_cie_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderPNS1_16gnu_ehptr_readerIT_EEy, symObjAddr: 0x0, symBinAddr: 0x2419C, symSize: 0x41C }
+  - { offset: 0x1356E0, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_cie_info_initIjEE15plcrash_error_tPNS1_28plcrash_async_dwarf_cie_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderPNS1_16gnu_ehptr_readerIT_EEy, symObjAddr: 0x0, symBinAddr: 0x2419C, symSize: 0x41C }
+  - { offset: 0x135C52, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_cie_info_initIyEE15plcrash_error_tPNS1_28plcrash_async_dwarf_cie_infoEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderPNS1_16gnu_ehptr_readerIT_EEy, symObjAddr: 0x41C, symBinAddr: 0x245B8, symSize: 0x41C }
+  - { offset: 0x13616E, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async56plcrash_async_dwarf_cie_info_initial_instructions_offsetEPNS1_28plcrash_async_dwarf_cie_infoE, symObjAddr: 0x838, symBinAddr: 0x249D4, symSize: 0x8 }
+  - { offset: 0x13619F, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async56plcrash_async_dwarf_cie_info_initial_instructions_lengthEPNS1_28plcrash_async_dwarf_cie_infoE, symObjAddr: 0x840, symBinAddr: 0x249DC, symSize: 0x8 }
+  - { offset: 0x1361D0, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async33plcrash_async_dwarf_cie_info_freeEPNS1_28plcrash_async_dwarf_cie_infoE, symObjAddr: 0x848, symBinAddr: 0x249E4, symSize: 0x4 }
+  - { offset: 0x137AA9, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE12eval_programEP21plcrash_async_mobjectjjPNS1_28plcrash_async_dwarf_cie_infoEPNS1_16gnu_ehptr_readerIjEEPK31BugSplatplcrash_async_byteorderyxy, symObjAddr: 0x0, symBinAddr: 0x249E8, symSize: 0xB80 }
+  - { offset: 0x138C45, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE12eval_programEP21plcrash_async_mobjectjjPNS1_28plcrash_async_dwarf_cie_infoEPNS1_16gnu_ehptr_readerIjEEPK31BugSplatplcrash_async_byteorderyxy, symObjAddr: 0x0, symBinAddr: 0x249E8, symSize: 0xB80 }
+  - { offset: 0x13A334, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async14dwarf_opstream12read_uleb128EPy, symObjAddr: 0xB80, symBinAddr: 0x25568, symSize: 0x78 }
+  - { offset: 0x13A578, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE11apply_stateEjPNS1_28plcrash_async_dwarf_cie_infoEPK26plcrash_async_thread_statePK31BugSplatplcrash_async_byteorderPS6_, symObjAddr: 0xBF8, symBinAddr: 0x255E0, symSize: 0x4B8 }
+  - { offset: 0x13AE54, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE12eval_programEP21plcrash_async_mobjectyyPNS1_28plcrash_async_dwarf_cie_infoEPNS1_16gnu_ehptr_readerIyEEPK31BugSplatplcrash_async_byteorderyxy, symObjAddr: 0x10B0, symBinAddr: 0x25A98, symSize: 0xB74 }
+  - { offset: 0x13C691, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE11apply_stateEjPNS1_28plcrash_async_dwarf_cie_infoEPK26plcrash_async_thread_statePK31BugSplatplcrash_async_byteorderPS6_, symObjAddr: 0x1C24, symBinAddr: 0x2660C, symSize: 0x4E4 }
+  - { offset: 0x13E570, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async14dwarf_opstream4initEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyxy, symObjAddr: 0x0, symBinAddr: 0x26AF0, symSize: 0x98 }
+  - { offset: 0x13E5BF, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async14dwarf_opstream4initEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderyxy, symObjAddr: 0x0, symBinAddr: 0x26AF0, symSize: 0x98 }
+  - { offset: 0x13FE84, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_reg, symObjAddr: 0x0, symBinAddr: 0x26B88, symSize: 0x164 }
+  - { offset: 0x13FEAC, size: 0x8, addend: 0x0, symName: _arm_nonvolatile_registers, symObjAddr: 0x810, symBinAddr: 0x33078, symSize: 0x0 }
+  - { offset: 0x13FEF0, size: 0x8, addend: 0x0, symName: _arm64_nonvolatile_registers, symObjAddr: 0x82C, symBinAddr: 0x33094, symSize: 0x0 }
+  - { offset: 0x13FF12, size: 0x8, addend: 0x0, symName: _arm_dwarf_table, symObjAddr: 0x858, symBinAddr: 0x330C0, symSize: 0x0 }
+  - { offset: 0x13FF6C, size: 0x8, addend: 0x0, symName: _arm64_dwarf_table, symObjAddr: 0x958, symBinAddr: 0x331C0, symSize: 0x0 }
+  - { offset: 0x140226, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_reg, symObjAddr: 0x0, symBinAddr: 0x26B88, symSize: 0x164 }
+  - { offset: 0x140373, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_set_reg, symObjAddr: 0x164, symBinAddr: 0x26CEC, symSize: 0x450 }
+  - { offset: 0x140412, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_reg_count, symObjAddr: 0x5B4, symBinAddr: 0x2713C, symSize: 0x18 }
+  - { offset: 0x14048D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_get_reg_name, symObjAddr: 0x5CC, symBinAddr: 0x27154, symSize: 0x4C }
+  - { offset: 0x14050C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_clear_volatile_regs, symObjAddr: 0x618, symBinAddr: 0x271A0, symSize: 0xA8 }
+  - { offset: 0x14053B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_clear_volatile_regs, symObjAddr: 0x618, symBinAddr: 0x271A0, symSize: 0xA8 }
+  - { offset: 0x14067B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_map_reg_to_dwarf, symObjAddr: 0x6C0, symBinAddr: 0x27248, symSize: 0x84 }
+  - { offset: 0x140708, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_thread_state_map_dwarf_to_reg, symObjAddr: 0x744, symBinAddr: 0x272CC, symSize: 0x74 }
+  - { offset: 0x140869, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiEC2Ev, symObjAddr: 0x0, symBinAddr: 0x27340, symSize: 0x1E8 }
+  - { offset: 0x140F8C, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiEC2Ev, symObjAddr: 0x0, symBinAddr: 0x27340, symSize: 0x1E8 }
+  - { offset: 0x141034, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiEC1Ev, symObjAddr: 0x1E8, symBinAddr: 0x27528, symSize: 0x4 }
+  - { offset: 0x141060, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiEC1Ev, symObjAddr: 0x1E8, symBinAddr: 0x27528, symSize: 0x4 }
+  - { offset: 0x141074, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE12set_registerEjNS1_28plcrash_dwarf_cfa_reg_rule_tEj, symObjAddr: 0x1EC, symBinAddr: 0x2752C, symSize: 0xD4 }
+  - { offset: 0x141121, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE17get_register_ruleEjPNS1_28plcrash_dwarf_cfa_reg_rule_tEPj, symObjAddr: 0x2C0, symBinAddr: 0x27600, symSize: 0x78 }
+  - { offset: 0x1411AE, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE15remove_registerEj, symObjAddr: 0x338, symBinAddr: 0x27678, symSize: 0xA4 }
+  - { offset: 0x141233, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE18get_register_countEv, symObjAddr: 0x3DC, symBinAddr: 0x2771C, symSize: 0x10 }
+  - { offset: 0x14128A, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE16set_cfa_registerEjj, symObjAddr: 0x3EC, symBinAddr: 0x2772C, symSize: 0x1C }
+  - { offset: 0x14132B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE23set_cfa_register_signedEji, symObjAddr: 0x408, symBinAddr: 0x27748, symSize: 0x1C }
+  - { offset: 0x1413CE, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE18set_cfa_expressionEyy, symObjAddr: 0x424, symBinAddr: 0x27764, symSize: 0x1C }
+  - { offset: 0x141443, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE12get_cfa_ruleEv, symObjAddr: 0x440, symBinAddr: 0x27780, symSize: 0x20 }
+  - { offset: 0x14146B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE10push_stateEv, symObjAddr: 0x460, symBinAddr: 0x277A0, symSize: 0x64 }
+  - { offset: 0x1414D4, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIjiE9pop_stateEv, symObjAddr: 0x4C4, symBinAddr: 0x27804, symSize: 0x1C }
+  - { offset: 0x1414FD, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIjiEC2EPNS1_15dwarf_cfa_stateIjiEE, symObjAddr: 0x4E0, symBinAddr: 0x27820, symSize: 0x10 }
+  - { offset: 0x141552, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIjiEC1EPNS1_15dwarf_cfa_stateIjiEE, symObjAddr: 0x4F0, symBinAddr: 0x27830, symSize: 0x10 }
+  - { offset: 0x14158D, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIjiEC1EPNS1_15dwarf_cfa_stateIjiEE, symObjAddr: 0x4F0, symBinAddr: 0x27830, symSize: 0x10 }
+  - { offset: 0x1415B1, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIjiE4nextEPjPNS1_28plcrash_dwarf_cfa_reg_rule_tES4_, symObjAddr: 0x500, symBinAddr: 0x27840, symSize: 0xBC }
+  - { offset: 0x141634, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxEC2Ev, symObjAddr: 0x5BC, symBinAddr: 0x278FC, symSize: 0x1E8 }
+  - { offset: 0x1416BE, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxEC1Ev, symObjAddr: 0x7A4, symBinAddr: 0x27AE4, symSize: 0x4 }
+  - { offset: 0x1416EA, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxEC1Ev, symObjAddr: 0x7A4, symBinAddr: 0x27AE4, symSize: 0x4 }
+  - { offset: 0x1416FE, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE12set_registerEjNS1_28plcrash_dwarf_cfa_reg_rule_tEy, symObjAddr: 0x7A8, symBinAddr: 0x27AE8, symSize: 0xCC }
+  - { offset: 0x1417AB, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE17get_register_ruleEjPNS1_28plcrash_dwarf_cfa_reg_rule_tEPy, symObjAddr: 0x874, symBinAddr: 0x27BB4, symSize: 0x78 }
+  - { offset: 0x141838, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE15remove_registerEj, symObjAddr: 0x8EC, symBinAddr: 0x27C2C, symSize: 0xA4 }
+  - { offset: 0x1418BD, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE18get_register_countEv, symObjAddr: 0x990, symBinAddr: 0x27CD0, symSize: 0x10 }
+  - { offset: 0x141914, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE16set_cfa_registerEjy, symObjAddr: 0x9A0, symBinAddr: 0x27CE0, symSize: 0x20 }
+  - { offset: 0x1419B5, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE23set_cfa_register_signedEjx, symObjAddr: 0x9C0, symBinAddr: 0x27D00, symSize: 0x20 }
+  - { offset: 0x141A58, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE18set_cfa_expressionEyy, symObjAddr: 0x9E0, symBinAddr: 0x27D20, symSize: 0x1C }
+  - { offset: 0x141ACD, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE12get_cfa_ruleEv, symObjAddr: 0x9FC, symBinAddr: 0x27D3C, symSize: 0x20 }
+  - { offset: 0x141AF5, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE10push_stateEv, symObjAddr: 0xA1C, symBinAddr: 0x27D5C, symSize: 0x64 }
+  - { offset: 0x141B5E, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async15dwarf_cfa_stateIyxE9pop_stateEv, symObjAddr: 0xA80, symBinAddr: 0x27DC0, symSize: 0x1C }
+  - { offset: 0x141B87, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIyxEC2EPNS1_15dwarf_cfa_stateIyxEE, symObjAddr: 0xA9C, symBinAddr: 0x27DDC, symSize: 0x10 }
+  - { offset: 0x141BDC, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIyxEC1EPNS1_15dwarf_cfa_stateIyxEE, symObjAddr: 0xAAC, symBinAddr: 0x27DEC, symSize: 0x10 }
+  - { offset: 0x141C17, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIyxEC1EPNS1_15dwarf_cfa_stateIyxEE, symObjAddr: 0xAAC, symBinAddr: 0x27DEC, symSize: 0x10 }
+  - { offset: 0x141C3B, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async24dwarf_cfa_state_iteratorIyxE4nextEPjPNS1_28plcrash_dwarf_cfa_reg_rule_tEPy, symObjAddr: 0xABC, symBinAddr: 0x27DFC, symSize: 0xBC }
+  - { offset: 0x143465, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async18dwarf_frame_reader4initEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderbb, symObjAddr: 0x0, symBinAddr: 0x27EB8, symSize: 0x14 }
+  - { offset: 0x1436CD, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async18dwarf_frame_reader4initEP21plcrash_async_mobjectPK31BugSplatplcrash_async_byteorderbb, symObjAddr: 0x0, symBinAddr: 0x27EB8, symSize: 0x14 }
+  - { offset: 0x14372A, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async18dwarf_frame_reader8find_fdeExyPNS1_28plcrash_async_dwarf_fde_infoE, symObjAddr: 0x14, symBinAddr: 0x27ECC, symSize: 0x1DC }
+  - { offset: 0x1451B1, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async35plcrash_async_dwarf_expression_evalIjiEE15plcrash_error_tP21plcrash_async_mobjectjPK26plcrash_async_thread_statePK31BugSplatplcrash_async_byteorderyxyPT_mSD_, symObjAddr: 0x0, symBinAddr: 0x280A8, symSize: 0xC40 }
+  - { offset: 0x1454FF, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async35plcrash_async_dwarf_expression_evalIjiEE15plcrash_error_tP21plcrash_async_mobjectjPK26plcrash_async_thread_statePK31BugSplatplcrash_async_byteorderyxyPT_mSD_, symObjAddr: 0x0, symBinAddr: 0x280A8, symSize: 0xC40 }
+  - { offset: 0x146FC9, size: 0x8, addend: 0x0, symName: __ZN7plcrash8BugSplat5async35plcrash_async_dwarf_expression_evalIyxEE15plcrash_error_tP21plcrash_async_mobjectjPK26plcrash_async_thread_statePK31BugSplatplcrash_async_byteorderyxyPT_mSD_, symObjAddr: 0xC40, symBinAddr: 0x28CE8, symSize: 0xCD0 }
+  - { offset: 0x14A785, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_dwarf_unwind, symObjAddr: 0x0, symBinAddr: 0x299B8, symSize: 0x444 }
+  - { offset: 0x14B7D7, size: 0x8, addend: 0x0, symName: _BugSplatplframe_cursor_read_dwarf_unwind, symObjAddr: 0x0, symBinAddr: 0x299B8, symSize: 0x444 }
+  - { offset: 0x14CDF0, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashHostInfo currentHostInfo]', symObjAddr: 0x0, symBinAddr: 0x29DFC, symSize: 0x14 }
+  - { offset: 0x14CE0C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashHostInfo init]', symObjAddr: 0x14, symBinAddr: 0x29E10, symSize: 0x254 }
+  - { offset: 0x14D14A, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashHostInfo currentHostInfo]', symObjAddr: 0x0, symBinAddr: 0x29DFC, symSize: 0x14 }
+  - { offset: 0x14D4E2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashHostInfo darwinVersion]', symObjAddr: 0x268, symBinAddr: 0x2A064, symSize: 0x14 }
+  - { offset: 0x14D61B, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashMachExceptionPort exceptionPortsForTask:mask:error:]', symObjAddr: 0x0, symBinAddr: 0x2A078, symSize: 0xC4 }
+  - { offset: 0x14D629, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort initWithServerPort:mask:behavior:flavor:]', symObjAddr: 0x188, symBinAddr: 0x2A200, symSize: 0x12C }
+  - { offset: 0x14D7A7, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort dealloc]', symObjAddr: 0x2B4, symBinAddr: 0x2A32C, symSize: 0xEC }
+  - { offset: 0x14DA25, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashMachExceptionPort exceptionPortsForTask:mask:error:]', symObjAddr: 0x0, symBinAddr: 0x2A078, symSize: 0xC4 }
+  - { offset: 0x14DD24, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashMachExceptionPort exceptionPortsForThread:mask:error:]', symObjAddr: 0xC4, symBinAddr: 0x2A13C, symSize: 0xC4 }
+  - { offset: 0x14DF03, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort registerForTask:previousPortSet:error:]', symObjAddr: 0x3A0, symBinAddr: 0x2A418, symSize: 0xF8 }
+  - { offset: 0x14E014, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort registerForThread:previousPortSet:error:]', symObjAddr: 0x498, symBinAddr: 0x2A510, symSize: 0xF8 }
+  - { offset: 0x14E125, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort server_port]', symObjAddr: 0x590, symBinAddr: 0x2A608, symSize: 0x8 }
+  - { offset: 0x14E15C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort mask]', symObjAddr: 0x598, symBinAddr: 0x2A610, symSize: 0x8 }
+  - { offset: 0x14E193, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort behavior]', symObjAddr: 0x5A0, symBinAddr: 0x2A618, symSize: 0x8 }
+  - { offset: 0x14E1CA, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPort flavor]', symObjAddr: 0x5A8, symBinAddr: 0x2A620, symSize: 0x8 }
+  - { offset: 0x14E3A3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet initWithSet:]', symObjAddr: 0x0, symBinAddr: 0x2A628, symSize: 0x22C }
+  - { offset: 0x14E3B1, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet initWithAsyncSafeRepresentation:]', symObjAddr: 0x22C, symBinAddr: 0x2A854, symSize: 0x218 }
+  - { offset: 0x14E785, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet initWithSet:]', symObjAddr: 0x0, symBinAddr: 0x2A628, symSize: 0x22C }
+  - { offset: 0x14E81B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet initWithSet:].cold.1', symObjAddr: 0x4A4, symBinAddr: 0x2BE14, symSize: 0x88 }
+  - { offset: 0x14E90E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet initWithAsyncSafeRepresentation:].cold.1', symObjAddr: 0x52C, symBinAddr: 0x2BE9C, symSize: 0x94 }
+  - { offset: 0x14E926, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet countByEnumeratingWithState:objects:count:]', symObjAddr: 0x444, symBinAddr: 0x2AA6C, symSize: 0x8 }
+  - { offset: 0x14E987, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet asyncSafeRepresentation]', symObjAddr: 0x44C, symBinAddr: 0x2AA74, symSize: 0x44 }
+  - { offset: 0x14E9BC, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet set]', symObjAddr: 0x490, symBinAddr: 0x2AAB8, symSize: 0x8 }
+  - { offset: 0x14E9F3, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashMachExceptionPortSet .cxx_destruct]', symObjAddr: 0x498, symBinAddr: 0x2AAC0, symSize: 0xC }
+  - { offset: 0x14EBA9, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mach_exception_get_siginfo, symObjAddr: 0x0, symBinAddr: 0x2AACC, symSize: 0x118 }
+  - { offset: 0x14EBB8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash_async_mach_exception_get_siginfo, symObjAddr: 0x0, symBinAddr: 0x2AACC, symSize: 0x118 }
+  - { offset: 0x14EE89, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporterConfig defaultConfiguration]', symObjAddr: 0x0, symBinAddr: 0x2ABE4, symSize: 0x14 }
+  - { offset: 0x14EFFE, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashReporterConfig defaultConfiguration]', symObjAddr: 0x0, symBinAddr: 0x2ABE4, symSize: 0x14 }
+  - { offset: 0x14F035, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig init]', symObjAddr: 0x14, symBinAddr: 0x2ABF8, symSize: 0xC }
+  - { offset: 0x14F06A, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithBasePath:]', symObjAddr: 0x20, symBinAddr: 0x2AC04, symSize: 0x10 }
+  - { offset: 0x14F0B1, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithSignalHandlerType:symbolicationStrategy:]', symObjAddr: 0x30, symBinAddr: 0x2AC14, symSize: 0x8 }
+  - { offset: 0x14F102, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithSignalHandlerType:symbolicationStrategy:basePath:]', symObjAddr: 0x38, symBinAddr: 0x2AC1C, symSize: 0xC }
+  - { offset: 0x14F165, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithSignalHandlerType:symbolicationStrategy:shouldRegisterUncaughtExceptionHandler:]', symObjAddr: 0x44, symBinAddr: 0x2AC28, symSize: 0xC }
+  - { offset: 0x14F1C9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithSignalHandlerType:symbolicationStrategy:shouldRegisterUncaughtExceptionHandler:basePath:]', symObjAddr: 0x50, symBinAddr: 0x2AC34, symSize: 0x8 }
+  - { offset: 0x14F23B, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig initWithSignalHandlerType:symbolicationStrategy:shouldRegisterUncaughtExceptionHandler:basePath:maxReportBytes:]', symObjAddr: 0x58, symBinAddr: 0x2AC3C, symSize: 0xB4 }
+  - { offset: 0x14F2C2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig signalHandlerType]', symObjAddr: 0x10C, symBinAddr: 0x2ACF0, symSize: 0x8 }
+  - { offset: 0x14F2F9, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig symbolicationStrategy]', symObjAddr: 0x114, symBinAddr: 0x2ACF8, symSize: 0x8 }
+  - { offset: 0x14F330, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig shouldRegisterUncaughtExceptionHandler]', symObjAddr: 0x11C, symBinAddr: 0x2AD00, symSize: 0x8 }
+  - { offset: 0x14F367, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig maxReportBytes]', symObjAddr: 0x124, symBinAddr: 0x2AD08, symSize: 0x8 }
+  - { offset: 0x14F39E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig basePath]', symObjAddr: 0x12C, symBinAddr: 0x2AD10, symSize: 0x8 }
+  - { offset: 0x14F3D5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReporterConfig .cxx_destruct]', symObjAddr: 0x134, symBinAddr: 0x2AD18, symSize: 0xC }
+  - { offset: 0x14F457, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__processor__init, symObjAddr: 0x0, symBinAddr: 0x2AD24, symSize: 0x1C }
+  - { offset: 0x14F465, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__processor__init, symObjAddr: 0x0, symBinAddr: 0x2AD24, symSize: 0x1C }
+  - { offset: 0x14F487, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__processor__init.init_value, symObjAddr: 0x340, symBinAddr: 0x40C48, symSize: 0x0 }
+  - { offset: 0x14F8FF, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__system_info__init, symObjAddr: 0x1C, symBinAddr: 0x2AD40, symSize: 0x1C }
+  - { offset: 0x14F921, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__system_info__init.init_value, symObjAddr: 0x3E8, symBinAddr: 0x40CF0, symSize: 0x0 }
+  - { offset: 0x14FA4A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__application_info__init, symObjAddr: 0x38, symBinAddr: 0x2AD5C, symSize: 0x1C }
+  - { offset: 0x14FA6C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__application_info__init.init_value, symObjAddr: 0x4A0, symBinAddr: 0x40DA8, symSize: 0x0 }
+  - { offset: 0x14FACE, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__symbol__init, symObjAddr: 0x54, symBinAddr: 0x2AD78, symSize: 0x24 }
+  - { offset: 0x14FAF0, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__symbol__init.init_value, symObjAddr: 0x548, symBinAddr: 0x40E50, symSize: 0x0 }
+  - { offset: 0x14FB5E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__stack_frame__init, symObjAddr: 0x78, symBinAddr: 0x2AD9C, symSize: 0x1C }
+  - { offset: 0x14FB80, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__stack_frame__init.init_value, symObjAddr: 0x5F8, symBinAddr: 0x40F00, symSize: 0x0 }
+  - { offset: 0x14FBDB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__register_value__init, symObjAddr: 0x94, symBinAddr: 0x2ADB8, symSize: 0x1C }
+  - { offset: 0x14FBFD, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__register_value__init.init_value, symObjAddr: 0x698, symBinAddr: 0x40FA0, symSize: 0x0 }
+  - { offset: 0x14FC57, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__init, symObjAddr: 0xB0, symBinAddr: 0x2ADD4, symSize: 0x24 }
+  - { offset: 0x14FC79, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__init.init_value, symObjAddr: 0x738, symBinAddr: 0x41040, symSize: 0x0 }
+  - { offset: 0x14FD1B, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__binary_image__init, symObjAddr: 0xD4, symBinAddr: 0x2ADF8, symSize: 0x24 }
+  - { offset: 0x14FD3D, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__binary_image__init.init_value, symObjAddr: 0x7F8, symBinAddr: 0x41100, symSize: 0x0 }
+  - { offset: 0x14FE00, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__exception__init, symObjAddr: 0xF8, symBinAddr: 0x2AE1C, symSize: 0x24 }
+  - { offset: 0x14FE22, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__exception__init.init_value, symObjAddr: 0x8C0, symBinAddr: 0x411C8, symSize: 0x0 }
+  - { offset: 0x14FE96, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__mach_exception__init, symObjAddr: 0x11C, symBinAddr: 0x2AE40, symSize: 0x1C }
+  - { offset: 0x14FEB8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__mach_exception__init.init_value, symObjAddr: 0x970, symBinAddr: 0x41278, symSize: 0x0 }
+  - { offset: 0x14FF24, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__init, symObjAddr: 0x138, symBinAddr: 0x2AE5C, symSize: 0x24 }
+  - { offset: 0x14FF46, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__init.init_value, symObjAddr: 0xA18, symBinAddr: 0x41320, symSize: 0x0 }
+  - { offset: 0x14FFBF, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__process_info__init, symObjAddr: 0x15C, symBinAddr: 0x2AE80, symSize: 0x24 }
+  - { offset: 0x14FFE1, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__process_info__init.init_value, symObjAddr: 0xAC8, symBinAddr: 0x413D0, symSize: 0x0 }
+  - { offset: 0x150089, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__machine_info__init, symObjAddr: 0x180, symBinAddr: 0x2AEA4, symSize: 0x1C }
+  - { offset: 0x1500AB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__machine_info__init.init_value, symObjAddr: 0xB90, symBinAddr: 0x41498, symSize: 0x0 }
+  - { offset: 0x15011F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__report_info__init, symObjAddr: 0x19C, symBinAddr: 0x2AEC0, symSize: 0x1C }
+  - { offset: 0x150141, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__report_info__init.init_value, symObjAddr: 0xC38, symBinAddr: 0x41540, symSize: 0x0 }
+  - { offset: 0x1501A8, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__init, symObjAddr: 0x1B8, symBinAddr: 0x2AEDC, symSize: 0x34 }
+  - { offset: 0x1501CA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__init.init_value, symObjAddr: 0xCE0, symBinAddr: 0x415E8, symSize: 0x0 }
+  - { offset: 0x1502FD, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__processor__type_encoding__descriptor, symObjAddr: 0xE30, symBinAddr: 0x41738, symSize: 0x0 }
+  - { offset: 0x150472, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__processor__descriptor, symObjAddr: 0x370, symBinAddr: 0x40C78, symSize: 0x0 }
+  - { offset: 0x150488, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__system_info__operating_system__descriptor, symObjAddr: 0x1048, symBinAddr: 0x41950, symSize: 0x0 }
+  - { offset: 0x15049F, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__system_info__descriptor, symObjAddr: 0x428, symBinAddr: 0x40D30, symSize: 0x0 }
+  - { offset: 0x1504B6, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__application_info__descriptor, symObjAddr: 0x4D0, symBinAddr: 0x40DD8, symSize: 0x0 }
+  - { offset: 0x1504CD, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__symbol__descriptor, symObjAddr: 0x580, symBinAddr: 0x40E88, symSize: 0x0 }
+  - { offset: 0x1504E4, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__stack_frame__descriptor, symObjAddr: 0x620, symBinAddr: 0x40F28, symSize: 0x0 }
+  - { offset: 0x1504FB, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__register_value__descriptor, symObjAddr: 0x6C0, symBinAddr: 0x40FC8, symSize: 0x0 }
+  - { offset: 0x150512, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__thread__descriptor, symObjAddr: 0x780, symBinAddr: 0x41088, symSize: 0x0 }
+  - { offset: 0x150529, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__binary_image__descriptor, symObjAddr: 0x848, symBinAddr: 0x41150, symSize: 0x0 }
+  - { offset: 0x150540, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__exception__descriptor, symObjAddr: 0x8F8, symBinAddr: 0x41200, symSize: 0x0 }
+  - { offset: 0x150557, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__mach_exception__descriptor, symObjAddr: 0x9A0, symBinAddr: 0x412A8, symSize: 0x0 }
+  - { offset: 0x15056E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__signal__descriptor, symObjAddr: 0xA50, symBinAddr: 0x41358, symSize: 0x0 }
+  - { offset: 0x150585, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__process_info__descriptor, symObjAddr: 0xB18, symBinAddr: 0x41420, symSize: 0x0 }
+  - { offset: 0x15059C, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__machine_info__descriptor, symObjAddr: 0xBC0, symBinAddr: 0x414C8, symSize: 0x0 }
+  - { offset: 0x1505B3, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__report_info__descriptor, symObjAddr: 0xC68, symBinAddr: 0x41570, symSize: 0x0 }
+  - { offset: 0x1505CA, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__descriptor, symObjAddr: 0xD68, symBinAddr: 0x41670, symSize: 0x0 }
+  - { offset: 0x1505E1, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__architecture__descriptor, symObjAddr: 0x2198, symBinAddr: 0x42AA0, symSize: 0x0 }
+  - { offset: 0x1505F7, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__type_encoding__enum_values_by_number, symObjAddr: 0xDE0, symBinAddr: 0x416E8, symSize: 0x0 }
+  - { offset: 0x150619, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__type_encoding__enum_values_by_name, symObjAddr: 0xE10, symBinAddr: 0x41718, symSize: 0x0 }
+  - { offset: 0x15063B, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__type_encoding__value_ranges, symObjAddr: 0x2E20, symBinAddr: 0x336F0, symSize: 0x0 }
+  - { offset: 0x15065D, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__field_descriptors, symObjAddr: 0xEA8, symBinAddr: 0x417B0, symSize: 0x0 }
+  - { offset: 0x15067F, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__encoding__default_value, symObjAddr: 0x3034, symBinAddr: 0x33904, symSize: 0x0 }
+  - { offset: 0x15069A, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__field_indices_by_name, symObjAddr: 0x2E30, symBinAddr: 0x33700, symSize: 0x0 }
+  - { offset: 0x1506BC, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__processor__number_ranges, symObjAddr: 0x2E3C, symBinAddr: 0x3370C, symSize: 0x0 }
+  - { offset: 0x1506D2, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__operating_system__enum_values_by_number, symObjAddr: 0xF80, symBinAddr: 0x41888, symSize: 0x0 }
+  - { offset: 0x1506F4, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__operating_system__enum_values_by_name, symObjAddr: 0xFF8, symBinAddr: 0x41900, symSize: 0x0 }
+  - { offset: 0x150716, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__operating_system__value_ranges, symObjAddr: 0x2E4C, symBinAddr: 0x3371C, symSize: 0x0 }
+  - { offset: 0x15072D, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__field_descriptors, symObjAddr: 0x10C0, symBinAddr: 0x419C8, symSize: 0x0 }
+  - { offset: 0x150750, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__operating_system__default_value, symObjAddr: 0x3038, symBinAddr: 0x33908, symSize: 0x0 }
+  - { offset: 0x15076C, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__architecture__default_value, symObjAddr: 0x303C, symBinAddr: 0x3390C, symSize: 0x0 }
+  - { offset: 0x150788, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__field_indices_by_name, symObjAddr: 0x2E5C, symBinAddr: 0x3372C, symSize: 0x0 }
+  - { offset: 0x1507AB, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__system_info__number_ranges, symObjAddr: 0x2E70, symBinAddr: 0x33740, symSize: 0x0 }
+  - { offset: 0x1507C2, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__application_info__field_descriptors, symObjAddr: 0x1228, symBinAddr: 0x41B30, symSize: 0x0 }
+  - { offset: 0x1507D9, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__application_info__field_indices_by_name, symObjAddr: 0x2E80, symBinAddr: 0x33750, symSize: 0x0 }
+  - { offset: 0x1507F0, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__application_info__number_ranges, symObjAddr: 0x2E8C, symBinAddr: 0x3375C, symSize: 0x0 }
+  - { offset: 0x150807, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__symbol__field_descriptors, symObjAddr: 0x1300, symBinAddr: 0x41C08, symSize: 0x0 }
+  - { offset: 0x15081E, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__symbol__field_indices_by_name, symObjAddr: 0x2E9C, symBinAddr: 0x3376C, symSize: 0x0 }
+  - { offset: 0x150835, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__symbol__number_ranges, symObjAddr: 0x2EA8, symBinAddr: 0x33778, symSize: 0x0 }
+  - { offset: 0x15084C, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__stack_frame__field_descriptors, symObjAddr: 0x13D8, symBinAddr: 0x41CE0, symSize: 0x0 }
+  - { offset: 0x15086F, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__stack_frame__field_indices_by_name, symObjAddr: 0x2EB8, symBinAddr: 0x33788, symSize: 0x0 }
+  - { offset: 0x150892, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__stack_frame__number_ranges, symObjAddr: 0x2EC0, symBinAddr: 0x33790, symSize: 0x0 }
+  - { offset: 0x1508B5, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__register_value__field_descriptors, symObjAddr: 0x1468, symBinAddr: 0x41D70, symSize: 0x0 }
+  - { offset: 0x1508CC, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__register_value__field_indices_by_name, symObjAddr: 0x2ED8, symBinAddr: 0x337A8, symSize: 0x0 }
+  - { offset: 0x1508E3, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__register_value__number_ranges, symObjAddr: 0x2EE0, symBinAddr: 0x337B0, symSize: 0x0 }
+  - { offset: 0x1508FA, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__field_descriptors, symObjAddr: 0x14F8, symBinAddr: 0x41E00, symSize: 0x0 }
+  - { offset: 0x15091D, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__field_indices_by_name, symObjAddr: 0x2EF0, symBinAddr: 0x337C0, symSize: 0x0 }
+  - { offset: 0x150940, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__thread__number_ranges, symObjAddr: 0x2F00, symBinAddr: 0x337D0, symSize: 0x0 }
+  - { offset: 0x150957, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__binary_image__field_descriptors, symObjAddr: 0x1618, symBinAddr: 0x41F20, symSize: 0x0 }
+  - { offset: 0x15096E, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__binary_image__field_indices_by_name, symObjAddr: 0x2F10, symBinAddr: 0x337E0, symSize: 0x0 }
+  - { offset: 0x150985, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__binary_image__number_ranges, symObjAddr: 0x2F24, symBinAddr: 0x337F4, symSize: 0x0 }
+  - { offset: 0x15099C, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__exception__field_descriptors, symObjAddr: 0x1780, symBinAddr: 0x42088, symSize: 0x0 }
+  - { offset: 0x1509B3, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__exception__field_indices_by_name, symObjAddr: 0x2F34, symBinAddr: 0x33804, symSize: 0x0 }
+  - { offset: 0x1509CA, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__exception__number_ranges, symObjAddr: 0x2F40, symBinAddr: 0x33810, symSize: 0x0 }
+  - { offset: 0x1509E1, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__mach_exception__field_descriptors, symObjAddr: 0x1858, symBinAddr: 0x42160, symSize: 0x0 }
+  - { offset: 0x1509F8, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__mach_exception__field_indices_by_name, symObjAddr: 0x2F50, symBinAddr: 0x33820, symSize: 0x0 }
+  - { offset: 0x150A0F, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__mach_exception__number_ranges, symObjAddr: 0x2F58, symBinAddr: 0x33828, symSize: 0x0 }
+  - { offset: 0x150A26, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__field_descriptors, symObjAddr: 0x18E8, symBinAddr: 0x421F0, symSize: 0x0 }
+  - { offset: 0x150A3D, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__field_indices_by_name, symObjAddr: 0x2F68, symBinAddr: 0x33838, symSize: 0x0 }
+  - { offset: 0x150A54, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__signal__number_ranges, symObjAddr: 0x2F78, symBinAddr: 0x33848, symSize: 0x0 }
+  - { offset: 0x150A6B, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__process_info__field_descriptors, symObjAddr: 0x1A08, symBinAddr: 0x42310, symSize: 0x0 }
+  - { offset: 0x150A8E, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__process_info__field_indices_by_name, symObjAddr: 0x2F88, symBinAddr: 0x33858, symSize: 0x0 }
+  - { offset: 0x150AB1, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__process_info__number_ranges, symObjAddr: 0x2FA4, symBinAddr: 0x33874, symSize: 0x0 }
+  - { offset: 0x150AC8, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__machine_info__field_descriptors, symObjAddr: 0x1C00, symBinAddr: 0x42508, symSize: 0x0 }
+  - { offset: 0x150ADF, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__machine_info__field_indices_by_name, symObjAddr: 0x2FB4, symBinAddr: 0x33884, symSize: 0x0 }
+  - { offset: 0x150AF6, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__machine_info__number_ranges, symObjAddr: 0x2FC4, symBinAddr: 0x33894, symSize: 0x0 }
+  - { offset: 0x150B0D, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__report_info__field_descriptors, symObjAddr: 0x1D20, symBinAddr: 0x42628, symSize: 0x0 }
+  - { offset: 0x150B24, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__report_info__field_indices_by_name, symObjAddr: 0x2FD4, symBinAddr: 0x338A4, symSize: 0x0 }
+  - { offset: 0x150B3B, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__report_info__number_ranges, symObjAddr: 0x2FDC, symBinAddr: 0x338AC, symSize: 0x0 }
+  - { offset: 0x150B52, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__field_descriptors, symObjAddr: 0x1DB0, symBinAddr: 0x426B8, symSize: 0x0 }
+  - { offset: 0x150B75, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__field_indices_by_name, symObjAddr: 0x2FEC, symBinAddr: 0x338BC, symSize: 0x0 }
+  - { offset: 0x150B98, size: 0x8, addend: 0x0, symName: _plcrash__crash_report__number_ranges, symObjAddr: 0x3014, symBinAddr: 0x338E4, symSize: 0x0 }
+  - { offset: 0x150BAF, size: 0x8, addend: 0x0, symName: _plcrash__architecture__enum_values_by_number, symObjAddr: 0x2080, symBinAddr: 0x42988, symSize: 0x0 }
+  - { offset: 0x150BD2, size: 0x8, addend: 0x0, symName: _plcrash__architecture__enum_values_by_name, symObjAddr: 0x2128, symBinAddr: 0x42A30, symSize: 0x0 }
+  - { offset: 0x150BF5, size: 0x8, addend: 0x0, symName: _plcrash__architecture__value_ranges, symObjAddr: 0x3024, symBinAddr: 0x338F4, symSize: 0x0 }
+  - { offset: 0x150C0E, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__get_packed_size, symObjAddr: 0x1EC, symBinAddr: 0x2AF10, symSize: 0x24 }
+  - { offset: 0x150C4A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack, symObjAddr: 0x210, symBinAddr: 0x2AF34, symSize: 0x24 }
+  - { offset: 0x150C68, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__get_packed_size.cold.1, symObjAddr: 0x29C, symBinAddr: 0x2BF30, symSize: 0x28 }
+  - { offset: 0x150C80, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack, symObjAddr: 0x210, symBinAddr: 0x2AF34, symSize: 0x24 }
+  - { offset: 0x150CCC, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack_to_buffer, symObjAddr: 0x234, symBinAddr: 0x2AF58, symSize: 0x24 }
+  - { offset: 0x150CEF, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack.cold.1, symObjAddr: 0x2C4, symBinAddr: 0x2BF58, symSize: 0x28 }
+  - { offset: 0x150D07, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack_to_buffer, symObjAddr: 0x234, symBinAddr: 0x2AF58, symSize: 0x24 }
+  - { offset: 0x150D53, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__unpack, symObjAddr: 0x258, symBinAddr: 0x2AF7C, symSize: 0x18 }
+  - { offset: 0x150DBE, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__pack_to_buffer.cold.1, symObjAddr: 0x2EC, symBinAddr: 0x2BF80, symSize: 0x28 }
+  - { offset: 0x150DD6, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__unpack, symObjAddr: 0x258, symBinAddr: 0x2AF7C, symSize: 0x18 }
+  - { offset: 0x150ED2, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__free_unpacked, symObjAddr: 0x270, symBinAddr: 0x2AF94, symSize: 0x2C }
+  - { offset: 0x150F1A, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__get_packed_size.cold.1, symObjAddr: 0x29C, symBinAddr: 0x2BF30, symSize: 0x28 }
+  - { offset: 0x150F39, size: 0x8, addend: 0x0, symName: _BugSplatplcrash__crash_report__free_unpacked.cold.1, symObjAddr: 0x314, symBinAddr: 0x2BFA8, symSize: 0x28 }
+  - { offset: 0x150FD1, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashProcessInfo currentProcessInfo]', symObjAddr: 0x0, symBinAddr: 0x2AFC0, symSize: 0x30 }
+  - { offset: 0x151160, size: 0x8, addend: 0x0, symName: '+[BugSplatPLCrashProcessInfo currentProcessInfo]', symObjAddr: 0x0, symBinAddr: 0x2AFC0, symSize: 0x30 }
+  - { offset: 0x1511B2, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo initWithProcessID:]', symObjAddr: 0x30, symBinAddr: 0x2AFF0, symSize: 0x14C }
+  - { offset: 0x151329, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo processID]', symObjAddr: 0x17C, symBinAddr: 0x2B13C, symSize: 0x8 }
+  - { offset: 0x151360, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo processName]', symObjAddr: 0x184, symBinAddr: 0x2B144, symSize: 0x8 }
+  - { offset: 0x151397, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo parentProcessID]', symObjAddr: 0x18C, symBinAddr: 0x2B14C, symSize: 0x8 }
+  - { offset: 0x1513CE, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo isTraced]', symObjAddr: 0x194, symBinAddr: 0x2B154, symSize: 0x8 }
+  - { offset: 0x151405, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo startTime]', symObjAddr: 0x19C, symBinAddr: 0x2B15C, symSize: 0xC }
+  - { offset: 0x15143C, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashProcessInfo .cxx_destruct]', symObjAddr: 0x1A8, symBinAddr: 0x2B168, symSize: 0xC }
+  - { offset: 0x151C34, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachExceptionInfo initWithType:codes:]', symObjAddr: 0x0, symBinAddr: 0x2B174, symSize: 0x90 }
+  - { offset: 0x151D00, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachExceptionInfo initWithType:codes:]', symObjAddr: 0x0, symBinAddr: 0x2B174, symSize: 0x90 }
+  - { offset: 0x151D57, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachExceptionInfo type]', symObjAddr: 0x90, symBinAddr: 0x2B204, symSize: 0x8 }
+  - { offset: 0x151D8E, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachExceptionInfo codes]', symObjAddr: 0x98, symBinAddr: 0x2B20C, symSize: 0x8 }
+  - { offset: 0x151DC5, size: 0x8, addend: 0x0, symName: '-[BugSplatPLCrashReportMachExceptionInfo .cxx_destruct]', symObjAddr: 0xA0, symBinAddr: 0x2B214, symSize: 0xC }
+  - { offset: 0x151E62, size: 0x8, addend: 0x0, symName: _mach_exception_raise, symObjAddr: 0x0, symBinAddr: 0x2B220, symSize: 0x1AC }
+  - { offset: 0x152022, size: 0x8, addend: 0x0, symName: _mach_exception_raise_state, symObjAddr: 0x1AC, symBinAddr: 0x2B3CC, symSize: 0x25C }
+  - { offset: 0x1523F1, size: 0x8, addend: 0x0, symName: _mach_exception_raise_state_identity, symObjAddr: 0x408, symBinAddr: 0x2B628, symSize: 0x290 }
+  - { offset: 0x15285F, size: 0x8, addend: 0x0, symName: _mach_exception_raise, symObjAddr: 0x0, symBinAddr: 0x2B220, symSize: 0x1AC }
+...

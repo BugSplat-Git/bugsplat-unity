@@ -1,4 +1,4 @@
-#import <Bugsplat/Bugsplat.h>
+#import <BugSplat/BugSplat.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
@@ -9,12 +9,12 @@ extern "C" {
 		strcpy(res, string);
 		return res;
 	}
-	
+
 	char* createCStringFrom(NSString* string) {
 		if (!string) {
 			string = @"";
 		}
-		
+
 		return cStringCopy([string UTF8String]);
 	}
 
@@ -22,8 +22,13 @@ extern "C" {
 		return [NSString stringWithUTF8String:(cstring ?: "")];
 	}
 
-	void _startBugSplat() {
-		[[BugsplatStartupManager sharedManager] start];
+	void _startBugSplat(const char* database, const char* application, const char* version) {
+		BugSplat *bugsplat = [BugSplat shared];
+		bugsplat.bugSplatDatabase = createNSStringFrom(database);
+		bugsplat.applicationName = createNSStringFrom(application);
+		bugsplat.applicationVersion = createNSStringFrom(version);
+		bugsplat.autoSubmitCrashReport = YES;
+		[bugsplat start];
 	}
 
     void _crashNativeIos() {
