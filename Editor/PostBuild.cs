@@ -115,7 +115,6 @@ public class BuildPostprocessors
 
 		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
 		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lz");
-		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lc++");
 		project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
 
 		project.SetBuildProperty(targetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
