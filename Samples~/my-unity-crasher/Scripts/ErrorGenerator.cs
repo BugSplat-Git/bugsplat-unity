@@ -1,12 +1,11 @@
 using System;
 using UnityEngine;
-using UnityEngine.Diagnostics;
 using BugSplat = BugSplatUnity.BugSplat;
 using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using System.Diagnostics;
-#if UNITY_STANDALONE_WIN || (UNITY_IOS && !UNITY_EDITOR)
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
 
@@ -42,15 +41,16 @@ namespace Crasher
 			infoUrl = "";
 		}
 
-		public void Event_ForceCrash(ForcedCrashCategory category)
-		{
-			Utils.ForceCrash(category);
-		}
-		
-		public void Event_NativeCrashIos()
+		public void Event_CrashNative()
 		{
 #if UNITY_IOS && !UNITY_EDITOR
 			_crashNativeIos();
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+			_crashNativeMac();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+			CrashNativeAndroid();
+#else
+			UnityEngine.Debug.LogError("BugSplat: Native crash not yet implemented on this platform");
 #endif
 		}
 
@@ -147,6 +147,17 @@ namespace Crasher
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _crashNativeIos();
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern void _crashNativeMac();
+#endif
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private void CrashNativeAndroid()
+		{
+			using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+			javaClass.CallStatic("crash");
+		}
 #endif
 	}
 }

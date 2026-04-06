@@ -30,3 +30,6 @@ MonoBehaviour:
   UseNativeCrashReportingForIos: 1
   UploadDebugSymbolsForIos: 1
   UseNativeCrashReportingForAndroid: 1
+  UploadDebugSymbolsForAndroid: 0
+  UseNativeCrashReportingForMac: 1
+  UploadDebugSymbolsForMac: 0

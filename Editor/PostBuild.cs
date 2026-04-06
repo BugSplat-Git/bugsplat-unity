@@ -127,6 +127,30 @@ public class BuildPostprocessors
 		HandleUploadSymbols(mainTargetGuid, project, options);
 
 		File.WriteAllText(projectPath, project.WriteToString());
+
+		if (options.UseNativeCrashReportingForIos)
+			DisableUnityCrashReporter(pathToBuiltProject);
+	}
+
+	private static void DisableUnityCrashReporter(string pathToBuiltProject)
+	{
+		var crashReporterPath = Path.Combine(pathToBuiltProject, "Classes", "CrashReporter.h");
+		if (!File.Exists(crashReporterPath))
+		{
+			Debug.Log("BugSplat: CrashReporter.h not found, Unity crash reporter may not be present in this version.");
+			return;
+		}
+
+		var content = File.ReadAllText(crashReporterPath);
+		var modified = content
+			.Replace("#define ENABLE_CUSTOM_CRASH_REPORTER 1", "#define ENABLE_CUSTOM_CRASH_REPORTER 0")
+			.Replace("#define ENABLE_CRASH_REPORT_SUBMISSION 1", "#define ENABLE_CRASH_REPORT_SUBMISSION 0");
+
+		if (content != modified)
+		{
+			File.WriteAllText(crashReporterPath, modified);
+			Debug.Log("BugSplat: Disabled Unity's built-in crash reporter to prevent PLCrashReporter conflict.");
+		}
 	}
 
 	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
