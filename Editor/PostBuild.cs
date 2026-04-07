@@ -97,6 +97,14 @@ public class BuildPostprocessors
 		if (!options.UploadDebugSymbolsForMac)
 			return;
 
+		// Skip symbol upload for Xcode project exports — dSYMs don't exist yet
+		if (Directory.GetFiles(pathToBuiltProject, "*.xcodeproj", SearchOption.TopDirectoryOnly).Length > 0
+			|| Directory.GetDirectories(pathToBuiltProject, "*.xcodeproj", SearchOption.TopDirectoryOnly).Length > 0)
+		{
+			Debug.Log("BugSplat: Xcode project export detected, skipping symbol upload. Symbols will be available after building in Xcode.");
+			return;
+		}
+
 		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
 		if (buildDir == null)
 		{
