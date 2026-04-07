@@ -49,7 +49,6 @@ extern "C" {
         [bugsplat setValue:db forKey:@"bugSplatDatabase"];
         [bugsplat setValue:app forKey:@"applicationName"];
         [bugsplat setValue:ver forKey:@"applicationVersion"];
-        [bugsplat setValue:@YES forKey:@"autoSubmitCrashReport"];
 
         [bugsplat performSelector:@selector(start)];
     }
