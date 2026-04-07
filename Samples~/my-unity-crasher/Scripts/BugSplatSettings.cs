@@ -20,16 +20,8 @@ public class BugSplatSettings : MonoBehaviour
         bugsplat.Attributes.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
         bugsplat.Description = "Overridden description from BugSplatSettings.";
         bugsplat.Notes = "Overridden notes field from BugSplatSettings.";
-
-        // Sync metadata to native crash reporter (iOS, macOS, Windows)
-        bugsplat.SetNativeAttribute("OS", SystemInfo.operatingSystem);
-        bugsplat.SetNativeAttribute("CPU", SystemInfo.processorType);
-        bugsplat.SetNativeAttribute("MEMORY", $"{SystemInfo.systemMemorySize} MB");
-        bugsplat.SetNativeAttribute("GPU", SystemInfo.graphicsDeviceName);
-        bugsplat.SetNativeAttribute("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
-        bugsplat.SetNativeNotes("Notes from BugSplatSettings.");
-        bugsplat.SetNativeUser("Fred");
-        bugsplat.SetNativeEmail("fred@bugsplat.com");
+        bugsplat.User = "Fred";
+        bugsplat.Email = "fred@bugsplat.com";
 
         if (!string.IsNullOrEmpty(Application.consoleLogPath))
             bugsplat.AttachNativeLogFile(Application.consoleLogPath);

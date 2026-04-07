@@ -33,9 +33,10 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A dictionary of key values pairs to be added every time Post is called
+        /// A dictionary of key values pairs to be added every time Post is called.
+        /// On platforms with native crash reporting, attributes are automatically synced to the native crash reporter.
         /// </summary>
-        public Dictionary<string, string> Attributes
+        public IDictionary<string, string> Attributes
         {
             get
             {
@@ -137,6 +138,7 @@ namespace BugSplatUnity
             set
             {
                 clientSettings.Email = value;
+                SetNativeEmail(value);
             }
         }
 
@@ -167,13 +169,14 @@ namespace BugSplatUnity
         }
 
         // <summary>
-        /// A general purpose field that can be overridden by call to Post. 
+        /// A general purpose field that can be overridden by call to Post.
         /// </summary>
         public string Notes
         {
             set
             {
                 clientSettings.Notes = value;
+                SetNativeNotes(value);
             }
         }
 
@@ -185,6 +188,7 @@ namespace BugSplatUnity
             set
             {
                 clientSettings.User = value;
+                SetNativeUser(value);
             }
         }
 
@@ -288,6 +292,11 @@ namespace BugSplatUnity
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
             feedbackClient = dotNetStandardClient;
+
+            if (clientSettings.Attributes is NativeSyncDictionary<string, string> syncDict)
+            {
+                syncDict.SetCallback((key, value) => SetNativeAttribute(key, value));
+            }
         }
 
         /// <summary>

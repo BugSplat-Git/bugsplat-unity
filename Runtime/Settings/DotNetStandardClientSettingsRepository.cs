@@ -16,13 +16,8 @@ namespace BugSplatUnity.Runtime.Settings
             }
         }
 
-        public Dictionary<string, string> Attributes
-        {
-            get
-            {
-                return _bugsplat.Attributes;
-            }
-        }
+        public IDictionary<string, string> Attributes { get; }
+
 
         public bool CaptureEditorLog { get; set; } = false;
 
@@ -101,6 +96,7 @@ namespace BugSplatUnity.Runtime.Settings
         public DotNetStandardClientSettingsRepository(BugSplatDotNetStandard.BugSplat bugsplat)
         {
             _bugsplat = bugsplat;
+            Attributes = new NativeSyncDictionary<string, string>();
         }
     }
 }
