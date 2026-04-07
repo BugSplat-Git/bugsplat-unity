@@ -44,7 +44,7 @@ static NSString *_logFilePath = nil;
 // Delegate class created at runtime to provide log file attachment
 static Class _delegateClass = nil;
 
-static const unsigned long long kMaxLogAttachmentSizeBytes = 5ull * 1024ull * 1024ull;
+static const unsigned long long kMaxLogAttachmentSizeBytes = 10ull * 1024ull * 1024ull;
 
 static NSData *ReadLogTail(NSString *path) {
     NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:path];
