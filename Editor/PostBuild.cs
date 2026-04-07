@@ -66,6 +66,8 @@ public class BuildPostprocessors
 		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
 			UploadSymbolFilesWin(pathToBuiltProject, options);
 #endif
+		if (target == BuildTarget.StandaloneOSX)
+			PostProcessMac(pathToBuiltProject, options);
 	}
 
 #if UNITY_EDITOR_WIN
@@ -89,6 +91,48 @@ public class BuildPostprocessors
 		});
 	}
 #endif
+
+	private static void PostProcessMac(string pathToBuiltProject, BugSplatOptions options)
+	{
+		if (!options.UploadDebugSymbolsForMac)
+			return;
+
+		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+		if (buildDir == null)
+		{
+			Debug.LogError("BugSplat. Could not find build directory. Will not upload macOS debug symbols.");
+			return;
+		}
+
+		// Copy LineNumberMappings.json for IL2CPP symbolication
+		var mappingSearchPaths = new[]
+		{
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+		};
+
+		foreach (var searchPath in mappingSearchPaths)
+		{
+			var fullPath = Path.GetFullPath(searchPath);
+			if (File.Exists(fullPath))
+			{
+				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
+				File.Copy(fullPath, dest, true);
+				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				break;
+			}
+		}
+
+		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>
+		{
+			if (uploadExitCode != 0)
+			{
+				Debug.LogError("BugSplat. Could not upload macOS symbols.");
+				return;
+			}
+
+			Debug.Log("BugSplat. macOS symbols uploading completed.");
+		});
+	}
 
 	private static BugSplatOptions GetBugSplatOptions()
 	{

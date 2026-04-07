@@ -69,5 +69,11 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForAndroid;
+
+		[Tooltip("Use native crash reporting framework for macOS builds (requires IL2CPP). If set to false, will only use .NET handler.")]
+		public bool UseNativeCrashReportingForMac;
+
+		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
+		public bool UploadDebugSymbolsForMac;
 	}
 }

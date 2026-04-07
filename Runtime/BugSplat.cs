@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-#if UNITY_IOS && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
 using UnityEngine;
@@ -208,8 +208,9 @@ namespace BugSplatUnity
             string database,
             string application,
             string version,
-            bool useNativeLibIos, 
-            bool useNativeLibAndroid 
+            bool useNativeLibIos,
+            bool useNativeLibAndroid,
+            bool useNativeLibMac = false
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -250,6 +251,11 @@ namespace BugSplatUnity
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
                 _startBugSplat(database, application, version);
+
+            UseDotNetHandler(database, application, version);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            if (useNativeLibMac)
+                _startBugSplatMac(database, application, version);
 
             UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -299,7 +305,8 @@ namespace BugSplatUnity
                 application,
                 version,
                 options.UseNativeCrashReportingForIos,
-                options.UseNativeCrashReportingForAndroid
+                options.UseNativeCrashReportingForAndroid,
+                options.UseNativeCrashReportingForMac
             )
             {
                 Description = options.Description,
@@ -464,6 +471,9 @@ namespace BugSplatUnity
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplat(string database, string application, string version);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern void _startBugSplatMac(string database, string application, string version);
 #endif
     }
 }
