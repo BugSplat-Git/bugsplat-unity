@@ -100,7 +100,7 @@ static void EnsureDelegateClass() {
 static id _delegateInstance = nil;
 
 extern "C" {
-    void _startBugSplatMac(const char* database, const char* application, const char* version) {
+    void _startBugSplatMac(const char* database, const char* application, const char* version, const char* logFilePath) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) {
             NSLog(@"BugSplat: BugSplat class not available");
@@ -114,6 +114,19 @@ extern "C" {
         [bugsplat setValue:db forKey:@"bugSplatDatabase"];
         [bugsplat setValue:app forKey:@"applicationName"];
         [bugsplat setValue:ver forKey:@"applicationVersion"];
+
+        // Set up log file delegate BEFORE start so it's available when
+        // pending crash reports are processed on launch
+        NSString *path = [NSString stringWithUTF8String:(logFilePath ?: "")];
+        if (path.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            _logFilePath = path;
+            EnsureDelegateClass();
+            if (!_delegateInstance) {
+                _delegateInstance = [[_delegateClass alloc] init];
+            }
+            [bugsplat setValue:_delegateInstance forKey:@"delegate"];
+            NSLog(@"BugSplat: Attached log file: %@", _logFilePath);
+        }
 
         [bugsplat performSelector:@selector(start)];
     }

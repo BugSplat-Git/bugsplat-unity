@@ -259,7 +259,10 @@ namespace BugSplatUnity
             UseDotNetHandler(database, application, version);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             if (useNativeLibMac)
-                _startBugSplatMac(database, application, version);
+            {
+                var logPath = Application.consoleLogPath;
+                _startBugSplatMac(database, application, version, logPath ?? "");
+            }
 
             UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -557,7 +560,7 @@ namespace BugSplatUnity
         static extern void _attachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
-        static extern void _startBugSplatMac(string database, string application, string version);
+        static extern void _startBugSplatMac(string database, string application, string version, string logFilePath);
 
         [DllImport("__Internal")]
         static extern void _setNativeAttributeMac(string key, string value);
