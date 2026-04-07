@@ -249,9 +249,8 @@ namespace BugSplatUnity
             exceptionReporter = webGLReporter;
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
-                _startBugSplat();
+                _startBugSplat(database, application, version);
 
-            version = $"{Application.version} ({_getBuildNumber()})";
             UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
@@ -259,7 +258,7 @@ namespace BugSplatUnity
                 var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
                 var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
                 
-                var javaClass = new AndroidJavaClass("com.ninevastudios.bugsplatunitylib.BugSplatBridge");
+                var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
             }
 
@@ -464,10 +463,7 @@ namespace BugSplatUnity
         }
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
-        static extern void _startBugSplat();
-        
-        [DllImport("__Internal")]
-        static extern string _getBuildNumber();
+        static extern void _startBugSplat(string database, string application, string version);
 #endif
     }
 }

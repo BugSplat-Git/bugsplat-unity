@@ -233,6 +233,9 @@ Utils.ForceCrash(ForcedCrashCategory.FatalError);
 Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
 ```
 
+> [!IMPORTANT]
+> `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
+
 ### Windows Symbols
 
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
@@ -306,7 +309,7 @@ More information on support responses can be found [here](https://docs.bugsplat.
 
 The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android via Crashpad. To configure crash reporting for Android, set the `UseNativeCrashReportingForAndroid` and `UploadDebugSymbolsForAndroid` properties to `true` on the BugSplatManager instance.
 
-You'll also need to configure the scripting backend to use IL2CPP, and target ARM64 (ARMV7a is not supported)
+You'll also need to configure the scripting backend to use IL2CPP, target ARM64 (ARMV7a is not supported), and set the Minimum API Level to **Android 8.0 (API level 26)** or higher.
 
 ![Android Player Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec8f5b7-8dfd-43db-84e0-7e7d1229324a)
 
@@ -316,7 +319,11 @@ When you build your app for Android, be sure to set `Create symbols.zip` to `Deb
 
 ## 🍎 iOS
 
-The bugsplat-unity plugin supports crash reporting for native C++ crashes on iOS via bugsplat-ios. To configure crash reporting for iOS, set the `UseNativeCrashReportingForIos` and `UploadDebugSymbolsForIos` properties to `true` on the BugSplatManager instance.
+The bugsplat-unity plugin supports native crash reporting on iOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes via Mach exception handling. To configure crash reporting for iOS, set the `UseNativeCrashReportingForIos` and `UploadDebugSymbolsForIos` properties to `true` on the BugSplatManager instance.
+
+When native crash reporting is enabled, BugSplat automatically disables Unity's built-in crash reporter during the build to prevent conflicts with PLCrashReporter. Crashes are captured at crash time and uploaded on the next app launch.
+
+For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json` alongside dSYMs. This enables BugSplat to map IL2CPP-generated C++ symbols back to original C# method names, file names, and line numbers.
 
 ## 🧩 API
 

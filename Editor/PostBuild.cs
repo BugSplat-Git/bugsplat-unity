@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -115,6 +114,7 @@ public class BuildPostprocessors
 		var targetGuid = project.GetUnityFrameworkTargetGuid();
 
 		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
+		project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lz");
 		project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
 
 		project.SetBuildProperty(targetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
@@ -123,56 +123,119 @@ public class BuildPostprocessors
 		project.AddBuildProperty(mainTargetGuid, "ENABLE_BITCODE", "NO");
 		project.SetBuildProperty(mainTargetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
 
-		ModifyPlist(pathToBuiltProject, options);
-		AddBundle(pathToBuiltProject, project, targetGuid);
-		HandleUploadSymbols(mainTargetGuid, project, options.UploadDebugSymbolsForIos);
+		HandleUploadSymbols(mainTargetGuid, project, options);
 
 		File.WriteAllText(projectPath, project.WriteToString());
+
+		CopyLineNumberMappings(pathToBuiltProject);
+
+		if (options.UseNativeCrashReportingForIos)
+			DisableUnityCrashReporter(pathToBuiltProject);
 	}
 
-	private static void ModifyPlist(string projectPath, BugSplatOptions options)
+	private static void CopyLineNumberMappings(string pathToBuiltProject)
 	{
-		var plistInfoFile = new PlistDocument();
-
-		var infoPlistPath = Path.Combine(projectPath, "Info.plist");
-		plistInfoFile.ReadFromString(File.ReadAllText(infoPlistPath));
-
-		const string bugSplatServerURLKey = "BugsplatServerURL";
-		plistInfoFile.root.AsDict().SetString(bugSplatServerURLKey, $"https://{options.Database}.bugsplat.com/");
-
-		File.WriteAllText(infoPlistPath, plistInfoFile.WriteToString());
-	}
-
-	private static void AddBundle(string pathToBuiltProject, PBXProject project, string targetGuid)
-	{
-		const string frameworksFolderPath = "Frameworks";
-		const string bundleName = "HockeySDKResources.bundle";
-		var files = Directory.GetDirectories(Path.Combine(pathToBuiltProject,
-			frameworksFolderPath), bundleName, SearchOption.AllDirectories);
-
-		if (!files.Any())
+		var searchPaths = new[]
 		{
-			Debug.LogWarning("Could not find the .bundle file.");
+			Path.Combine("Library", "Bee", "artifacts", "iOS", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "iOSPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+		};
+
+		foreach (var searchPath in searchPaths)
+		{
+			var fullPath = Path.GetFullPath(searchPath);
+			if (File.Exists(fullPath))
+			{
+				var dest = Path.Combine(pathToBuiltProject, "LineNumberMappings.json");
+				File.Copy(fullPath, dest, true);
+				Debug.Log($"BugSplat: Copied LineNumberMappings.json to Xcode project ({new FileInfo(fullPath).Length / 1024}KB)");
+				return;
+			}
+		}
+
+		Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available. Ensure Scripting Backend is set to IL2CPP.");
+	}
+
+	private static void DisableUnityCrashReporter(string pathToBuiltProject)
+	{
+		var crashReporterPath = Path.Combine(pathToBuiltProject, "Classes", "CrashReporter.h");
+		if (!File.Exists(crashReporterPath))
+		{
+			Debug.Log("BugSplat: CrashReporter.h not found, Unity crash reporter may not be present in this version.");
 			return;
 		}
 
-		var linkedResourcePathAbsolute = files.First();
-		var substringIndex = linkedResourcePathAbsolute.IndexOf(frameworksFolderPath, StringComparison.Ordinal);
-		var relativePath = linkedResourcePathAbsolute.Substring(substringIndex);
+		var content = File.ReadAllText(crashReporterPath);
+		var modified = content
+			.Replace("#define ENABLE_CUSTOM_CRASH_REPORTER 1", "#define ENABLE_CUSTOM_CRASH_REPORTER 0")
+			.Replace("#define ENABLE_CRASH_REPORT_SUBMISSION 1", "#define ENABLE_CRASH_REPORT_SUBMISSION 0");
 
-		var addFolderReference = project.AddFolderReference(relativePath, bundleName);
-		project.AddFileToBuild(targetGuid, addFolderReference);
+		if (content != modified)
+		{
+			File.WriteAllText(crashReporterPath, modified);
+			Debug.Log("BugSplat: Disabled Unity's built-in crash reporter to prevent PLCrashReporter conflict.");
+		}
 	}
 
-	private static void HandleUploadSymbols(string targetGuid, PBXProject project, bool upload)
+	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
 	{
+		if (!options.UploadDebugSymbolsForIos)
+			return;
+
+		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
+		if (string.IsNullOrEmpty(clientId))
+			clientId = options.SymbolUploadClientId;
+
+		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
+		if (string.IsNullOrEmpty(clientSecret))
+			clientSecret = options.SymbolUploadClientSecret;
+
+		if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+		{
+			Debug.LogWarning("BugSplat: SymbolUploadClientId/Secret not set. Skipping iOS dSYM upload build phase.");
+			return;
+		}
+
+		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
+		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
+
 		const string shellPath = "/bin/sh";
 		const int index = 999;
 		const string name = "Upload dSYM files to BugSplat";
-		const string shellScript =
-			"if [ ! -f \"${HOME}/.bugsplat.conf\" ]\nthen\n    echo \"Missing bugsplat config file: ~/.bugsplat.conf\"\n    exit\nfi\n\nsource \"${HOME}/.bugsplat.conf\"\n\nif [ -z \"${BUGSPLAT_USER}\" ]\nthen\n    echo \"BUGSPLAT_USER must be set in ~/.bugsplat.conf\"\n    exit\nfi\n\nif [ -z \"${BUGSPLAT_PASS}\" ]\nthen\n    echo \"BUGSPLAT_PASS must be set in ~/.bugsplat.conf\"\n    exit\nfi\n\necho \"Product dir: ${BUILT_PRODUCTS_DIR}\"\n\nWORK_DIR=\"$PWD\"\nAPP=$(find $BUILT_PRODUCTS_DIR -name *.app -type d -maxdepth 1 -print | head -n1)\n\necho \"App: ${APP}\"\n\nFILE=\"${WORK_DIR}/Archive.zip\"\n\ncd $BUILT_PRODUCTS_DIR\nzip -r \"${FILE}\" ./*\ncd -\n\n# Change Info.plist path\nAPP_MARKETING_VERSION=$(/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \"${APP}/Info.plist\")\nAPP_BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${APP}/Info.plist\")\n\nif [ -z \"${APP_MARKETING_VERSION}\" ]\nthen\n\\techo \"CFBundleShortVersionString not found in app Info.plist\"\n    exit\nfi\n\necho \"App marketing version: ${APP_MARKETING_VERSION}\"\necho \"App bundle version: ${APP_BUNDLE_VERSION}\"\n\nAPP_VERSION=\"${APP_MARKETING_VERSION}\"\n\nif [ -n \"${APP_BUNDLE_VERSION}\" ]\nthen\n    APP_VERSION=\"${APP_VERSION} (${APP_BUNDLE_VERSION})\"\nfi\n\n# Changed CFBundleName to CFBundleExecutable and Info.plist path\nPRODUCT_NAME=$(/usr/libexec/PlistBuddy -c \"Print CFBundleExecutable\" \"${APP}/Info.plist\")\n\nBUGSPLAT_SERVER_URL=$(/usr/libexec/PlistBuddy -c \"Print BugsplatServerURL\" \"${APP}/Info.plist\")\nBUGSPLAT_SERVER_URL=${BUGSPLAT_SERVER_URL%/}\n\nUPLOAD_URL=\"${BUGSPLAT_SERVER_URL}/post/plCrashReporter/symbol/\"\n\necho \"App version: ${APP_VERSION}\"\n\nUUID_CMD_OUT=$(xcrun dwarfdump --uuid \"${APP}/${PRODUCT_NAME}\")\nUUID_CMD_OUT=$([[ \"${UUID_CMD_OUT}\" =~ ^(UUID: )([0-9a-zA-Z\\-]+) ]] && echo ${BASH_REMATCH[2]})\necho \"UUID found: ${UUID_CMD_OUT}\"\n\necho \"Signing into bugsplat and storing session cookie for use in upload\"\n\nCOOKIEPATH=\"/tmp/bugsplat-cookie.txt\"\nLOGIN_URL=\"${BUGSPLAT_SERVER_URL}/browse/login.php\"\necho \"Login URL: ${LOGIN_URL}\"\nrm \"${COOKIEPATH}\"\ncurl -b \"${COOKIEPATH}\" -c \"${COOKIEPATH}\" --data-urlencode \"currusername=${BUGSPLAT_USER}\" --data-urlencode \"currpasswd=${BUGSPLAT_PASS}\" \"${LOGIN_URL}\"\n\necho \"Uploading ${FILE} to ${UPLOAD_URL}\"\n\ncurl -i -b \"${COOKIEPATH}\" -c \"${COOKIEPATH}\" -F filedata=@\"${FILE}\" -F appName=\"${PRODUCT_NAME}\" -F appVer=\"${APP_VERSION}\" -F buildId=\"${UUID_CMD_OUT}\" $UPLOAD_URL";
+		var shellScript =
+			$"if [ \"$(uname -m)\" = \"x86_64\" ]; then\n" +
+			$"    VARIANT=\"symbol-upload-macos-intel\"\n" +
+			$"else\n" +
+			$"    VARIANT=\"symbol-upload-macos\"\n" +
+			$"fi\n" +
+			$"SYMBOL_UPLOAD=\"${{TMPDIR}}/$VARIANT\"\n" +
+			$"if [ ! -f \"$SYMBOL_UPLOAD\" ]; then\n" +
+			$"    echo \"Downloading $VARIANT...\"\n" +
+			$"    curl -sL -o \"$SYMBOL_UPLOAD\" \"https://app.bugsplat.com/download/$VARIANT\"\n" +
+			$"    chmod +x \"$SYMBOL_UPLOAD\"\n" +
+			$"fi\n\n" +
+			$"\"$SYMBOL_UPLOAD\" \\\n" +
+			$"    --database \"{options.Database}\" \\\n" +
+			$"    --application \"{application}\" \\\n" +
+			$"    --version \"{version}\" \\\n" +
+			$"    --clientId \"{clientId}\" \\\n" +
+			$"    --clientSecret \"{clientSecret}\" \\\n" +
+			$"    --files \"**/*.dSYM\" \\\n" +
+			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
+			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication\n" +
+			$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
+			$"if [ -f \"$MAPPINGS\" ]; then\n" +
+			$"    \"$SYMBOL_UPLOAD\" \\\n" +
+			$"        --database \"{options.Database}\" \\\n" +
+			$"        --application \"{application}\" \\\n" +
+			$"        --version \"{version}\" \\\n" +
+			$"        --clientId \"{clientId}\" \\\n" +
+			$"        --clientSecret \"{clientSecret}\" \\\n" +
+			$"        --files \"LineNumberMappings.json\" \\\n" +
+			$"        --directory \"${{PROJECT_DIR}}\"\n" +
+			$"fi";
 
-		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)) && upload)
+		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 	}
 #endif
