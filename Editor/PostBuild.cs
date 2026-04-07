@@ -127,8 +127,33 @@ public class BuildPostprocessors
 
 		File.WriteAllText(projectPath, project.WriteToString());
 
+		CopyLineNumberMappings(pathToBuiltProject);
+
 		if (options.UseNativeCrashReportingForIos)
 			DisableUnityCrashReporter(pathToBuiltProject);
+	}
+
+	private static void CopyLineNumberMappings(string pathToBuiltProject)
+	{
+		var searchPaths = new[]
+		{
+			Path.Combine("Library", "Bee", "artifacts", "iOS", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "iOSPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+		};
+
+		foreach (var searchPath in searchPaths)
+		{
+			var fullPath = Path.GetFullPath(searchPath);
+			if (File.Exists(fullPath))
+			{
+				var dest = Path.Combine(pathToBuiltProject, "LineNumberMappings.json");
+				File.Copy(fullPath, dest, true);
+				Debug.Log($"BugSplat: Copied LineNumberMappings.json to Xcode project ({new FileInfo(fullPath).Length / 1024}KB)");
+				return;
+			}
+		}
+
+		Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available. Ensure Scripting Backend is set to IL2CPP.");
 	}
 
 	private static void DisableUnityCrashReporter(string pathToBuiltProject)
@@ -196,7 +221,19 @@ public class BuildPostprocessors
 			$"    --clientId \"{clientId}\" \\\n" +
 			$"    --clientSecret \"{clientSecret}\" \\\n" +
 			$"    --files \"**/*.dSYM\" \\\n" +
-			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"";
+			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
+			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication\n" +
+			$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
+			$"if [ -f \"$MAPPINGS\" ]; then\n" +
+			$"    \"$SYMBOL_UPLOAD\" \\\n" +
+			$"        --database \"{options.Database}\" \\\n" +
+			$"        --application \"{application}\" \\\n" +
+			$"        --version \"{version}\" \\\n" +
+			$"        --clientId \"{clientId}\" \\\n" +
+			$"        --clientSecret \"{clientSecret}\" \\\n" +
+			$"        --files \"LineNumberMappings.json\" \\\n" +
+			$"        --directory \"${{PROJECT_DIR}}\"\n" +
+			$"fi";
 
 		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);

@@ -309,7 +309,7 @@ More information on support responses can be found [here](https://docs.bugsplat.
 
 The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android via Crashpad. To configure crash reporting for Android, set the `UseNativeCrashReportingForAndroid` and `UploadDebugSymbolsForAndroid` properties to `true` on the BugSplatManager instance.
 
-You'll also need to configure the scripting backend to use IL2CPP, and target ARM64 (ARMV7a is not supported)
+You'll also need to configure the scripting backend to use IL2CPP, target ARM64 (ARMV7a is not supported), and set the Minimum API Level to **Android 8.0 (API level 26)** or higher.
 
 ![Android Player Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec8f5b7-8dfd-43db-84e0-7e7d1229324a)
 
