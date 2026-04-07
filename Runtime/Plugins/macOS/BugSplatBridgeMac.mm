@@ -12,8 +12,8 @@ static Class GetBugSplatClass() {
             NSString *plugInsPath = [[NSBundle mainBundle] builtInPlugInsPath];
 
             NSArray *searchPaths = @[
-                [frameworksPath stringByAppendingPathComponent:@"BugSplat.dylib"],
-                [plugInsPath stringByAppendingPathComponent:@"BugSplat.dylib"],
+                [frameworksPath stringByAppendingPathComponent:@"BugSplat-macOS.dylib"],
+                [plugInsPath stringByAppendingPathComponent:@"BugSplat-macOS.dylib"],
             ];
 
             for (NSString *path in searchPaths) {
@@ -25,7 +25,7 @@ static Class GetBugSplatClass() {
             }
 
             if (!cls) {
-                NSLog(@"BugSplat: Failed to load BugSplat.dylib: %s", dlerror());
+                NSLog(@"BugSplat: Failed to load BugSplat-macOS.dylib: %s", dlerror());
             }
         }
     });
