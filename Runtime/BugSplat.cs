@@ -468,12 +468,102 @@ namespace BugSplatUnity
             yield return null;
 #endif
         }
+        /// <summary>
+        /// Set a key-value attribute on the native crash reporter. Attributes are included in native crash reports.
+        /// </summary>
+        public void SetNativeAttribute(string key, string value)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeAttributeIos(key, value);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeAttributeMac(key, value);
+#endif
+        }
+
+        /// <summary>
+        /// Set the user name on the native crash reporter.
+        /// </summary>
+        public void SetNativeUser(string user)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeUserIos(user);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeUserMac(user);
+#endif
+        }
+
+        /// <summary>
+        /// Set the user email on the native crash reporter.
+        /// </summary>
+        public void SetNativeEmail(string email)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeEmailIos(email);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeEmailMac(email);
+#endif
+        }
+
+        /// <summary>
+        /// Set notes on the native crash reporter.
+        /// </summary>
+        public void SetNativeNotes(string notes)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeNotesIos(notes);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeNotesMac(notes);
+#endif
+        }
+
+        /// <summary>
+        /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
+        /// </summary>
+        public void AttachNativeLogFile(string path)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _attachNativeLogFileIos(path);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _attachNativeLogFileMac(path);
+#endif
+        }
+
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplat(string database, string application, string version);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeAttributeIos(string key, string value);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeUserIos(string user);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeEmailIos(string email);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeNotesIos(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _attachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplatMac(string database, string application, string version);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeAttributeMac(string key, string value);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeUserMac(string user);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeEmailMac(string email);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeNotesMac(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _attachNativeLogFileMac(string path);
 #endif
     }
 }
