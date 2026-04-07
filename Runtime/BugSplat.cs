@@ -195,6 +195,7 @@ namespace BugSplatUnity
         private IClientSettingsRepository clientSettings;
         private IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
+        private bool nativeCrashReportingEnabled;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -206,8 +207,9 @@ namespace BugSplatUnity
         /// <param name="database">The BugSplat database for your organization</param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
-        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on IOS</param>
+        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on iOS</param>
         /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
+        /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
         public BugSplat(
             string database,
             string application,
@@ -254,7 +256,10 @@ namespace BugSplatUnity
             exceptionReporter = webGLReporter;
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
+            {
                 _startBugSplat(database, application, version);
+                nativeCrashReportingEnabled = true;
+            }
 
             UseDotNetHandler(database, application, version);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -262,6 +267,7 @@ namespace BugSplatUnity
             {
                 var logPath = Application.consoleLogPath;
                 _startBugSplatMac(database, application, version, logPath ?? "");
+                nativeCrashReportingEnabled = true;
             }
 
             UseDotNetHandler(database, application, version);
@@ -485,6 +491,7 @@ namespace BugSplatUnity
         /// </summary>
         public void SetNativeAttribute(string key, string value)
         {
+            if (!nativeCrashReportingEnabled) return;
 #if UNITY_IOS && !UNITY_EDITOR
             _setNativeAttributeIos(key, value);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -497,6 +504,7 @@ namespace BugSplatUnity
         /// </summary>
         public void SetNativeUser(string user)
         {
+            if (!nativeCrashReportingEnabled) return;
 #if UNITY_IOS && !UNITY_EDITOR
             _setNativeUserIos(user);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -509,6 +517,7 @@ namespace BugSplatUnity
         /// </summary>
         public void SetNativeEmail(string email)
         {
+            if (!nativeCrashReportingEnabled) return;
 #if UNITY_IOS && !UNITY_EDITOR
             _setNativeEmailIos(email);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -521,6 +530,7 @@ namespace BugSplatUnity
         /// </summary>
         public void SetNativeNotes(string notes)
         {
+            if (!nativeCrashReportingEnabled) return;
 #if UNITY_IOS && !UNITY_EDITOR
             _setNativeNotesIos(notes);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -533,6 +543,7 @@ namespace BugSplatUnity
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
+            if (!nativeCrashReportingEnabled) return;
 #if UNITY_IOS && !UNITY_EDITOR
             _attachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR

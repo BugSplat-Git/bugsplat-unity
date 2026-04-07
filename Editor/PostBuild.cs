@@ -116,8 +116,12 @@ public class BuildPostprocessors
 		var mappingSearchPaths = new[]
 		{
 			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 		};
 
+		var mappingFound = false;
 		foreach (var searchPath in mappingSearchPaths)
 		{
 			var fullPath = Path.GetFullPath(searchPath);
@@ -126,8 +130,14 @@ public class BuildPostprocessors
 				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
 				File.Copy(fullPath, dest, true);
 				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				mappingFound = true;
 				break;
 			}
+		}
+
+		if (!mappingFound)
+		{
+			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
 		}
 
 		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>

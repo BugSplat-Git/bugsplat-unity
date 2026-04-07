@@ -3,30 +3,6 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
-static NSString *_logFilePath = nil;
-
-@interface BugSplatUnityDelegate : NSObject <BugSplatDelegate>
-@end
-
-@implementation BugSplatUnityDelegate
-
-- (BugSplatAttachment *)attachmentForBugSplat:(BugSplat *)bugSplat {
-    if (!_logFilePath || ![[NSFileManager defaultManager] fileExistsAtPath:_logFilePath]) {
-        return nil;
-    }
-
-    NSData *data = [NSData dataWithContentsOfFile:_logFilePath];
-    if (!data) return nil;
-
-    return [[BugSplatAttachment alloc] initWithFilename:@"Player.log"
-                                        attachmentData:data
-                                           contentType:@"text/plain"];
-}
-
-@end
-
-static BugSplatUnityDelegate *_delegateInstance = nil;
-
 extern "C" {
 	NSString* createNSStringFrom(const char* cstring) {
 		return [NSString stringWithUTF8String:(cstring ?: "")];
@@ -58,12 +34,9 @@ extern "C" {
 	}
 
 	void _attachNativeLogFileIos(const char* path) {
-		_logFilePath = createNSStringFrom(path);
-
-		if (!_delegateInstance) {
-			_delegateInstance = [[BugSplatUnityDelegate alloc] init];
-		}
-		[BugSplat shared].delegate = _delegateInstance;
+		// Log file attachment is not supported on iOS because the BugSplatDelegate's
+		// attachmentForBugSplat: method suppresses attributes from setValue:forAttribute:.
+		// The Player.log is still uploaded via the managed .NET exception reporter.
 	}
 
     void _crashNativeIos() {

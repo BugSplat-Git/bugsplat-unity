@@ -44,22 +44,42 @@ static NSString *_logFilePath = nil;
 // Delegate class created at runtime to provide log file attachment
 static Class _delegateClass = nil;
 
+static const unsigned long long kMaxLogAttachmentSizeBytes = 5ull * 1024ull * 1024ull;
+
+static NSData *ReadLogTail(NSString *path) {
+    NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:path];
+    if (!fh) return nil;
+
+    @try {
+        unsigned long long fileSize = [fh seekToEndOfFile];
+        unsigned long long readSize = MIN(fileSize, kMaxLogAttachmentSizeBytes);
+
+        if (fileSize > readSize) {
+            [fh seekToFileOffset:(fileSize - readSize)];
+        } else {
+            [fh seekToFileOffset:0];
+        }
+
+        NSData *data = [fh readDataToEndOfFile];
+        [fh closeFile];
+        return data;
+    } @catch (__unused NSException *e) {
+        [fh closeFile];
+        return nil;
+    }
+}
+
 static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
     if (!_logFilePath || ![[NSFileManager defaultManager] fileExistsAtPath:_logFilePath]) {
         return @[];
     }
 
-    NSData *data = [NSData dataWithContentsOfFile:_logFilePath];
-    if (!data) return @[];
+    NSData *data = ReadLogTail(_logFilePath);
+    if (!data || data.length == 0) return @[];
 
     Class attachmentClass = NSClassFromString(@"BugSplatAttachment");
     if (!attachmentClass) return @[];
 
-    id attachment = [[attachmentClass alloc] performSelector:@selector(initWithFilename:attachmentData:contentType:)
-                                                 withObject:@"Player.log"
-                                                 withObject:data];
-    // contentType doesn't get passed with performSelector:withObject:withObject:
-    // Use NSInvocation instead
     SEL initSel = @selector(initWithFilename:attachmentData:contentType:);
     NSMethodSignature *sig = [attachmentClass instanceMethodSignatureForSelector:initSel];
     if (!sig) return @[];
