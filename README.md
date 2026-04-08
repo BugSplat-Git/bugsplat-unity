@@ -325,6 +325,12 @@ When native crash reporting is enabled, BugSplat automatically disables Unity's 
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json` alongside dSYMs. This enables BugSplat to map IL2CPP-generated C++ symbols back to original C# method names, file names, and line numbers.
 
+## 🖥 macOS
+
+The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes via Mach exception handling. Native macOS crash reporting requires the **IL2CPP** scripting backend.
+
+To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` and `UploadDebugSymbolsForMac` properties to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
+
 ## 🧩 API
 
 The following API methods are available to help you customize BugSplat to fit your needs.

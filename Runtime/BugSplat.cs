@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-#if UNITY_IOS && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
 using UnityEngine;
@@ -33,9 +33,10 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A dictionary of key values pairs to be added every time Post is called
+        /// A dictionary of key values pairs to be added every time Post is called.
+        /// On platforms with native crash reporting, attributes are automatically synced to the native crash reporter.
         /// </summary>
-        public Dictionary<string, string> Attributes
+        public IDictionary<string, string> Attributes
         {
             get
             {
@@ -137,6 +138,7 @@ namespace BugSplatUnity
             set
             {
                 clientSettings.Email = value;
+                SetNativeEmail(value);
             }
         }
 
@@ -167,13 +169,14 @@ namespace BugSplatUnity
         }
 
         // <summary>
-        /// A general purpose field that can be overridden by call to Post. 
+        /// A general purpose field that can be overridden by call to Post.
         /// </summary>
         public string Notes
         {
             set
             {
                 clientSettings.Notes = value;
+                SetNativeNotes(value);
             }
         }
 
@@ -185,12 +188,14 @@ namespace BugSplatUnity
             set
             {
                 clientSettings.User = value;
+                SetNativeUser(value);
             }
         }
 
         private IClientSettingsRepository clientSettings;
         private IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
+        private bool nativeCrashReportingEnabled;
 
 #if UNITY_STANDALONE_WIN || UNITY_WSA
         private readonly INativeCrashReporter nativeCrashReporter;
@@ -202,14 +207,16 @@ namespace BugSplatUnity
         /// <param name="database">The BugSplat database for your organization</param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
-        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on IOS</param>
+        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on iOS</param>
         /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
+        /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
         public BugSplat(
             string database,
             string application,
             string version,
-            bool useNativeLibIos, 
-            bool useNativeLibAndroid 
+            bool useNativeLibIos,
+            bool useNativeLibAndroid,
+            bool useNativeLibMac = false
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -249,7 +256,19 @@ namespace BugSplatUnity
             exceptionReporter = webGLReporter;
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
+            {
                 _startBugSplat(database, application, version);
+                nativeCrashReportingEnabled = true;
+            }
+
+            UseDotNetHandler(database, application, version);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            if (useNativeLibMac)
+            {
+                var logPath = Application.consoleLogPath;
+                _startBugSplatMac(database, application, version, logPath ?? "");
+                nativeCrashReportingEnabled = true;
+            }
 
             UseDotNetHandler(database, application, version);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -282,6 +301,11 @@ namespace BugSplatUnity
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
             feedbackClient = dotNetStandardClient;
+
+            if (clientSettings.Attributes is NativeSyncDictionary<string, string> syncDict)
+            {
+                syncDict.SetCallback((key, value) => SetNativeAttribute(key, value));
+            }
         }
 
         /// <summary>
@@ -299,7 +323,8 @@ namespace BugSplatUnity
                 application,
                 version,
                 options.UseNativeCrashReportingForIos,
-                options.UseNativeCrashReportingForAndroid
+                options.UseNativeCrashReportingForAndroid,
+                options.UseNativeCrashReportingForMac
             )
             {
                 Description = options.Description,
@@ -461,9 +486,107 @@ namespace BugSplatUnity
             yield return null;
 #endif
         }
+        /// <summary>
+        /// Set a key-value attribute on the native crash reporter. Attributes are included in native crash reports.
+        /// </summary>
+        public void SetNativeAttribute(string key, string value)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeAttributeIos(key, value);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeAttributeMac(key, value);
+#endif
+        }
+
+        /// <summary>
+        /// Set the user name on the native crash reporter.
+        /// </summary>
+        public void SetNativeUser(string user)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeUserIos(user);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeUserMac(user);
+#endif
+        }
+
+        /// <summary>
+        /// Set the user email on the native crash reporter.
+        /// </summary>
+        public void SetNativeEmail(string email)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeEmailIos(email);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeEmailMac(email);
+#endif
+        }
+
+        /// <summary>
+        /// Set notes on the native crash reporter.
+        /// </summary>
+        public void SetNativeNotes(string notes)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeNotesIos(notes);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeNotesMac(notes);
+#endif
+        }
+
+        /// <summary>
+        /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
+        /// </summary>
+        public void AttachNativeLogFile(string path)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _attachNativeLogFileIos(path);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _attachNativeLogFileMac(path);
+#endif
+        }
+
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplat(string database, string application, string version);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeAttributeIos(string key, string value);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeUserIos(string user);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeEmailIos(string email);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeNotesIos(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _attachNativeLogFileIos(string path);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern void _startBugSplatMac(string database, string application, string version, string logFilePath);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeAttributeMac(string key, string value);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeUserMac(string user);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeEmailMac(string email);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeNotesMac(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _attachNativeLogFileMac(string path);
 #endif
     }
 }

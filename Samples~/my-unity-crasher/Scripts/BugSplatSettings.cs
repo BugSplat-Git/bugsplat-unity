@@ -20,6 +20,11 @@ public class BugSplatSettings : MonoBehaviour
         bugsplat.Attributes.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
         bugsplat.Description = "Overridden description from BugSplatSettings.";
         bugsplat.Notes = "Overridden notes field from BugSplatSettings.";
+        bugsplat.User = "Fred";
+        bugsplat.Email = "fred@bugsplat.com";
+
+        if (!string.IsNullOrEmpty(Application.consoleLogPath))
+            bugsplat.AttachNativeLogFile(Application.consoleLogPath);
 
         var lastPost = new DateTime(0);
         bugsplat.ShouldPostException = (ex) =>
