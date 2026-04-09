@@ -1,6 +1,6 @@
 {
     "name": "com.bugsplat.unity",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
     "unity": "6000.0",
