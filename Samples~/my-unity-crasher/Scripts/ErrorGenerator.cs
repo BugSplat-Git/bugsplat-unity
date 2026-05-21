@@ -177,8 +177,16 @@ namespace Crasher
 
 		private void HangNativeAndroid()
 		{
-			using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-			javaClass.CallStatic("hang");
+			// BugSplatBridge.hang() blocks whatever thread calls it. Unity runs C#
+			// on its own player thread, not the Android UI thread, so the call must
+			// be dispatched to the UI thread for the OS to register an ANR.
+			using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+			using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+			activity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+			{
+				using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+				javaClass.CallStatic("hang");
+			}));
 		}
 #endif
 	}
