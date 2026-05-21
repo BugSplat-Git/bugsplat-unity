@@ -54,6 +54,19 @@ namespace Crasher
 #endif
 		}
 
+		public void Event_HangNative()
+		{
+#if UNITY_IOS && !UNITY_EDITOR
+			// Wedges the main thread; the OS watchdog terminates the app and BugSplat
+			// uploads an "App Hang (Fatal)" report on the next launch.
+			_hangNativeIos();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+			HangNativeAndroid();
+#else
+			UnityEngine.Debug.LogError("BugSplat: Native hang not yet implemented on this platform");
+#endif
+		}
+
 		public void Event_CatchExceptionThenPostNewBugSplat()
 		{
 			try
@@ -147,6 +160,9 @@ namespace Crasher
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _crashNativeIos();
+
+        [DllImport("__Internal")]
+        static extern void _hangNativeIos();
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _crashNativeMac();
@@ -157,6 +173,12 @@ namespace Crasher
 		{
 			using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
 			javaClass.CallStatic("crash");
+		}
+
+		private void HangNativeAndroid()
+		{
+			using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+			javaClass.CallStatic("hang");
 		}
 #endif
 	}
