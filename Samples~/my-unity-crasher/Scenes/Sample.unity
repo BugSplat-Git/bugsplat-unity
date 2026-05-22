@@ -456,30 +456,6 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.95686275
       objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: category
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 152587283}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Event_ForceCrash
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: Crasher.Crasher, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
     m_RemovedGameObjects: []
@@ -850,34 +826,6 @@ PrefabInstance:
     - target: {fileID: 5305253083977984386, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
       propertyPath: m_Color.r
       value: 0.2901961
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: category
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.size
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 152587283}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Event_CrashNative
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: Crasher.ErrorGenerator, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
@@ -1854,34 +1802,6 @@ PrefabInstance:
     - target: {fileID: 5305253083977984386, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
       propertyPath: m_Color.r
       value: 0.95686275
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: category
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.size
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 152587283}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Event_HangNative
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: Crasher.ErrorGenerator, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
-      propertyPath: OnForceCrash.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5305253083977984388, guid: de657baed6ab68e4e946d741cdbe94e2, type: 3}
