@@ -209,7 +209,7 @@ bugsplat.ShouldPostException = (ex) =>
 
 ### Windows Crashes
 
-BugSplat captures native Windows crashes via [bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). See the [Windows](#-windows) section for setup details.
+BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](#-windows) section for setup details.
 
 > [!IMPORTANT]
 > `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
@@ -319,7 +319,7 @@ To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` 
 
 ## 🪟 Windows
 
-The bugsplat-unity plugin supports native crash reporting on Windows via [bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x64 and Windows-on-ARM (ARM64) players.
+The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x64 and Windows-on-ARM (ARM64) players.
 
 To configure native crash reporting for Windows, set the `UseNativeCrashReportingForWindows` property to `true` on your `BugSplatOptions` asset.
 
