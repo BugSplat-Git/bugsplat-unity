@@ -207,31 +207,9 @@ bugsplat.ShouldPostException = (ex) =>
 };
 ```
 
-### Windows Minidumps (Crashes)
+### Windows Crashes
 
-BugSplat can be configured to upload Windows minidumps created by the `UnityCrashHandler`. BugSplat will automatically pull Unity Player symbols from the [Unity Symbol Server](https://docs.unity3d.com/Manual/WindowsDebugging.html).
-
-The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used to upload minidumps to BugSplat. We recommend running `PostAllCrashes` when your game launches.
-
-```cs
-void Start()
-{
-    bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
-    StartCoroutine(bugsplat.PostAllCrashes());
-}
-
-```
-
-Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identical to the `ExceptionPostOptions` example listed above.
-
-You can generate a test crash on Windows with any of the following methods.
-
-```cs
-Utils.ForceCrash(ForcedCrashCategory.Abort);
-Utils.ForceCrash(ForcedCrashCategory.AccessViolation);
-Utils.ForceCrash(ForcedCrashCategory.FatalError);
-Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
-```
+BugSplat captures native Windows crashes via [bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). See the [Windows](#-windows) section for setup details.
 
 > [!IMPORTANT]
 > `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
@@ -339,6 +317,35 @@ The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat
 
 To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` and `UploadDebugSymbolsForMac` properties to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
 
+## 🪟 Windows
+
+The bugsplat-unity plugin supports native crash reporting on Windows via [bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x64 and Windows-on-ARM (ARM64) players.
+
+To configure native crash reporting for Windows, set the `UseNativeCrashReportingForWindows` property to `true` on your `BugSplatOptions` asset.
+
+When native crash reporting is enabled:
+
+- Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
+- `Player.log` is attached to native crash reports automatically.
+- The BugSplat crash dialog is suppressed by default; reports are sent silently. Set `WindowsShowCrashDialog` to `true` to present BugSplat's crash dialog to users instead.
+- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatRc.dll`, and `BugSplatWer.dll` next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
+
+The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
+
+For IL2CPP builds, BugSplat copies `LineNumberMappings.json` into the build directory and uploads it with your symbols so IL2CPP-generated C++ frames symbolicate back to C# method names, file names, and line numbers. See [Windows Symbols](#windows-symbols) for symbol upload configuration.
+
+### Windows Hang Detection
+
+Set `WindowsHangDetectionTimeoutMs` to a non-zero value to report hangs when your game's main thread stops responding for longer than the configured timeout. Hang detection is **disabled by default** (`0`) because long frames — such as loading screens or synchronous asset operations — can be falsely reported as hangs. If you enable hang detection, choose a timeout comfortably longer than your game's longest expected frame.
+
+### Migrating from 4.x
+
+Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
+
+- `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` are obsolete. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch.
+- Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
+- `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
+
 ## 🧩 API
 
 The following API methods are available to help you customize BugSplat to fit your needs.
@@ -370,6 +377,9 @@ The following API methods are available to help you customize BugSplat to fit yo
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
 | SymbolUploadClientId | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
 | SymbolUploadClientSecret | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
+| UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
+| WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows. When disabled (default), crash reports are sent silently |
+| WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
 
 ### BugSplat Environment Variables
 

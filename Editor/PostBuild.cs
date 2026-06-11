@@ -64,7 +64,10 @@ public class BuildPostprocessors
 			UploadSymbolsAndroid(pathToBuiltProject, options);
 #elif UNITY_EDITOR_WIN
 		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+		{
+			PostProcessWindows(pathToBuiltProject, options);
 			UploadSymbolFilesWin(pathToBuiltProject, options);
+		}
 #endif
 		if (target == BuildTarget.StandaloneOSX)
 			PostProcessMac(pathToBuiltProject, options);
@@ -89,6 +92,99 @@ public class BuildPostprocessors
 
 			Debug.Log("BugSplat. Symbols uploading completed.");
 		});
+	}
+
+	private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
+	{
+		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+		if (buildDir == null)
+		{
+			Debug.LogError("BugSplat. Could not find build directory. Skipping Windows post-build tasks.");
+			return;
+		}
+
+		CopyWindowsLineNumberMappings(buildDir);
+
+		if (!options.UseNativeCrashReportingForWindows)
+			return;
+
+		string arch;
+		try
+		{
+			arch = GetPEMachineArchitecture(pathToBuiltProject);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"BugSplat. Could not determine built executable architecture: {ex.Message}. Skipping native runtime support file copy.");
+			return;
+		}
+
+		var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+		var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+		var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
+
+		foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatRc.dll", "BugSplatWer.dll" })
+		{
+			var source = Path.Combine(supportDir, fileName);
+			if (!File.Exists(source))
+			{
+				Debug.LogError($"BugSplat. Missing native runtime support file {source}. Native crash reports may not upload.");
+				continue;
+			}
+
+			File.Copy(source, Path.Combine(buildDir, fileName), true);
+		}
+
+		Debug.Log($"BugSplat. Copied Windows native runtime support files ({arch}) next to the built executable.");
+	}
+
+	private static void CopyWindowsLineNumberMappings(string buildDir)
+	{
+		// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
+		var mappingSearchPaths = new[]
+		{
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
+		foreach (var searchPath in mappingSearchPaths)
+		{
+			var fullPath = Path.GetFullPath(searchPath);
+			if (File.Exists(fullPath))
+			{
+				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
+				File.Copy(fullPath, dest, true);
+				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				return;
+			}
+		}
+
+		Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+	}
+
+	private static string GetPEMachineArchitecture(string exePath)
+	{
+		// Read the COFF machine field from the PE header: 0x8664 = x64, 0xAA64 = ARM64
+		using (var stream = File.OpenRead(exePath))
+		using (var reader = new BinaryReader(stream))
+		{
+			stream.Seek(0x3C, SeekOrigin.Begin);
+			var peHeaderOffset = reader.ReadInt32();
+			stream.Seek(peHeaderOffset + 4, SeekOrigin.Begin);
+			var machine = reader.ReadUInt16();
+
+			switch (machine)
+			{
+				case 0x8664:
+					return "x64";
+				case 0xAA64:
+					return "ARM64";
+				default:
+					throw new InvalidOperationException($"Unsupported PE machine type 0x{machine:X4}");
+			}
+		}
 	}
 #endif
 

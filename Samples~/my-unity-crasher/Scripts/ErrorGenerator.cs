@@ -20,10 +20,7 @@ namespace Crasher
 		{
 			bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
 			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
-#if UNITY_STANDALONE_WIN
-            StartCoroutine(bugsplat.PostMostRecentCrash());
-#endif
-        }
+		}
 
 		void Update()
 		{
@@ -49,6 +46,8 @@ namespace Crasher
 			_crashNativeMac();
 #elif UNITY_ANDROID && !UNITY_EDITOR
 			CrashNativeAndroid();
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+			UnityEngine.Diagnostics.Utils.ForceCrash(UnityEngine.Diagnostics.ForcedCrashCategory.AccessViolation);
 #else
 			UnityEngine.Debug.LogError("BugSplat: Native crash not yet implemented on this platform");
 #endif
@@ -62,6 +61,10 @@ namespace Crasher
 			_hangNativeIos();
 #elif UNITY_ANDROID && !UNITY_EDITOR
 			HangNativeAndroid();
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+			// Blocks the main thread so the window stops pumping messages. BugSplat
+			// reports a hang if WindowsHangDetectionTimeoutMs is set to a non-zero value.
+			System.Threading.Thread.Sleep(30000);
 #else
 			UnityEngine.Debug.LogError("BugSplat: Native hang not yet implemented on this platform");
 #endif
