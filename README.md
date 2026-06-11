@@ -336,7 +336,9 @@ For IL2CPP builds, BugSplat copies `LineNumberMappings.json` into the build dire
 
 ### Windows Hang Detection
 
-Set `WindowsHangDetectionTimeoutMs` to a non-zero value to report hangs when your game's main thread stops responding for longer than the configured timeout. Hang detection is **disabled by default** (`0`) because long frames — such as loading screens or synchronous asset operations — can be falsely reported as hangs. If you enable hang detection, choose a timeout comfortably longer than your game's longest expected frame.
+Set `WindowsHangDetectionTimeoutMs` to a non-zero value to report hangs when your game's main thread stops responding for longer than the configured timeout. When a hang is detected, BugSplat captures a hang report, uploads it, and **terminates the hung process**.
+
+Hang detection is **disabled by default** (`0`) because long frames — such as loading screens or synchronous asset operations — can be falsely reported as hangs, and a false positive terminates your game. If you enable hang detection, choose a timeout comfortably longer than your game's longest expected frame.
 
 ### Migrating from 4.x
 
