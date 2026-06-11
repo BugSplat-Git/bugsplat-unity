@@ -625,8 +625,9 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Set the native hang detection timeout in milliseconds on Windows. 0 disables hang detection (default).
-        /// Long frames such as loading screens can be falsely reported as hangs with small timeout values.
-        /// Windows only; no-op on other platforms.
+        /// When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a
+        /// timeout longer than your longest expected frame — long frames such as loading screens are otherwise
+        /// falsely reported as hangs. Windows only; no-op on other platforms.
         /// </summary>
         public void SetWindowsHangDetectionTimeout(int ms)
         {

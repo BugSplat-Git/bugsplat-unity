@@ -82,7 +82,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows. When disabled (default), crash reports are sent silently.")]
 		public bool WindowsShowCrashDialog;
 
-		[Tooltip("Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection. Long frames such as loading screens can be falsely reported as hangs with small timeout values.")]
+		[Tooltip("Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection. When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a timeout longer than your longest expected frame (e.g. loading screens).")]
 		public int WindowsHangDetectionTimeoutMs = 0;
 	}
 }
