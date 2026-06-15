@@ -48,6 +48,8 @@ namespace Crasher
 			CrashNativeAndroid();
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
 			UnityEngine.Diagnostics.Utils.ForceCrash(UnityEngine.Diagnostics.ForcedCrashCategory.AccessViolation);
+#elif UNITY_EDITOR
+			UnityEngine.Debug.LogWarning("BugSplat: native crash reporting runs in built players only, not the editor. Make a build and click this button there to test native crash reporting.");
 #else
 			UnityEngine.Debug.LogError("BugSplat: Native crash not yet implemented on this platform");
 #endif
