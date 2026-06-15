@@ -9,9 +9,7 @@ A sample scene that demonstrates BugSplat crash, exception, hang, and feedback r
 
 ## Dependencies
 
-The sample uses the built-in UI package (`com.unity.ugui`, which also provides TextMeshPro). It does **not** require the Universal Render Pipeline.
-
-Input works with **either** input backend: a small `SampleInputModule` script adds the correct UI input module to the EventSystem at runtime — `InputSystemUIInputModule` when the Input System package is active, or the legacy `StandaloneInputModule` otherwise. No project setting changes are required.
+The sample uses the built-in UI package (`com.unity.ugui`, which also provides TextMeshPro) and the **Input System package** (`com.unity.inputsystem`) for UI input — the EventSystem uses an `InputSystemUIInputModule`. It does **not** require the Universal Render Pipeline.
 
 ## Buttons
 
