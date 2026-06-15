@@ -18,7 +18,7 @@ namespace Crasher
 		
 		void Start()
 		{
-			bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
+			bugsplat = FindAnyObjectByType<BugSplatManager>().BugSplat;
 			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.Full);
 		}
 
@@ -96,7 +96,7 @@ namespace Crasher
 
 		public void Event_LeaveFeedback()
 		{
-			var popup = FindFirstObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
+			var popup = FindAnyObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
 			if (popup != null)
 			{
 				popup.Show();
