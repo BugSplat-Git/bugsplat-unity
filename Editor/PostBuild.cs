@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -73,6 +74,22 @@ public class BuildPostprocessors
 			PostProcessMac(pathToBuiltProject, options);
 	}
 
+	// Zips a single file with the entry at the archive root and writes it to destZip.
+	// symbol-upload skips no-dbgId files (e.g. LineNumberMappings.json) but uploads
+	// .zip files as-is via the versions path, so we zip the mapping before upload.
+	private static void ZipForUpload(string sourceFile, string destZip)
+	{
+		if (File.Exists(destZip))
+		{
+			File.Delete(destZip);
+		}
+
+		using (var archive = ZipFile.Open(destZip, ZipArchiveMode.Create))
+		{
+			archive.CreateEntryFromFile(sourceFile, Path.GetFileName(sourceFile));
+		}
+	}
+
 #if UNITY_EDITOR_WIN
 	private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 	{
@@ -82,7 +99,7 @@ public class BuildPostprocessors
 			return;
 		}
 
-		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json}", options, uploadExitCode =>
+		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
@@ -154,9 +171,9 @@ public class BuildPostprocessors
 			var fullPath = Path.GetFullPath(searchPath);
 			if (File.Exists(fullPath))
 			{
-				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
-				File.Copy(fullPath, dest, true);
-				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
+				ZipForUpload(fullPath, destZip);
+				Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
 				return;
 			}
 		}
@@ -223,9 +240,9 @@ public class BuildPostprocessors
 			var fullPath = Path.GetFullPath(searchPath);
 			if (File.Exists(fullPath))
 			{
-				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
-				File.Copy(fullPath, dest, true);
-				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
+				ZipForUpload(fullPath, destZip);
+				Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
 				mappingFound = true;
 				break;
 			}
@@ -236,7 +253,7 @@ public class BuildPostprocessors
 			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
 		}
 
-		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>
+		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json.zip}", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
@@ -380,16 +397,18 @@ public class BuildPostprocessors
 			$"    --clientSecret \"{clientSecret}\" \\\n" +
 			$"    --files \"**/*.dSYM\" \\\n" +
 			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
-			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication\n" +
+			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
+			$"# symbol-upload skips the raw .json (no dbgId), so zip it; the .zip uploads via the versions path.\n" +
 			$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
 			$"if [ -f \"$MAPPINGS\" ]; then\n" +
+			$"    (cd \"${{PROJECT_DIR}}\" && zip -j -q LineNumberMappings.json.zip LineNumberMappings.json)\n" +
 			$"    \"$SYMBOL_UPLOAD\" \\\n" +
 			$"        --database \"{options.Database}\" \\\n" +
 			$"        --application \"{application}\" \\\n" +
 			$"        --version \"{version}\" \\\n" +
 			$"        --clientId \"{clientId}\" \\\n" +
 			$"        --clientSecret \"{clientSecret}\" \\\n" +
-			$"        --files \"LineNumberMappings.json\" \\\n" +
+			$"        --files \"LineNumberMappings.json.zip\" \\\n" +
 			$"        --directory \"${{PROJECT_DIR}}\"\n" +
 			$"fi";
 
