@@ -79,8 +79,8 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForWindows;
 
-		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows. When disabled (default), crash reports are sent silently.")]
-		public bool WindowsShowCrashDialog;
+		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently.")]
+		public bool WindowsShowCrashDialog = true;
 
 		[Tooltip("Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection. When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a timeout longer than your longest expected frame (e.g. loading screens).")]
 		public int WindowsHangDetectionTimeoutMs = 0;

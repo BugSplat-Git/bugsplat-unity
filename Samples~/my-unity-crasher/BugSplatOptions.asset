@@ -34,5 +34,5 @@ MonoBehaviour:
   UseNativeCrashReportingForMac: 1
   UploadDebugSymbolsForMac: 0
   UseNativeCrashReportingForWindows: 1
-  WindowsShowCrashDialog: 0
+  WindowsShowCrashDialog: 1
   WindowsHangDetectionTimeoutMs: 0

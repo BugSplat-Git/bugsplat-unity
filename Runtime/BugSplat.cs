@@ -242,7 +242,9 @@ namespace BugSplatUnity
                 if (BugSplat_Init(database, application, version) == 1)
                 {
                     nativeCrashReportingEnabled = true;
-                    BugSplat_SetQuietMode(1);
+                    // Show the native crash dialog by default; CreateFromOptions
+                    // overrides this from WindowsShowCrashDialog.
+                    BugSplat_SetQuietMode(0);
                     BugSplat_SetHangDetectionTimeout(0);
                     // Hard-terminate after a crash report uploads; a standalone Windows
                     // player's CRT shutdown can hang on the SDK's default exit() path.
@@ -617,7 +619,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Show or hide the BugSplat crash dialog when a native crash occurs on Windows.
-        /// Defaults to hidden (quiet mode). Windows only; no-op on other platforms.
+        /// Defaults to shown. Windows only; no-op on other platforms.
         /// </summary>
         public void SetWindowsCrashDialogEnabled(bool show)
         {
