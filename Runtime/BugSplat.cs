@@ -250,6 +250,9 @@ namespace BugSplatUnity
                     // player's CRT shutdown can hang on the SDK's default exit() path.
                     // 1 == BUGSPLAT_CRASH_TERMINATE.
                     BugSplat_SetCrashCompletionBehavior(1);
+                    // Tag native crashes as UnityNative (BugSplat crash type 15) so the
+                    // backend applies LineNumberMappings.json to symbolicate C# frames.
+                    BugSplat_SetCrashType(15);
 
                     var logPath = Application.consoleLogPath;
                     if (!string.IsNullOrEmpty(logPath))
@@ -732,6 +735,9 @@ namespace BugSplatUnity
 
         [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
         static extern void BugSplat_SetCrashCompletionBehavior(int behavior);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetCrashType(int crashTypeId);
 
         [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
         static extern int BugSplat_PostAllCrashesAsync();
