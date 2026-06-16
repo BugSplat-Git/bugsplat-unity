@@ -322,7 +322,7 @@ To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` 
 
 ## 🪟 Windows
 
-The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x64 and Windows-on-ARM (ARM64) players.
+The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
 
 To configure native crash reporting for Windows, set the `UseNativeCrashReportingForWindows` property to `true` on your `BugSplatOptions` asset.
 

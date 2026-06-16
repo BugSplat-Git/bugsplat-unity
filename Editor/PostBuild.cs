@@ -136,12 +136,6 @@ public class BuildPostprocessors
 			return;
 		}
 
-		if (arch == "x86")
-		{
-			Debug.LogWarning("BugSplat. Native Windows crash reporting is only supported for x64 and ARM64 builds. Skipping native runtime support file copy for the 32-bit (x86) build.");
-			return;
-		}
-
 		var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
 		var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
 		var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
