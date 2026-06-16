@@ -244,6 +244,9 @@ namespace BugSplatUnity
                     nativeCrashReportingEnabled = true;
                     BugSplat_SetQuietMode(1);
                     BugSplat_SetHangDetectionTimeout(0);
+                    // Hard-terminate after a crash report uploads; a standalone Windows
+                    // player's CRT shutdown can hang on the SDK's default exit() path.
+                    BugSplat_SetTerminateAfterCrash(1);
 
                     var logPath = Application.consoleLogPath;
                     if (!string.IsNullOrEmpty(logPath))
@@ -723,6 +726,9 @@ namespace BugSplatUnity
 
         [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
         static extern void BugSplat_SetHangDetectionTimeout(int ms);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetTerminateAfterCrash(int terminate);
 
         [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
         static extern int BugSplat_PostAllCrashesAsync();
