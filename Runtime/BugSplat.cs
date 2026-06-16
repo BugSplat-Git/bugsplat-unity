@@ -445,6 +445,7 @@ namespace BugSplatUnity
         public IEnumerator PostCrash(DirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             Debug.Log("BugSplat info: PostCrash is deprecated; native crashes are captured and uploaded by the native crash reporter.");
+            callback?.Invoke(null);
             yield return null;
         }
 
@@ -457,6 +458,7 @@ namespace BugSplatUnity
         public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
             Debug.Log("BugSplat info: PostMostRecentCrash is deprecated; native crashes are captured and uploaded by the native crash reporter.");
+            callback?.Invoke(null);
             yield return null;
         }
 
@@ -523,20 +525,26 @@ namespace BugSplatUnity
             options = options ?? new ReportPostOptions();
             options.SetNullOrEmptyValues(clientSettings);
 
-            yield return Task.Run(
-                async () =>
-                {
-                    try
-                    {
-                        var result = await nativeCrashReportClient.Post(minidump, options);
-                        callback?.Invoke(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"BugSplat error: {ex}");
-                    }
-                }
-            );
+            var task = nativeCrashReportClient.Post(minidump, options);
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (task.IsFaulted)
+            {
+                Debug.LogError($"BugSplat error: {task.Exception?.GetBaseException()}");
+                callback?.Invoke(null);
+            }
+            else if (task.IsCanceled)
+            {
+                Debug.LogError("BugSplat error: Post task was canceled");
+                callback?.Invoke(null);
+            }
+            else
+            {
+                callback?.Invoke(task.Result);
+            }
         }
         /// <summary>
         /// Set a key-value attribute on the native crash reporter. Attributes are included in native crash reports.

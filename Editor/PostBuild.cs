@@ -136,6 +136,12 @@ public class BuildPostprocessors
 			return;
 		}
 
+		if (arch == "x86")
+		{
+			Debug.LogWarning("BugSplat. Native Windows crash reporting is only supported for x64 and ARM64 builds. Skipping native runtime support file copy for the 32-bit (x86) build.");
+			return;
+		}
+
 		var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
 		var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
 		var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
@@ -183,7 +189,7 @@ public class BuildPostprocessors
 
 	private static string GetPEMachineArchitecture(string exePath)
 	{
-		// Read the COFF machine field from the PE header: 0x8664 = x64, 0xAA64 = ARM64
+		// Read the COFF machine field from the PE header: 0x014C = x86, 0x8664 = x64, 0xAA64 = ARM64
 		using (var stream = File.OpenRead(exePath))
 		using (var reader = new BinaryReader(stream))
 		{
@@ -194,6 +200,8 @@ public class BuildPostprocessors
 
 			switch (machine)
 			{
+				case 0x014C:
+					return "x86";
 				case 0x8664:
 					return "x64";
 				case 0xAA64:
