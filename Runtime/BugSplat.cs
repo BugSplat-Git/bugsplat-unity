@@ -418,51 +418,6 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Post all Unity player crashes that haven't been posted to BugSplat.
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that will be invoked with an empty list of HttpResponseMessages</param>
-        [Obsolete("Native Windows crash reporting uploads unsent crashes automatically at startup. This method will be removed in a future release.")]
-        public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
-        {
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            if (nativeCrashReportingEnabled)
-            {
-                BugSplat_PostAllCrashesAsync();
-            }
-#endif
-            Debug.Log("BugSplat info: PostAllCrashes is deprecated; unsent native crashes are uploaded automatically at startup. No per-crash results are available.");
-            callback?.Invoke(new List<HttpResponseMessage>());
-            yield return null;
-        }
-
-        /// <summary>
-        /// Post a specifc crash to BugSplat and will skip crashes that have already been posted
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that is no longer invoked</param>
-        [Obsolete("The Unity crash folder flow has been replaced by native Windows crash reporting. This method no longer posts crashes and will be removed in a future release.")]
-        public IEnumerator PostCrash(DirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-            Debug.Log("BugSplat info: PostCrash is deprecated; native crashes are captured and uploaded by the native crash reporter.");
-            callback?.Invoke(null);
-            yield return null;
-        }
-
-        /// <summary>
-        /// Post the most recent Player crash to BugSplat and will skip crashes that have already been posted
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that is no longer invoked</param>
-        [Obsolete("The Unity crash folder flow has been replaced by native Windows crash reporting. This method no longer posts crashes and will be removed in a future release.")]
-        public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-            Debug.Log("BugSplat info: PostMostRecentCrash is deprecated; native crashes are captured and uploaded by the native crash reporter.");
-            callback?.Invoke(null);
-            yield return null;
-        }
-
-        /// <summary>
         /// Post user feedback to BugSplat
         /// </summary>
         /// <param name="title">The feedback title, used as the stack key for grouping</param>

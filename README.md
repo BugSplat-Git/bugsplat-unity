@@ -347,7 +347,7 @@ Hang detection is **disabled by default** (`0`) because long frames — such as 
 
 Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
 
-- `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` are obsolete. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch.
+- `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
 - Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
 - `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
 
