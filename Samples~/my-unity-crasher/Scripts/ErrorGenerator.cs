@@ -5,9 +5,8 @@ using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using System.Diagnostics;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
-#endif
+using System.Runtime.CompilerServices;
 
 namespace Crasher
 {
@@ -47,13 +46,42 @@ namespace Crasher
 #elif UNITY_ANDROID && !UNITY_EDITOR
 			CrashNativeAndroid();
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-			UnityEngine.Diagnostics.Utils.ForceCrash(UnityEngine.Diagnostics.ForcedCrashCategory.AccessViolation);
+			CrashWindowsNative();
 #elif UNITY_EDITOR
 			UnityEngine.Debug.LogWarning("BugSplat: native crash reporting runs in built players only, not the editor. Make a build and click this button there to test native crash reporting.");
 #else
 			UnityEngine.Debug.LogError("BugSplat: Native crash not yet implemented on this platform");
 #endif
 		}
+
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+		// Triggers a native access violation from a chain of C# frames. BugSplat's
+		// native handler captures the crash; on an IL2CPP build these frames
+		// symbolicate back to their C# method names and line numbers via
+		// GameAssembly.pdb + LineNumberMappings.json, so the report shows a
+		// game-code call stack instead of an engine-internal one. NoInlining keeps
+		// the frames distinct through IL2CPP/MSVC optimization, so the full chain
+		// shows up rather than a single collapsed frame.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void CrashWindowsNative() => NativeCrashFrame0();
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void NativeCrashFrame0() => NativeCrashFrame1();
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void NativeCrashFrame1() => NativeCrashFrame2();
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void NativeCrashFrame2() => DereferenceNullPointer();
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void DereferenceNullPointer()
+		{
+			// Raw write to address 0 -> hardware access violation (SEH), not a
+			// managed NullReferenceException. Works on both Mono and IL2CPP.
+			Marshal.WriteInt32(IntPtr.Zero, 0);
+		}
+#endif
 
 		public void Event_HangNative()
 		{
