@@ -210,6 +210,19 @@ bugsplat.ShouldPostException = (ex) =>
 };
 ```
 
+### Background Thread Exceptions
+
+Unity raises `Application.logMessageReceived` only for logs written on the main thread. An unhandled exception on a background thread is written to the player log but never reaches that callback, so BugSplat captures these through `Application.logMessageReceivedThreaded` instead, buffers them, and posts them from the main thread on the next frame.
+
+This is on by default. Uncheck **Capture Exceptions On Background Threads** on your `BugSplatManager` to restore the previous behavior of reporting only main-thread exceptions.
+
+Because the threaded callback also fires for main-thread logs that `logMessageReceived` already delivered, BugSplat ignores anything raised on the main thread there — main-thread exceptions are reported exactly once either way.
+
+At most 64 background exceptions are buffered at a time. A thread failing in a tight loop can produce them faster than they can be uploaded, so the excess is dropped and a single warning is logged rather than queueing unbounded work.
+
+> [!NOTE]
+> Exceptions from a `Task` nobody awaits are still not captured. They surface on the finalizer thread via `TaskScheduler.UnobservedTaskException`, which never writes to the Unity log, and only after a garbage collection. To report them, subscribe to that event yourself and re-raise on the main thread — `CrashScenarioMenu` in the sample shows the pattern.
+
 ### Windows Crashes
 
 BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](#-windows) section for setup details.
@@ -391,6 +404,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | --------------- | --------------- |
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
 | RegisterLogMessageReceived | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
+| CaptureExceptionsOnBackgroundThreads | Also capture unhandled exceptions thrown on background threads (default). Requires RegisterLogMessageReceived. See [Background thread exceptions](#background-thread-exceptions).|
 
 ### BugSplat Options
 

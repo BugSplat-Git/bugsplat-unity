@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using UnityEngine;
 using BugSplat = BugSplatUnity.BugSplat;
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #endif
 
@@ -106,13 +107,26 @@ namespace Crasher
 			{
 				Name = "Exception on a background thread",
 				Expected =
-					"KNOWN GAP: appears in Player.log but produces no report. Unity only raises " +
-					"logMessageReceived for main-thread logs.",
-				Path = CapturePath.NotCaptured,
+					"Queued by the threaded log callback and posted from the main thread. Reported " +
+					"once, not twice. Requires Capture Exceptions On Background Threads.",
+				Path = CapturePath.ManagedHandler,
 				Terminates = false,
 				RunsInEditor = true,
 				Run = _ => RunOnBackgroundThread(
 					() => throw new Exception("BugSplat sample: exception on a background thread"))
+			});
+
+			scenarios.Add(new CrashScenario
+			{
+				Name = "Unobserved Task exception",
+				Expected =
+					"Still not captured by the SDK — it surfaces on the finalizer thread, which never " +
+					"logs. This sample reports it only because CrashScenarioMenu subscribes to " +
+					"TaskScheduler.UnobservedTaskException and re-raises on the main thread.",
+				Path = CapturePath.NotCaptured,
+				Terminates = false,
+				RunsInEditor = true,
+				Run = host => host.Run(FaultUnobservedTask())
 			});
 
 			scenarios.Add(new CrashScenario
@@ -254,6 +268,28 @@ namespace Crasher
 		{
 			yield return null;
 			throw new Exception("BugSplat sample: exception inside a coroutine");
+		}
+
+		/// <summary>
+		/// Faults a Task nobody awaits, then forces the collection that makes the runtime notice.
+		/// Without the GC the exception can sit unobserved indefinitely.
+		/// </summary>
+		static IEnumerator FaultUnobservedTask()
+		{
+			StartFaultedTask();
+
+			yield return null;
+
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			GC.Collect();
+		}
+
+		// Kept out of the coroutine so the Task is unreachable by the time the GC runs.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void StartFaultedTask()
+		{
+			Task.Run(() => throw new Exception("BugSplat sample: unobserved Task exception"));
 		}
 
 		static void PostCaughtException(ICrashScenarioHost host)

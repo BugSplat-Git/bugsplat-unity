@@ -197,7 +197,7 @@ namespace Crasher
 			var legend = CreateTextElement(
 				"Legend", box.transform,
 				"NATIVE = BugSplat crash handler   WER = Windows Error Reporting   " +
-				"MANAGED = .NET handler   POST = explicit Post   HANG = watchdog   NONE = not captured",
+				"MANAGED = .NET handler   POST = explicit Post   HANG = watchdog   NONE = not captured by the SDK",
 				12, FontStyles.Normal);
 			legend.GetComponent<TextMeshProUGUI>().color = new Color(0.4f, 0.4f, 0.4f, 1f);
 			SetTopAnchored(legend, cursor, 18, pad);

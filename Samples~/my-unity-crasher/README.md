@@ -29,10 +29,10 @@ The **Crash Scenarios** button in the bottom-right opens a scrollable list cover
 | --- | --- | --- |
 | `NATIVE` | BugSplat's crash handler, dumped out of process by `BugSplatMonitor` | Access violation (write, read, background thread), custom SEH exception, stack overflow |
 | `WER` | `BugSplatWer.dll` via Windows Error Reporting | Fail-fast `0xC0000602`, fail-fast as stack buffer overrun `0xC0000409`, heap corruption `0xC0000374` |
-| `MANAGED` | The .NET handler, via `Application.logMessageReceived` | Unhandled exception, exception inside a coroutine |
+| `MANAGED` | The .NET handler, via Unity's log callbacks | Unhandled exception, exception inside a coroutine, exception on a background thread |
 | `POST` | An explicit `bugsplat.Post` call | Caught exception posted manually |
 | `HANG` | `BugSplatMonitor`'s hang watchdog | Main-thread hang |
-| `NONE` | Nothing — a documented gap | Exception on a background thread |
+| `NONE` | Not captured by the SDK | Unobserved `Task` exception |
 
 A few things worth knowing before you run these:
 
@@ -41,4 +41,5 @@ A few things worth knowing before you run these:
 - **Run without a debugger attached.** A fail-fast breaks into an attached debugger instead of reporting.
 - **Anything marked `(terminates)` kills the player.** Relaunching is part of the test: unsent reports upload on the next launch.
 - Scenarios set a distinct `Key` before crashing, since the fail-fast rows all fault at the same address and would otherwise group into one bucket in the dashboard.
+- The background-thread exception should report **once**. Seeing it twice means the main-thread deduplication in `BackgroundLogMessageQueue` regressed.
 - `UnityEngine.Diagnostics.Utils.ForceCrash` is deliberately not used anywhere in this sample. It routes through Unity's own diagnostics pipeline rather than raising a clean fault, so what the crash handler sees is inconsistent across Unity versions and scripting backends.
