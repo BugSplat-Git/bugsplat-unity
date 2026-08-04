@@ -200,6 +200,17 @@ namespace BugSplatUnity
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
+        private bool windowsWerEnabled;
+
+        /// <summary>
+        /// True when BugSplat's Windows Error Reporting handler is registered for this process.
+        /// Fail-fast terminations — stack buffer overrun (0xC0000409), heap corruption (0xC0000374),
+        /// and __fastfail — bypass BugSplat's crash handler entirely and are reported only when this
+        /// is true. Registration requires BugSplatWer.dll next to the game executable and a
+        /// machine-wide registry value naming its full path. Always false in the editor and on
+        /// non-Windows platforms.
+        /// </summary>
+        public bool WindowsWerEnabled => windowsWerEnabled;
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -261,6 +272,7 @@ namespace BugSplatUnity
                     }
 
                     BugSplat_PostAllCrashesAsync();
+                    ReportWindowsWerStatus();
                 }
                 else
                 {
@@ -595,6 +607,48 @@ namespace BugSplatUnity
 #endif
         }
 
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        private void ReportWindowsWerStatus()
+        {
+            try
+            {
+                windowsWerEnabled = BugSplat_IsWerEnabled() == 1;
+            }
+            catch (EntryPointNotFoundException)
+            {
+                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.0.1).
+                windowsWerEnabled = false;
+            }
+
+            if (windowsWerEnabled) return;
+
+            var werDll = Path.Combine(
+                Path.GetDirectoryName(Application.dataPath) ?? string.Empty,
+                "BugSplatWer.dll");
+
+            var message =
+                "BugSplat: Windows Error Reporting is not armed, so fail-fast crashes — stack buffer " +
+                "overrun (0xC0000409), heap corruption (0xC0000374), and __fastfail — will not be " +
+                $"reported. They bypass BugSplat's crash handler entirely. To arm it, \"{werDll}\" must " +
+                "exist and be named by a REG_DWORD value under HKLM\\SOFTWARE\\Microsoft\\Windows\\" +
+                "Windows Error Reporting\\RuntimeExceptionHelperModules, which requires administrator " +
+                "rights. Your installer should add that value and remove it on uninstall; for local " +
+                "builds use BugSplat > Windows > Register WER Handler in the editor. All other crashes " +
+                "are reported normally.";
+
+            // The registry value is absent on virtually every end-user machine unless the installer
+            // wrote it, and a player can do nothing about it — so only nag in development builds.
+            if (Debug.isDebugBuild)
+            {
+                Debug.LogWarning(message);
+            }
+            else
+            {
+                Debug.Log(message);
+            }
+        }
+#endif
+
         /// <summary>
         /// Set the native hang detection timeout in milliseconds on Windows. 0 disables hang detection (default).
         /// When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a
@@ -704,6 +758,9 @@ namespace BugSplatUnity
 
         [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
         static extern int BugSplat_PostAllCrashesAsync();
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_IsWerEnabled();
 #endif
     }
 }

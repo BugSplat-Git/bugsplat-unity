@@ -6,7 +6,6 @@ using BugSplatUnity;
 using BugSplatUnity.Runtime.Reporter;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 
 namespace Crasher
 {
@@ -59,28 +58,9 @@ namespace Crasher
 		// native handler captures the crash; on an IL2CPP build these frames
 		// symbolicate back to their C# method names and line numbers via
 		// GameAssembly.pdb + LineNumberMappings.json, so the report shows a
-		// game-code call stack instead of an engine-internal one. NoInlining keeps
-		// the frames distinct through IL2CPP/MSVC optimization, so the full chain
-		// shows up rather than a single collapsed frame.
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void CrashWindowsNative() => NativeCrashFrame0();
-
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void NativeCrashFrame0() => NativeCrashFrame1();
-
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void NativeCrashFrame1() => NativeCrashFrame2();
-
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void NativeCrashFrame2() => DereferenceNullPointer();
-
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void DereferenceNullPointer()
-		{
-			// Raw write to address 0 -> hardware access violation (SEH), not a
-			// managed NullReferenceException. Works on both Mono and IL2CPP.
-			Marshal.WriteInt32(IntPtr.Zero, 0);
-		}
+		// game-code call stack instead of an engine-internal one. Shared with the
+		// Crash Scenarios menu so there is one implementation of each trigger.
+		private void CrashWindowsNative() => CrashScenarios.AccessViolationWrite();
 #endif
 
 		public void Event_HangNative()
@@ -137,7 +117,7 @@ namespace Crasher
 
 		private void GenerateSampleStackFramesAndThrow()
 		{
-			SampleStackFrame0();
+			CrashScenarios.ThrowFromSampleFrames();
 		}
 
 		private void OpenUrl(string url)
@@ -153,26 +133,6 @@ namespace Crasher
 #else
 			UnityEngine.Debug.Log($"OpenUrl unsupported platform: {Application.platform}");
 #endif
-		}
-
-		private void SampleStackFrame0()
-		{
-			SampleStackFrame1();
-		}
-
-		private void SampleStackFrame1()
-		{
-			SampleStackFrame2();
-		}
-
-		private void SampleStackFrame2()
-		{
-			ThrowException();
-		}
-
-		private void ThrowException()
-		{
-			throw new Exception("BugSplat rocks!");
 		}
 
         void ExceptionCallback(ExceptionReporterPostResult result)
