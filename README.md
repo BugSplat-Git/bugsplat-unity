@@ -64,7 +64,7 @@ Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **B
 > [!NOTE]
 > The sample's UI labels use TextMeshPro. If the button text appears blank, import TMP Essentials via **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled in the sample.
 
-Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
+Click **Play** and run a scenario from the **Crash Scenarios** menu to send an error report to BugSplat. Scenarios are grouped by the mechanism that captures them, and the menu is platform-aware — each platform lists only what it can capture. Native scenarios are disabled in the editor and need a built player; see the [sample README](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/README.md) for the full scenario matrix. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
 
 ![Running the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/4418b736-dc88-496a-ada6-a27ad19032f1)
 
@@ -227,16 +227,16 @@ For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line map
 
 BugSplat has the ability to display a support response to users who encounter a crash. You can show your users a generalized support response for all crashes, or a custom support response that corresponds to the type of crash that occurred. Defining a support response allows you to alert users that bug has been fixed in a new version, or that they need to update their graphics drivers.
 
-Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser. A full example can be seen in [ErrorGenerator.cs](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/Scripts/ErrorGenerator.cs).
+Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser:
 
 ```cs
 private string infoUrl = "";
 
-public void Event_CatchExceptionThenPostNewBugSplat()
+public void CatchExceptionThenPostNewBugSplat()
 {
     try
     {
-        GenerateSampleStackFramesAndThrow();
+        MethodThatThrows();
     }
     catch (Exception ex)
     {
