@@ -312,6 +312,7 @@ namespace BugSplatUnity
                 
                 var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
+                nativeCrashReportingEnabled = true;
             }
 
             UseDotNetHandler(database, application, version);
@@ -525,11 +526,15 @@ namespace BugSplatUnity
             _setNativeAttributeMac(key, value);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
 
         /// <summary>
         /// Set the user name on the native crash reporter.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeUser(string user)
         {
@@ -545,6 +550,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Set the user email on the native crash reporter.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeEmail(string email)
         {
@@ -560,6 +566,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Set notes on the native crash reporter.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeNotes(string notes)
         {
@@ -665,6 +672,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
