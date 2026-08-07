@@ -267,7 +267,7 @@ public class BuildPostprocessors
 		});
 	}
 
-	private static BugSplatOptions GetBugSplatOptions()
+	internal static BugSplatOptions GetBugSplatOptions()
 	{
 		var guids = AssetDatabase.FindAssets("t:BugSplatOptions");
 
@@ -300,7 +300,7 @@ public class BuildPostprocessors
 		project.AddBuildProperty(mainTargetGuid, "ENABLE_BITCODE", "NO");
 		project.SetBuildProperty(mainTargetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
 
-		HandleUploadSymbols(mainTargetGuid, project, options);
+		HandleUploadSymbols(mainTargetGuid, project, options, pathToBuiltProject);
 
 		File.WriteAllText(projectPath, project.WriteToString());
 
@@ -354,23 +354,23 @@ public class BuildPostprocessors
 		}
 	}
 
-	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
+	const string IosCredentialsFileName = "bugsplat-credentials.sh";
+
+	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options, string pathToBuiltProject)
 	{
 		if (!options.UploadDebugSymbolsForIos)
 			return;
 
-		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-		if (string.IsNullOrEmpty(clientId))
-			clientId = options.SymbolUploadClientId;
-
-		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-		if (string.IsNullOrEmpty(clientSecret))
-			clientSecret = options.SymbolUploadClientSecret;
+		var clientId = BugSplatSymbolUploadCredentials.GetClientId(options);
+		var clientSecret = BugSplatSymbolUploadCredentials.GetClientSecret(options);
 
 		if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
 		{
-			Debug.LogWarning("BugSplat: SymbolUploadClientId/Secret not set. Skipping iOS dSYM upload build phase.");
-			return;
+			Debug.LogWarning($"BugSplat: SymbolUploadClientId/Secret not set. Set BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET in the Xcode build environment or create {IosCredentialsFileName} next to the Xcode project, otherwise the dSYM upload build phase will skip uploading.");
+		}
+		else if (!BugSplatSymbolUploadCredentials.EnvironmentHasCredentials)
+		{
+			WriteIosCredentialsFile(pathToBuiltProject, clientId, clientSecret);
 		}
 
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
@@ -380,6 +380,21 @@ public class BuildPostprocessors
 		const int index = 999;
 		const string name = "Upload dSYM files to BugSplat";
 		var shellScript =
+			$"BUGSPLAT_CREDENTIALS=\"${{PROJECT_DIR}}/{IosCredentialsFileName}\"\n" +
+			$"if [ -f \"$BUGSPLAT_CREDENTIALS\" ]; then\n" +
+			$"    . \"$BUGSPLAT_CREDENTIALS\"\n" +
+			$"fi\n" +
+			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] && [ -n \"$BUGSPLAT_CLIENT_ID\" ]; then\n" +
+			$"    SYMBOL_UPLOAD_CLIENT_ID=\"$BUGSPLAT_CLIENT_ID\"\n" +
+			$"fi\n" +
+			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ] && [ -n \"$BUGSPLAT_CLIENT_SECRET\" ]; then\n" +
+			$"    SYMBOL_UPLOAD_CLIENT_SECRET=\"$BUGSPLAT_CLIENT_SECRET\"\n" +
+			$"fi\n" +
+			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] || [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ]; then\n" +
+			$"    echo \"warning: BugSplat symbol upload credentials not found. Set BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET or create {IosCredentialsFileName} next to the Xcode project. Skipping dSYM upload.\"\n" +
+			$"    exit 0\n" +
+			$"fi\n" +
+			$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
 			$"if [ \"$(uname -m)\" = \"x86_64\" ]; then\n" +
 			$"    VARIANT=\"symbol-upload-macos-intel\"\n" +
 			$"else\n" +
@@ -395,8 +410,6 @@ public class BuildPostprocessors
 			$"    --database \"{options.Database}\" \\\n" +
 			$"    --application \"{application}\" \\\n" +
 			$"    --version \"{version}\" \\\n" +
-			$"    --clientId \"{clientId}\" \\\n" +
-			$"    --clientSecret \"{clientSecret}\" \\\n" +
 			$"    --files \"**/*.dSYM\" \\\n" +
 			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
 			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
@@ -408,14 +421,48 @@ public class BuildPostprocessors
 			$"        --database \"{options.Database}\" \\\n" +
 			$"        --application \"{application}\" \\\n" +
 			$"        --version \"{version}\" \\\n" +
-			$"        --clientId \"{clientId}\" \\\n" +
-			$"        --clientSecret \"{clientSecret}\" \\\n" +
 			$"        --files \"LineNumberMappings.json.zip\" \\\n" +
 			$"        --directory \"${{PROJECT_DIR}}\"\n" +
 			$"fi";
 
 		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
+	}
+
+	private static void WriteIosCredentialsFile(string pathToBuiltProject, string clientId, string clientSecret)
+	{
+		var credentialsPath = Path.Combine(pathToBuiltProject, IosCredentialsFileName);
+		File.WriteAllText(credentialsPath,
+			$"export SYMBOL_UPLOAD_CLIENT_ID='{EscapeShellSingleQuoted(clientId)}'\n" +
+			$"export SYMBOL_UPLOAD_CLIENT_SECRET='{EscapeShellSingleQuoted(clientSecret)}'\n");
+
+		AddToGitIgnore(pathToBuiltProject, IosCredentialsFileName);
+
+		Debug.Log($"BugSplat: Wrote symbol upload credentials to {IosCredentialsFileName} next to the Xcode project and added it to .gitignore. Do not commit this file.");
+	}
+
+	private static string EscapeShellSingleQuoted(string value)
+	{
+		return value.Replace("'", "'\\''");
+	}
+
+	private static void AddToGitIgnore(string directory, string entry)
+	{
+		var gitIgnorePath = Path.Combine(directory, ".gitignore");
+
+		if (!File.Exists(gitIgnorePath))
+		{
+			File.WriteAllText(gitIgnorePath, $"{entry}\n");
+			return;
+		}
+
+		foreach (var line in File.ReadAllLines(gitIgnorePath))
+		{
+			if (string.Equals(line.Trim(), entry))
+				return;
+		}
+
+		File.AppendAllText(gitIgnorePath, $"\n{entry}\n");
 	}
 #endif
 
@@ -500,12 +547,7 @@ public class BuildPostprocessors
 
 	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
-		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-		if (string.IsNullOrEmpty(clientId))
-		{
-			clientId = options.SymbolUploadClientId;
-		}
-		
+		string clientId = BugSplatSymbolUploadCredentials.GetClientId(options);
 		if (string.IsNullOrEmpty(clientId))
 		{
 			Debug.LogWarning("BugSplat: SymbolUploadClientId is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_ID. Skipping symbol uploads.");
@@ -513,12 +555,7 @@ public class BuildPostprocessors
 			return;
 		}
 
-		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-		if (string.IsNullOrEmpty(clientSecret))
-		{
-			clientSecret = options.SymbolUploadClientSecret;
-		}
-
+		string clientSecret = BugSplatSymbolUploadCredentials.GetClientSecret(options);
 		if (string.IsNullOrEmpty(clientSecret))
 		{
 			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_SECRET. Skipping symbol uploads");
@@ -540,9 +577,12 @@ public class BuildPostprocessors
 			FileName = symbolUploadPath,
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {clientId} --clientSecret {clientSecret} " +
+			Arguments = $"--database {options.Database} --application \"{application}\" " +
 				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
+
+		symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
+		symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
 
 		if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
 		{

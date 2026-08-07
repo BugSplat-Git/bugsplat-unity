@@ -10,6 +10,7 @@ public class BugSplatOptionsEditor : Editor
     private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
     private const string integrationsQueryString = "?database={0}";
     private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
+    private const string credentialsWarningMessage = "Symbol upload credentials saved in this asset are stored in plain text and can end up in version control. Prefer the BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET environment variables, which override these values. Values saved here are removed from the asset while a player build runs and restored when it finishes.";
 
     private const int integrationsPaddingTop = 5;
     private const int integrationsPaddingBottom = 5;
@@ -57,10 +58,23 @@ public class BugSplatOptionsEditor : Editor
             }
 
             var property = serializedObject.FindProperty(iterator.name);
+            if (string.Equals(iterator.name, nameof(options.SymbolUploadClientId))
+                || string.Equals(iterator.name, nameof(options.SymbolUploadClientSecret)))
+            {
+                var label = new GUIContent(property.displayName, property.tooltip);
+                property.stringValue = EditorGUILayout.PasswordField(label, property.stringValue);
+                continue;
+            }
+
             EditorGUILayout.PropertyField(property, true);
         }
 
         serializedObject.ApplyModifiedProperties();
+
+        if (!string.IsNullOrEmpty(options.SymbolUploadClientId) || !string.IsNullOrEmpty(options.SymbolUploadClientSecret))
+        {
+            EditorGUILayout.HelpBox(credentialsWarningMessage, MessageType.Warning);
+        }
 
         if (string.IsNullOrEmpty(options.Database))
         {
