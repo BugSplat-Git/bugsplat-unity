@@ -616,7 +616,7 @@ namespace BugSplatUnity
             }
             catch (EntryPointNotFoundException)
             {
-                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.0.1).
+                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.1.0).
                 windowsWerEnabled = false;
             }
 
