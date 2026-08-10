@@ -620,12 +620,18 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. Supported on Windows and Android; no-op on iOS and macOS.
+        /// Set the key on the native crash reporter. iOS, macOS, and Windows use the platform SDK's own
+        /// key setter; Android's bridge has none, so there the key travels as the reserved
+        /// BugSplatApplicationKey attribute that the backend promotes to the report's key.
         /// </summary>
         public void SetNativeKey(string key)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeKeyIos(key);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeKeyMac(key);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
@@ -745,6 +751,9 @@ namespace BugSplatUnity
         static extern void _setNativeNotesIos(string notes);
 
         [DllImport("__Internal")]
+        static extern void _setNativeKeyIos(string key);
+
+        [DllImport("__Internal")]
         static extern void _attachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
@@ -761,6 +770,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _setNativeNotesMac(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeKeyMac(string key);
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileMac(string path);

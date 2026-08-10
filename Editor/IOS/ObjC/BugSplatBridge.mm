@@ -41,6 +41,10 @@ extern "C" {
 		[BugSplat shared].notes = createNSStringFrom(notes);
 	}
 
+	void _setNativeKeyIos(const char* key) {
+		[BugSplat shared].appKey = createNSStringFrom(key);
+	}
+
 	void _attachNativeLogFileIos(const char* path) {
 		// Log file attachment is not supported on iOS because the BugSplatDelegate's
 		// attachmentForBugSplat: method suppresses attributes from setValue:forAttribute:.
