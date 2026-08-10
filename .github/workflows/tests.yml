@@ -96,6 +96,17 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: ${{ matrix.buildTarget }} test results
 
+      # Every container is a new machine to Unity, so each run consumes an activation. If a run
+      # dies before returning it, that slot is burned against a machine that no longer exists and
+      # has to be revoked by hand. Always return it.
+      - uses: game-ci/unity-return-license@v2
+        if: always()
+        continue-on-error: true
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
