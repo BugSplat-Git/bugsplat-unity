@@ -75,6 +75,58 @@ namespace BugSplatUnity.RuntimeTests
 		}
 
 		[Test]
+		public void CreateFromOptions_ShouldCopyAttributes()
+		{
+			options.Attributes = new System.Collections.Generic.List<BugSplatAttribute>
+			{
+				new BugSplatAttribute { Name = "level", Value = "boss" },
+				new BugSplatAttribute { Name = "difficulty", Value = "hard" }
+			};
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.AreEqual(2, sut.Attributes.Count);
+			Assert.AreEqual("boss", sut.Attributes["level"]);
+			Assert.AreEqual("hard", sut.Attributes["difficulty"]);
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttributeNameIsEmpty_ShouldSkipIt()
+		{
+			options.Attributes = new System.Collections.Generic.List<BugSplatAttribute>
+			{
+				new BugSplatAttribute { Name = "", Value = "orphaned" },
+				new BugSplatAttribute { Name = "kept", Value = "value" }
+			};
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.AreEqual(1, sut.Attributes.Count);
+			Assert.AreEqual("value", sut.Attributes["kept"]);
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttributeValueIsNull_ShouldUseEmptyString()
+		{
+			options.Attributes = new System.Collections.Generic.List<BugSplatAttribute>
+			{
+				new BugSplatAttribute { Name = "name", Value = null }
+			};
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.AreEqual(string.Empty, sut.Attributes["name"]);
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttributesIsNull_ShouldNotThrow()
+		{
+			options.Attributes = null;
+
+			Assert.DoesNotThrow(() => BugSplat.CreateFromOptions(options));
+		}
+
+		[Test]
 		public void CreateFromOptions_WhenPersistentDataFileAttachmentPathsIsNull_ShouldNotThrow()
 		{
 			options.PersistentDataFileAttachmentPaths = null;
