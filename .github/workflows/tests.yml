@@ -36,6 +36,10 @@ jobs:
         include:
           - buildTarget: StandaloneLinux64
             image: linux-il2cpp
+          - buildTarget: StandaloneWindows64
+            image: windows-mono
+          - buildTarget: StandaloneOSX
+            image: mac-mono
           - buildTarget: WebGL
             image: webgl
 
