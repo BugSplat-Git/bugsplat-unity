@@ -40,7 +40,7 @@ jobs:
             image: webgl
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: package
           lfs: true
@@ -70,7 +70,7 @@ jobs:
           }
           EOF
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: TestProject/Library
           key: Library-${{ matrix.buildTarget }}-${{ hashFiles('package/**/*.cs', 'package/**/*.asmdef') }}
@@ -107,7 +107,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-${{ matrix.buildTarget }}
