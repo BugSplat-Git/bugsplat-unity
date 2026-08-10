@@ -1,3 +1,4 @@
+using System.Threading;
 using BugSplatUnity.Runtime.Manager;
 using NUnit.Framework;
 using UnityEngine;
@@ -116,6 +117,62 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			queue.Enqueue("message", "stack", LogType.Exception, BackgroundThreadId);
 
 			Assert.AreEqual(0, queue.TakeDroppedCount());
+		}
+
+		[Test]
+		public void Capacity_ShouldReportTheConfiguredBound()
+		{
+			Assert.AreEqual(BackgroundLogMessageQueue.DefaultCapacity, CreateQueue().Capacity);
+			Assert.AreEqual(4, CreateQueue(capacity: 4).Capacity);
+		}
+
+		// The sequential tests above only exercise one thread at a time, which is not the state this
+		// queue exists for. Capacity accounting is deliberately lock-free and therefore approximate
+		// at the saturation boundary: a dequeue frees a slot slightly before it decrements the count,
+		// so a racing enqueue can drop when a slot was technically free. That imprecision is allowed.
+		// What must hold is that nothing is invented or silently lost — every message is either
+		// queued or counted as dropped, and every queued message comes back out exactly once.
+		[Test]
+		public void Enqueue_WhenDrainedConcurrently_ShouldAccountForEveryMessage()
+		{
+			const int messageCount = 5000;
+			var queue = CreateQueue(capacity: 8);
+			var queued = 0;
+			var dequeued = 0;
+
+			var producer = new Thread(() =>
+			{
+				for (var i = 0; i < messageCount; i++)
+				{
+					if (queue.Enqueue("message", "stack", LogType.Exception, BackgroundThreadId))
+					{
+						queued++;
+					}
+				}
+			});
+
+			producer.Start();
+
+			// Mirrors the manager's bounded per-frame drain running against a live producer.
+			while (producer.IsAlive)
+			{
+				for (var drained = 0; drained < queue.Capacity && queue.TryDequeue(out _); drained++)
+				{
+					dequeued++;
+				}
+			}
+
+			producer.Join();
+
+			while (queue.TryDequeue(out _))
+			{
+				dequeued++;
+			}
+
+			// Join is the barrier that makes the producer's writes visible here.
+			Assert.AreEqual(messageCount, queued + queue.TakeDroppedCount(), "every message is either queued or counted as dropped");
+			Assert.AreEqual(queued, dequeued, "every queued message is dequeued exactly once");
+			Assert.True(queue.IsEmpty);
 		}
 
 		[Test]

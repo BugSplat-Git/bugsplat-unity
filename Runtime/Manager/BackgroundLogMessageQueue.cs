@@ -56,6 +56,12 @@ namespace BugSplatUnity.Runtime.Manager
 		public bool IsEmpty => pending.IsEmpty;
 
 		/// <summary>
+		/// Upper bound on buffered messages for this instance. Also bounds how much the main
+		/// thread drains per frame, so one frame can never do more work than the queue can hold.
+		/// </summary>
+		public int Capacity => capacity;
+
+		/// <summary>
 		/// Mirrors <c>ReportUploadGuardService.ShouldPostLogMessage</c> so ordinary background
 		/// logging doesn't consume the queue's capacity. The guard still runs downstream and
 		/// remains authoritative — this is a filter, not the policy.
@@ -66,6 +72,16 @@ namespace BugSplatUnity.Runtime.Manager
 		/// Queues a message if it came from a background thread, is reportable, and there is room.
 		/// Returns whether it was queued. Safe to call from any thread.
 		/// </summary>
+		/// <remarks>
+		/// Capacity accounting is conservative rather than exact. <see cref="TryDequeue"/> decrements
+		/// the count after the item is already out of the queue, so an enqueue racing that window can
+		/// still see the pre-dequeue count and drop even though a slot has just opened. The error only
+		/// runs one way — the queue never holds more than <see cref="Capacity"/> — and it can only
+		/// occur while already saturated, a state that is by definition already dropping and already
+		/// reported through <see cref="TakeDroppedCount"/>. A lock would close the window, but this
+		/// runs on arbitrary threads from inside Unity's log handler while an exception is unwinding;
+		/// blocking there is the worse risk.
+		/// </remarks>
 		public bool Enqueue(string logMessage, string stackTrace, LogType type, int callingThreadId)
 		{
 			if (callingThreadId == mainThreadId)

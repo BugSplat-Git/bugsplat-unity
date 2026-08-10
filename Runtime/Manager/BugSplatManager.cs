@@ -65,20 +65,29 @@ namespace BugSplatUnity.Runtime.Manager
 
 		private void Update()
 		{
-			if (backgroundLogMessages == null || backgroundLogMessages.IsEmpty)
+			if (backgroundLogMessages == null)
 			{
 				return;
 			}
 
-			while (backgroundLogMessages.TryDequeue(out var message))
+			// Bounded rather than "drain until empty". Background threads enqueue concurrently, so
+			// an unbounded loop only exits when the producers happen to lose the race — a thread
+			// failing in a tight loop could refill the queue as fast as this drains it and never
+			// hand control back to the player loop. One frame drains at most one queue's worth;
+			// whatever is left waits for the next frame.
+			for (var drained = 0;
+				drained < backgroundLogMessages.Capacity && backgroundLogMessages.TryDequeue(out var message);
+				drained++)
 			{
 				StartCoroutine(bugsplatRef.BugSplat.LogMessageReceived(message.LogMessage, message.StackTrace, message.Type));
 			}
 
+			// Checked even when nothing was drained: a burst can overflow and then fully drain, and
+			// the warning would otherwise be stranded until the next background exception arrived.
 			var dropped = backgroundLogMessages.TakeDroppedCount();
 			if (dropped > 0)
 			{
-				Debug.LogWarning($"BugSplat. Dropped {dropped} background thread exception(s) — they arrived faster than they could be posted. At most {BackgroundLogMessageQueue.DefaultCapacity} are buffered at a time.");
+				Debug.LogWarning($"BugSplat. Dropped {dropped} background thread exception(s) — they arrived faster than they could be posted. At most {backgroundLogMessages.Capacity} are buffered at a time.");
 			}
 		}
 

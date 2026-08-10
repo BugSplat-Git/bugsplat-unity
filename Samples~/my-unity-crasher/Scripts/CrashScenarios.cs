@@ -276,8 +276,29 @@ namespace Crasher
 		/// </summary>
 		static IEnumerator FaultUnobservedTask()
 		{
+			faultedTaskThrew = false;
 			StartFaultedTask();
 
+			// Waiting a fixed number of frames would make this flaky: under load Task.Run may not
+			// have reached the throw yet, and collecting while the Task is still live raises
+			// nothing at all — the row would silently do nothing rather than fail.
+			var deadline = Time.realtimeSinceStartup + FaultedTaskTimeoutSeconds;
+			while (!faultedTaskThrew && Time.realtimeSinceStartup < deadline)
+			{
+				yield return null;
+			}
+
+			if (!faultedTaskThrew)
+			{
+				Debug.LogWarning(
+					$"BugSplat sample: the faulted Task did not run within {FaultedTaskTimeoutSeconds}s, " +
+					"so there is nothing unobserved to collect. Try the scenario again.");
+				yield break;
+			}
+
+			// The flag is set as the exception unwinds, a moment before the Task transitions to
+			// Faulted and its last reference goes out of scope. Give that a frame to settle,
+			// otherwise the collection can run while the Task is still reachable.
 			yield return null;
 
 			GC.Collect();
@@ -285,11 +306,27 @@ namespace Crasher
 			GC.Collect();
 		}
 
-		// Kept out of the coroutine so the Task is unreachable by the time the GC runs.
+		const float FaultedTaskTimeoutSeconds = 5f;
+
+		static volatile bool faultedTaskThrew;
+
+		// Kept out of the coroutine so the Task is unreachable by the time the GC runs — a Task
+		// still rooted on the stack never becomes garbage, so its finalizer never runs.
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		static void StartFaultedTask()
 		{
-			Task.Run(() => throw new Exception("BugSplat sample: unobserved Task exception"));
+			Task.Run(() =>
+			{
+				try
+				{
+					throw new Exception("BugSplat sample: unobserved Task exception");
+				}
+				finally
+				{
+					// Signalled from a finally rather than after the throw, which is unreachable.
+					faultedTaskThrew = true;
+				}
+			});
 		}
 
 		static void PostCaughtException(ICrashScenarioHost host)
