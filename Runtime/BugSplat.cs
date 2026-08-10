@@ -534,7 +534,6 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Set the user name on the native crash reporter.
-        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeUser(string user)
         {
@@ -545,12 +544,14 @@ namespace BugSplatUnity
             _setNativeUserMac(user);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatUser", user);
 #endif
         }
 
         /// <summary>
         /// Set the user email on the native crash reporter.
-        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeEmail(string email)
         {
@@ -561,12 +562,14 @@ namespace BugSplatUnity
             _setNativeEmailMac(email);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
 #endif
         }
 
         /// <summary>
         /// Set notes on the native crash reporter.
-        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void SetNativeNotes(string notes)
         {
@@ -577,17 +580,23 @@ namespace BugSplatUnity
             _setNativeNotesMac(notes);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
 #endif
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. Windows only; no-op on other platforms.
+        /// Set the key on the native crash reporter. Supported on Windows and Android; no-op on iOS and macOS.
         /// </summary>
         public void SetNativeKey(string key)
         {
             if (!nativeCrashReportingEnabled) return;
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
 #endif
         }
 
