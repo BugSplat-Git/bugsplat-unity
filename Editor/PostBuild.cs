@@ -366,7 +366,7 @@ public class BuildPostprocessors
 
 		if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
 		{
-			Debug.LogWarning($"BugSplat: SymbolUploadClientId/Secret not set. Set BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET in the Xcode build environment or create {IosCredentialsFileName} next to the Xcode project, otherwise the dSYM upload build phase will skip uploading.");
+			Debug.LogWarning($"BugSplat: SymbolUploadClientId/Secret not set. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET in the Xcode build environment or create {IosCredentialsFileName} next to the Xcode project, otherwise the dSYM upload build phase will skip uploading.");
 		}
 		else if (!BugSplatSymbolUploadCredentials.EnvironmentHasCredentials)
 		{
@@ -384,14 +384,8 @@ public class BuildPostprocessors
 			$"if [ -f \"$BUGSPLAT_CREDENTIALS\" ]; then\n" +
 			$"    . \"$BUGSPLAT_CREDENTIALS\"\n" +
 			$"fi\n" +
-			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] && [ -n \"$BUGSPLAT_CLIENT_ID\" ]; then\n" +
-			$"    SYMBOL_UPLOAD_CLIENT_ID=\"$BUGSPLAT_CLIENT_ID\"\n" +
-			$"fi\n" +
-			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ] && [ -n \"$BUGSPLAT_CLIENT_SECRET\" ]; then\n" +
-			$"    SYMBOL_UPLOAD_CLIENT_SECRET=\"$BUGSPLAT_CLIENT_SECRET\"\n" +
-			$"fi\n" +
 			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] || [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ]; then\n" +
-			$"    echo \"warning: BugSplat symbol upload credentials not found. Set BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET or create {IosCredentialsFileName} next to the Xcode project. Skipping dSYM upload.\"\n" +
+			$"    echo \"warning: BugSplat symbol upload credentials not found. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET or create {IosCredentialsFileName} next to the Xcode project. Skipping dSYM upload.\"\n" +
 			$"    exit 0\n" +
 			$"fi\n" +
 			$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
@@ -550,7 +544,7 @@ public class BuildPostprocessors
 		string clientId = BugSplatSymbolUploadCredentials.GetClientId(options);
 		if (string.IsNullOrEmpty(clientId))
 		{
-			Debug.LogWarning("BugSplat: SymbolUploadClientId is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_ID. Skipping symbol uploads.");
+			Debug.LogWarning("BugSplat: SymbolUploadClientId is not set in BugSplatOptions or in the environment variable SYMBOL_UPLOAD_CLIENT_ID. Skipping symbol uploads.");
 			onCompleted(0);
 			return;
 		}
@@ -558,7 +552,7 @@ public class BuildPostprocessors
 		string clientSecret = BugSplatSymbolUploadCredentials.GetClientSecret(options);
 		if (string.IsNullOrEmpty(clientSecret))
 		{
-			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_SECRET. Skipping symbol uploads");
+			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions or in the environment variable SYMBOL_UPLOAD_CLIENT_SECRET. Skipping symbol uploads");
 			onCompleted(0);
 			return;
 		}

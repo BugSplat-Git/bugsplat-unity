@@ -10,7 +10,7 @@ public class BugSplatOptionsEditor : Editor
     private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
     private const string integrationsQueryString = "?database={0}";
     private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
-    private const string credentialsWarningMessage = "Symbol upload credentials saved in this asset are stored in plain text and can end up in version control. Prefer the BUGSPLAT_CLIENT_ID and BUGSPLAT_CLIENT_SECRET environment variables, which override these values. Values saved here are removed from the asset while a player build runs and restored when it finishes.";
+    private const string credentialsWarningMessage = "Symbol upload credentials saved in this asset are stored in plain text and can end up in version control. Prefer the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables, which override these values. Values saved here are removed from the asset while a player build runs and restored when it finishes.";
 
     private const int integrationsPaddingTop = 5;
     private const int integrationsPaddingBottom = 5;

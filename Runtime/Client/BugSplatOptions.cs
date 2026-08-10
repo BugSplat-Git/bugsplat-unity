@@ -66,18 +66,18 @@ namespace BugSplatUnity.Runtime.Client
 		
 		/// <summary>
 		/// OAuth2 Client ID generated on BugSplat's Integrations page, used to upload symbol files.
-		/// Prefer the BUGSPLAT_CLIENT_ID environment variable, which overrides this value and keeps
+		/// Prefer the SYMBOL_UPLOAD_CLIENT_ID environment variable, which overrides this value and keeps
 		/// the credential out of the asset, version control, and builds.
 		/// </summary>
-		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page. Prefer the BUGSPLAT_CLIENT_ID environment variable, which overrides this value.")]
+		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page. Prefer the SYMBOL_UPLOAD_CLIENT_ID environment variable, which overrides this value.")]
 		public string SymbolUploadClientId;
 
 		/// <summary>
 		/// OAuth2 Client Secret generated on BugSplat's Integrations page, used to upload symbol files.
-		/// Prefer the BUGSPLAT_CLIENT_SECRET environment variable, which overrides this value and keeps
+		/// Prefer the SYMBOL_UPLOAD_CLIENT_SECRET environment variable, which overrides this value and keeps
 		/// the credential out of the asset, version control, and builds.
 		/// </summary>
-		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page. Prefer the BUGSPLAT_CLIENT_SECRET environment variable, which overrides this value.")]
+		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page. Prefer the SYMBOL_UPLOAD_CLIENT_SECRET environment variable, which overrides this value.")]
 		public string SymbolUploadClientSecret;
 		
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]

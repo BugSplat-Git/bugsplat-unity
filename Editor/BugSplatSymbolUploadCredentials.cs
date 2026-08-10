@@ -13,8 +13,9 @@ using UnityEditor.Build.Reporting;
 /// </summary>
 public class BugSplatSymbolUploadCredentials : IPreprocessBuildWithReport, IPostprocessBuildWithReport
 {
-	const string ClientIdEnvironmentVariable = "BUGSPLAT_CLIENT_ID";
-	const string ClientSecretEnvironmentVariable = "BUGSPLAT_CLIENT_SECRET";
+	// The same names the symbol-upload CLI reads, so nothing has to be remapped on the way down.
+	const string ClientIdEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_ID";
+	const string ClientSecretEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_SECRET";
 	const string ClientIdSessionKey = "BugSplat.SymbolUploadClientId";
 	const string ClientSecretSessionKey = "BugSplat.SymbolUploadClientSecret";
 	const string RestorePendingSessionKey = "BugSplat.SymbolUploadCredentialsRestorePending";
@@ -52,8 +53,8 @@ public class BugSplatSymbolUploadCredentials : IPreprocessBuildWithReport, IPost
 	}
 
 	/// <summary>
-	/// Resolves the symbol upload Client ID. The BUGSPLAT_CLIENT_ID environment variable is the
-	/// recommended source and takes precedence; the options asset and the value cached during
+	/// Resolves the symbol upload Client ID. The SYMBOL_UPLOAD_CLIENT_ID environment variable is
+	/// the recommended source and takes precedence; the options asset and the value cached during
 	/// build preprocessing are fallbacks.
 	/// </summary>
 	internal static string GetClientId(BugSplatOptions options)
@@ -69,9 +70,9 @@ public class BugSplatSymbolUploadCredentials : IPreprocessBuildWithReport, IPost
 	}
 
 	/// <summary>
-	/// Resolves the symbol upload Client Secret. The BUGSPLAT_CLIENT_SECRET environment variable
-	/// is the recommended source and takes precedence; the options asset and the value cached
-	/// during build preprocessing are fallbacks.
+	/// Resolves the symbol upload Client Secret. The SYMBOL_UPLOAD_CLIENT_SECRET environment
+	/// variable is the recommended source and takes precedence; the options asset and the value
+	/// cached during build preprocessing are fallbacks.
 	/// </summary>
 	internal static string GetClientSecret(BugSplatOptions options)
 	{
