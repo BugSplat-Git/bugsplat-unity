@@ -10,10 +10,18 @@ env:
   # Must be a version GameCI publishes an image for: https://hub.docker.com/r/unityci/editor/tags
   UNITY_VERSION: 6000.0.81f1
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     name: ${{ matrix.buildTarget }}
     runs-on: ubuntu-latest
+    # Secrets aren't exposed to forks, so the license would be empty and the run would always
+    # fail. Skip rather than report a red check a contributor can't fix.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 45
     permissions:
       checks: write
       contents: read
@@ -82,4 +90,4 @@ jobs:
         if: always()
         with:
           name: test-results-${{ matrix.buildTarget }}
-          path: ${{ steps.tests.outputs.artifactsPath }}
+          path: ${{ matrix.buildTarget }}-results
