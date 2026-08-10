@@ -634,13 +634,20 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Set the description on the native crash reporter. Windows only; no-op on other platforms.
+        /// Set the description on the native crash reporter.
         /// </summary>
         public void SetNativeDescription(string description)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeAttributeIos("BugSplatDescription", description);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeAttributeMac("BugSplatDescription", description);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
 #endif
         }
 
