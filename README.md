@@ -410,8 +410,8 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
-| SymbolUploadClientId | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
-| SymbolUploadClientSecret | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
+| SymbolUploadClientId | An OAuth2 Client ID used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files). Legacy — prefer `BUGSPLAT_CLIENT_ID`, see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SymbolUploadClientSecret | An OAuth2 Client Secret used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files). Legacy — prefer `BUGSPLAT_CLIENT_SECRET`, see [Symbol Upload Credentials](#symbol-upload-credentials) |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
@@ -422,6 +422,20 @@ The following API methods are available to help you customize BugSplat to fit yo
 |----------| --------------- |
 | BUGSPLAT_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientId
 | BUGSPLAT_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientSecret
+| SYMBOL_UPLOAD_CLIENT_ID | Read by the `symbol-upload` CLI itself. Set this when your CI runs `xcodebuild` — Unity's generated build phase maps `BUGSPLAT_CLIENT_ID` onto it |
+| SYMBOL_UPLOAD_CLIENT_SECRET | Read by the `symbol-upload` CLI itself. Set this when your CI runs `xcodebuild` — Unity's generated build phase maps `BUGSPLAT_CLIENT_SECRET` onto it |
+
+### Symbol Upload Credentials
+
+Credentials come from BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. They are resolved in this order:
+
+1. **`BUGSPLAT_CLIENT_ID` / `BUGSPLAT_CLIENT_SECRET` environment variables** — recommended. The secret never touches disk or version control.
+2. **`bugsplat-credentials.sh`** (iOS only) — written next to the exported Xcode project when the credentials came from the options asset, and added to that project's `.gitignore`. It holds the secret in plain text, so keep it out of version control. This is the route for Xcode GUI builds, which don't inherit your shell environment.
+3. **The `BugSplatOptions` asset** — kept for backwards compatibility. The fields are blanked while the player build serializes the asset and restored afterwards, so the secret no longer ships inside builds.
+
+For CI that builds the exported Xcode project itself, set `SYMBOL_UPLOAD_CLIENT_ID` and `SYMBOL_UPLOAD_CLIENT_SECRET` in the `xcodebuild` environment. When no credentials resolve, the build phase logs an Xcode warning and the build succeeds without uploading symbols.
+
+> **Upgrading:** if a `BugSplatOptions` asset holding credentials has ever been committed, rotate them. Prior versions serialized both values into player builds and into the generated `project.pbxproj`.
 
 ## 🧑‍💻 Contributing
 
