@@ -12,7 +12,9 @@ env:
 
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancelling mid-run can skip GameCI's license return step and leak a Pro activation, which
+  # accumulates silently until the seat is exhausted. Superseded runs are cheaper than that.
+  cancel-in-progress: false
 
 jobs:
   tests:
@@ -27,6 +29,9 @@ jobs:
       contents: read
     strategy:
       fail-fast: false
+      # Each job activates the Unity serial, and a Pro seat allows only a couple of concurrent
+      # activations. Serialised so one run needs one activation. Raise once seat headroom is known.
+      max-parallel: 1
       matrix:
         include:
           - buildTarget: StandaloneLinux64
