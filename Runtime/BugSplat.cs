@@ -394,6 +394,19 @@ namespace BugSplatUnity
                 PostExceptionsInEditor = options.PostExceptionsInEditor
             };
 
+            if (options.Attributes != null)
+            {
+                foreach (var attribute in options.Attributes)
+                {
+                    if (attribute == null || string.IsNullOrEmpty(attribute.Name))
+                    {
+                        continue;
+                    }
+
+                    bugSplat.Attributes[attribute.Name] = attribute.Value ?? string.Empty;
+                }
+            }
+
             bugSplat.SetWindowsCrashDialogEnabled(options.WindowsShowCrashDialog);
 
             if (options.WindowsHangDetectionTimeoutMs > 0)
