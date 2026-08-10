@@ -75,7 +75,12 @@ jobs:
       - id: tests
         uses: game-ci/unity-test-runner@v4
         env:
+          # Personal licenses use UNITY_LICENSE; Pro/Plus use the email/password/serial trio.
+          # Set whichever pair applies — GameCI activates based on which are present.
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         with:
           projectPath: TestProject
           customImage: unityci/editor:ubuntu-${{ env.UNITY_VERSION }}-${{ matrix.image }}-3
