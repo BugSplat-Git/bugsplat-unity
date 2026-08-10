@@ -309,11 +309,11 @@ namespace BugSplatUnity.Runtime.Reporter
         }
 
         // Copy to a temp file to avoid sharing exception
-        private FileInfo CopyLogTailToTempFile(FileInfo logFileInfo, int tailMaxSizeMB)
+        internal FileInfo CopyLogTailToTempFile(FileInfo logFileInfo, int tailMaxSizeMB)
         {
             if (logFileInfo == null || !logFileInfo.Exists)
             {
-                Debug.LogError($"Log file does not exist at {logFileInfo.FullName}, skipping...");
+                Debug.LogError($"Log file does not exist at {logFileInfo?.FullName}, skipping...");
                 return null;
             }
 

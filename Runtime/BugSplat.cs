@@ -125,6 +125,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Description
         {
+            get
+            {
+                return clientSettings.Description;
+            }
             set
             {
                 clientSettings.Description = value;
@@ -137,6 +141,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Email
         {
+            get
+            {
+                return clientSettings.Email;
+            }
             set
             {
                 clientSettings.Email = value;
@@ -149,6 +157,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Key
         {
+            get
+            {
+                return clientSettings.Key;
+            }
             set
             {
                 clientSettings.Key = value;
@@ -176,6 +188,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Notes
         {
+            get
+            {
+                return clientSettings.Notes;
+            }
             set
             {
                 clientSettings.Notes = value;
@@ -188,6 +204,10 @@ namespace BugSplatUnity
         /// </summary>
         public string User
         {
+            get
+            {
+                return clientSettings.User;
+            }
             set
             {
                 clientSettings.User = value;
@@ -374,6 +394,19 @@ namespace BugSplatUnity
                 LogFileMaxSizeMB = options.LogFileMaxSizeMB,
                 PostExceptionsInEditor = options.PostExceptionsInEditor
             };
+
+            if (options.Attributes != null)
+            {
+                foreach (var attribute in options.Attributes)
+                {
+                    if (attribute == null || string.IsNullOrEmpty(attribute.Name))
+                    {
+                        continue;
+                    }
+
+                    bugSplat.Attributes[attribute.Name] = attribute.Value ?? string.Empty;
+                }
+            }
 
             bugSplat.SetWindowsCrashDialogEnabled(options.WindowsShowCrashDialog);
 
