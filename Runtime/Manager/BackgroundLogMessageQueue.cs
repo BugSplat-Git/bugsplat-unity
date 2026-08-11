@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
@@ -49,6 +50,11 @@ namespace BugSplatUnity.Runtime.Manager
 
 		public BackgroundLogMessageQueue(int mainThreadId, int capacity = DefaultCapacity)
 		{
+			if (capacity < 1)
+			{
+				throw new ArgumentException($"BugSplat error: capacity must be at least 1, was {capacity}");
+			}
+
 			this.mainThreadId = mainThreadId;
 			this.capacity = capacity;
 		}

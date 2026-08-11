@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using BugSplatUnity.Runtime.Manager;
 using NUnit.Framework;
@@ -12,6 +13,15 @@ namespace BugSplatUnity.RuntimeTests.Manager
 
 		static BackgroundLogMessageQueue CreateQueue(int capacity = BackgroundLogMessageQueue.DefaultCapacity)
 			=> new BackgroundLogMessageQueue(MainThreadId, capacity);
+
+		// A capacity that can't hold a single message would silently drop everything and stall
+		// the manager's drain loop, so it fails fast instead.
+		[TestCase(0)]
+		[TestCase(-1)]
+		public void Constructor_WhenCapacityIsNotPositive_ShouldThrow(int capacity)
+		{
+			Assert.Throws<ArgumentException>(() => CreateQueue(capacity));
+		}
 
 		[Test]
 		public void Enqueue_WhenCalledOnBackgroundThread_ShouldQueueMessage()
