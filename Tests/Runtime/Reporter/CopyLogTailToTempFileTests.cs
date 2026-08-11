@@ -2,6 +2,7 @@ using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -121,6 +122,52 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
 
 			Assert.Null(sut.CopyLogTailToTempFile(null, 1));
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileExists_ShouldAddTempFileToAttachmentsAndTempFiles()
+		{
+			var contents = Encoding.UTF8.GetBytes("a small log file");
+			var log = WriteLog("Player.log", contents);
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			sut.AddLogTailAttachment(log, options, tempFiles);
+
+			Assert.AreEqual(1, options.AdditionalAttachments.Count);
+			Assert.AreEqual(1, tempFiles.Count);
+			Assert.AreSame(options.AdditionalAttachments[0], tempFiles[0]);
+			Assert.AreEqual("Player.log", options.AdditionalAttachments[0].Name);
+			CollectionAssert.AreEqual(contents, File.ReadAllBytes(options.AdditionalAttachments[0].FullName));
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileDoesNotExist_ShouldNotAddNullToAttachmentsOrTempFiles()
+		{
+			var missing = new FileInfo(Path.Combine(workingDirectory, "missing.log"));
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
+
+			sut.AddLogTailAttachment(missing, options, tempFiles);
+
+			Assert.IsEmpty(options.AdditionalAttachments);
+			Assert.IsEmpty(tempFiles);
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileInfoIsNull_ShouldNotAddNullToAttachmentsOrTempFiles()
+		{
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
+
+			sut.AddLogTailAttachment(null, options, tempFiles);
+
+			Assert.IsEmpty(options.AdditionalAttachments);
+			Assert.IsEmpty(tempFiles);
 		}
 	}
 }
