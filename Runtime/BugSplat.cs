@@ -216,7 +216,7 @@ namespace BugSplatUnity
         }
 
         private IClientSettingsRepository clientSettings;
-        private IExceptionReporter exceptionReporter;
+        internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;

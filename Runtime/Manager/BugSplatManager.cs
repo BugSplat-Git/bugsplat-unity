@@ -9,19 +9,19 @@ namespace BugSplatUnity.Runtime.Manager
 	{
 		[SerializeField]
 		[Tooltip("BugSplat configuration SerializedObject to instantiate BugSplat with.")]
-		private BugSplatOptions bugSplatOptions;
+		internal BugSplatOptions bugSplatOptions;
 
 		[SerializeField]
 		[Tooltip("Should the BugSplatManager be destroyed when a new scene is loaded?")]
-		private bool dontDestroyManagerOnSceneLoad = true;
+		internal bool dontDestroyManagerOnSceneLoad = true;
 
 		[SerializeField]
 		[Tooltip("Register BugSplat to capture LogType.Exceptions on initialization.")]
-		private bool registerLogMessageReceived = true;
+		internal bool registerLogMessageReceived = true;
 
 		[SerializeField]
 		[Tooltip("Also capture unhandled exceptions thrown on background threads. Unity only raises logMessageReceived for main-thread logs, so without this those exceptions are written to the log but never reported. Requires Register Log Message Received.")]
-		private bool captureExceptionsOnBackgroundThreads = true;
+		internal bool captureExceptionsOnBackgroundThreads = true;
 
 		private BugSplatRef bugsplatRef;
 		private BackgroundLogMessageQueue backgroundLogMessages;
@@ -93,6 +93,14 @@ namespace BugSplatUnity.Runtime.Manager
 
 		void LogMessageReceivedHandler(string logMessage, string stackTrace, LogType type)
 		{
+			// Filter before StartCoroutine — the guard downstream skips these anyway, but only
+			// after allocating two iterator state machines and a Coroutine per Debug.Log. Same
+			// contract as the background path: the guard remains authoritative.
+			if (!BackgroundLogMessageQueue.IsReportable(type))
+			{
+				return;
+			}
+
 			StartCoroutine(bugsplatRef.BugSplat.LogMessageReceived(logMessage, stackTrace, type));
 		}
 
