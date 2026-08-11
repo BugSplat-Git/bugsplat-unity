@@ -516,13 +516,13 @@ public class BuildPostprocessors
 
 		UploadSymbols(symbolsUnzipPath, "**/*.so", options, uploadExitCode =>
 		{
+			Directory.Delete(symbolsUnzipPath, true);
+
 			if (uploadExitCode != 0)
 			{
 				Debug.LogError("BugSplat. Could not upload symbols.");
+				return;
 			}
-
-			// Clean up generated debug symbols
-			Directory.Delete(symbolsUnzipPath, true);
 
 			Debug.Log("BugSplat. Symbols uploading completed.");
 		});
