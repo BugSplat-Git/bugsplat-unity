@@ -92,6 +92,8 @@ BugSplat's Unity integration is flexible and can be used in various ways. The ea
 
 Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will default these values to `Application.productName` and `Application.version`, respectively.
 
+Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **PostExceptionsInEditor** on the options asset (or set `bugsplat.PostExceptionsInEditor = true` in code) while you verify your integration.
+
 ![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
 
 Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
@@ -424,7 +426,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | CaptureEditorLog| Should BugSplat upload Editor.log when Post is called|
 | CapturePlayerLog| Should BugSplat upload Player.log when Post is called |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
-| PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
+| PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
