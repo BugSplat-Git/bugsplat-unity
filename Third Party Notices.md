@@ -11,6 +11,11 @@ Anything that could **not** be established from this repository or from the upst
 license files is marked **UNRESOLVED** and collected in [Open questions](#open-questions) at the end
 of this document. Those entries are deliberately left blank rather than filled in with a guess.
 
+> **The MIT license in [LICENSE.md](./LICENSE.md) covers this package's source code only.** The
+> prebuilt binaries under `Runtime/Plugins/**` and `Editor/IOS/Frameworks/**` are licensed
+> separately, by the terms recorded for each payload below. `LICENSE.md` states that scope
+> explicitly so the MIT grant is not read as extending to them.
+
 ---------
 
 ## Apple platforms (iOS, tvOS, macOS)
@@ -160,9 +165,12 @@ version resources report `8.1.0.0`, "BugSplat, LLC", "Copyright BugSplat. All ri
 
 Component Name: BugSplat Crash Reporting SDK for Windows
 
-License Type: **UNRESOLVED**
+License Type: **UNRESOLVED — proprietary, terms pending**
 
-Upstream: https://github.com/BugSplat-Git/bugsplat-windows — that repository contains no license file.
+Upstream: https://github.com/BugSplat-Git/bugsplat-windows — a private repository containing no
+license file. These binaries are not open source and are **not** covered by this package's MIT
+license. A binary redistribution license granting the right to embed and ship them inside an
+application is being prepared; this entry must be replaced with a link to it before 5.0.0 tags.
 
 ---------
 
@@ -266,9 +274,12 @@ named copyright holders, reproduced in the Apple section above.
 These could not be resolved from this repository or from the upstream projects' own license files.
 They need a decision from the maintainers before this file can be considered complete.
 
-1. **Windows natives** — `BugSplat-Git/bugsplat-windows` has no license file. Under what terms are
-   `BugSplat.dll`, `BugSplatMonitor.exe`, `BugSplatRc.dll` and `BugSplatWer.dll` redistributed to
-   Unity package consumers? The version resources say only "Copyright BugSplat. All rights reserved."
+1. **Windows natives** — `BugSplat-Git/bugsplat-windows` is private and has no license file. The
+   source is staying closed, so these ship under a proprietary binary redistribution license that is
+   being drafted; counsel review is outstanding on the warranty disclaimer, the limitation of
+   liability, and whether MS-PL's conditions on distributing WTL in compiled form sit comfortably
+   inside those terms. **Blocking 5.0.0:** replace the Windows entry above with a link to the final
+   document before tagging.
 2. **Windows third-party set** — upstream `ReadMeOss.txt` lists RapidJSON, msinttypes, JSON.org,
    GenericHTTPClient and Info-ZIP, while `bugsplat-windows/.gitmodules` additionally declares
    `ThirdParty/Miniz-Cpp` (tfussell/miniz-cpp, MIT) and `ThirdParty/ATGTK`, which `ReadMeOss.txt`
