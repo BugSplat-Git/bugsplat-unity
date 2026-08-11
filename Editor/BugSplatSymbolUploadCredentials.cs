@@ -1,120 +1,163 @@
 using System;
-using BugSplatUnity.Runtime.Client;
-using UnityEditor;
-using UnityEditor.Build;
-using UnityEditor.Build.Reporting;
+using System.IO;
+using System.Text.RegularExpressions;
 
 /// <summary>
-/// Keeps symbol upload credentials out of built players. Before a player build serializes the
-/// BugSplatOptions asset, the OAuth2 Client ID and Client Secret are cached in SessionState and
-/// blanked on the asset; they are restored after the build completes. If the build throws before
-/// the post-build callback runs, the values are restored by the next editor update tick, the next
-/// domain reload, or editor shutdown, whichever happens first.
+/// Resolves symbol upload credentials, which are per-database and machine-local.
+///
+/// They are never stored in the project: an asset carrying them ends up in version control and in
+/// shipped player builds, which is what this replaces. Instead they live in the user's home
+/// directory, one file per BugSplat database, in the shell format the symbol-upload CLI already
+/// understands so the generated Xcode build phase can source the same file directly.
 /// </summary>
-public class BugSplatSymbolUploadCredentials : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+public static class BugSplatSymbolUploadCredentials
 {
-	// The same names the symbol-upload CLI reads, so nothing has to be remapped on the way down.
-	const string ClientIdEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_ID";
-	const string ClientSecretEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_SECRET";
-	const string ClientIdSessionKey = "BugSplat.SymbolUploadClientId";
-	const string ClientSecretSessionKey = "BugSplat.SymbolUploadClientSecret";
-	const string RestorePendingSessionKey = "BugSplat.SymbolUploadCredentialsRestorePending";
+	// The names the symbol-upload CLI reads, so nothing has to be remapped on the way down.
+	public const string ClientIdEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_ID";
+	public const string ClientSecretEnvironmentVariable = "SYMBOL_UPLOAD_CLIENT_SECRET";
 
-	public int callbackOrder => 0;
+	const string CredentialsDirectoryName = ".bugsplat";
+	const string CredentialsSubdirectoryName = "credentials";
 
-	public void OnPreprocessBuild(BuildReport report)
+	/// <summary>
+	/// Absolute path to the credentials file for a database. Shared with the generated Xcode build
+	/// phase, which resolves the same path against $HOME.
+	/// </summary>
+	public static string GetCredentialsPath(string database)
 	{
-		var options = BuildPostprocessors.GetBugSplatOptions();
-		if (options == null)
-			return;
-
-		SessionState.SetString(ClientIdSessionKey, options.SymbolUploadClientId ?? string.Empty);
-		SessionState.SetString(ClientSecretSessionKey, options.SymbolUploadClientSecret ?? string.Empty);
-
-		if (string.IsNullOrEmpty(options.SymbolUploadClientId) && string.IsNullOrEmpty(options.SymbolUploadClientSecret))
-			return;
-
-		SessionState.SetBool(RestorePendingSessionKey, true);
-
-		EditorApplication.update -= RestoreOnEditorUpdate;
-		EditorApplication.update += RestoreOnEditorUpdate;
-		EditorApplication.quitting -= Restore;
-		EditorApplication.quitting += Restore;
-
-		options.SymbolUploadClientId = string.Empty;
-		options.SymbolUploadClientSecret = string.Empty;
-		EditorUtility.SetDirty(options);
-		AssetDatabase.SaveAssetIfDirty(options);
-	}
-
-	public void OnPostprocessBuild(BuildReport report)
-	{
-		Restore();
+		var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+		return Path.Combine(home, CredentialsDirectoryName, CredentialsSubdirectoryName, $"{SanitizeDatabase(database)}.sh");
 	}
 
 	/// <summary>
-	/// Resolves the symbol upload Client ID. The SYMBOL_UPLOAD_CLIENT_ID environment variable is
-	/// the recommended source and takes precedence; the options asset and the value cached during
-	/// build preprocessing are fallbacks.
+	/// The path the Xcode build phase uses, expressed relative to $HOME so the generated script
+	/// carries no absolute path from the machine that ran the Unity build.
 	/// </summary>
-	internal static string GetClientId(BugSplatOptions options)
-	{
-		var clientId = Environment.GetEnvironmentVariable(ClientIdEnvironmentVariable);
-		if (string.IsNullOrEmpty(clientId))
-			clientId = options.SymbolUploadClientId;
-
-		if (string.IsNullOrEmpty(clientId))
-			clientId = SessionState.GetString(ClientIdSessionKey, string.Empty);
-
-		return clientId;
-	}
+	public static string GetCredentialsPathRelativeToHome(string database)
+		=> $"{CredentialsDirectoryName}/{CredentialsSubdirectoryName}/{SanitizeDatabase(database)}.sh";
 
 	/// <summary>
-	/// Resolves the symbol upload Client Secret. The SYMBOL_UPLOAD_CLIENT_SECRET environment
-	/// variable is the recommended source and takes precedence; the options asset and the value
-	/// cached during build preprocessing are fallbacks.
+	/// Resolves credentials for a database: the environment wins, then the credentials file.
+	/// Returns false when neither supplies both values.
 	/// </summary>
-	internal static string GetClientSecret(BugSplatOptions options)
+	public static bool TryResolve(string database, out string clientId, out string clientSecret)
 	{
-		var clientSecret = Environment.GetEnvironmentVariable(ClientSecretEnvironmentVariable);
+		clientId = Environment.GetEnvironmentVariable(ClientIdEnvironmentVariable);
+		clientSecret = Environment.GetEnvironmentVariable(ClientSecretEnvironmentVariable);
+
+		if (!string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret))
+		{
+			return true;
+		}
+
+		var stored = Read(database);
+		if (string.IsNullOrEmpty(clientId))
+		{
+			clientId = stored.clientId;
+		}
+
 		if (string.IsNullOrEmpty(clientSecret))
-			clientSecret = options.SymbolUploadClientSecret;
+		{
+			clientSecret = stored.clientSecret;
+		}
 
-		if (string.IsNullOrEmpty(clientSecret))
-			clientSecret = SessionState.GetString(ClientSecretSessionKey, string.Empty);
-
-		return clientSecret;
+		return !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret);
 	}
 
-	internal static bool EnvironmentHasCredentials =>
-		!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ClientIdEnvironmentVariable))
-		&& !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ClientSecretEnvironmentVariable));
+	public static bool Exists(string database) => File.Exists(GetCredentialsPath(database));
 
-	[InitializeOnLoadMethod]
-	static void RestoreAfterDomainReload()
+	public static (string clientId, string clientSecret) Read(string database)
 	{
-		Restore();
+		var path = GetCredentialsPath(database);
+		if (!File.Exists(path))
+		{
+			return (string.Empty, string.Empty);
+		}
+
+		string id = string.Empty, secret = string.Empty;
+		foreach (var line in File.ReadAllLines(path))
+		{
+			var match = Regex.Match(line.Trim(), @"^export\s+(\w+)='(.*)'$");
+			if (!match.Success)
+			{
+				continue;
+			}
+
+			// Undo the POSIX single-quote escaping applied by Write.
+			var value = match.Groups[2].Value.Replace("'\\''", "'");
+			if (match.Groups[1].Value == ClientIdEnvironmentVariable)
+			{
+				id = value;
+			}
+			else if (match.Groups[1].Value == ClientSecretEnvironmentVariable)
+			{
+				secret = value;
+			}
+		}
+
+		return (id, secret);
 	}
 
-	static void RestoreOnEditorUpdate()
+	public static void Write(string database, string clientId, string clientSecret)
 	{
-		EditorApplication.update -= RestoreOnEditorUpdate;
-		Restore();
+		var path = GetCredentialsPath(database);
+		Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+		File.WriteAllText(
+			path,
+			$"# BugSplat symbol upload credentials for the '{database}' database.\n" +
+			"# Machine-local and not part of any project. Delete this file to revoke it here.\n" +
+			$"export {ClientIdEnvironmentVariable}='{EscapeShellSingleQuoted(clientId)}'\n" +
+			$"export {ClientSecretEnvironmentVariable}='{EscapeShellSingleQuoted(clientSecret)}'\n");
+
+		RestrictToOwner(path);
 	}
 
-	static void Restore()
+	public static bool Clear(string database)
 	{
-		if (!SessionState.GetBool(RestorePendingSessionKey, false))
+		var path = GetCredentialsPath(database);
+		if (!File.Exists(path))
+		{
+			return false;
+		}
+
+		File.Delete(path);
+		return true;
+	}
+
+	// Database names are subdomains of bugsplat.com, so this should never alter a real one - it is
+	// here so a malformed value cannot escape the credentials directory.
+	static string SanitizeDatabase(string database)
+	{
+		if (string.IsNullOrWhiteSpace(database))
+		{
+			return "unknown";
+		}
+
+		return Regex.Replace(database.Trim(), @"[^A-Za-z0-9_.-]", "_");
+	}
+
+	static string EscapeShellSingleQuoted(string value) => (value ?? string.Empty).Replace("'", "'\\''");
+
+	static void RestrictToOwner(string path)
+	{
+		if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
+		{
 			return;
+		}
 
-		var options = BuildPostprocessors.GetBugSplatOptions();
-		if (options == null)
-			return;
-
-		options.SymbolUploadClientId = SessionState.GetString(ClientIdSessionKey, string.Empty);
-		options.SymbolUploadClientSecret = SessionState.GetString(ClientSecretSessionKey, string.Empty);
-		EditorUtility.SetDirty(options);
-		AssetDatabase.SaveAssetIfDirty(options);
-		SessionState.SetBool(RestorePendingSessionKey, false);
+		try
+		{
+			var chmod = new System.Diagnostics.ProcessStartInfo("/bin/chmod", $"600 \"{path}\"")
+			{
+				UseShellExecute = false,
+				CreateNoWindow = true
+			};
+			System.Diagnostics.Process.Start(chmod)?.WaitForExit();
+		}
+		catch (Exception ex)
+		{
+			UnityEngine.Debug.LogWarning($"BugSplat: could not restrict permissions on {path}: {ex.Message}");
+		}
 	}
 }

@@ -380,7 +380,8 @@ Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash re
 - `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
 - Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
 - `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
-- The symbol upload environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. Rename them wherever they are set — the old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
+- `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
+- Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
 
 ## 🧩 API
 
@@ -411,8 +412,6 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
-| SymbolUploadClientId | An OAuth2 Client ID used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files). Legacy — prefer `SYMBOL_UPLOAD_CLIENT_ID`, see [Symbol Upload Credentials](#symbol-upload-credentials) |
-| SymbolUploadClientSecret | An OAuth2 Client Secret used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files). Legacy — prefer `SYMBOL_UPLOAD_CLIENT_SECRET`, see [Symbol Upload Credentials](#symbol-upload-credentials) |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
@@ -426,15 +425,16 @@ The following API methods are available to help you customize BugSplat to fit yo
 
 ### Symbol Upload Credentials
 
-Credentials come from BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. They are resolved in this order:
+Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and are **specific to one database**. They are never stored in your project — an asset carrying them ends up in version control and inside shipped builds. They resolve in this order:
 
-1. **`SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` environment variables** — recommended. The secret never touches disk or version control. These are the names the `symbol-upload` CLI reads, so the same pair works whether Unity runs the upload or your CI runs `xcodebuild` itself.
-2. **`bugsplat-credentials.sh`** (iOS only) — written next to the exported Xcode project when the credentials came from the options asset, and added to that project's `.gitignore`. It holds the secret in plain text, so keep it out of version control. This is the route for Xcode GUI builds, which don't inherit your shell environment.
-3. **The `BugSplatOptions` asset** — kept for backwards compatibility. The fields are blanked while the player build serializes the asset and restored afterwards, so the secret no longer ships inside builds.
+1. **`SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` environment variables** — use these in CI. They are the names the `symbol-upload` CLI reads, so the same pair works whether Unity runs the upload or your CI runs `xcodebuild` itself.
+2. **`~/.bugsplat/credentials/<database>.sh`** — for local development. Set it from **BugSplat > Symbol Upload > Set Credentials**, which writes one file per database, so a machine can hold credentials for as many databases as you work with.
 
-When no credentials resolve, the iOS build phase logs an Xcode warning and the build succeeds without uploading symbols.
+`Clear Credentials` deletes the current project's file; `Check Credentials` reports which source a build would use. When neither source supplies both values, symbol upload is skipped with a warning and the build still succeeds — on iOS as an Xcode build warning, since that upload runs during the Xcode build rather than the Unity one.
 
-> **Upgrading from 4.x:** the environment variables were previously named `BUGSPLAT_CLIENT_ID` and `BUGSPLAT_CLIENT_SECRET`; rename them. If a `BugSplatOptions` asset holding credentials has ever been committed, rotate them — prior versions serialized both values into player builds and into the generated `project.pbxproj`.
+Because the file lives in your home directory rather than the project, there is nothing to add to `.gitignore` and nothing to strip out of a build.
+
+> **Upgrading from 4.x:** `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`, and the environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET`. Move your credentials to the menu or the new variables. **If an options asset holding credentials has ever been committed, rotate them** — prior versions serialized both values into player builds and into the generated `project.pbxproj`.
 
 ## 🧑‍💻 Contributing
 
