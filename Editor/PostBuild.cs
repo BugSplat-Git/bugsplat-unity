@@ -41,6 +41,20 @@ public class BuildPostprocessors
 			_ => throw new InvalidOperationException($"BugSplat. Failed to obtain symbol uploader for {Application.platform}")
 		};
 
+	internal static string GetSymUploaderPath()
+	{
+		var uploaderName = GetSymUploaderName();
+		var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+		var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+		var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
+
+		// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
+		// re-extract, so anything we have to download has to land outside the package.
+		return File.Exists(packagePath)
+			? packagePath
+			: Path.GetFullPath(Path.Combine("Temp", uploaderName));
+	}
+
 	/// <summary>
 	/// Upload Asset/Plugin symbol files to BugSplat. 
 	/// We don't upload Unity symbol files because the build output only contains public symbol information.
@@ -542,10 +556,11 @@ public class BuildPostprocessors
 			return;
 		}
 
-		var symbolUploadPath = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Editor", GetSymUploaderName()));
-		if (!File.Exists(symbolUploadPath))
+		var symbolUploadPath = GetSymUploaderPath();
+		if (!File.Exists(symbolUploadPath) && !DownloadSymbolUpload(symbolUploadPath))
 		{
-			DownloadSymbolUpload(symbolUploadPath);
+			onCompleted(-1);
+			return;
 		}
 
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
@@ -568,7 +583,18 @@ public class BuildPostprocessors
 			symUploadProcessInfo.Arguments += " --dumpSyms";
 		}
 
-		var uploadSymProcess = Process.Start(symUploadProcessInfo);
+		Process uploadSymProcess;
+		try
+		{
+			uploadSymProcess = Process.Start(symUploadProcessInfo);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"BugSplat. Failed to start {symbolUploadPath}. Error: {ex.Message}");
+			onCompleted(-1);
+			return;
+		}
+
 		if (uploadSymProcess == null)
 		{
 			onCompleted(-1);
@@ -582,13 +608,15 @@ public class BuildPostprocessors
 		onCompleted(uploadSymProcess.ExitCode);
 	}
 
-	private static void DownloadSymbolUpload(string destinationPath)
+	private static bool DownloadSymbolUpload(string destinationPath)
 	{
 		var varient = Path.GetFileName(destinationPath);
 		var fileUrl = $"https://app.bugsplat.com/download/{varient}";
 
 		try
 		{
+			Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+
 			using (var client = new WebClient())
 			{
 				Debug.Log($"BugSplat. Downloading {varient} to {destinationPath}");
@@ -602,21 +630,24 @@ public class BuildPostprocessors
 				else
 				{
 					Debug.LogError($"BugSplat. Could not download {varient}");
+					return false;
 				}
 			}
 		}
 		catch (WebException ex)
 		{
 			Debug.LogError($"BugSplat. Failed to download file from {fileUrl}. Error: {ex.Message}");
+			return false;
 		}
 		catch (Exception ex)
 		{
 			Debug.LogError($"BugSplat. Unexpected error during file download. Error: {ex.Message}");
+			return false;
 		}
 
 		if (Application.platform == RuntimePlatform.WindowsEditor)
 		{
-			return;
+			return true;
 		}
 
 		try
@@ -636,18 +667,20 @@ public class BuildPostprocessors
 			var error = process.StandardError.ReadToEnd();
 			process.WaitForExit();
 
-			if (process.ExitCode == 0)
-			{
-				Debug.Log($"PostBuild: Successfully made {destinationPath} executable. Output: {output}");
-			}
-			else
+			if (process.ExitCode != 0)
 			{
 				Debug.LogError($"PostBuild: Failed to make {destinationPath} executable. Error: {error}");
+				return false;
 			}
+
+			Debug.Log($"PostBuild: Successfully made {destinationPath} executable. Output: {output}");
 		}
 		catch (Exception ex)
 		{
 			Debug.LogError($"PostBuild: Error setting executable permission for {destinationPath}. Error: {ex.Message}");
+			return false;
 		}
+
+		return true;
 	}
 }
