@@ -1,0 +1,36 @@
+<linker>
+    <!--
+      Managed stripping deletes anything the linker cannot see a reference to. Members that only
+      the serializer touches look unreferenced, so they have to be named here.
+
+      UnityLinker collects link.xml from Assets/** only, never from packages, so this file reaches
+      a build through Editor/BugSplatLinkXmlProcessor.cs.
+    -->
+    <assembly fullname="BugSplat.Unity.Runtime">
+        <!--
+          Nothing constructs a BugSplatResponse or writes its fields: it exists purely as the target
+          of JsonUtility.FromJson<BugSplatResponse>() in DotNetStandardExceptionReporter and
+          WebGLExceptionClient. Stripped, there is no build error, just a null infoUrl and a crashId
+          of 0 handed to every caller.
+
+          preserve="all" rather than "fields" because JsonUtility also needs the compiler-generated
+          parameterless constructor, which is a method. This type is three fields plus that
+          constructor, so "all" keeps nothing extra.
+        -->
+        <type fullname="BugSplatUnity.Runtime.Reporter.BugSplatResponse" preserve="all"/>
+    </assembly>
+
+    <!--
+      Deliberately absent:
+
+      BugSplatDotNetStandard, the vendored DLL. Every entry point the player uses is called
+      directly, and it reads JSON by hand through JsonReaderWriterFactory/XElement instead of
+      mapping it onto types, so it has no reflection-only members for the linker to miss.
+      Preserving it wholesale would also keep the OAuth2 and symbol-upload code that only the
+      Editor calls.
+
+      BugSplatOptions, BugSplatAttribute and BugSplatManager, which Unity serialization populates.
+      The build already roots types found in scenes and serialized assets, emitting its own
+      TypesInScenes.xml and SerializedTypes.xml, so repeating them here would add nothing.
+    -->
+</linker>
