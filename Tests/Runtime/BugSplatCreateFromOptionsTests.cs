@@ -54,6 +54,19 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.False(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
 		}
 
+		// CapturePlayerLog defaults to true in the client settings, so false is the direction that
+		// proves the option reached them. Whether the native reporter honors it cannot be asserted
+		// here — the native branches are compiled out in the editor.
+		[Test]
+		public void CreateFromOptions_WhenCapturePlayerLogIsFalse_ShouldNotCapturePlayerLog()
+		{
+			options.CapturePlayerLog = false;
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.False(sut.CapturePlayerLog);
+		}
+
 		// The constructor throws on an empty application, so completing at all is what proves the
 		// fallback ran.
 		[Test]
