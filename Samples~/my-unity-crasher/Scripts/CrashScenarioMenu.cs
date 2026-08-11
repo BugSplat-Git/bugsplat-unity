@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BugSplatUnity.Runtime.Manager;
 using TMPro;
@@ -11,27 +12,65 @@ using BugSplat = BugSplatUnity.BugSplat;
 namespace Crasher
 {
 	/// <summary>
-	/// A scrollable menu of crash scenarios grouped by the BugSplat mechanism expected to capture
-	/// each one. Built entirely in code — the sample scene only carries this component, so adding
-	/// a scenario never means editing scene YAML (where a missing onClick call state has silently
-	/// broken buttons before).
+	/// The sample's main menu: every crash scenario for the current platform, grouped by the
+	/// BugSplat mechanism expected to capture it. The UI is built entirely in code — the scene
+	/// carries only this component and its two button sprites — so adding a scenario never means
+	/// editing scene YAML (where a missing onClick call state has silently broken buttons before).
 	/// </summary>
 	public class CrashScenarioMenu : MonoBehaviour, ICrashScenarioHost
 	{
-		const float PanelWidth = 860f;
-		const float PanelHeight = 640f;
-		const float RowHeight = 62f;
+		// The scene's canvas scales against 1920x1080 matching height. This canvas has to use the
+		// same reference or its contents render at a different scale than the rest of the sample.
+		static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
+
+		// The band above the panel stays clear so the spinning BugSplat cube remains visible.
+		// The cube is the sample's liveness indicator: after a managed scenario, the cube still
+		// turning is the proof the player survived.
+		const float PanelHeight = 680f;
+		const float PanelMarginX = 60f;
+		const float PanelMarginBottom = 24f;
+		const float RowHeight = 54f;
+		const float RowButtonWidth = 430f;
 
 		static readonly Color BugSplatRed = new Color32(244, 102, 137, 255);
 		static readonly Color BugSplatGreen = new Color32(74, 235, 195, 255);
 		static readonly Color BugSplatBlue = new Color32(58, 163, 255, 255);
+		static readonly Color BugSplatPurple = new Color32(186, 132, 224, 255);
+		static readonly Color Amber = new Color32(255, 177, 61, 255);
 		static readonly Color Grey = new Color32(140, 140, 150, 255);
-		static readonly Color DarkGrey = new Color32(90, 90, 98, 255);
-		static readonly Color Ink = new Color(0.16f, 0.16f, 0.16f, 1f);
+
+		// A translucent navy close to the scene's background, so the panel reads as part of the
+		// sample rather than a floating grey dialog.
+		static readonly Color PanelNavy = new Color(0.055f, 0.09f, 0.16f, 0.93f);
+		static readonly Color SubtitleGrey = new Color32(147, 163, 184, 255);
+		static readonly Color BodyText = new Color(0.86f, 0.9f, 0.95f, 1f);
+
+		// The sample's buttons label themselves in near-black rather than white.
+		static readonly Color Ink = new Color(0.19607843f, 0.19607843f, 0.19607843f, 1f);
+
+		[Header("Button skin — assign the sample's UI sprites so this menu matches the scene")]
+		[SerializeField] Sprite buttonSprite;
+		[SerializeField] Sprite buttonPressedSprite;
 
 		readonly ConcurrentQueue<Action> mainThreadWork = new ConcurrentQueue<Action>();
 
-		GameObject panel;
+		/// <summary>
+		/// Rows are built in Awake but whether each one can run depends on the BugSplat client,
+		/// which is only resolvable in Start (Awake order between components is undefined). Keep
+		/// what each row needs to restyle itself so availability can be applied afterwards.
+		/// </summary>
+		sealed class Row
+		{
+			public CrashScenario Scenario;
+			public Color Accent;
+			public Button Button;
+			public Image Image;
+			public TextMeshProUGUI Label;
+			public TextMeshProUGUI Expected;
+		}
+
+		readonly List<Row> rows = new List<Row>();
+
 		TextMeshProUGUI statusText;
 		BugSplat bugsplat;
 
@@ -40,12 +79,10 @@ namespace Crasher
 		void Awake()
 		{
 			// Unobserved Task exceptions surface on the finalizer thread, where Unity's log
-			// callback never fires — marshal to the main thread so they can be reported. This is
-			// also the documented workaround for background-thread exceptions generally.
+			// callbacks never fire — marshal to the main thread so they can be reported.
 			TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
 			BuildUI();
-			panel.SetActive(false);
 		}
 
 		void OnDestroy()
@@ -58,6 +95,7 @@ namespace Crasher
 			var manager = FindAnyObjectByType<BugSplatManager>();
 			bugsplat = manager != null ? manager.BugSplat : null;
 			RefreshStatus();
+			ApplyAvailability();
 		}
 
 		void Update()
@@ -72,6 +110,19 @@ namespace Crasher
 
 		public void OnMainThread(Action action) => mainThreadWork.Enqueue(action);
 
+		public void ShowFeedback()
+		{
+			var popup = FindAnyObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
+			if (popup != null)
+			{
+				popup.Show();
+			}
+			else
+			{
+				Debug.LogError("[BugSplat] FeedbackPopup not found in scene.");
+			}
+		}
+
 		void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs args)
 		{
 			args.SetObserved();
@@ -79,22 +130,14 @@ namespace Crasher
 			OnMainThread(() => Debug.LogException(exception));
 		}
 
-		public void Show()
-		{
-			RefreshStatus();
-			panel.SetActive(true);
-		}
-
-		public void Hide() => panel.SetActive(false);
-
 		void RunScenario(CrashScenario scenario)
 		{
-			if (!scenario.RunsInEditor && Application.isEditor)
+			// The button is already non-interactable in these cases; this is the backstop for a
+			// scenario invoked before Start has applied availability.
+			var reason = BlockedReason(scenario);
+			if (reason != null)
 			{
-				Debug.LogWarning(
-					$"BugSplat sample: '{scenario.Name}' only runs in a built Windows player. " +
-					"BugSplat.dll is excluded from the editor, so there is no native reporter here, " +
-					"and the crash would take the editor down with any unsaved work.");
+				Debug.LogWarning($"BugSplat sample: '{scenario.Name}' cannot run. {reason}");
 				return;
 			}
 
@@ -108,6 +151,28 @@ namespace Crasher
 			scenario.Run(this);
 		}
 
+		static string PlatformName
+		{
+			get
+			{
+#if UNITY_STANDALONE_WIN
+				return "Windows";
+#elif UNITY_STANDALONE_OSX
+				return "macOS";
+#elif UNITY_STANDALONE_LINUX
+				return "Linux";
+#elif UNITY_IOS
+				return "iOS";
+#elif UNITY_ANDROID
+				return "Android";
+#elif UNITY_WEBGL
+				return "WebGL";
+#else
+				return Application.platform.ToString();
+#endif
+			}
+		}
+
 		void RefreshStatus()
 		{
 			if (statusText == null) return;
@@ -119,44 +184,45 @@ namespace Crasher
 				return;
 			}
 
-			var backend = Application.isEditor ? "Editor" : "Player";
+#if UNITY_EDITOR
+			statusText.text =
+				$"Editor ({PlatformName} build target) — managed and feedback scenarios run here. " +
+				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
+			statusText.color = Amber;
+#elif UNITY_STANDALONE_WIN
 			if (bugsplat.WindowsWerEnabled)
 			{
-				statusText.text = $"{backend} — Windows Error Reporting is ARMED. Fail-fast scenarios will report.";
-				statusText.color = new Color(0.1f, 0.5f, 0.3f, 1f);
+				statusText.text = "Windows player — WER is ARMED. Fail-fast scenarios will report.";
+				statusText.color = BugSplatGreen;
 			}
 			else
 			{
 				statusText.text =
-					$"{backend} — Windows Error Reporting is NOT ARMED, so fail-fast scenarios will not " +
-					"report. Use BugSplat > Windows > Register WER Handler on a built player.";
+					"Windows player — WER is NOT ARMED, so fail-fast scenarios will not report. " +
+					"Use BugSplat > Windows > Register WER Handler in the editor.";
 				statusText.color = BugSplatRed;
 			}
+#elif UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+			statusText.text = $"{PlatformName} player — native crash reporting is active.";
+			statusText.color = BugSplatGreen;
+#else
+			statusText.text =
+				$"{PlatformName} — native crash reporting is not yet supported on this platform; " +
+				"managed scenarios only.";
+			statusText.color = Amber;
+#endif
 		}
 
-		static Color ColorFor(CapturePath path)
+		static Color AccentFor(string groupTitle)
 		{
-			switch (path)
+			switch (groupTitle)
 			{
-				case CapturePath.NativeHandler: return BugSplatRed;
-				case CapturePath.WindowsErrorReporting: return BugSplatBlue;
-				case CapturePath.ManagedHandler: return BugSplatGreen;
-				case CapturePath.ManualPost: return Grey;
-				case CapturePath.HangWatchdog: return Grey;
-				default: return DarkGrey;
-			}
-		}
-
-		static string LabelFor(CapturePath path)
-		{
-			switch (path)
-			{
-				case CapturePath.NativeHandler: return "NATIVE";
-				case CapturePath.WindowsErrorReporting: return "WER";
-				case CapturePath.ManagedHandler: return "MANAGED";
-				case CapturePath.ManualPost: return "POST";
-				case CapturePath.HangWatchdog: return "HANG";
-				default: return "NONE";
+				case "MANAGED": return BugSplatGreen;
+				case "NATIVE": return BugSplatRed;
+				case "FAIL-FAST": return BugSplatBlue;
+				case "HANG": return Amber;
+				case "FEEDBACK": return BugSplatPurple;
+				default: return Grey;
 			}
 		}
 
@@ -166,179 +232,180 @@ namespace Crasher
 			canvasGo.transform.SetParent(transform, false);
 			var canvas = canvasGo.AddComponent<Canvas>();
 			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-			// Below FeedbackPopup's 100 so its dialog still wins.
+			// Below FeedbackPopup's 100 so its dialog draws on top.
 			canvas.sortingOrder = 90;
-			canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+			var scaler = canvasGo.AddComponent<CanvasScaler>();
+			scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+			scaler.referenceResolution = ReferenceResolution;
+			scaler.matchWidthOrHeight = 1f;
+
 			canvasGo.AddComponent<GraphicRaycaster>();
 
-			BuildLauncherButton(canvasGo.transform);
-
-			panel = CreateElement("ScenarioPanel", canvasGo.transform);
+			var panel = CreateElement("Panel", canvasGo.transform);
 			var panelRect = panel.GetComponent<RectTransform>();
-			panelRect.anchorMin = Vector2.zero;
-			panelRect.anchorMax = Vector2.one;
-			panelRect.sizeDelta = Vector2.zero;
-			panel.AddComponent<Image>().color = new Color(0, 0, 0, 0.5f);
+			panelRect.anchorMin = new Vector2(0, 0);
+			panelRect.anchorMax = new Vector2(1, 0);
+			panelRect.pivot = new Vector2(0.5f, 0);
+			panelRect.anchoredPosition = new Vector2(0, PanelMarginBottom);
+			panelRect.sizeDelta = new Vector2(-PanelMarginX * 2, PanelHeight);
+			panel.AddComponent<Image>().color = PanelNavy;
 
-			var box = CreateElement("PanelBox", panel.transform);
-			var boxRect = box.GetComponent<RectTransform>();
-			boxRect.anchorMin = new Vector2(0.5f, 0.5f);
-			boxRect.anchorMax = new Vector2(0.5f, 0.5f);
-			boxRect.sizeDelta = new Vector2(PanelWidth, PanelHeight);
-			box.AddComponent<Image>().color = new Color(0.95f, 0.95f, 0.95f, 1f);
+			var panelLayout = panel.AddComponent<VerticalLayoutGroup>();
+			panelLayout.padding = new RectOffset(28, 28, 20, 20);
+			panelLayout.spacing = 8;
+			panelLayout.childForceExpandWidth = true;
+			panelLayout.childForceExpandHeight = false;
+			panelLayout.childControlWidth = true;
+			panelLayout.childControlHeight = true;
 
-			const float pad = 20f;
-			var cursor = -pad;
+			var title = CreateTextElement("Title", panel.transform, "Crash Scenarios", 30, FontStyles.Bold, Color.white);
+			title.AddComponent<LayoutElement>().preferredHeight = 40;
 
-			var header = CreateTextElement("Header", box.transform, "Crash Scenarios", 22, FontStyles.Bold);
-			SetTopAnchored(header, cursor, 30, pad);
-			cursor -= 30 + 6;
-
-			var legend = CreateTextElement(
-				"Legend", box.transform,
-				"NATIVE = BugSplat crash handler   WER = Windows Error Reporting   " +
-				"MANAGED = .NET handler   POST = explicit Post   HANG = watchdog   NONE = not captured by the SDK",
-				12, FontStyles.Normal);
-			legend.GetComponent<TextMeshProUGUI>().color = new Color(0.4f, 0.4f, 0.4f, 1f);
-			SetTopAnchored(legend, cursor, 18, pad);
-			cursor -= 18 + 4;
-
-			var status = CreateTextElement("Status", box.transform, "", 12, FontStyles.Bold);
+			var status = CreateTextElement("Status", panel.transform, "", 17, FontStyles.Bold, Color.white);
 			statusText = status.GetComponent<TextMeshProUGUI>();
-			SetTopAnchored(status, cursor, 32, pad);
-			cursor -= 32 + 8;
+			status.AddComponent<LayoutElement>().preferredHeight = 26;
 
-			if (Application.isEditor)
-			{
-				var banner = CreateTextElement(
-					"EditorBanner", box.transform,
-					"Editor: native and fail-fast scenarios are disabled. BugSplat.dll is excluded from " +
-					"the editor, so they would produce no report and would crash the editor. Build a " +
-					"Windows player to run them.",
-					12, FontStyles.Bold);
-				banner.GetComponent<TextMeshProUGUI>().color = BugSplatRed;
-				SetTopAnchored(banner, cursor, 34, pad);
-				cursor -= 34 + 8;
-			}
-
-			BuildScenarioList(box.transform, cursor, pad);
-
-			var closeButton = CreateButton("CloseBtn", box.transform, "Close", DarkGrey, Hide);
-			var closeRect = closeButton.GetComponent<RectTransform>();
-			closeRect.anchorMin = new Vector2(1, 1);
-			closeRect.anchorMax = new Vector2(1, 1);
-			closeRect.pivot = new Vector2(1, 1);
-			closeRect.anchoredPosition = new Vector2(-pad, -pad);
-			closeRect.sizeDelta = new Vector2(90, 30);
+			BuildScenarioList(panel.transform);
 		}
 
-		void BuildLauncherButton(Transform parent)
+		void BuildScenarioList(Transform parent)
 		{
-			// Bottom-right is free: Button_Feedback is anchored top-right and the existing crash
-			// button grid is vertically centered.
-			var launcher = CreateButton("ScenarioMenuBtn", parent, "Crash Scenarios", BugSplatBlue, Show);
-			var rect = launcher.GetComponent<RectTransform>();
-			rect.anchorMin = new Vector2(1, 0);
-			rect.anchorMax = new Vector2(1, 0);
-			rect.pivot = new Vector2(1, 0);
-			rect.anchoredPosition = new Vector2(-40, 40);
-			rect.sizeDelta = new Vector2(260, 56);
-		}
-
-		void BuildScenarioList(Transform boxTransform, float cursor, float pad)
-		{
-			var viewport = CreateElement("Viewport", boxTransform);
-			var viewportRect = viewport.GetComponent<RectTransform>();
-			viewportRect.anchorMin = new Vector2(0, 0);
-			viewportRect.anchorMax = new Vector2(1, 1);
-			viewportRect.pivot = new Vector2(0.5f, 1);
-			viewportRect.offsetMin = new Vector2(pad, pad);
-			viewportRect.offsetMax = new Vector2(-pad, cursor);
+			var viewport = CreateElement("Viewport", parent);
+			viewport.AddComponent<LayoutElement>().flexibleHeight = 1;
 			viewport.AddComponent<RectMask2D>();
 			// A raycast target is required or the wheel and drag never reach the ScrollRect.
-			var viewportImage = viewport.AddComponent<Image>();
-			viewportImage.color = new Color(1, 1, 1, 0.01f);
+			viewport.AddComponent<Image>().color = new Color(1, 1, 1, 0.01f);
 
 			var content = CreateElement("Content", viewport.transform);
 			var contentRect = content.GetComponent<RectTransform>();
 			contentRect.anchorMin = new Vector2(0, 1);
 			contentRect.anchorMax = new Vector2(1, 1);
 			contentRect.pivot = new Vector2(0.5f, 1);
-			contentRect.sizeDelta = new Vector2(0, 0);
+			contentRect.sizeDelta = Vector2.zero;
 
 			var layout = content.AddComponent<VerticalLayoutGroup>();
-			layout.spacing = 6;
-			layout.childForceExpandHeight = false;
+			layout.spacing = 8;
 			layout.childForceExpandWidth = true;
-			layout.childControlHeight = true;
+			layout.childForceExpandHeight = false;
 			layout.childControlWidth = true;
+			layout.childControlHeight = true;
 
 			var fitter = content.AddComponent<ContentSizeFitter>();
 			fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
 			var scrollRect = viewport.AddComponent<ScrollRect>();
 			scrollRect.content = contentRect;
-			scrollRect.viewport = viewportRect;
+			scrollRect.viewport = viewport.GetComponent<RectTransform>();
 			scrollRect.horizontal = false;
 			scrollRect.vertical = true;
-			scrollRect.movementType = ScrollRect.MovementType.Elastic;
+			scrollRect.movementType = ScrollRect.MovementType.Clamped;
 			scrollRect.scrollSensitivity = 30;
 
-			foreach (var scenario in CrashScenarios.All)
+			foreach (var group in CrashScenarios.Groups)
 			{
-				BuildScenarioRow(content.transform, scenario);
+				BuildSectionHeader(content.transform, group);
+				foreach (var scenario in group.Scenarios)
+				{
+					BuildScenarioRow(content.transform, group, scenario);
+				}
 			}
 		}
 
-		void BuildScenarioRow(Transform parent, CrashScenario scenario)
+		void BuildSectionHeader(Transform parent, ScenarioGroup group)
+		{
+			var accent = ColorUtility.ToHtmlStringRGB(AccentFor(group.Title));
+			var subtitle = ColorUtility.ToHtmlStringRGB(SubtitleGrey);
+			var header = CreateTextElement(
+				$"Section_{group.Title}", parent,
+				$"<b><color=#{accent}>{group.Title}</color></b>  <color=#{subtitle}>{group.Subtitle}</color>",
+				18, FontStyles.Normal, Color.white);
+			header.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.BottomLeft;
+			// Taller than the text so each section gets breathing room above its name.
+			header.AddComponent<LayoutElement>().preferredHeight = 46;
+		}
+
+		void BuildScenarioRow(Transform parent, ScenarioGroup group, CrashScenario scenario)
 		{
 			var row = CreateElement($"Row_{scenario.Name}", parent);
 			var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
-			rowLayout.spacing = 10;
-			rowLayout.childForceExpandHeight = true;
+			rowLayout.spacing = 14;
 			rowLayout.childForceExpandWidth = false;
-			rowLayout.childControlHeight = true;
+			rowLayout.childForceExpandHeight = true;
 			rowLayout.childControlWidth = true;
+			rowLayout.childControlHeight = true;
 			rowLayout.childAlignment = TextAnchor.MiddleLeft;
+			row.AddComponent<LayoutElement>().preferredHeight = RowHeight;
 
-			var rowElement = row.AddComponent<LayoutElement>();
-			rowElement.preferredHeight = RowHeight;
-			rowElement.flexibleWidth = 1;
+			var accent = AccentFor(group.Title);
+			var color = scenario.KnownGap ? Grey : accent;
 
-			var pill = CreateElement("Pill", row.transform);
-			pill.AddComponent<Image>().color = ColorFor(scenario.Path);
-			var pillElement = pill.AddComponent<LayoutElement>();
-			pillElement.preferredWidth = 84;
-			pillElement.flexibleWidth = 0;
-
-			var pillText = CreateTextElement("Text", pill.transform, LabelFor(scenario.Path), 12, FontStyles.Bold);
-			var pillTextRect = pillText.GetComponent<RectTransform>();
-			pillTextRect.anchorMin = Vector2.zero;
-			pillTextRect.anchorMax = Vector2.one;
-			pillTextRect.sizeDelta = Vector2.zero;
-			var pillTmp = pillText.GetComponent<TextMeshProUGUI>();
-			pillTmp.color = Color.white;
-			pillTmp.alignment = TextAlignmentOptions.Center;
-
-			var disabled = !scenario.RunsInEditor && Application.isEditor;
-
-			var buttonLabel = scenario.Terminates ? $"{scenario.Name}  (terminates)" : scenario.Name;
-			var button = CreateButton(
-				"RunBtn", row.transform, buttonLabel,
-				disabled ? Grey : ColorFor(scenario.Path),
-				() => RunScenario(scenario));
+			var button = CreateButton("RunBtn", row.transform, scenario.Name, color, () => RunScenario(scenario), 18);
+			// minWidth, not just preferredWidth: the description text's preferred width competes
+			// for space, and losing that negotiation would give every row a different button width.
+			// Minimums are allocated first, so this pins the buttons into an even column.
 			var buttonElement = button.AddComponent<LayoutElement>();
-			buttonElement.preferredWidth = 320;
+			buttonElement.minWidth = RowButtonWidth;
+			buttonElement.preferredWidth = RowButtonWidth;
 			buttonElement.flexibleWidth = 0;
-			button.GetComponent<Button>().interactable = !disabled;
-			button.GetComponentInChildren<TextMeshProUGUI>().fontSize = 13;
 
-			var expected = CreateTextElement("Expected", row.transform, scenario.Expected, 12, FontStyles.Normal);
-			var expectedTmp = expected.GetComponent<TextMeshProUGUI>();
-			expectedTmp.color = disabled ? new Color(0.55f, 0.55f, 0.55f, 1f) : Ink;
-			expectedTmp.alignment = TextAlignmentOptions.MidlineLeft;
+			var expected = CreateTextElement(
+				"Expected", row.transform, scenario.Expected, 16, FontStyles.Normal, BodyText);
+			expected.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
+			// Zero out the text's own preferred width so it takes exactly the space the button
+			// leaves, instead of bargaining for its unwrapped line length.
 			var expectedElement = expected.AddComponent<LayoutElement>();
+			expectedElement.minWidth = 0;
+			expectedElement.preferredWidth = 0;
 			expectedElement.flexibleWidth = 1;
+
+			rows.Add(new Row
+			{
+				Scenario = scenario,
+				Accent = color,
+				Button = button.GetComponent<Button>(),
+				Image = button.GetComponent<Image>(),
+				Label = button.GetComponentInChildren<TextMeshProUGUI>(),
+				Expected = expected.GetComponent<TextMeshProUGUI>()
+			});
+		}
+
+		/// <summary>
+		/// Why a scenario cannot run right now, or null if it can. The reason replaces the row's
+		/// description: "this button is grey" is not useful on its own, but "register the WER
+		/// handler" is.
+		/// </summary>
+		string BlockedReason(CrashScenario scenario)
+		{
+			if (!scenario.RunsInEditor && Application.isEditor)
+			{
+				return "Built player only — there is no native reporter in the editor.";
+			}
+
+			if (scenario.RequiresWer && bugsplat != null && !bugsplat.WindowsWerEnabled)
+			{
+				return
+					"Needs the WER handler registered, or this terminates the player and reports " +
+					"nothing. Use BugSplat > Windows > Register WER Handler.";
+			}
+
+			return null;
+		}
+
+		void ApplyAvailability()
+		{
+			foreach (var row in rows)
+			{
+				var reason = BlockedReason(row.Scenario);
+				var blocked = reason != null;
+				var color = blocked ? Grey : row.Accent;
+
+				row.Button.interactable = !blocked;
+				row.Image.color = color;
+				row.Label.color = TextOn(color);
+				row.Expected.text = reason ?? row.Scenario.Expected;
+				row.Expected.color = blocked ? SubtitleGrey : BodyText;
+			}
 		}
 
 		GameObject CreateElement(string name, Transform parent)
@@ -349,45 +416,58 @@ namespace Crasher
 			return go;
 		}
 
-		GameObject CreateTextElement(string name, Transform parent, string text, float fontSize, FontStyles style)
+		GameObject CreateTextElement(string name, Transform parent, string text, float fontSize, FontStyles style, Color color)
 		{
 			var go = CreateElement(name, parent);
 			var tmp = go.AddComponent<TextMeshProUGUI>();
 			tmp.text = text;
 			tmp.fontSize = fontSize;
 			tmp.fontStyle = style;
-			tmp.color = Ink;
+			tmp.color = color;
 			return go;
 		}
 
-		void SetTopAnchored(GameObject go, float y, float height, float horizontalPad)
+		/// <summary>
+		/// The sample labels its bright brand colours in near-black. The grey used for disabled
+		/// rows and the known-gap row is too dark for that to stay legible, so pick per colour
+		/// rather than hard-coding either.
+		/// </summary>
+		static Color TextOn(Color background)
 		{
-			var rect = go.GetComponent<RectTransform>();
-			rect.anchorMin = new Vector2(0, 1);
-			rect.anchorMax = new Vector2(1, 1);
-			rect.pivot = new Vector2(0.5f, 1);
-			rect.anchoredPosition = new Vector2(0, y);
-			rect.sizeDelta = new Vector2(-horizontalPad * 2, height);
+			var luminance = 0.299f * background.r + 0.587f * background.g + 0.114f * background.b;
+			return luminance > 0.5f ? Ink : Color.white;
 		}
 
-		GameObject CreateButton(string name, Transform parent, string label, Color color, UnityEngine.Events.UnityAction onClick)
+		GameObject CreateButton(string name, Transform parent, string label, Color color,
+			UnityEngine.Events.UnityAction onClick, float fontSize)
 		{
 			var go = CreateElement(name, parent);
 			var image = go.AddComponent<Image>();
 			image.color = color;
+			image.sprite = buttonSprite;
 
 			var button = go.AddComponent<Button>();
 			button.targetGraphic = image;
 			button.onClick.AddListener(onClick);
 
-			var textGo = CreateTextElement("Text", go.transform, label, 15, FontStyles.Bold);
+			// Sprite swap is how the sample's own buttons show a press. It needs both sprites, so
+			// fall back to the default colour tint when the skin has not been assigned.
+			if (buttonSprite != null && buttonPressedSprite != null)
+			{
+				button.transition = Selectable.Transition.SpriteSwap;
+				var spriteState = button.spriteState;
+				spriteState.pressedSprite = buttonPressedSprite;
+				button.spriteState = spriteState;
+			}
+
+			var textGo = CreateTextElement("Text", go.transform, label, fontSize, FontStyles.Bold, TextOn(color));
 			var textRect = textGo.GetComponent<RectTransform>();
 			textRect.anchorMin = Vector2.zero;
 			textRect.anchorMax = Vector2.one;
 			textRect.sizeDelta = Vector2.zero;
 			var tmp = textGo.GetComponent<TextMeshProUGUI>();
-			tmp.color = Color.white;
 			tmp.alignment = TextAlignmentOptions.Center;
+			tmp.margin = new Vector4(8, 0, 8, 0);
 
 			return go;
 		}

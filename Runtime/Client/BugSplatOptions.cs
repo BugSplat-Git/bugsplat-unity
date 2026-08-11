@@ -1,8 +1,20 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Client
 {
+	/// <summary>
+	/// A single report attribute. Unity cannot serialize a Dictionary, so attributes are authored
+	/// as a list of pairs.
+	/// </summary>
+	[Serializable]
+	public class BugSplatAttribute
+	{
+		public string Name;
+		public string Value;
+	}
+
 	[CreateAssetMenu(menuName = "BugSplat Options")]
 	public class BugSplatOptions : ScriptableObject
 	{
@@ -50,13 +62,7 @@ namespace BugSplatUnity.Runtime.Client
 		public List<string> PersistentDataFileAttachmentPaths;
 
 		[Tooltip("Attributes to attach to reports")]
-		public Dictionary<string, string> Attributes;
-		
-		[Tooltip("OAuth2 Client ID generated on BugSplat's Integrations page")]
-		public string SymbolUploadClientId;
-
-		[Tooltip("OAuth2 Client Secret generated on BugSplat's Integrations page")]
-		public string SymbolUploadClientSecret;
+		public List<BugSplatAttribute> Attributes = new List<BugSplatAttribute>();
 		
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;

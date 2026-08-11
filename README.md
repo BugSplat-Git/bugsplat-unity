@@ -64,7 +64,7 @@ Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **B
 > [!NOTE]
 > The sample's UI labels use TextMeshPro. If the button text appears blank, import TMP Essentials via **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled in the sample.
 
-Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
+Click **Play** and run a scenario from the **Crash Scenarios** menu to send an error report to BugSplat. Scenarios are grouped by the mechanism that captures them, and the menu is platform-aware — each platform lists only what it can capture. Native scenarios are disabled in the editor and need a built player; see the [sample README](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/README.md) for the full scenario matrix. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
 
 ![Running the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/4418b736-dc88-496a-ada6-a27ad19032f1)
 
@@ -232,7 +232,7 @@ BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs
 
 ### Windows Symbols
 
-To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and provide them as described in [Symbol Upload Credentials](#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents.
 
@@ -240,16 +240,16 @@ For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line map
 
 BugSplat has the ability to display a support response to users who encounter a crash. You can show your users a generalized support response for all crashes, or a custom support response that corresponds to the type of crash that occurred. Defining a support response allows you to alert users that bug has been fixed in a new version, or that they need to update their graphics drivers.
 
-Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser. A full example can be seen in [ErrorGenerator.cs](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/Scripts/ErrorGenerator.cs).
+Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser:
 
 ```cs
 private string infoUrl = "";
 
-public void Event_CatchExceptionThenPostNewBugSplat()
+public void CatchExceptionThenPostNewBugSplat()
 {
     try
     {
-        GenerateSampleStackFramesAndThrow();
+        MethodThatThrows();
     }
     catch (Exception ex)
     {
@@ -393,6 +393,9 @@ Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash re
 - `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
 - Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
 - `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
+- `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
+- Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
+- **iOS projects exported with Append, or checked into version control, keep their old "Upload dSYM files to BugSplat" build phase.** Unity matches an existing phase on its script body, so the rewritten phase is not recognised as the same one. Delete the old phase and build again, or re-export with Replace. A phase generated before 5.0.0 contains your Client ID and Secret in plain text — **rotate them**.
 
 ## 🧩 API
 
@@ -424,8 +427,6 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
-| SymbolUploadClientId | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
-| SymbolUploadClientSecret | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
@@ -434,8 +435,21 @@ The following API methods are available to help you customize BugSplat to fit yo
 
 | Variable | Description |
 |----------| --------------- |
-| BUGSPLAT_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientId
-| BUGSPLAT_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientSecret
+| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+
+### Symbol Upload Credentials
+
+Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and are **specific to one database**. They are never stored in your project — an asset carrying them ends up in version control and inside shipped builds. They resolve in this order:
+
+1. **`SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` environment variables** — use these in CI. They are the names the `symbol-upload` CLI reads, so the same pair works whether Unity runs the upload or your CI runs `xcodebuild` itself.
+2. **`~/.bugsplat/credentials/<database>.sh`** — for local development. Set it from **BugSplat > Symbol Upload > Set Credentials**, which writes one file per database, so a machine can hold credentials for as many databases as you work with.
+
+`Clear Credentials` deletes the current project's file; `Check Credentials` reports which source a build would use. When neither source supplies both values, symbol upload is skipped with a warning and the build still succeeds — on iOS as an Xcode build warning, since that upload runs during the Xcode build rather than the Unity one.
+
+Because the file lives in your home directory rather than the project, there is nothing to add to `.gitignore` and nothing to strip out of a build.
+
+> **Upgrading from 4.x:** `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`, and the environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET`. Move your credentials to the menu or the new variables. **If an options asset holding credentials has ever been committed, rotate them** — prior versions serialized both values into player builds and into the generated `project.pbxproj`.
 
 ## 🧑‍💻 Contributing
 

@@ -125,6 +125,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Description
         {
+            get
+            {
+                return clientSettings.Description;
+            }
             set
             {
                 clientSettings.Description = value;
@@ -137,6 +141,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Email
         {
+            get
+            {
+                return clientSettings.Email;
+            }
             set
             {
                 clientSettings.Email = value;
@@ -149,6 +157,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Key
         {
+            get
+            {
+                return clientSettings.Key;
+            }
             set
             {
                 clientSettings.Key = value;
@@ -176,6 +188,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Notes
         {
+            get
+            {
+                return clientSettings.Notes;
+            }
             set
             {
                 clientSettings.Notes = value;
@@ -188,6 +204,10 @@ namespace BugSplatUnity
         /// </summary>
         public string User
         {
+            get
+            {
+                return clientSettings.User;
+            }
             set
             {
                 clientSettings.User = value;
@@ -312,6 +332,7 @@ namespace BugSplatUnity
                 
                 var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
+                nativeCrashReportingEnabled = true;
             }
 
             UseDotNetHandler(database, application, version);
@@ -373,6 +394,19 @@ namespace BugSplatUnity
                 LogFileMaxSizeMB = options.LogFileMaxSizeMB,
                 PostExceptionsInEditor = options.PostExceptionsInEditor
             };
+
+            if (options.Attributes != null)
+            {
+                foreach (var attribute in options.Attributes)
+                {
+                    if (attribute == null || string.IsNullOrEmpty(attribute.Name))
+                    {
+                        continue;
+                    }
+
+                    bugSplat.Attributes[attribute.Name] = attribute.Value ?? string.Empty;
+                }
+            }
 
             bugSplat.SetWindowsCrashDialogEnabled(options.WindowsShowCrashDialog);
 
@@ -525,6 +559,9 @@ namespace BugSplatUnity
             _setNativeAttributeMac(key, value);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
 
@@ -540,6 +577,9 @@ namespace BugSplatUnity
             _setNativeUserMac(user);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatUser", user);
 #endif
         }
 
@@ -555,6 +595,9 @@ namespace BugSplatUnity
             _setNativeEmailMac(email);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
 #endif
         }
 
@@ -570,17 +613,29 @@ namespace BugSplatUnity
             _setNativeNotesMac(notes);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
 #endif
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. Windows only; no-op on other platforms.
+        /// Set the key on the native crash reporter. iOS, macOS, and Windows use the platform SDK's own
+        /// key setter; Android's bridge has none, so there the key travels as the reserved
+        /// BugSplatApplicationKey attribute that the backend promotes to the report's key.
         /// </summary>
         public void SetNativeKey(string key)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeKeyIos(key);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeKeyMac(key);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
 #endif
         }
 
@@ -616,7 +671,7 @@ namespace BugSplatUnity
             }
             catch (EntryPointNotFoundException)
             {
-                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.0.1).
+                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.1.0).
                 windowsWerEnabled = false;
             }
 
@@ -665,6 +720,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
@@ -695,6 +751,9 @@ namespace BugSplatUnity
         static extern void _setNativeNotesIos(string notes);
 
         [DllImport("__Internal")]
+        static extern void _setNativeKeyIos(string key);
+
+        [DllImport("__Internal")]
         static extern void _attachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
@@ -711,6 +770,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _setNativeNotesMac(string notes);
+
+        [DllImport("__Internal")]
+        static extern void _setNativeKeyMac(string key);
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileMac(string path);
