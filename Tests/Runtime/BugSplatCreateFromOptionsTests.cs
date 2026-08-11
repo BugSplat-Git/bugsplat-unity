@@ -35,7 +35,7 @@ namespace BugSplatUnity.RuntimeTests
 			options.Notes = "notes";
 			options.User = "fred";
 			options.CaptureEditorLog = true;
-			options.CapturePlayerLog = true;
+			options.CapturePlayerLog = false;
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
 			options.PostExceptionsInEditor = false;
@@ -48,7 +48,7 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.AreEqual("notes", sut.Notes, nameof(options.Notes));
 			Assert.AreEqual("fred", sut.User, nameof(options.User));
 			Assert.True(sut.CaptureEditorLog, nameof(options.CaptureEditorLog));
-			Assert.True(sut.CapturePlayerLog, nameof(options.CapturePlayerLog));
+			Assert.False(sut.CapturePlayerLog, nameof(options.CapturePlayerLog));
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
 			Assert.False(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
@@ -147,6 +147,22 @@ namespace BugSplatUnity.RuntimeTests
 			var sut = BugSplat.CreateFromOptions(options);
 
 			Assert.IsEmpty(sut.Attachments);
+		}
+
+		// A default that differs by construction path is two privacy postures for one setting.
+		// WebGL has no Player.log to capture at all, so its repository default is excluded.
+		[Test]
+		public void CapturePlayerLog_ShouldDefaultToEnabledOnEveryConstructionPath()
+		{
+			var fromOptions = BugSplat.CreateFromOptions(options);
+
+			Assert.True(options.CapturePlayerLog, "BugSplatOptions field default");
+			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
+#if !UNITY_WEBGL
+			var fromCode = new BugSplat("database", "application", "version", false, false);
+
+			Assert.True(fromCode.CapturePlayerLog, "client created in code");
+#endif
 		}
 	}
 }

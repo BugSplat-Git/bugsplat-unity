@@ -422,7 +422,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | Notes | A default general purpose field that can be overridden by call to post |
 | User | A default user that can be overridden by call to Post |
 | CaptureEditorLog| Should BugSplat upload Editor.log when Post is called|
-| CapturePlayerLog| Should BugSplat upload Player.log when Post is called |
+| CapturePlayerLog| Should BugSplat upload Player.log when Post is called. Enabled by default — see [Player.log and privacy](#playerlog-and-privacy) |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
@@ -430,6 +430,16 @@ The following API methods are available to help you customize BugSplat to fit yo
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
+
+### Player.log and privacy
+
+`CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:
+
+```cs
+bugsplat.CapturePlayerLog = false;
+```
+
+> **Upgrading from 4.x:** `BugSplatOptions` assets created before 5.0.0 keep whatever value is already serialized in the asset file; only newly created assets pick up the new default. Check the field on your existing asset if you want the new behavior.
 
 ### BugSplat Environment Variables
 
