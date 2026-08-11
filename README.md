@@ -61,7 +61,10 @@ Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **B
 
 ![Configuring BugSplat](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/a6250cea-a4da-44a8-b6cb-ff2467b0d978)
 
-Click **Play** and click or tap one of the buttons to send an error report to BugSplat. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
+> [!NOTE]
+> The sample's UI labels use TextMeshPro. If the button text appears blank, import TMP Essentials via **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled in the sample.
+
+Click **Play** and run a scenario from the **Crash Scenarios** menu to send an error report to BugSplat. Scenarios are grouped by the mechanism that captures them, and the menu is platform-aware — each platform lists only what it can capture. Native scenarios are disabled in the editor and need a built player; see the [sample README](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/README.md) for the full scenario matrix. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
 
 ![Running the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/4418b736-dc88-496a-ada6-a27ad19032f1)
 
@@ -104,7 +107,7 @@ If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically 
 First, find your instance of `BugSplat`. The following is an example of how to find an instance of `BugSplat` via `BugSplatManager`:
 
 ```cs
-var bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
+var bugsplat = FindAnyObjectByType<BugSplatManager>().BugSplat;
 ```
 
 You can extend `BugSplat` by setting the following properties:
@@ -126,7 +129,7 @@ You can use the `Notes` field to capture arbitrary data such as system informati
 ```cs
 void Start()
 {
-    bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
+    bugsplat = FindAnyObjectByType<BugSplatManager>().BugSplat;
     bugsplat.Notes = GetSystemInfo();
 }
 
@@ -207,38 +210,29 @@ bugsplat.ShouldPostException = (ex) =>
 };
 ```
 
-### Windows Minidumps (Crashes)
+### Background Thread Exceptions
 
-BugSplat can be configured to upload Windows minidumps created by the `UnityCrashHandler`. BugSplat will automatically pull Unity Player symbols from the [Unity Symbol Server](https://docs.unity3d.com/Manual/WindowsDebugging.html).
+Unity raises `Application.logMessageReceived` only for logs written on the main thread. An unhandled exception on a background thread is written to the player log but never reaches that callback, so BugSplat captures these through `Application.logMessageReceivedThreaded` instead, buffers them, and posts them from the main thread on the next frame.
 
-The methods `PostCrash`, `PostMostRecentCrash`, and `PostAllCrashes` can be used to upload minidumps to BugSplat. We recommend running `PostAllCrashes` when your game launches.
+This is on by default. Uncheck **Capture Exceptions On Background Threads** on your `BugSplatManager` to restore the previous behavior of reporting only main-thread exceptions.
 
-```cs
-void Start()
-{
-    bugsplat = FindFirstObjectByType<BugSplatManager>().BugSplat;
-    StartCoroutine(bugsplat.PostAllCrashes());
-}
+Because the threaded callback also fires for main-thread logs that `logMessageReceived` already delivered, BugSplat ignores anything raised on the main thread there — main-thread exceptions are reported exactly once either way.
 
-```
+At most 64 background exceptions are buffered at a time. A thread failing in a tight loop can produce them faster than they can be uploaded, so the excess is dropped and a single warning is logged rather than queueing unbounded work.
 
-Each of the methods that post crashes to BugSplat also accept a `MinidumpPostOptions` parameter and a `callback`. The usage of `MinidumpPostOptions` and `callback` are nearly identical to the `ExceptionPostOptions` example listed above.
+> [!NOTE]
+> Exceptions from a `Task` nobody awaits are still not captured. They surface on the finalizer thread via `TaskScheduler.UnobservedTaskException`, which never writes to the Unity log, and only after a garbage collection. To report them, subscribe to that event yourself and re-raise on the main thread — `CrashScenarioMenu` in the sample shows the pattern.
 
-You can generate a test crash on Windows with any of the following methods.
+### Windows Crashes
 
-```cs
-Utils.ForceCrash(ForcedCrashCategory.Abort);
-Utils.ForceCrash(ForcedCrashCategory.AccessViolation);
-Utils.ForceCrash(ForcedCrashCategory.FatalError);
-Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction);
-```
+BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](#-windows) section for setup details.
 
 > [!IMPORTANT]
 > `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
 
 ### Windows Symbols
 
-To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and provide them as described in [Symbol Upload Credentials](#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents.
 
@@ -246,16 +240,16 @@ For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line map
 
 BugSplat has the ability to display a support response to users who encounter a crash. You can show your users a generalized support response for all crashes, or a custom support response that corresponds to the type of crash that occurred. Defining a support response allows you to alert users that bug has been fixed in a new version, or that they need to update their graphics drivers.
 
-Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser. A full example can be seen in [ErrorGenerator.cs](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/Scripts/ErrorGenerator.cs).
+Next, pass a callback to `bugsplat.Post`. In the callback handler add code to open the support response in the user's browser:
 
 ```cs
 private string infoUrl = "";
 
-public void Event_CatchExceptionThenPostNewBugSplat()
+public void CatchExceptionThenPostNewBugSplat()
 {
     try
     {
-        GenerateSampleStackFramesAndThrow();
+        MethodThatThrows();
     }
     catch (Exception ex)
     {
@@ -339,6 +333,70 @@ The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat
 
 To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` and `UploadDebugSymbolsForMac` properties to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
 
+## 🪟 Windows
+
+The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
+
+To configure native crash reporting for Windows, set the `UseNativeCrashReportingForWindows` property to `true` on your `BugSplatOptions` asset.
+
+When native crash reporting is enabled:
+
+- Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
+- `Player.log` is attached to native crash reports automatically.
+- The BugSplat crash dialog is shown by default. Set `WindowsShowCrashDialog` to `false` to send reports silently instead.
+- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatRc.dll`, and `BugSplatWer.dll` next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
+- Fail-fast crashes — stack buffer overruns and heap corruption — bypass BugSplat's crash handler entirely and need one extra install-time step. See [Windows Error Reporting](#windows-error-reporting).
+
+The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
+
+For IL2CPP builds, BugSplat copies `LineNumberMappings.json` into the build directory and uploads it with your symbols so IL2CPP-generated C++ frames symbolicate back to C# method names, file names, and line numbers. See [Windows Symbols](#windows-symbols) for symbol upload configuration.
+
+### Windows Hang Detection
+
+Set `WindowsHangDetectionTimeoutMs` to a non-zero value to report hangs when your game's main thread stops responding for longer than the configured timeout. When a hang is detected, BugSplat captures a hang report, uploads it, and **terminates the hung process**.
+
+Hang detection is **disabled by default** (`0`) because long frames — such as loading screens or synchronous asset operations — can be falsely reported as hangs, and a false positive terminates your game. If you enable hang detection, choose a timeout comfortably longer than your game's longest expected frame.
+
+### Windows Error Reporting
+
+A few crash types terminate a process without giving any in-process code a chance to run. The most common are stack buffer overruns (`0xC0000409`, which is also what `__fastfail` produces) and heap corruption (`0xC0000374`). BugSplat's crash handler never sees these, so Windows Error Reporting has to hand them over instead — that is what `BugSplatWer.dll` is for.
+
+Two things must be true for it to work:
+
+1. **`BugSplatWer.dll` sits next to your game's executable.** The post-build step already does this when `UseNativeCrashReportingForWindows` is enabled.
+2. **A machine-wide registry value names that DLL's full path.** Under `HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules`, add a `REG_DWORD` whose **name** is the absolute path to the installed `BugSplatWer.dll` (the data is ignored). This lives in `HKLM`, so writing it requires administrator rights.
+
+**Your installer is responsible for step 2**, and for removing the value on uninstall:
+
+```bat
+reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules" /v "C:\Program Files\MyGame\BugSplatWer.dll" /t REG_DWORD /d 0 /f
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules" /v "C:\Program Files\MyGame\BugSplatWer.dll" /f
+```
+
+The value name must match the installed path exactly, using backslashes. Moving or reinstalling the game to a different folder silently disarms it.
+
+For local builds, use **BugSplat > Windows > Register WER Handler** in the editor. It asks for your built player, writes the value elevated, and reads it back to confirm. **Check WER Handler Registration** reports the current state.
+
+At runtime, `bugsplat.WindowsWerEnabled` tells you whether the handler registered. When it hasn't, BugSplat logs what will be missed and how to fix it — as a warning in development builds and an informational message otherwise, since end users can't act on it. All other crashes are reported normally either way.
+
+If registration appears to succeed but `WindowsWerEnabled` stays `false`, check your endpoint-protection software: `RuntimeExceptionHelperModules` is a known persistence location and some products monitor or block writes to it.
+
+Two places to look when a report doesn't arrive: `%TEMP%\BugSplat\<Application>-<Version>\<GUID>\` holds the SDK's own logs including `BugSplatWer.log`, and `%LOCALAPPDATA%\CrashDumps` collects dumps Windows wrote because nothing claimed the crash.
+
+> [!NOTE]
+> BugSplat installs its handler with `SetUnhandledExceptionFilter` and then prevents that filter from being replaced, so other middleware in your project cannot install a top-level exception filter after BugSplat initializes.
+
+### Migrating from 4.x
+
+Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
+
+- `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
+- Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
+- `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
+- `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
+- Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
+- **iOS projects exported with Append, or checked into version control, keep their old "Upload dSYM files to BugSplat" build phase.** Unity matches an existing phase on its script body, so the rewritten phase is not recognised as the same one. Delete the old phase and build again, or re-export with Replace. A phase generated before 5.0.0 contains your Client ID and Secret in plain text — **rotate them**.
+
 ## 🧩 API
 
 The following API methods are available to help you customize BugSplat to fit your needs.
@@ -349,6 +407,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | --------------- | --------------- |
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
 | RegisterLogMessageReceived | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
+| CaptureExceptionsOnBackgroundThreads | Also capture unhandled exceptions thrown on background threads (default). Requires RegisterLogMessageReceived. See [Background thread exceptions](#background-thread-exceptions).|
 
 ### BugSplat Options
 
@@ -368,15 +427,29 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
-| SymbolUploadClientId | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
-| SymbolUploadClientSecret | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page
+| UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
+| WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
+| WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
 
 ### BugSplat Environment Variables
 
 | Variable | Description |
 |----------| --------------- |
-| BUGSPLAT_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientId
-| BUGSPLAT_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientSecret
+| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+
+### Symbol Upload Credentials
+
+Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and are **specific to one database**. They are never stored in your project — an asset carrying them ends up in version control and inside shipped builds. They resolve in this order:
+
+1. **`SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` environment variables** — use these in CI. They are the names the `symbol-upload` CLI reads, so the same pair works whether Unity runs the upload or your CI runs `xcodebuild` itself.
+2. **`~/.bugsplat/credentials/<database>.sh`** — for local development. Set it from **BugSplat > Symbol Upload > Set Credentials**, which writes one file per database, so a machine can hold credentials for as many databases as you work with.
+
+`Clear Credentials` deletes the current project's file; `Check Credentials` reports which source a build would use. When neither source supplies both values, symbol upload is skipped with a warning and the build still succeeds — on iOS as an Xcode build warning, since that upload runs during the Xcode build rather than the Unity one.
+
+Because the file lives in your home directory rather than the project, there is nothing to add to `.gitignore` and nothing to strip out of a build.
+
+> **Upgrading from 4.x:** `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`, and the environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET`. Move your credentials to the menu or the new variables. **If an options asset holding credentials has ever been committed, rotate them** — prior versions serialized both values into player builds and into the generated `project.pbxproj`.
 
 ## 🧑‍💻 Contributing
 

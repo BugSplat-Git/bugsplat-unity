@@ -187,6 +187,12 @@ extern "C" {
         [bugsplat setValue:[NSString stringWithUTF8String:(notes ?: "")] forKey:@"notes"];
     }
 
+    void _setNativeKeyMac(const char* key) {
+        id bugsplat = GetBugSplatInstance();
+        if (!bugsplat) return;
+        [bugsplat setValue:[NSString stringWithUTF8String:(key ?: "")] forKey:@"appKey"];
+    }
+
     void _attachNativeLogFileMac(const char* path) {
         _logFilePath = [NSString stringWithUTF8String:(path ?: "")];
 

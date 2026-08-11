@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -64,10 +65,29 @@ public class BuildPostprocessors
 			UploadSymbolsAndroid(pathToBuiltProject, options);
 #elif UNITY_EDITOR_WIN
 		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+		{
+			PostProcessWindows(pathToBuiltProject, options);
 			UploadSymbolFilesWin(pathToBuiltProject, options);
+		}
 #endif
 		if (target == BuildTarget.StandaloneOSX)
 			PostProcessMac(pathToBuiltProject, options);
+	}
+
+	// Zips a single file with the entry at the archive root and writes it to destZip.
+	// symbol-upload skips no-dbgId files (e.g. LineNumberMappings.json) but uploads
+	// .zip files as-is via the versions path, so we zip the mapping before upload.
+	private static void ZipForUpload(string sourceFile, string destZip)
+	{
+		if (File.Exists(destZip))
+		{
+			File.Delete(destZip);
+		}
+
+		using (var archive = ZipFile.Open(destZip, ZipArchiveMode.Create))
+		{
+			archive.CreateEntryFromFile(sourceFile, Path.GetFileName(sourceFile));
+		}
 	}
 
 #if UNITY_EDITOR_WIN
@@ -79,7 +99,7 @@ public class BuildPostprocessors
 			return;
 		}
 
-		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json}", options, uploadExitCode =>
+		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
@@ -89,6 +109,101 @@ public class BuildPostprocessors
 
 			Debug.Log("BugSplat. Symbols uploading completed.");
 		});
+	}
+
+	private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
+	{
+		var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+		if (buildDir == null)
+		{
+			Debug.LogError("BugSplat. Could not find build directory. Skipping Windows post-build tasks.");
+			return;
+		}
+
+		CopyWindowsLineNumberMappings(buildDir);
+
+		if (!options.UseNativeCrashReportingForWindows)
+			return;
+
+		string arch;
+		try
+		{
+			arch = GetPEMachineArchitecture(pathToBuiltProject);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"BugSplat. Could not determine built executable architecture: {ex.Message}. Skipping native runtime support file copy.");
+			return;
+		}
+
+		var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+		var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+		var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
+
+		foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatRc.dll", "BugSplatWer.dll" })
+		{
+			var source = Path.Combine(supportDir, fileName);
+			if (!File.Exists(source))
+			{
+				Debug.LogError($"BugSplat. Missing native runtime support file {source}. Native crash reports may not upload.");
+				continue;
+			}
+
+			File.Copy(source, Path.Combine(buildDir, fileName), true);
+		}
+
+		Debug.Log($"BugSplat. Copied Windows native runtime support files ({arch}) next to the built executable.");
+	}
+
+	private static void CopyWindowsLineNumberMappings(string buildDir)
+	{
+		// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
+		var mappingSearchPaths = new[]
+		{
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
+		foreach (var searchPath in mappingSearchPaths)
+		{
+			var fullPath = Path.GetFullPath(searchPath);
+			if (File.Exists(fullPath))
+			{
+				var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
+				ZipForUpload(fullPath, destZip);
+				Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
+				return;
+			}
+		}
+
+		Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+	}
+
+	private static string GetPEMachineArchitecture(string exePath)
+	{
+		// Read the COFF machine field from the PE header: 0x014C = x86, 0x8664 = x64, 0xAA64 = ARM64
+		using (var stream = File.OpenRead(exePath))
+		using (var reader = new BinaryReader(stream))
+		{
+			stream.Seek(0x3C, SeekOrigin.Begin);
+			var peHeaderOffset = reader.ReadInt32();
+			stream.Seek(peHeaderOffset + 4, SeekOrigin.Begin);
+			var machine = reader.ReadUInt16();
+
+			switch (machine)
+			{
+				case 0x014C:
+					return "x86";
+				case 0x8664:
+					return "x64";
+				case 0xAA64:
+					return "ARM64";
+				default:
+					throw new InvalidOperationException($"Unsupported PE machine type 0x{machine:X4}");
+			}
+		}
 	}
 #endif
 
@@ -127,9 +242,9 @@ public class BuildPostprocessors
 			var fullPath = Path.GetFullPath(searchPath);
 			if (File.Exists(fullPath))
 			{
-				var dest = Path.Combine(buildDir, "LineNumberMappings.json");
-				File.Copy(fullPath, dest, true);
-				Debug.Log($"BugSplat: Copied LineNumberMappings.json to build directory ({new FileInfo(fullPath).Length / 1024}KB)");
+				var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
+				ZipForUpload(fullPath, destZip);
+				Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
 				mappingFound = true;
 				break;
 			}
@@ -140,7 +255,7 @@ public class BuildPostprocessors
 			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
 		}
 
-		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>
+		UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json.zip}", options, uploadExitCode =>
 		{
 			if (uploadExitCode != 0)
 			{
@@ -152,7 +267,7 @@ public class BuildPostprocessors
 		});
 	}
 
-	private static BugSplatOptions GetBugSplatOptions()
+	internal static BugSplatOptions GetBugSplatOptions()
 	{
 		var guids = AssetDatabase.FindAssets("t:BugSplatOptions");
 
@@ -244,27 +359,35 @@ public class BuildPostprocessors
 		if (!options.UploadDebugSymbolsForIos)
 			return;
 
-		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-		if (string.IsNullOrEmpty(clientId))
-			clientId = options.SymbolUploadClientId;
-
-		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-		if (string.IsNullOrEmpty(clientSecret))
-			clientSecret = options.SymbolUploadClientSecret;
-
-		if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+		if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out _, out _))
 		{
-			Debug.LogWarning("BugSplat: SymbolUploadClientId/Secret not set. Skipping iOS dSYM upload build phase.");
-			return;
+			Debug.LogWarning(
+				$"BugSplat: no symbol upload credentials for database '{options.Database}'. Set " +
+				$"{BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and " +
+				$"{BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable} in the Xcode build environment, or use " +
+				"BugSplat > Symbol Upload > Set Credentials. The dSYM upload build phase will skip uploading without them.");
 		}
 
 		var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
 		var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
+		// Resolved against $HOME at Xcode build time, so the credentials never enter the project
+		// and the generated script carries no path from the machine that ran the Unity build.
+		var credentialsRelativePath = BugSplatSymbolUploadCredentials.GetCredentialsPathRelativeToHome(options.Database);
+
 		const string shellPath = "/bin/sh";
 		const int index = 999;
 		const string name = "Upload dSYM files to BugSplat";
 		var shellScript =
+			$"BUGSPLAT_CREDENTIALS=\"$HOME/{credentialsRelativePath}\"\n" +
+			$"if [ -f \"$BUGSPLAT_CREDENTIALS\" ]; then\n" +
+			$"    . \"$BUGSPLAT_CREDENTIALS\"\n" +
+			$"fi\n" +
+			$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] || [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ]; then\n" +
+			$"    echo \"warning: BugSplat symbol upload credentials not found. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET, or run BugSplat > Symbol Upload > Set Credentials in Unity. Skipping dSYM upload.\"\n" +
+			$"    exit 0\n" +
+			$"fi\n" +
+			$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
 			$"if [ \"$(uname -m)\" = \"x86_64\" ]; then\n" +
 			$"    VARIANT=\"symbol-upload-macos-intel\"\n" +
 			$"else\n" +
@@ -280,26 +403,51 @@ public class BuildPostprocessors
 			$"    --database \"{options.Database}\" \\\n" +
 			$"    --application \"{application}\" \\\n" +
 			$"    --version \"{version}\" \\\n" +
-			$"    --clientId \"{clientId}\" \\\n" +
-			$"    --clientSecret \"{clientSecret}\" \\\n" +
 			$"    --files \"**/*.dSYM\" \\\n" +
 			$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
-			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication\n" +
+			$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
+			$"# symbol-upload skips the raw .json (no dbgId), so zip it; the .zip uploads via the versions path.\n" +
 			$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
 			$"if [ -f \"$MAPPINGS\" ]; then\n" +
+			$"    (cd \"${{PROJECT_DIR}}\" && zip -j -q LineNumberMappings.json.zip LineNumberMappings.json)\n" +
 			$"    \"$SYMBOL_UPLOAD\" \\\n" +
 			$"        --database \"{options.Database}\" \\\n" +
 			$"        --application \"{application}\" \\\n" +
 			$"        --version \"{version}\" \\\n" +
-			$"        --clientId \"{clientId}\" \\\n" +
-			$"        --clientSecret \"{clientSecret}\" \\\n" +
-			$"        --files \"LineNumberMappings.json\" \\\n" +
+			$"        --files \"LineNumberMappings.json.zip\" \\\n" +
 			$"        --directory \"${{PROJECT_DIR}}\"\n" +
 			$"fi";
 
-		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
-			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
+		if (!string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
+			return;
+
+		// GetShellScriptBuildPhaseForTarget matches on name, shellPath *and* script body, so a phase
+		// written by an older version does not match this one. Inserting regardless would leave two
+		// phases, with the older one still uploading - and, before this change, still carrying
+		// credentials inlined into project.pbxproj.
+		if (HasBuildPhaseNamed(project, targetGuid, name))
+		{
+			Debug.LogWarning(
+				$"BugSplat: the Xcode project already has a '{name}' build phase from an earlier version, so a new one was not added. " +
+				"Delete that phase and build again, or export with Replace instead of Append. " +
+				"If it was generated before 5.0.0 it contains your symbol upload Client ID and Secret in plain text - rotate them.");
+			return;
+		}
+
+		project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 	}
+
+	private static bool HasBuildPhaseNamed(PBXProject project, string targetGuid, string name)
+	{
+		foreach (var phaseGuid in project.GetAllBuildPhasesForTarget(targetGuid))
+		{
+			if (string.Equals(project.GetBuildPhaseName(phaseGuid), name))
+				return true;
+		}
+
+		return false;
+	}
+
 #endif
 
 #if UNITY_ANDROID
@@ -383,28 +531,13 @@ public class BuildPostprocessors
 
 	private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 	{
-		string clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-		if (string.IsNullOrEmpty(clientId))
+		if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
 		{
-			clientId = options.SymbolUploadClientId;
-		}
-		
-		if (string.IsNullOrEmpty(clientId))
-		{
-			Debug.LogWarning("BugSplat: SymbolUploadClientId is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_ID. Skipping symbol uploads.");
-			onCompleted(0);
-			return;
-		}
-
-		string clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-		if (string.IsNullOrEmpty(clientSecret))
-		{
-			clientSecret = options.SymbolUploadClientSecret;
-		}
-
-		if (string.IsNullOrEmpty(clientSecret))
-		{
-			Debug.LogWarning("BugSplat. SymbolUploadClientSecret is not set in BugSplatOptions or in the environment variable BUGSPLAT_CLIENT_SECRET. Skipping symbol uploads");
+			Debug.LogWarning(
+				$"BugSplat: no symbol upload credentials for database '{options.Database}'. Set " +
+				$"{BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and " +
+				$"{BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use " +
+				"BugSplat > Symbol Upload > Set Credentials. Skipping symbol uploads.");
 			onCompleted(0);
 			return;
 		}
@@ -423,9 +556,12 @@ public class BuildPostprocessors
 			FileName = symbolUploadPath,
 			UseShellExecute = false,
 			RedirectStandardOutput = true,
-			Arguments = $"--database {options.Database} --application \"{application}\" --clientId {clientId} --clientSecret {clientSecret} " +
+			Arguments = $"--database {options.Database} --application \"{application}\" " +
 				$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 		};
+
+		symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
+		symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
 
 		if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
 		{

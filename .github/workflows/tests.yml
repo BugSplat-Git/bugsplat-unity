@@ -1,0 +1,245 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Must be a version GameCI publishes an image for: https://hub.docker.com/r/unityci/editor/tags
+  UNITY_VERSION: 6000.0.81f1
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  # Cancelling mid-run can skip GameCI's license return step and leak a Pro activation, which
+  # accumulates silently until the seat is exhausted. Superseded runs are cheaper than that.
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: ${{ matrix.buildTarget }}
+    runs-on: ubuntu-latest
+    # Secrets aren't exposed to forks, so the license would be empty and the run would always
+    # fail. Skip rather than report a red check a contributor can't fix.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 45
+    permissions:
+      checks: write
+      contents: read
+    strategy:
+      fail-fast: false
+      # Each job activates the Unity serial, and a Pro seat allows only a couple of concurrent
+      # activations. Serialised so one run needs one activation. Raise once seat headroom is known.
+      max-parallel: 1
+      matrix:
+        include:
+          - buildTarget: StandaloneLinux64
+            image: linux-il2cpp
+          - buildTarget: StandaloneWindows64
+            image: windows-mono
+          - buildTarget: StandaloneOSX
+            image: mac-mono
+          - buildTarget: WebGL
+            image: webgl
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+          lfs: true
+
+      # This repo is a UPM package, not a Unity project, so the test runner needs a host
+      # project that embeds it and lists it under "testables".
+      - name: Generate test project
+        run: |
+          mkdir -p TestProject/Assets TestProject/Packages TestProject/ProjectSettings
+          echo "m_EditorVersion: ${UNITY_VERSION}" > TestProject/ProjectSettings/ProjectVersion.txt
+          cat > TestProject/Packages/manifest.json <<'EOF'
+          {
+            "dependencies": {
+              "com.bugsplat.unity": "file:../../package",
+              "com.unity.test-framework": "1.7.0",
+              "com.unity.modules.androidjni": "1.0.0",
+              "com.unity.modules.imageconversion": "1.0.0",
+              "com.unity.modules.imgui": "1.0.0",
+              "com.unity.modules.jsonserialize": "1.0.0",
+              "com.unity.modules.screencapture": "1.0.0",
+              "com.unity.modules.uielements": "1.0.0",
+              "com.unity.modules.unitywebrequest": "1.0.0"
+            },
+            "testables": [
+              "com.bugsplat.unity"
+            ]
+          }
+          EOF
+
+      - uses: actions/cache@v6
+        with:
+          path: TestProject/Library
+          key: Library-${{ matrix.buildTarget }}-${{ hashFiles('package/**/*.cs', 'package/**/*.asmdef') }}
+          restore-keys: |
+            Library-${{ matrix.buildTarget }}-
+
+      - id: tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          # Personal licenses use UNITY_LICENSE; Pro/Plus use the email/password/serial trio.
+          # Set whichever pair applies — GameCI activates based on which are present.
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProject
+          customImage: unityci/editor:ubuntu-${{ env.UNITY_VERSION }}-${{ matrix.image }}-3
+          # The suite lives in Tests/Runtime, which the test framework treats as play mode.
+          testMode: all
+          customParameters: -buildTarget ${{ matrix.buildTarget }}
+          artifactsPath: ${{ matrix.buildTarget }}-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: ${{ matrix.buildTarget }} test results
+
+      # Every container is a new machine to Unity, so each run consumes an activation. If a run
+      # dies before returning it, that slot is burned against a machine that no longer exists and
+      # has to be revoked by hand. Always return it.
+      # GameCI's own post step returns the license on a clean run; it is only known to fail when
+      # the run is interrupted (unity-builder#538). Running this unconditionally costs ~70s a job
+      # to repeat work already done, so restrict it to the case it exists for.
+      - uses: game-ci/unity-return-license@v2
+        if: failure() || cancelled()
+        continue-on-error: true
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-${{ matrix.buildTarget }}
+          path: ${{ matrix.buildTarget }}-results
+
+  # Tests run inside the editor, so everything behind `&& !UNITY_EDITOR` — every native crash
+  # path — is excluded from the assemblies they link against. Compiling the player scripts is
+  # the only thing in CI that builds that code.
+  compile:
+    name: Compile ${{ matrix.targetPlatform }}
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Serialised behind the tests: one Unity activation is available at a time.
+    needs: tests
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - targetPlatform: iOS
+            image: ios
+          - targetPlatform: Android
+            image: android
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: package
+          lfs: true
+
+      - name: Generate compile project
+        run: |
+          mkdir -p CompileProject/Assets/Editor CompileProject/Packages CompileProject/ProjectSettings
+          echo "m_EditorVersion: ${UNITY_VERSION}" > CompileProject/ProjectSettings/ProjectVersion.txt
+          cat > CompileProject/Packages/manifest.json <<'EOF'
+          {
+            "dependencies": {
+              "com.bugsplat.unity": "file:../../package",
+              "com.unity.modules.androidjni": "1.0.0",
+              "com.unity.modules.imageconversion": "1.0.0",
+              "com.unity.modules.imgui": "1.0.0",
+              "com.unity.modules.jsonserialize": "1.0.0",
+              "com.unity.modules.screencapture": "1.0.0",
+              "com.unity.modules.uielements": "1.0.0",
+              "com.unity.modules.unitywebrequest": "1.0.0"
+            }
+          }
+          EOF
+          cat > CompileProject/Assets/Editor/CompileCheck.cs <<'EOF'
+          using System.Linq;
+          using UnityEditor;
+          using UnityEditor.Build.Player;
+          using UnityEngine;
+
+          public static class CompileCheck
+          {
+              const string ExpectedAssembly = "BugSplat.Unity.Runtime.dll";
+
+              public static void Run()
+              {
+                  var target = EditorUserBuildSettings.activeBuildTarget;
+                  var settings = new ScriptCompilationSettings
+                  {
+                      group = BuildPipeline.GetBuildTargetGroup(target),
+                      target = target,
+                      options = ScriptCompilationOptions.None
+                  };
+
+                  ScriptCompilationResult result;
+                  try
+                  {
+                      result = PlayerBuildInterface.CompilePlayerScripts(settings, "Temp/PlayerScriptCompile");
+                  }
+                  catch (System.Exception ex)
+                  {
+                      Debug.LogError($"CompileCheck: compilation threw for {target}: {ex}");
+                      EditorApplication.Exit(1);
+                      return;
+                  }
+
+                  var assemblies = result.assemblies?.ToList();
+                  if (assemblies == null || !assemblies.Any(a => a.EndsWith(ExpectedAssembly)))
+                  {
+                      Debug.LogError($"CompileCheck: {ExpectedAssembly} was not produced for {target}");
+                      EditorApplication.Exit(1);
+                      return;
+                  }
+
+                  Debug.Log($"CompileCheck: {target} OK, {assemblies.Count} assemblies");
+                  EditorApplication.Exit(0);
+              }
+          }
+          EOF
+
+      - uses: actions/cache@v6
+        with:
+          path: CompileProject/Library
+          key: Library-compile-${{ matrix.targetPlatform }}-${{ hashFiles('package/**/*.cs', 'package/**/*.asmdef') }}
+          restore-keys: |
+            Library-compile-${{ matrix.targetPlatform }}-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: CompileProject
+          targetPlatform: ${{ matrix.targetPlatform }}
+          customImage: unityci/editor:ubuntu-${{ env.UNITY_VERSION }}-${{ matrix.image }}-3
+          buildMethod: CompileCheck.Run
+          manualExit: true
+          versioning: None
+
+      # GameCI's own post step returns the license on a clean run; it is only known to fail when
+      # the run is interrupted (unity-builder#538). Running this unconditionally costs ~70s a job
+      # to repeat work already done, so restrict it to the case it exists for.
+      - uses: game-ci/unity-return-license@v2
+        if: failure() || cancelled()
+        continue-on-error: true
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}

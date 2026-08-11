@@ -33,3 +33,6 @@ MonoBehaviour:
   UploadDebugSymbolsForAndroid: 0
   UseNativeCrashReportingForMac: 1
   UploadDebugSymbolsForMac: 0
+  UseNativeCrashReportingForWindows: 1
+  WindowsShowCrashDialog: 1
+  WindowsHangDetectionTimeoutMs: 0

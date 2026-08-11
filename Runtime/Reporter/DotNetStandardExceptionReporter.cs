@@ -263,50 +263,57 @@ namespace BugSplatUnity.Runtime.Reporter
                 }
             }
 
-            yield return Task.Run(
+            var task = Task.Run(
                 async () =>
                 {
-                    try
-                    {
-                        var result = await exceptionClient.Post(stackTrace, options);
-                        var status = result.StatusCode;
-                        var contents = await result.Content.ReadAsStringAsync();
-                        var uploaded = status == System.Net.HttpStatusCode.OK;
-                        var message = uploaded ? "Crash successfully uploaded to BugSplat!" : $"BugSplat upload failed with code {status}";
-                        var response = JsonUtility.FromJson<BugSplatResponse>(contents);
-                        Debug.Log($"BugSplat info: status {status}\n {contents}");
-                        callback?.Invoke(new ExceptionReporterPostResult()
-                        {
-                            Uploaded = uploaded,
-                            Exception = stackTrace,
-                            Message = message,
-                            Response = response
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"BugSplat error: {ex}");
-                        callback?.Invoke(new ExceptionReporterPostResult()
-                        {
-                            Uploaded = false,
-                            Exception = stackTrace,
-                            Message = $"BugSplat upload failed with exception: {ex}",
-                        });
-                    }
-                    finally
-                    {
-                        DeleteTempFiles(tempFiles);
-                    }
+                    var result = await exceptionClient.Post(stackTrace, options);
+                    var contents = await result.Content.ReadAsStringAsync();
+                    return new KeyValuePair<System.Net.HttpStatusCode, string>(result.StatusCode, contents);
                 }
             );
+
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            DeleteTempFiles(tempFiles);
+
+            try
+            {
+                var result = task.GetAwaiter().GetResult();
+                var status = result.Key;
+                var contents = result.Value;
+                var uploaded = status == System.Net.HttpStatusCode.OK;
+                var message = uploaded ? "Crash successfully uploaded to BugSplat!" : $"BugSplat upload failed with code {status}";
+                var response = JsonUtility.FromJson<BugSplatResponse>(contents);
+                Debug.Log($"BugSplat info: status {status}\n {contents}");
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = uploaded,
+                    Exception = stackTrace,
+                    Message = message,
+                    Response = response
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"BugSplat error: {ex}");
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = $"BugSplat upload failed with exception: {ex}",
+                });
+            }
         }
 
         // Copy to a temp file to avoid sharing exception
-        private FileInfo CopyLogTailToTempFile(FileInfo logFileInfo, int tailMaxSizeMB)
+        internal FileInfo CopyLogTailToTempFile(FileInfo logFileInfo, int tailMaxSizeMB)
         {
             if (logFileInfo == null || !logFileInfo.Exists)
             {
-                Debug.LogError($"Log file does not exist at {logFileInfo.FullName}, skipping...");
+                Debug.LogError($"Log file does not exist at {logFileInfo?.FullName}, skipping...");
                 return null;
             }
 

@@ -5,7 +5,6 @@ using System.IO;
 
 namespace BugSplatUnity.Runtime.Settings
 {
-#if UNITY_WEBGL
     internal class WebGLClientSettingsRepository : IClientSettingsRepository
     {
         // TODO BG what do we do about attachments here...
@@ -16,6 +15,7 @@ namespace BugSplatUnity.Runtime.Settings
         public bool CapturePlayerLog { get; set; } = false;
         public bool CaptureScreenshots { get; set; } = false;
         public bool PostExceptionsInEditor { get; set; } = true;
+        public int LogFileMaxSizeMB { get; set; } = 10;
         public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
         public string Description { get; set; }
         public string Email { get; set; }
@@ -23,5 +23,4 @@ namespace BugSplatUnity.Runtime.Settings
         public string Notes { get; set; }
         public string User { get; set; }
     }
-#endif
 }

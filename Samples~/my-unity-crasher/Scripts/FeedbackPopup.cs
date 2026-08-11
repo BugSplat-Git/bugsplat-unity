@@ -31,7 +31,7 @@ namespace Crasher
 
         private void OnSubmit()
         {
-            var manager = FindFirstObjectByType<BugSplatManager>();
+            var manager = FindAnyObjectByType<BugSplatManager>();
             if (manager == null || manager.BugSplat == null)
             {
                 Debug.LogError("[BugSplat] BugSplatManager not found in scene. Feedback cannot be submitted.");

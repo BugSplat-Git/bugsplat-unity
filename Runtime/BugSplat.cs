@@ -8,9 +8,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
+using System.Threading.Tasks;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
@@ -124,9 +125,14 @@ namespace BugSplatUnity
         /// </summary>
         public string Description
         {
+            get
+            {
+                return clientSettings.Description;
+            }
             set
             {
                 clientSettings.Description = value;
+                SetNativeDescription(value);
             }
         }
 
@@ -135,6 +141,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Email
         {
+            get
+            {
+                return clientSettings.Email;
+            }
             set
             {
                 clientSettings.Email = value;
@@ -147,9 +157,14 @@ namespace BugSplatUnity
         /// </summary>
         public string Key
         {
+            get
+            {
+                return clientSettings.Key;
+            }
             set
             {
                 clientSettings.Key = value;
+                SetNativeKey(value);
             }
         }
 
@@ -173,6 +188,10 @@ namespace BugSplatUnity
         /// </summary>
         public string Notes
         {
+            get
+            {
+                return clientSettings.Notes;
+            }
             set
             {
                 clientSettings.Notes = value;
@@ -185,6 +204,10 @@ namespace BugSplatUnity
         /// </summary>
         public string User
         {
+            get
+            {
+                return clientSettings.User;
+            }
             set
             {
                 clientSettings.User = value;
@@ -193,13 +216,21 @@ namespace BugSplatUnity
         }
 
         private IClientSettingsRepository clientSettings;
-        private IExceptionReporter exceptionReporter;
+        internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
+        private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
+        private bool windowsWerEnabled;
 
-#if UNITY_STANDALONE_WIN || UNITY_WSA
-        private readonly INativeCrashReporter nativeCrashReporter;
-#endif
+        /// <summary>
+        /// True when BugSplat's Windows Error Reporting handler is registered for this process.
+        /// Fail-fast terminations — stack buffer overrun (0xC0000409), heap corruption (0xC0000374),
+        /// and __fastfail — bypass BugSplat's crash handler entirely and are reported only when this
+        /// is true. Registration requires BugSplatWer.dll next to the game executable and a
+        /// machine-wide registry value naming its full path. Always false in the editor and on
+        /// non-Windows platforms.
+        /// </summary>
+        public bool WindowsWerEnabled => windowsWerEnabled;
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -210,13 +241,15 @@ namespace BugSplatUnity
         /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on iOS</param>
         /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
         /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
+        /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
         public BugSplat(
             string database,
             string application,
             string version,
             bool useNativeLibIos,
             bool useNativeLibAndroid,
-            bool useNativeLibMac = false
+            bool useNativeLibMac = false,
+            bool useNativeLibWin = false
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -234,20 +267,40 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-#if UNITY_STANDALONE_WIN || UNITY_WSA        
-            var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            if (useNativeLibWin)
             {
-                MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
-                ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
-            };
-            var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
-            var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
-            var windowsReporter = new WindowsReporter(dotNetStandardClientSettings, dotNetStandardExceptionReporter, dotNetStandardClient);
-            clientSettings = dotNetStandardClientSettings;
-            exceptionReporter = windowsReporter;
-            nativeCrashReporter = windowsReporter;
-            feedbackClient = dotNetStandardClient;
+                if (BugSplat_Init(database, application, version) == 1)
+                {
+                    nativeCrashReportingEnabled = true;
+                    // Show the native crash dialog by default; CreateFromOptions
+                    // overrides this from WindowsShowCrashDialog.
+                    BugSplat_SetQuietMode(0);
+                    BugSplat_SetHangDetectionTimeout(0);
+                    // Hard-terminate after a crash report uploads; a standalone Windows
+                    // player's CRT shutdown can hang on the SDK's default exit() path.
+                    // 1 == BUGSPLAT_CRASH_TERMINATE.
+                    BugSplat_SetCrashCompletionBehavior(1);
+                    // Tag native crashes as UnityNative (BugSplat crash type 15) so the
+                    // backend applies LineNumberMappings.json to symbolicate C# frames.
+                    BugSplat_SetCrashType(15);
+
+                    var logPath = Application.consoleLogPath;
+                    if (!string.IsNullOrEmpty(logPath))
+                    {
+                        BugSplat_AddAttachment(logPath);
+                    }
+
+                    BugSplat_PostAllCrashesAsync();
+                    ReportWindowsWerStatus();
+                }
+                else
+                {
+                    Debug.LogError("BugSplat error: failed to initialize native Windows crash reporting");
+                }
+            }
+
+            UseDotNetHandler(database, application, version);
 #elif UNITY_WEBGL
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
@@ -279,6 +332,7 @@ namespace BugSplatUnity
                 
                 var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
+                nativeCrashReportingEnabled = true;
             }
 
             UseDotNetHandler(database, application, version);
@@ -301,6 +355,7 @@ namespace BugSplatUnity
             clientSettings = dotNetStandardClientSettings;
             exceptionReporter = dotNetStandardExceptionReporter;
             feedbackClient = dotNetStandardClient;
+            nativeCrashReportClient = dotNetStandardClient;
 
             if (clientSettings.Attributes is NativeSyncDictionary<string, string> syncDict)
             {
@@ -324,7 +379,8 @@ namespace BugSplatUnity
                 version,
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid,
-                options.UseNativeCrashReportingForMac
+                options.UseNativeCrashReportingForMac,
+                options.UseNativeCrashReportingForWindows
             )
             {
                 Description = options.Description,
@@ -338,6 +394,26 @@ namespace BugSplatUnity
                 LogFileMaxSizeMB = options.LogFileMaxSizeMB,
                 PostExceptionsInEditor = options.PostExceptionsInEditor
             };
+
+            if (options.Attributes != null)
+            {
+                foreach (var attribute in options.Attributes)
+                {
+                    if (attribute == null || string.IsNullOrEmpty(attribute.Name))
+                    {
+                        continue;
+                    }
+
+                    bugSplat.Attributes[attribute.Name] = attribute.Value ?? string.Empty;
+                }
+            }
+
+            bugSplat.SetWindowsCrashDialogEnabled(options.WindowsShowCrashDialog);
+
+            if (options.WindowsHangDetectionTimeoutMs > 0)
+            {
+                bugSplat.SetWindowsHangDetectionTimeout(options.WindowsHangDetectionTimeoutMs);
+            }
 
             if (options.PersistentDataFileAttachmentPaths != null)
 			{
@@ -388,51 +464,6 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Post all Unity player crashes that haven't been posted to BugSplat. Waits 1 second between posts to prevent rate-limiting.
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after all crashes are posted to BugSplat</param>
-        public IEnumerator PostAllCrashes(IReportPostOptions options = null, Action<List<HttpResponseMessage>> callback = null)
-        {
-#if UNITY_STANDALONE_WIN
-            return nativeCrashReporter.PostAllCrashes(options, callback);
-#else
-            Debug.Log($"BugSplat info: PostAllCrashes is not implemented on this platform");
-            yield return null;
-#endif
-        }
-
-        /// <summary>
-        /// Post a specifc crash to BugSplat and will skip crashes that have already been posted 
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-        public IEnumerator PostCrash(DirectoryInfo crashFolder, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-#if UNITY_STANDALONE_WIN
-            return nativeCrashReporter.PostCrash(new WrappedDirectoryInfo(crashFolder), options, callback);
-#else
-            Debug.Log($"BugSplat info: PostCrash is not implemented on this platform");
-            yield return null;
-#endif
-        }
-
-        /// <summary>
-        /// Post the most recent Player crash to BugSplat and will skip crashes that have already been posted 
-        /// </summary>
-        /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the crash is posted to BugSplat</param>
-        public IEnumerator PostMostRecentCrash(IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
-        {
-#if UNITY_STANDALONE_WIN
-            return nativeCrashReporter.PostMostRecentCrash(options, callback);
-#else
-            Debug.Log($"BugSplat info: PostMostRecentCrash is not implemented on this platform");
-            yield return null;
-#endif
-        }
-
-        /// <summary>
         /// Post user feedback to BugSplat
         /// </summary>
         /// <param name="title">The feedback title, used as the stack key for grouping</param>
@@ -477,14 +508,44 @@ namespace BugSplatUnity
             }
         }
 
+        /// <summary>
+        /// Post a minidump file to BugSplat
+        /// </summary>
+        /// <param name="minidump">The minidump file to post</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after the minidump is posted to BugSplat</param>
         public IEnumerator Post(FileInfo minidump, IReportPostOptions options = null, Action<HttpResponseMessage> callback = null)
         {
-#if UNITY_STANDALONE_WIN || UNITY_WSA
-            return nativeCrashReporter.Post(minidump, options, callback);
-#else
-            Debug.Log($"BugSplat info: Post is not implemented on this platform");
-            yield return null;
-#endif
+            if (nativeCrashReportClient == null)
+            {
+                Debug.Log($"BugSplat info: Post is not implemented on this platform");
+                yield return null;
+                yield break;
+            }
+
+            options = options ?? new ReportPostOptions();
+            options.SetNullOrEmptyValues(clientSettings);
+
+            var task = nativeCrashReportClient.Post(minidump, options);
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (task.IsFaulted)
+            {
+                Debug.LogError($"BugSplat error: {task.Exception?.GetBaseException()}");
+                callback?.Invoke(null);
+            }
+            else if (task.IsCanceled)
+            {
+                Debug.LogError("BugSplat error: Post task was canceled");
+                callback?.Invoke(null);
+            }
+            else
+            {
+                callback?.Invoke(task.Result);
+            }
         }
         /// <summary>
         /// Set a key-value attribute on the native crash reporter. Attributes are included in native crash reports.
@@ -496,6 +557,11 @@ namespace BugSplatUnity
             _setNativeAttributeIos(key, value);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _setNativeAttributeMac(key, value);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetAttribute(key, value);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
 
@@ -509,6 +575,11 @@ namespace BugSplatUnity
             _setNativeUserIos(user);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _setNativeUserMac(user);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetUser(user);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatUser", user);
 #endif
         }
 
@@ -522,6 +593,11 @@ namespace BugSplatUnity
             _setNativeEmailIos(email);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _setNativeEmailMac(email);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetEmail(email);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
 #endif
         }
 
@@ -535,11 +611,116 @@ namespace BugSplatUnity
             _setNativeNotesIos(notes);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _setNativeNotesMac(notes);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetNotes(notes);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
+#endif
+        }
+
+        /// <summary>
+        /// Set the key on the native crash reporter. iOS, macOS, and Windows use the platform SDK's own
+        /// key setter; Android's bridge has none, so there the key travels as the reserved
+        /// BugSplatApplicationKey attribute that the backend promotes to the report's key.
+        /// </summary>
+        public void SetNativeKey(string key)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeKeyIos(key);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeKeyMac(key);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetKey(key);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
+#endif
+        }
+
+        /// <summary>
+        /// Set the description on the native crash reporter. Windows only; no-op on other platforms.
+        /// </summary>
+        public void SetNativeDescription(string description)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetUserDescription(description);
+#endif
+        }
+
+        /// <summary>
+        /// Show or hide the BugSplat crash dialog when a native crash occurs on Windows.
+        /// Defaults to shown. Windows only; no-op on other platforms.
+        /// </summary>
+        public void SetWindowsCrashDialogEnabled(bool show)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetQuietMode(show ? 0 : 1);
+#endif
+        }
+
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        private void ReportWindowsWerStatus()
+        {
+            try
+            {
+                windowsWerEnabled = BugSplat_IsWerEnabled() == 1;
+            }
+            catch (EntryPointNotFoundException)
+            {
+                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.1.0).
+                windowsWerEnabled = false;
+            }
+
+            if (windowsWerEnabled) return;
+
+            var werDll = Path.Combine(
+                Path.GetDirectoryName(Application.dataPath) ?? string.Empty,
+                "BugSplatWer.dll");
+
+            var message =
+                "BugSplat: Windows Error Reporting is not armed, so fail-fast crashes — stack buffer " +
+                "overrun (0xC0000409), heap corruption (0xC0000374), and __fastfail — will not be " +
+                $"reported. They bypass BugSplat's crash handler entirely. To arm it, \"{werDll}\" must " +
+                "exist and be named by a REG_DWORD value under HKLM\\SOFTWARE\\Microsoft\\Windows\\" +
+                "Windows Error Reporting\\RuntimeExceptionHelperModules, which requires administrator " +
+                "rights. Your installer should add that value and remove it on uninstall; for local " +
+                "builds use BugSplat > Windows > Register WER Handler in the editor. All other crashes " +
+                "are reported normally.";
+
+            // The registry value is absent on virtually every end-user machine unless the installer
+            // wrote it, and a player can do nothing about it — so only nag in development builds.
+            if (Debug.isDebugBuild)
+            {
+                Debug.LogWarning(message);
+            }
+            else
+            {
+                Debug.Log(message);
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Set the native hang detection timeout in milliseconds on Windows. 0 disables hang detection (default).
+        /// When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a
+        /// timeout longer than your longest expected frame — long frames such as loading screens are otherwise
+        /// falsely reported as hangs. Windows only; no-op on other platforms.
+        /// </summary>
+        public void SetWindowsHangDetectionTimeout(int ms)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_SetHangDetectionTimeout(ms);
 #endif
         }
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
+        /// Supported on Windows, iOS, and macOS; no-op on Android.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
@@ -548,6 +729,8 @@ namespace BugSplatUnity
             _attachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _attachNativeLogFileMac(path);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_AddAttachment(path);
 #endif
         }
 
@@ -568,6 +751,9 @@ namespace BugSplatUnity
         static extern void _setNativeNotesIos(string notes);
 
         [DllImport("__Internal")]
+        static extern void _setNativeKeyIos(string key);
+
+        [DllImport("__Internal")]
         static extern void _attachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
@@ -586,7 +772,57 @@ namespace BugSplatUnity
         static extern void _setNativeNotesMac(string notes);
 
         [DllImport("__Internal")]
+        static extern void _setNativeKeyMac(string key);
+
+        [DllImport("__Internal")]
         static extern void _attachNativeLogFileMac(string path);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        const string BugSplatDll = "BugSplat";
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_Init(string database, string application, string version);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetKey(string key);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetUser(string user);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetEmail(string email);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetUserDescription(string description);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetNotes(string notes);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetAttribute(string key, string value);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_AddAttachment(string path);
+
+        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_RemoveAttachment(string path);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetQuietMode(int quiet);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetHangDetectionTimeout(int ms);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetCrashCompletionBehavior(int behavior);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern void BugSplat_SetCrashType(int crashTypeId);
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_PostAllCrashesAsync();
+
+        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
+        static extern int BugSplat_IsWerEnabled();
 #endif
     }
 }

@@ -100,7 +100,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             };
             var httpResponseMessage = new HttpResponseMessage
             {
-                Content = new StringContent(string.Empty)
+                Content = new StringContent("{}")
             };
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient)
@@ -145,7 +145,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             };
             var httpResponseMessage = new HttpResponseMessage
             {
-                Content = new StringContent(string.Empty)
+                Content = new StringContent("{}")
             };
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient)
@@ -177,7 +177,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             };
             var httpResponseMessage = new HttpResponseMessage
             {
-                Content = new StringContent(string.Empty)
+                Content = new StringContent("{}")
             };
             var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
             var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient)
