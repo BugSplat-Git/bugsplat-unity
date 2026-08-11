@@ -220,8 +220,13 @@ Because the threaded callback also fires for main-thread logs that `logMessageRe
 
 At most 64 background exceptions are buffered at a time. A thread failing in a tight loop can produce them faster than they can be uploaded, so the excess is dropped and a single warning is logged rather than queueing unbounded work.
 
-> [!NOTE]
-> Exceptions from a `Task` nobody awaits are still not captured. They surface on the finalizer thread via `TaskScheduler.UnobservedTaskException`, which never writes to the Unity log, and only after a garbage collection. To report them, subscribe to that event yourself and re-raise on the main thread — `CrashScenarioMenu` in the sample shows the pattern.
+### Unobserved Task Exceptions
+
+A `Task` that faults with nobody awaiting it never writes to the Unity log at all, so neither log callback sees it. BugSplat subscribes to `TaskScheduler.UnobservedTaskException` and posts these through the same main-thread queue as background thread exceptions. Each exception inside the `AggregateException` is reported separately, so unrelated failures land in separate buckets rather than one.
+
+This is on by default. Uncheck **Capture Unobserved Task Exceptions** on your `BugSplatManager` to disable it.
+
+Two things are worth knowing about the timing. The runtime raises this event only when a garbage collection notices the faulted `Task`, so reports arrive well after the failure and a `Task` that is never collected is never reported. And BugSplat deliberately does **not** call `SetObserved()` on these — marking the exception observed would suppress whatever your project does with it next, and reporting a failure must not change whether that failure happens.
 
 ### Windows Crashes
 

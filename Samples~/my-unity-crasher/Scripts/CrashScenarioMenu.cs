@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using BugSplatUnity.Runtime.Manager;
 using TMPro;
 using UnityEngine;
@@ -52,8 +50,6 @@ namespace Crasher
 		[SerializeField] Sprite buttonSprite;
 		[SerializeField] Sprite buttonPressedSprite;
 
-		readonly ConcurrentQueue<Action> mainThreadWork = new ConcurrentQueue<Action>();
-
 		/// <summary>
 		/// Rows are built in Awake but whether each one can run depends on the BugSplat client,
 		/// which is only resolvable in Start (Awake order between components is undefined). Keep
@@ -78,16 +74,7 @@ namespace Crasher
 
 		void Awake()
 		{
-			// Unobserved Task exceptions surface on the finalizer thread, where Unity's log
-			// callbacks never fire — marshal to the main thread so they can be reported.
-			TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-
 			BuildUI();
-		}
-
-		void OnDestroy()
-		{
-			TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
 		}
 
 		void Start()
@@ -98,17 +85,7 @@ namespace Crasher
 			ApplyAvailability();
 		}
 
-		void Update()
-		{
-			while (mainThreadWork.TryDequeue(out var work))
-			{
-				work();
-			}
-		}
-
 		public Coroutine Run(IEnumerator routine) => StartCoroutine(routine);
-
-		public void OnMainThread(Action action) => mainThreadWork.Enqueue(action);
 
 		public void ShowFeedback()
 		{
@@ -121,13 +98,6 @@ namespace Crasher
 			{
 				Debug.LogError("[BugSplat] FeedbackPopup not found in scene.");
 			}
-		}
-
-		void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs args)
-		{
-			args.SetObserved();
-			var exception = args.Exception;
-			OnMainThread(() => Debug.LogException(exception));
 		}
 
 		void RunScenario(CrashScenario scenario)
