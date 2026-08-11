@@ -63,13 +63,13 @@ public class BuildPostprocessors
 #elif UNITY_ANDROID
 		if (target == BuildTarget.Android)
 			UploadSymbolsAndroid(pathToBuiltProject, options);
-#elif UNITY_EDITOR_WIN
+#endif
 		if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
 		{
 			PostProcessWindows(pathToBuiltProject, options);
 			UploadSymbolFilesWin(pathToBuiltProject, options);
 		}
-#endif
+
 		if (target == BuildTarget.StandaloneOSX)
 			PostProcessMac(pathToBuiltProject, options);
 	}
@@ -90,14 +90,17 @@ public class BuildPostprocessors
 		}
 	}
 
-#if UNITY_EDITOR_WIN
 	private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 	{
+#if UNITY_EDITOR_WIN
 		if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
 		{
 			Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
 			return;
 		}
+#else
+		Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
+#endif
 
 		UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
 		{
@@ -205,7 +208,6 @@ public class BuildPostprocessors
 			}
 		}
 	}
-#endif
 
 	private static void PostProcessMac(string pathToBuiltProject, BugSplatOptions options)
 	{
