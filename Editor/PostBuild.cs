@@ -300,7 +300,7 @@ public class BuildPostprocessors
 		project.AddBuildProperty(mainTargetGuid, "ENABLE_BITCODE", "NO");
 		project.SetBuildProperty(mainTargetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
 
-		HandleUploadSymbols(mainTargetGuid, project, options, pathToBuiltProject);
+		HandleUploadSymbols(mainTargetGuid, project, options);
 
 		File.WriteAllText(projectPath, project.WriteToString());
 
@@ -354,7 +354,7 @@ public class BuildPostprocessors
 		}
 	}
 
-	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options, string pathToBuiltProject)
+	private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
 	{
 		if (!options.UploadDebugSymbolsForIos)
 			return;
@@ -418,8 +418,34 @@ public class BuildPostprocessors
 			$"        --directory \"${{PROJECT_DIR}}\"\n" +
 			$"fi";
 
-		if (string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
-			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
+		if (!string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
+			return;
+
+		// GetShellScriptBuildPhaseForTarget matches on name, shellPath *and* script body, so a phase
+		// written by an older version does not match this one. Inserting regardless would leave two
+		// phases, with the older one still uploading - and, before this change, still carrying
+		// credentials inlined into project.pbxproj.
+		if (HasBuildPhaseNamed(project, targetGuid, name))
+		{
+			Debug.LogWarning(
+				$"BugSplat: the Xcode project already has a '{name}' build phase from an earlier version, so a new one was not added. " +
+				"Delete that phase and build again, or export with Replace instead of Append. " +
+				"If it was generated before 5.0.0 it contains your symbol upload Client ID and Secret in plain text - rotate them.");
+			return;
+		}
+
+		project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
+	}
+
+	private static bool HasBuildPhaseNamed(PBXProject project, string targetGuid, string name)
+	{
+		foreach (var phaseGuid in project.GetAllBuildPhasesForTarget(targetGuid))
+		{
+			if (string.Equals(project.GetBuildPhaseName(phaseGuid), name))
+				return true;
+		}
+
+		return false;
 	}
 
 #endif

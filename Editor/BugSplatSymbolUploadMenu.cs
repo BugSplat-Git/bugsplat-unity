@@ -61,17 +61,39 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			var resolved = BugSplatSymbolUploadCredentials.TryResolve(database, out _, out _);
-			var source = System.Environment.GetEnvironmentVariable(BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable) != null
-				? "the environment"
-				: BugSplatSymbolUploadCredentials.GetCredentialsPath(database);
+			if (!BugSplatSymbolUploadCredentials.TryResolve(database, out _, out _))
+			{
+				EditorUtility.DisplayDialog(
+					"BugSplat",
+					$"No symbol upload credentials found for '{database}'.\n\nSet {BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and {BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use BugSplat > Symbol Upload > Set Credentials.",
+					"OK");
+				return;
+			}
 
-			EditorUtility.DisplayDialog(
-				"BugSplat",
-				resolved
-					? $"Symbol upload credentials for '{database}' resolve from {source}."
-					: $"No symbol upload credentials found for '{database}'.\n\nSet {BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and {BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use BugSplat > Symbol Upload > Set Credentials.",
-				"OK");
+			// Report what a build would actually use. The environment only supplies a value when it
+			// is non-empty, and it can supply one of the two while the file supplies the other.
+			var envHasId = !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable));
+			var envHasSecret = !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable));
+			var path = BugSplatSymbolUploadCredentials.GetCredentialsPath(database);
+
+			string source;
+			if (envHasId && envHasSecret)
+			{
+				source = "the environment";
+			}
+			else if (!envHasId && !envHasSecret)
+			{
+				source = path;
+			}
+			else
+			{
+				var fromEnvironment = envHasId
+					? BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable
+					: BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable;
+				source = $"{fromEnvironment} in the environment, and the rest from {path}";
+			}
+
+			EditorUtility.DisplayDialog("BugSplat", $"Symbol upload credentials for '{database}' resolve from {source}.", "OK");
 		}
 
 		void OnGUI()

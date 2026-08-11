@@ -219,7 +219,7 @@ BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs
 
 ### Windows Symbols
 
-To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page. Add your Client ID and Client Secret to the `BugSplatOptions` object you generated in the [Configuration](#⚙️-configuration) section. If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
+To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and provide them as described in [Symbol Upload Credentials](#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents.
 
@@ -382,6 +382,7 @@ Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash re
 - `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
 - `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
 - Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
+- **iOS projects exported with Append, or checked into version control, keep their old "Upload dSYM files to BugSplat" build phase.** Unity matches an existing phase on its script body, so the rewritten phase is not recognised as the same one. Delete the old phase and build again, or re-export with Replace. A phase generated before 5.0.0 contains your Client ID and Secret in plain text — **rotate them**.
 
 ## 🧩 API
 
@@ -420,8 +421,8 @@ The following API methods are available to help you customize BugSplat to fit yo
 
 | Variable | Description |
 |----------| --------------- |
-| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientId |
-| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>If set it will be used instead of options.SymbolUploadClientSecret |
+| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
 
 ### Symbol Upload Credentials
 
