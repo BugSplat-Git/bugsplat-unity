@@ -19,6 +19,7 @@ namespace BugSplatUnity.Runtime.Reporter
     {
         private IClientSettingsRepository clientSettings;
         private IDotNetStandardExceptionClient exceptionClient;
+        private bool loggingPipelineError;
 
         internal IReportUploadGuardService reportUploadGuardService;
 
@@ -32,8 +33,33 @@ namespace BugSplatUnity.Runtime.Reporter
             reportUploadGuardService = new ReportUploadGuardService(clientSettings);
         }
 
+        private void LogPipelineError(string message)
+        {
+            var wasLogging = loggingPipelineError;
+            loggingPipelineError = true;
+            try
+            {
+                Debug.LogError(message);
+            }
+            finally
+            {
+                loggingPipelineError = wasLogging;
+            }
+        }
+
         public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
+            if (loggingPipelineError)
+            {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped, log message was raised by BugSplat's reporting pipeline.",
+                });
+                yield break;
+            }
+
             if (!reportUploadGuardService.ShouldPostLogMessage(type))
             {
                 callback?.Invoke(new ExceptionReporterPostResult()
@@ -56,6 +82,17 @@ namespace BugSplatUnity.Runtime.Reporter
         public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             var stackTrace = exception.ToString();
+
+            if (loggingPipelineError)
+            {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped, exception was raised by BugSplat's reporting pipeline.",
+                });
+                yield break;
+            }
 
             if (!reportUploadGuardService.ShouldPostException(exception))
             {
@@ -98,7 +135,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -119,7 +156,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -140,7 +177,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -169,7 +206,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -190,7 +227,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -211,7 +248,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -232,7 +269,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -298,7 +335,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
             catch (Exception ex)
             {
-                Debug.LogError($"BugSplat error: {ex}");
+                LogPipelineError($"BugSplat error: {ex}");
                 callback?.Invoke(new ExceptionReporterPostResult()
                 {
                     Uploaded = false,
@@ -338,7 +375,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
             catch (Exception ex)
             {
-                Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                LogPipelineError($"BugSplat error: Could not copy log tail to temp file {ex}");
                 return null;
             }
 
@@ -360,7 +397,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
             catch (Exception ex)
             {
-                Debug.LogException(new Exception("Could not delete temp files", ex));
+                LogPipelineError($"BugSplat error: Could not delete temp files {ex}");
             }
         }
 

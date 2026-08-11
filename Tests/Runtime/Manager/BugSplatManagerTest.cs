@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Threading;
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Manager;
+using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using UnityEngine;
@@ -237,6 +239,33 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			{
 				Application.logMessageReceived -= countDropWarnings;
 			}
+		}
+
+		[UnityTest]
+		public IEnumerator ReportingPipelineError_ReportsExactlyOnce()
+		{
+			CreateManager();
+			LogAssert.ignoreFailingMessages = true;
+
+			// The real reporter, so the diagnostic it logs when an upload fails travels back
+			// through Application.logMessageReceived and this manager, as it does in a player.
+			var exceptionClient = new FakeFailingDotNetExceptionClient(
+				new Exception("BugSplat manager test: upload failed"));
+			manager.BugSplat.exceptionReporter = new DotNetStandardExceptionReporter(
+				new WebGLClientSettingsRepository(),
+				exceptionClient)
+			{
+				reportUploadGuardService = new FakeTrueReportUploadGuardService()
+			};
+
+			Debug.LogException(new Exception("BugSplat manager test: pipeline re-entrancy"));
+
+			yield return WaitUntil(() => exceptionClient.Calls.Count >= 1);
+			yield return null;
+			yield return null;
+			yield return null;
+
+			Assert.AreEqual(1, exceptionClient.Calls.Count);
 		}
 	}
 }
