@@ -20,21 +20,23 @@ namespace BugSplatUnity.Editor
 		public string GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data)
 		{
 			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BugSplatLinkXmlProcessor).Assembly);
-			if (package == null)
+			if (package != null)
 			{
-				// Sources were copied under Assets/ rather than installed as a package, which puts
-				// link.xml somewhere UnityLinker already looks.
-				return null;
+				var linkXml = Path.Combine(package.resolvedPath, "Runtime", "link.xml");
+				if (!File.Exists(linkXml))
+				{
+					Debug.LogWarning($"BugSplat warning: {linkXml} is missing, managed stripping may leave crash report responses empty");
+					return null;
+				}
+
+				return linkXml;
 			}
 
-			var linkXml = Path.Combine(package.resolvedPath, "Runtime", "link.xml");
-			if (!File.Exists(linkXml))
-			{
-				Debug.LogWarning($"BugSplat warning: {linkXml} is missing, managed stripping may leave crash report responses empty");
-				return null;
-			}
-
-			return linkXml;
+			// FindForAssembly can return null even for package installs, so try the package root
+			// directly before concluding the sources were copied under Assets/ (where UnityLinker
+			// already reads link.xml).
+			var fallbackLinkXml = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Runtime", "link.xml"));
+			return File.Exists(fallbackLinkXml) ? fallbackLinkXml : null;
 		}
 	}
 }
