@@ -55,8 +55,8 @@ namespace BugSplatUnity.Runtime.Client
         [Tooltip("Take a screenshot and upload it when Post is called")]
 		public bool CaptureScreenshots;
 
-		[Tooltip("Should BugSplat upload exceptions when in editor")]
-		public bool PostExceptionsInEditor = true;
+		[Tooltip("Should BugSplat upload exceptions when in editor. Off by default so play mode exceptions stay out of your database.")]
+		public bool PostExceptionsInEditor;
 
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;

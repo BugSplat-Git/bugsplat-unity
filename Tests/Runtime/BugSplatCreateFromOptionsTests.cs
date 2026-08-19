@@ -38,7 +38,7 @@ namespace BugSplatUnity.RuntimeTests
 			options.CapturePlayerLog = true;
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
-			options.PostExceptionsInEditor = false;
+			options.PostExceptionsInEditor = true;
 
 			var sut = BugSplat.CreateFromOptions(options);
 
@@ -51,7 +51,23 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(sut.CapturePlayerLog, nameof(options.CapturePlayerLog));
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
+			Assert.True(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenPostExceptionsInEditorNotSet_ShouldNotPostExceptionsInEditor()
+		{
+			var sut = BugSplat.CreateFromOptions(options);
+
 			Assert.False(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
+		}
+
+		[Test]
+		public void NewBugSplat_ShouldNotPostExceptionsInEditor()
+		{
+			var sut = new BugSplat("database", "application", "version", false, false);
+
+			Assert.False(sut.PostExceptionsInEditor, nameof(BugSplat.PostExceptionsInEditor));
 		}
 
 		// The constructor throws on an empty application, so completing at all is what proves the
