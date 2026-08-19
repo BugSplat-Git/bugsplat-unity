@@ -7,7 +7,7 @@ using System.IO;
 
 namespace BugSplatUnity.RuntimeTests.Util
 {
-    public class ExceptionPostOptionsExtensionsTests
+    public class ReportPostOptionsExtensionsTests
     {
         [Test]
         public void SetNullOrEmptyValues_NullAttachments_ShouldNotThrow()
@@ -50,7 +50,7 @@ namespace BugSplatUnity.RuntimeTests.Util
         }
 
         [Test]
-        public void Attachments_ShippedClientSettingsRepository_ShouldBeInitialized()
+        public void Attachments_WebGLClientSettingsRepository_ShouldBeInitialized()
         {
             Assert.IsNotNull(new WebGLClientSettingsRepository().Attachments);
         }
