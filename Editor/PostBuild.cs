@@ -516,7 +516,14 @@ public class BuildPostprocessors
 
 		UploadSymbols(symbolsUnzipPath, "**/*.so", options, uploadExitCode =>
 		{
-			Directory.Delete(symbolsUnzipPath, true);
+			try
+			{
+				Directory.Delete(symbolsUnzipPath, true);
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning($"BugSplat. Could not clean up unzipped symbols at {symbolsUnzipPath}: {e.Message}");
+			}
 
 			if (uploadExitCode != 0)
 			{
