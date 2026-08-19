@@ -136,10 +136,10 @@ namespace BugSplatUnity.Runtime.Manager
 		}
 
 		/// <summary>
-		/// Queues one report per faulted Task. Runs on the finalizer thread, so it only writes to
-		/// the queue; <see cref="Update"/> posts from the main thread. Reporting each inner
-		/// exception separately rather than the AggregateException wrapper keeps distinct failures
-		/// in distinct dashboard buckets.
+		/// Queues one report per inner exception of the flattened AggregateException. Runs on the
+		/// finalizer thread, so it only writes to the queue; <see cref="Update"/> posts from the
+		/// main thread. Reporting each inner exception separately rather than the wrapper keeps
+		/// distinct failures in distinct dashboard buckets.
 		/// </summary>
 		internal static void EnqueueUnobservedTaskException(BackgroundLogMessageQueue queue, AggregateException exception, int callingThreadId)
 		{
