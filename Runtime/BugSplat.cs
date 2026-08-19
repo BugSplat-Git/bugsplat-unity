@@ -327,10 +327,10 @@ namespace BugSplatUnity
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
-                var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
                 
-                var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
                 nativeCrashReportingEnabled = true;
             }
@@ -560,7 +560,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
@@ -578,7 +578,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatUser", user);
 #endif
         }
@@ -596,7 +596,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
 #endif
         }
@@ -614,7 +614,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
 #endif
         }
@@ -634,19 +634,26 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
 #endif
         }
 
         /// <summary>
-        /// Set the description on the native crash reporter. Windows only; no-op on other platforms.
+        /// Set the description on the native crash reporter.
         /// </summary>
         public void SetNativeDescription(string description)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeAttributeIos("BugSplatDescription", description);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeAttributeMac("BugSplatDescription", description);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
 #endif
         }
 
