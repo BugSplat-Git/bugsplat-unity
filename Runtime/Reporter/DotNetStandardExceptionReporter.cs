@@ -92,9 +92,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -113,9 +111,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -134,9 +130,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -163,9 +157,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -184,9 +176,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -205,9 +195,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -226,9 +214,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -246,20 +232,29 @@ namespace BugSplatUnity.Runtime.Reporter
 
             if (clientSettings.CaptureScreenshots)
             {
-                // There isn't really a safe way to do this
-                // Serializing the image to disk potentially litters the file system
-                // Capturing the image in memory potentially risks a memory exception
-                yield return new WaitForEndOfFrame();
-                var bytes = CaptureInMemoryPngScreenshot();
-                if (bytes != null)
+                // Batch mode has no render loop, so WaitForEndOfFrame never resumes and the rest of
+                // this coroutine, including the upload, would never run
+                if (isBatchMode())
                 {
-                    var param = new FormDataParam()
+                    Debug.Log("BugSplat info: CaptureScreenshots is not supported in batch mode, skipping...");
+                }
+                else
+                {
+                    // There isn't really a safe way to do this
+                    // Serializing the image to disk potentially litters the file system
+                    // Capturing the image in memory potentially risks a memory exception
+                    yield return new WaitForEndOfFrame();
+                    var bytes = CaptureInMemoryPngScreenshot();
+                    if (bytes != null)
                     {
-                        Name = "screenshot",
-                        Content = new ByteArrayContent(bytes),
-                        FileName = "screenshot.png"
-                    };
-                    options.AdditionalFormDataParams.Add(param);
+                        var param = new FormDataParam()
+                        {
+                            Name = "screenshot",
+                            Content = new ByteArrayContent(bytes),
+                            FileName = "screenshot.png"
+                        };
+                        options.AdditionalFormDataParams.Add(param);
+                    }
                 }
             }
 
@@ -306,6 +301,19 @@ namespace BugSplatUnity.Runtime.Reporter
                     Message = $"BugSplat upload failed with exception: {ex}",
                 });
             }
+        }
+
+        internal void AddLogTailAttachment(FileInfo logFileInfo, IReportPostOptions options, List<FileInfo> tempFiles)
+        {
+            var tempFile = CopyLogTailToTempFile(logFileInfo, clientSettings.LogFileMaxSizeMB);
+
+            if (tempFile == null)
+            {
+                return;
+            }
+
+            options.AdditionalAttachments.Add(tempFile);
+            tempFiles.Add(tempFile);
         }
 
         // Copy to a temp file to avoid sharing exception
@@ -363,6 +371,8 @@ namespace BugSplatUnity.Runtime.Reporter
                 Debug.LogException(new Exception("Could not delete temp files", ex));
             }
         }
+
+        internal Func<bool> isBatchMode = () => Application.isBatchMode;
 
         private byte[] CaptureInMemoryPngScreenshot()
         {

@@ -7,7 +7,7 @@ namespace BugSplatUnity.Runtime.Util
     {
         public static void SetNullOrEmptyValues(this IReportPostOptions options, IClientSettingsRepository clientSettings)
         {
-            if (clientSettings.Attachments?.Count != 0)
+            if (clientSettings.Attachments?.Count > 0)
             {
                 options.AdditionalAttachments.AddRange(clientSettings.Attachments);
             }

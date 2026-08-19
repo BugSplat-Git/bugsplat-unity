@@ -92,6 +92,8 @@ BugSplat's Unity integration is flexible and can be used in various ways. The ea
 
 Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will default these values to `Application.productName` and `Application.version`, respectively.
 
+Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **PostExceptionsInEditor** on the options asset (or set `bugsplat.PostExceptionsInEditor = true` in code) while you verify your integration.
+
 ![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
 
 Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
@@ -220,8 +222,13 @@ Because the threaded callback also fires for main-thread logs that `logMessageRe
 
 At most 64 background exceptions are buffered at a time. A thread failing in a tight loop can produce them faster than they can be uploaded, so the excess is dropped and a single warning is logged rather than queueing unbounded work.
 
-> [!NOTE]
-> Exceptions from a `Task` nobody awaits are still not captured. They surface on the finalizer thread via `TaskScheduler.UnobservedTaskException`, which never writes to the Unity log, and only after a garbage collection. To report them, subscribe to that event yourself and re-raise on the main thread — `CrashScenarioMenu` in the sample shows the pattern.
+### Unobserved Task Exceptions
+
+A `Task` that faults with nobody awaiting it never writes to the Unity log at all, so neither log callback sees it. BugSplat subscribes to `TaskScheduler.UnobservedTaskException` and posts these through the same main-thread queue as background thread exceptions. Each exception inside the `AggregateException` is reported separately, so unrelated failures land in separate buckets rather than one.
+
+This is on by default. Uncheck **Capture Unobserved Task Exceptions** on your `BugSplatManager` to disable it.
+
+Two things are worth knowing about the timing. The runtime raises this event only when a garbage collection notices the faulted `Task`, so reports arrive well after the failure and a `Task` that is never collected is never reported. And BugSplat deliberately does **not** call `SetObserved()` on these — marking the exception observed would suppress whatever your project does with it next, and reporting a failure must not change whether that failure happens.
 
 ### Windows Crashes
 
@@ -444,9 +451,9 @@ The following API methods are available to help you customize BugSplat to fit yo
 | Notes | A default general purpose field that can be overridden by call to post |
 | User | A default user that can be overridden by call to Post |
 | CaptureEditorLog| Should BugSplat upload Editor.log when Post is called|
-| CapturePlayerLog| Should BugSplat upload Player.log when Post is called |
+| CapturePlayerLog| Should BugSplat upload Player.log when Post is called. Enabled by default — see [Player.log and privacy](#playerlog-and-privacy) |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
-| PostExceptionsInEditor | Should BugSplat upload exceptions when in editor |
+| PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
@@ -454,6 +461,16 @@ The following API methods are available to help you customize BugSplat to fit yo
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](#preventing-repeated-reports).
+
+### Player.log and privacy
+
+`CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. WebGL is the exception: the platform has no `Player.log`, so a `BugSplat` created in code there defaults to off and the setting has no effect. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:
+
+```cs
+bugsplat.CapturePlayerLog = false;
+```
+
+> **Upgrading from 4.x:** `BugSplatOptions` assets created before 5.0.0 keep whatever value is already serialized in the asset file; only newly created assets pick up the new default. Check the field on your existing asset if you want the new behavior.
 
 ### BugSplat Environment Variables
 

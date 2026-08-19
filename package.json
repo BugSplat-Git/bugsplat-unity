@@ -4,6 +4,9 @@
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
     "unity": "6000.0",
+    "documentationUrl": "https://docs.bugsplat.com/integrations/game-development/unity",
+    "changelogUrl": "https://github.com/BugSplat-Git/bugsplat-unity/blob/main/CHANGELOG.md",
+    "licensesUrl": "https://github.com/BugSplat-Git/bugsplat-unity/blob/main/LICENSE.md",
     "keywords": [
         "bugsplat",
         "crash",
