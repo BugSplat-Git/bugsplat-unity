@@ -590,7 +590,7 @@ public class BuildPostprocessors
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError($"BugSplat. Failed to start {symbolUploadPath}. Error: {ex.Message}");
+			Debug.LogError($"BugSplat. Failed to start {symbolUploadPath}. Error: {ex}");
 			onCompleted(-1);
 			return;
 		}
@@ -610,8 +610,8 @@ public class BuildPostprocessors
 
 	private static bool DownloadSymbolUpload(string destinationPath)
 	{
-		var varient = Path.GetFileName(destinationPath);
-		var fileUrl = $"https://app.bugsplat.com/download/{varient}";
+		var variant = Path.GetFileName(destinationPath);
+		var fileUrl = $"https://app.bugsplat.com/download/{variant}";
 
 		try
 		{
@@ -619,17 +619,17 @@ public class BuildPostprocessors
 
 			using (var client = new WebClient())
 			{
-				Debug.Log($"BugSplat. Downloading {varient} to {destinationPath}");
+				Debug.Log($"BugSplat. Downloading {variant} to {destinationPath}");
 
 				client.DownloadFile(fileUrl, destinationPath);
 
 				if (File.Exists(destinationPath))
 				{
-					Debug.Log($"BugSplat. {varient} downloaded successfully to {destinationPath}");
+					Debug.Log($"BugSplat. {variant} downloaded successfully to {destinationPath}");
 				}
 				else
 				{
-					Debug.LogError($"BugSplat. Could not download {varient}");
+					Debug.LogError($"BugSplat. Could not download {variant}");
 					return false;
 				}
 			}
@@ -641,7 +641,7 @@ public class BuildPostprocessors
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError($"BugSplat. Unexpected error during file download. Error: {ex.Message}");
+			Debug.LogError($"BugSplat. Unexpected error during file download. Error: {ex}");
 			return false;
 		}
 
@@ -669,15 +669,15 @@ public class BuildPostprocessors
 
 			if (process.ExitCode != 0)
 			{
-				Debug.LogError($"PostBuild: Failed to make {destinationPath} executable. Error: {error}");
+				Debug.LogError($"BugSplat. Failed to make {destinationPath} executable. Error: {error}");
 				return false;
 			}
 
-			Debug.Log($"PostBuild: Successfully made {destinationPath} executable. Output: {output}");
+			Debug.Log($"BugSplat. Successfully made {destinationPath} executable. Output: {output}");
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError($"PostBuild: Error setting executable permission for {destinationPath}. Error: {ex.Message}");
+			Debug.LogError($"BugSplat. Error setting executable permission for {destinationPath}. Error: {ex}");
 			return false;
 		}
 
