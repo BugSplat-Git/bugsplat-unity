@@ -44,9 +44,9 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 ## 🧑‍🏫 Sample
 
 > [!TIP]
-> BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings ) section.
+> BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings) section.
 
-After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
+After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#-usage) instructions.
 
 To import the sample, click the caret next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
 
@@ -100,7 +100,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 
 ## ⌨️ Usage
 
-If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#windows) from native crashes.
+If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#-windows) from native crashes.
 
 ### Adding Metadata
 
