@@ -49,15 +49,13 @@ namespace Crasher
 	}
 
 	/// <summary>
-	/// Services a scenario needs from whatever MonoBehaviour is hosting the menu: coroutines, a
-	/// main-thread dispatcher for callbacks that arrive on other threads, the BugSplat client,
-	/// and the feedback dialog.
+	/// Services a scenario needs from whatever MonoBehaviour is hosting the menu: coroutines, the
+	/// BugSplat client, and the feedback dialog.
 	/// </summary>
 	public interface ICrashScenarioHost
 	{
 		BugSplat BugSplat { get; }
 		Coroutine Run(IEnumerator routine);
-		void OnMainThread(Action action);
 		void ShowFeedback();
 	}
 
@@ -131,10 +129,9 @@ namespace Crasher
 				{
 					Name = "Unobserved Task exception",
 					Expected =
-						"Still not captured by the SDK — it surfaces on the finalizer thread, which never " +
-						"logs. This sample reports it only because CrashScenarioMenu subscribes to " +
-						"TaskScheduler.UnobservedTaskException and re-raises on the main thread.",
-					KnownGap = true,
+						"A Task nobody awaited. Never reaches Unity's log, so BugSplat subscribes to " +
+						"TaskScheduler.UnobservedTaskException directly. Reported after the GC collects " +
+						"the Task. Requires Capture Unobserved Task Exceptions.",
 					RunsInEditor = true,
 					Run = host => host.Run(FaultUnobservedTask())
 				},
