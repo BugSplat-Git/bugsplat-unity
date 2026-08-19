@@ -17,6 +17,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
 		DotNetStandardExceptionReporter sut;
 		string workingDirectory;
+		List<string> tempCopyDirectories;
 
 		[SetUp]
 		public void SetUp()
@@ -27,6 +28,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
 			workingDirectory = Path.Combine(Path.GetTempPath(), "bugsplat-log-tail-tests", Path.GetRandomFileName());
 			Directory.CreateDirectory(workingDirectory);
+			tempCopyDirectories = new List<string>();
 		}
 
 		[TearDown]
@@ -36,6 +38,26 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			{
 				Directory.Delete(workingDirectory, true);
 			}
+
+			foreach (var tempCopyDirectory in tempCopyDirectories)
+			{
+				if (Directory.Exists(tempCopyDirectory))
+				{
+					Directory.Delete(tempCopyDirectory, true);
+				}
+			}
+		}
+
+		// CopyLogTailToTempFile writes each copy to its own generated directory
+		// that nothing cleans up in tests, so every non-null result must be
+		// tracked for TearDown.
+		FileInfo TrackTempCopy(FileInfo tempCopy)
+		{
+			if (tempCopy != null)
+			{
+				tempCopyDirectories.Add(tempCopy.DirectoryName);
+			}
+			return tempCopy;
 		}
 
 		FileInfo WriteLog(string name, byte[] contents)
@@ -62,7 +84,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Encoding.UTF8.GetBytes("a small log file");
 			var log = WriteLog("Player.log", contents);
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.NotNull(result);
 			Assert.AreEqual(contents.Length, result.Length);
@@ -75,7 +97,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Repeating(2 * OneMegabyte + 4096);
 			var log = WriteLog("Player.log", contents);
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.NotNull(result);
 			Assert.AreEqual(OneMegabyte, result.Length, "should be truncated to exactly the max size");
@@ -90,7 +112,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		{
 			var log = WriteLog("Editor.log", Encoding.UTF8.GetBytes("contents"));
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.AreEqual("Editor.log", result.Name);
 		}
@@ -101,7 +123,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Repeating(2 * OneMegabyte);
 			var log = WriteLog("Player.log", contents);
 
-			sut.CopyLogTailToTempFile(log, 1);
+			TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.AreEqual(contents.Length, new FileInfo(log.FullName).Length);
 		}
@@ -133,6 +155,10 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var tempFiles = new List<FileInfo>();
 
 			sut.AddLogTailAttachment(log, options, tempFiles);
+			foreach (var tempFile in tempFiles)
+			{
+				TrackTempCopy(tempFile);
+			}
 
 			Assert.AreEqual(1, options.AdditionalAttachments.Count);
 			Assert.AreEqual(1, tempFiles.Count);
