@@ -36,6 +36,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public void ShouldPostException_WhenClientSettingsRepositoryShouldPostExceptionFalse_ShouldReturnFalse()
         {
             var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
             clientSettings.ShouldPostException = (Exception ex) => false;
             var rugs = new ReportUploadGuardService(clientSettings);
             var exception = new Exception();
@@ -47,6 +48,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public void ShouldPostException_WhenClientSettingsRepositoryShouldPostExceptionTrue_ShouldReturnTrue()
         {
             var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
             clientSettings.ShouldPostException = (Exception ex) => true;
             var rugs = new ReportUploadGuardService(clientSettings);
             var exception = new Exception();
@@ -78,6 +80,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public void ShouldPostLogMessage_WhenLogTypeNotException_ShouldReturnFalse()
         {
             var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
             clientSettings.ShouldPostException = (Exception ex) => true;
             var rugs = new ReportUploadGuardService(clientSettings);
             var exception = new Exception();
@@ -90,6 +93,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public void ShouldPostLogMessage_WhenLogTypeException_ShouldReturnTrue()
         {
             var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
             clientSettings.ShouldPostException = (Exception ex) => true;
             var rugs = new ReportUploadGuardService(clientSettings);         
             var exception = new Exception();
@@ -102,6 +106,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         public void ShouldPostLogMessage_WhenLogTypeNotException_ShouldNotCallClientSettingsRepositoryShouldPostException()
         {
             var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
             var rugs = new ReportUploadGuardService(clientSettings);
             var exception = new Exception();
             var logType = LogType.Error;

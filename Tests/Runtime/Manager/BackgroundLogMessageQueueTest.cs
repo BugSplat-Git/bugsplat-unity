@@ -185,6 +185,79 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			Assert.True(queue.IsEmpty);
 		}
 
+		// Unobserved Task exceptions arrive on the finalizer thread as an AggregateException and
+		// share this queue with the threaded log callback. The event itself can't be raised on
+		// demand, so these cover everything up to that boundary.
+
+		[Test]
+		public void EnqueueUnobservedTaskException_ShouldQueueOneMessagePerInnerException()
+		{
+			var queue = CreateQueue();
+			var aggregate = new AggregateException(
+				new InvalidOperationException("first"),
+				new ArgumentException("second"));
+
+			BugSplatManager.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
+
+			Assert.True(queue.TryDequeue(out var first));
+			Assert.AreEqual($"{typeof(InvalidOperationException)}: first", first.LogMessage);
+			Assert.AreEqual(LogType.Exception, first.Type);
+
+			Assert.True(queue.TryDequeue(out var second));
+			Assert.AreEqual($"{typeof(ArgumentException)}: second", second.LogMessage);
+			Assert.True(queue.IsEmpty);
+		}
+
+		// A Task awaiting other Tasks faults with aggregates inside aggregates. Reporting the
+		// wrapper would bucket unrelated failures together, so Flatten runs first.
+		[Test]
+		public void EnqueueUnobservedTaskException_WhenNested_ShouldQueueTheLeafExceptions()
+		{
+			var queue = CreateQueue();
+			var aggregate = new AggregateException(
+				new AggregateException(new InvalidOperationException("leaf")));
+
+			BugSplatManager.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
+
+			Assert.True(queue.TryDequeue(out var message));
+			Assert.AreEqual($"{typeof(InvalidOperationException)}: leaf", message.LogMessage);
+			Assert.True(queue.IsEmpty);
+		}
+
+		// An exception that never propagated has no stack trace. Unity's log callback delivers an
+		// empty string in that case, not null, and the reporter concatenates it either way.
+		[Test]
+		public void EnqueueUnobservedTaskException_WhenStackTraceIsNull_ShouldQueueEmptyStackTrace()
+		{
+			var queue = CreateQueue();
+
+			BugSplatManager.EnqueueUnobservedTaskException(
+				queue, new AggregateException(new Exception("never thrown")), BackgroundThreadId);
+
+			Assert.True(queue.TryDequeue(out var message));
+			Assert.AreEqual(string.Empty, message.StackTrace);
+		}
+
+		[Test]
+		public void EnqueueUnobservedTaskException_WhenAggregateIsEmpty_ShouldQueueTheAggregate()
+		{
+			var queue = CreateQueue();
+
+			BugSplatManager.EnqueueUnobservedTaskException(queue, new AggregateException(), BackgroundThreadId);
+
+			Assert.True(queue.TryDequeue(out var message));
+			StringAssert.Contains(typeof(AggregateException).ToString(), message.LogMessage);
+		}
+
+		[Test]
+		public void EnqueueUnobservedTaskException_WhenQueueOrExceptionIsNull_ShouldNotThrow()
+		{
+			Assert.DoesNotThrow(() =>
+				BugSplatManager.EnqueueUnobservedTaskException(null, new AggregateException(), BackgroundThreadId));
+			Assert.DoesNotThrow(() =>
+				BugSplatManager.EnqueueUnobservedTaskException(CreateQueue(), null, BackgroundThreadId));
+		}
+
 		[Test]
 		public void IsReportable_ShouldOnlyAllowExceptions()
 		{
