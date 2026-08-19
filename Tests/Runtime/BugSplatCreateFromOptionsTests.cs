@@ -150,19 +150,24 @@ namespace BugSplatUnity.RuntimeTests
 		}
 
 		// A default that differs by construction path is two privacy postures for one setting.
-		// WebGL has no Player.log to capture at all, so its repository default is excluded.
 		[Test]
-		public void CapturePlayerLog_ShouldDefaultToEnabledOnEveryConstructionPath()
+		public void CapturePlayerLog_ShouldDefaultToEnabledWhenCreatedFromOptions()
 		{
 			var fromOptions = BugSplat.CreateFromOptions(options);
 
 			Assert.True(options.CapturePlayerLog, "BugSplatOptions field default");
 			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
+		}
+
 #if !UNITY_WEBGL
+		// WebGL is excluded: it has no Player.log, so its repository defaults to off.
+		[Test]
+		public void CapturePlayerLog_ShouldDefaultToEnabledWhenConstructedInCode()
+		{
 			var fromCode = new BugSplat("database", "application", "version", false, false);
 
 			Assert.True(fromCode.CapturePlayerLog, "client created in code");
-#endif
 		}
+#endif
 	}
 }

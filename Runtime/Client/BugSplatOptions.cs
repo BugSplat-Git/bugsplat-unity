@@ -46,7 +46,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Upload Editor.log when Post is called")]
 		public bool CaptureEditorLog;
 
-		[Tooltip("Upload Player.log when Post is called (default). Player.log paths contain the OS username - uncheck to opt out.")]
+		[Tooltip("Upload Player.log when Post is called (default). Player.log paths contain the OS username - uncheck to opt out. Not available on WebGL.")]
 		public bool CapturePlayerLog = true;
 
         [Tooltip("Maximum size of the log files to upload in MB. Defaults to 10MB if not set.")]
