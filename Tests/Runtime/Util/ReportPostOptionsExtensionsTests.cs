@@ -10,7 +10,7 @@ namespace BugSplatUnity.RuntimeTests.Util
     // SetNullOrEmptyValues is the merge step between the per-report options a caller passes to
     // Post and the client-wide defaults on the settings repository. These tests pin what it does
     // today, including behaviour that is arguably wrong; the comments mark which is which.
-    public class ExceptionPostOptionsExtensionsTests
+    public class ReportPostOptionsExtensionsTests
     {
         static readonly FileInfo FirstAttachment = new FileInfo("first.txt");
         static readonly FileInfo SecondAttachment = new FileInfo("second.txt");
@@ -156,6 +156,18 @@ namespace BugSplatUnity.RuntimeTests.Util
             Assert.IsEmpty(options.AdditionalAttachments);
         }
 
+        // Unlike Attributes below, a null Attachments list is tolerated: the `?.Count > 0` guard
+        // skips the copy instead of throwing.
+        [Test]
+        public void SetNullOrEmptyValues_WhenClientSettingsAttachmentsIsNull_ShouldNotThrow()
+        {
+            var options = new ReportPostOptions();
+            var clientSettings = new FakeClientSettingsRepository { Attachments = null };
+
+            Assert.DoesNotThrow(() => options.SetNullOrEmptyValues(clientSettings));
+            Assert.IsEmpty(options.AdditionalAttachments);
+        }
+
         // Nothing dedupes, so applying the same client settings to the same options twice uploads
         // every client attachment twice. Callers only get away with it because the manager builds
         // fresh options per report. Pinned, not endorsed.
@@ -243,6 +255,12 @@ namespace BugSplatUnity.RuntimeTests.Util
             Assert.AreEqual(42, options.CrashTypeId);
             Assert.AreEqual(1, options.AdditionalFormDataParams.Count);
             Assert.AreEqual("param", options.AdditionalFormDataParams[0].Name);
+        }
+
+        [Test]
+        public void Attachments_WebGLClientSettingsRepository_ShouldBeInitialized()
+        {
+            Assert.IsNotNull(new WebGLClientSettingsRepository().Attachments);
         }
 
         class FakeClientSettingsRepository : IClientSettingsRepository

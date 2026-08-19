@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using BugSplatUnity.Runtime.Client;
 using UnityEngine;
 
@@ -23,6 +24,10 @@ namespace BugSplatUnity.Runtime.Manager
 		[Tooltip("Also capture unhandled exceptions thrown on background threads. Unity only raises logMessageReceived for main-thread logs, so without this those exceptions are written to the log but never reported. Requires Register Log Message Received.")]
 		internal bool captureExceptionsOnBackgroundThreads = true;
 
+		[SerializeField]
+		[Tooltip("Also capture exceptions from Tasks that faulted and were never awaited. These never reach Unity's log at all, so they are otherwise invisible. They surface only after a garbage collection notices the Task, so they are reported late and are not guaranteed to be reported before the process exits. Requires Register Log Message Received.")]
+		internal bool captureUnobservedTaskExceptions = true;
+
 		private BugSplatRef bugsplatRef;
 		private BackgroundLogMessageQueue backgroundLogMessages;
 
@@ -42,12 +47,21 @@ namespace BugSplatUnity.Runtime.Manager
 			{
 				Application.logMessageReceived += LogMessageReceivedHandler;
 
-				if (captureExceptionsOnBackgroundThreads)
+				if (captureExceptionsOnBackgroundThreads || captureUnobservedTaskExceptions)
 				{
 					// Awake runs on the main thread, so this is the id the threaded handler compares
 					// against to tell a background log from one logMessageReceived already delivered.
 					backgroundLogMessages = new BackgroundLogMessageQueue(Thread.CurrentThread.ManagedThreadId);
+				}
+
+				if (captureExceptionsOnBackgroundThreads)
+				{
 					Application.logMessageReceivedThreaded += LogMessageReceivedThreadedHandler;
+				}
+
+				if (captureUnobservedTaskExceptions)
+				{
+					TaskScheduler.UnobservedTaskException += UnobservedTaskExceptionHandler;
 				}
 			}
 
@@ -61,6 +75,7 @@ namespace BugSplatUnity.Runtime.Manager
 		{
 			Application.logMessageReceived -= LogMessageReceivedHandler;
 			Application.logMessageReceivedThreaded -= LogMessageReceivedThreadedHandler;
+			TaskScheduler.UnobservedTaskException -= UnobservedTaskExceptionHandler;
 		}
 
 		private void Update()
@@ -87,7 +102,7 @@ namespace BugSplatUnity.Runtime.Manager
 			var dropped = backgroundLogMessages.TakeDroppedCount();
 			if (dropped > 0)
 			{
-				Debug.LogWarning($"BugSplat. Dropped {dropped} background thread exception(s) — they arrived faster than they could be posted. At most {backgroundLogMessages.Capacity} are buffered at a time.");
+				Debug.LogWarning($"BugSplat. Dropped {dropped} off-main-thread exception(s) — they arrived faster than they could be posted. At most {backgroundLogMessages.Capacity} are buffered at a time.");
 			}
 		}
 
@@ -109,6 +124,52 @@ namespace BugSplatUnity.Runtime.Manager
 			// Runs on whichever thread logged. Do nothing here beyond queueing — most of the Unity
 			// API, StartCoroutine included, is main-thread only.
 			backgroundLogMessages?.Enqueue(logMessage, stackTrace, type, Thread.CurrentThread.ManagedThreadId);
+		}
+
+		void UnobservedTaskExceptionHandler(object sender, UnobservedTaskExceptionEventArgs args)
+		{
+			// SetObserved is deliberately not called. Marking the exception observed would suppress
+			// whatever the application does with it next — including the process-terminating
+			// behavior a project can opt into — and reporting a crash must not change whether that
+			// crash happens.
+			EnqueueUnobservedTaskException(backgroundLogMessages, args?.Exception, Thread.CurrentThread.ManagedThreadId);
+		}
+
+		/// <summary>
+		/// Queues one report per inner exception of the flattened AggregateException. Runs on the
+		/// finalizer thread, so it only writes to the queue; <see cref="Update"/> posts from the
+		/// main thread. Reporting each inner exception separately rather than the wrapper keeps
+		/// distinct failures in distinct dashboard buckets.
+		/// </summary>
+		internal static void EnqueueUnobservedTaskException(BackgroundLogMessageQueue queue, AggregateException exception, int callingThreadId)
+		{
+			if (queue == null || exception == null)
+			{
+				return;
+			}
+
+			var inners = exception.Flatten().InnerExceptions;
+			if (inners.Count == 0)
+			{
+				Enqueue(queue, exception, callingThreadId);
+				return;
+			}
+
+			foreach (var inner in inners)
+			{
+				Enqueue(queue, inner, callingThreadId);
+			}
+		}
+
+		// Matches the shape Unity's log callback delivers for an exception, so both capture paths
+		// produce identically formatted reports.
+		static void Enqueue(BackgroundLogMessageQueue queue, Exception exception, int callingThreadId)
+		{
+			queue.Enqueue(
+				$"{exception.GetType()}: {exception.Message}",
+				exception.StackTrace ?? string.Empty,
+				LogType.Exception,
+				callingThreadId);
 		}
 	}
 }
