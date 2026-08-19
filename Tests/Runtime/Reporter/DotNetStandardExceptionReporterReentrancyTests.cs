@@ -30,9 +30,6 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			{
 				reportUploadGuardService = new FakeTrueReportUploadGuardService()
 			};
-
-			// The reporter logs an error when the upload fails, and an unexpected error fails the test.
-			LogAssert.ignoreFailingMessages = true;
 		}
 
 		[TearDown]
@@ -43,8 +40,15 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 				Application.logMessageReceived -= logCallback;
 				logCallback = null;
 			}
+		}
 
-			LogAssert.ignoreFailingMessages = false;
+		// The reporter logs an error when the upload fails, and an unexpected error fails the
+		// test. This must run inside the test body: SetUp executes outside the test's log
+		// scope, so the flag set there doesn't reach the scope that judges the logs. The flag
+		// dies with the test's scope, so no TearDown reset is needed.
+		static void IgnoreReporterErrorLogs()
+		{
+			LogAssert.ignoreFailingMessages = true;
 		}
 
 		void OnLogMessageReceived(Application.LogCallback callback)
@@ -56,6 +60,8 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		[UnityTest]
 		public IEnumerator Post_WhenUploadFails_ShouldNotRaiseTheDiagnosticAsAnException()
 		{
+			IgnoreReporterErrorLogs();
+
 			var types = new List<LogType>();
 			OnLogMessageReceived((message, stackTrace, type) => types.Add(type));
 
@@ -68,6 +74,8 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		[UnityTest]
 		public IEnumerator Post_WhenUploadFails_ShouldNotReportTheDiagnosticItLogs()
 		{
+			IgnoreReporterErrorLogs();
+
 			ExceptionReporterPostResult reentrantResult = null;
 			var reentrantStarted = false;
 
@@ -97,6 +105,8 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		[UnityTest]
 		public IEnumerator Post_WhenUploadFails_ShouldStillReportTheNextGenuineException()
 		{
+			IgnoreReporterErrorLogs();
+
 			yield return sut.Post(new Exception("BugSplat test: original"));
 
 			yield return sut.LogMessageReceived("BugSplat test: next", "stackTrace", LogType.Exception);
