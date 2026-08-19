@@ -92,9 +92,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -113,9 +111,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -134,9 +130,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(editorLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(editorLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -163,9 +157,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -184,9 +176,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -205,9 +195,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -226,9 +214,7 @@ namespace BugSplatUnity.Runtime.Reporter
                 {
                     try
                     {
-                        var tempFile = CopyLogTailToTempFile(playerLogFileInfo, clientSettings.LogFileMaxSizeMB);
-                        options.AdditionalAttachments.Add(tempFile);
-                        tempFiles.Add(tempFile);
+                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
                     }
                     catch (Exception ex)
                     {
@@ -315,6 +301,19 @@ namespace BugSplatUnity.Runtime.Reporter
                     Message = $"BugSplat upload failed with exception: {ex}",
                 });
             }
+        }
+
+        internal void AddLogTailAttachment(FileInfo logFileInfo, IReportPostOptions options, List<FileInfo> tempFiles)
+        {
+            var tempFile = CopyLogTailToTempFile(logFileInfo, clientSettings.LogFileMaxSizeMB);
+
+            if (tempFile == null)
+            {
+                return;
+            }
+
+            options.AdditionalAttachments.Add(tempFile);
+            tempFiles.Add(tempFile);
         }
 
         // Copy to a temp file to avoid sharing exception
