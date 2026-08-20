@@ -258,14 +258,34 @@ namespace BugSplatUnity.RuntimeTests.Manager
 				reportUploadGuardService = new FakeTrueReportUploadGuardService()
 			};
 
-			Debug.LogException(new Exception("BugSplat manager test: pipeline re-entrancy"));
+			var diagnosticLogged = false;
+			void watchForDiagnostic(string logMessage, string stackTrace, LogType type)
+			{
+				if (type == LogType.Error && logMessage.Contains("BugSplat error:"))
+				{
+					diagnosticLogged = true;
+				}
+			}
 
-			yield return WaitUntil(() => exceptionClient.Calls.Count >= 1);
-			yield return null;
-			yield return null;
-			yield return null;
+			Application.logMessageReceived += watchForDiagnostic;
+			try
+			{
+				Debug.LogException(new Exception("BugSplat manager test: pipeline re-entrancy"));
 
-			Assert.AreEqual(1, exceptionClient.Calls.Count);
+				// Waiting on the diagnostic rather than the call count also settles the upload
+				// task. The reporter logs it only after observing the faulted task, so the
+				// failure can't outlive this test as an unobserved exception and get reported
+				// against whichever test the finalizer happens to land in.
+				yield return WaitUntil(() => diagnosticLogged);
+				yield return null;
+				yield return null;
+
+				Assert.AreEqual(1, exceptionClient.Calls.Count);
+			}
+			finally
+			{
+				Application.logMessageReceived -= watchForDiagnostic;
+			}
 		}
 	}
 }
