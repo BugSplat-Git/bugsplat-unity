@@ -39,6 +39,33 @@ namespace BugSplatUnity.RuntimeTests.Reporter
         }
 
         [UnityTest]
+        public IEnumerator LogMessageReceived_WhenReportUploadGuardServiceReturnsFalse_ShouldInvokeCallbackWithSkippedResult()
+        {
+            var logMessage = "logMessage";
+            var stackTrace = "stackTrace";
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => false
+            };
+            var fakeExceptionClient = new FakeWebGLExceptionClient();
+            var sut = new WebGLReporter(
+                clientSettings,
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeFalseReportUploadGuardService()
+            };
+
+            ExceptionReporterPostResult result = null;
+            yield return sut.LogMessageReceived(logMessage, stackTrace, LogType.Exception, (postResult) => result = postResult);
+
+            Assert.NotNull(result);
+            Assert.IsFalse(result.Uploaded);
+            Assert.AreEqual(stackTrace, result.Exception);
+            Assert.AreEqual("BugSplat upload skipped due to ShouldPostLogMessage check.", result.Message);
+        }
+
+        [UnityTest]
         public IEnumerator LogMessageReceived_WhenReportUploadGuardServiceReturnsTrue_ShouldCallPostWithStackTraceAndOptions()
         {
             var logMessage = "logMessage";
@@ -82,6 +109,32 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             yield return sut.Post(exception);
 
             Assert.IsEmpty(fakeExceptionClient.Calls);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WhenReportUploadGuardServiceReturnsFalse_ShouldInvokeCallbackWithSkippedResult()
+        {
+            var exception = new Exception("BugSplat rocks!");
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => false
+            };
+            var fakeExceptionClient = new FakeWebGLExceptionClient();
+            var sut = new WebGLReporter(
+                clientSettings,
+                fakeExceptionClient
+            )
+            {
+                reportUploadGuardService = new FakeFalseReportUploadGuardService()
+            };
+
+            ExceptionReporterPostResult result = null;
+            yield return sut.Post(exception, callback: (postResult) => result = postResult);
+
+            Assert.NotNull(result);
+            Assert.IsFalse(result.Uploaded);
+            Assert.AreEqual(exception.ToString(), result.Exception);
+            Assert.AreEqual("BugSplat upload skipped due to ShouldPostException check.", result.Message);
         }
 
         [UnityTest]

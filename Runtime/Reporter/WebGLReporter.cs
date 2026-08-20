@@ -28,6 +28,12 @@ namespace BugSplatUnity.Runtime.Reporter
         {
             if (!reportUploadGuardService.ShouldPostLogMessage(type))
             {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped due to ShouldPostLogMessage check.",
+                });
                 yield break;
             }
 
@@ -53,8 +59,16 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator Post(Exception ex, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
+            var stackTrace = ex.ToString();
+
             if (!reportUploadGuardService.ShouldPostException(ex))
             {
+                callback?.Invoke(new ExceptionReporterPostResult()
+                {
+                    Uploaded = false,
+                    Exception = stackTrace,
+                    Message = "BugSplat upload skipped due to ShouldPostException check.",
+                });
                 yield break;
             }
 
@@ -62,7 +76,7 @@ namespace BugSplatUnity.Runtime.Reporter
             options.SetNullOrEmptyValues(clientSettings);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity;
 
-            yield return Post(ex.ToString(), options, callback);
+            yield return Post(stackTrace, options, callback);
         }
 
         private IEnumerator Post(string stackTrace, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
