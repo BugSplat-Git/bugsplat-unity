@@ -1,3 +1,4 @@
+using BugSplatUnity.Runtime.Manager;
 using NUnit.Framework;
 using System;
 

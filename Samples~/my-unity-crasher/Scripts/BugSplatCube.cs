@@ -1,10 +1,13 @@
 using UnityEngine;
 
-public class BugSplatCube : MonoBehaviour
+namespace Crasher
 {
-    void Update()
+    public class BugSplatCube : MonoBehaviour
     {
-        // Rotate slowly, but menacingly
-        transform.Rotate(new Vector3(0, 0, -0.2f));
+        void Update()
+        {
+            // Rotate slowly, but menacingly
+            transform.Rotate(new Vector3(0, 0, -0.2f));
+        }
     }
 }

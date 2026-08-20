@@ -5,53 +5,56 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class BugSplatSettings : MonoBehaviour
+namespace Crasher
 {
-    BugSplat bugsplat;
-
-    // Start is called before the first frame update
-    void Start()
+    public class BugSplatSettings : MonoBehaviour
     {
-        var manager = FindAnyObjectByType<BugSplatManager>();
-        bugsplat = manager != null ? manager.BugSplat : null;
-        if (bugsplat == null)
+        BugSplat bugsplat;
+
+        // Start is called before the first frame update
+        void Start()
         {
-            Debug.LogError("[BugSplat] BugSplatManager not found in scene. Attributes and settings will not be applied.");
-            return;
-        }
-
-        bugsplat.Attributes.Add("OS", SystemInfo.operatingSystem);
-        bugsplat.Attributes.Add("CPU", SystemInfo.processorType);
-        bugsplat.Attributes.Add("MEMORY", $"{SystemInfo.systemMemorySize} MB");
-        bugsplat.Attributes.Add("GPU", SystemInfo.graphicsDeviceName);
-        bugsplat.Attributes.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
-        bugsplat.Description = "Overridden description from BugSplatSettings.";
-        bugsplat.Notes = "Overridden notes field from BugSplatSettings.";
-        bugsplat.User = "Fred";
-        bugsplat.Email = "fred@bugsplat.com";
-
-        var lastPost = new DateTime(0);
-        bugsplat.ShouldPostException = (ex) =>
-        {
-            var now = DateTime.Now;
-
-            // Set to a long TimeSpan for demonstration purposes
-            // In production BugSplat recommends 3 seconds between posts
-            if (now - lastPost < TimeSpan.FromSeconds(7))
+            var manager = FindAnyObjectByType<BugSplatManager>();
+            bugsplat = manager != null ? manager.BugSplat : null;
+            if (bugsplat == null)
             {
-                Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
-                return false;
+                Debug.LogError("[BugSplat] BugSplatManager not found in scene. Attributes and settings will not be applied.");
+                return;
             }
 
-            Debug.Log("ShouldPostException returns true in BugSplatSettings. Posting BugSplat report...");
-            lastPost = now;
-            return true;
-        };
-    }
+            bugsplat.Attributes.Add("OS", SystemInfo.operatingSystem);
+            bugsplat.Attributes.Add("CPU", SystemInfo.processorType);
+            bugsplat.Attributes.Add("MEMORY", $"{SystemInfo.systemMemorySize} MB");
+            bugsplat.Attributes.Add("GPU", SystemInfo.graphicsDeviceName);
+            bugsplat.Attributes.Add("GPU MEMORY", $"{SystemInfo.graphicsMemorySize} MB");
+            bugsplat.Description = "Overridden description from BugSplatSettings.";
+            bugsplat.Notes = "Overridden notes field from BugSplatSettings.";
+            bugsplat.User = "Fred";
+            bugsplat.Email = "fred@bugsplat.com";
 
-    // Update is called once per frame
-    void Update()
-    {
+            var lastPost = new DateTime(0);
+            bugsplat.ShouldPostException = (ex) =>
+            {
+                var now = DateTime.Now;
+
+                // Set to a long TimeSpan for demonstration purposes
+                // In production BugSplat recommends 3 seconds between posts
+                if (now - lastPost < TimeSpan.FromSeconds(7))
+                {
+                    Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
+                    return false;
+                }
+
+                Debug.Log("ShouldPostException returns true in BugSplatSettings. Posting BugSplat report...");
+                lastPost = now;
+                return true;
+            };
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
         
+        }
     }
 }
