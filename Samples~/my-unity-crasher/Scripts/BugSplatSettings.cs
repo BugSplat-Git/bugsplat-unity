@@ -30,9 +30,6 @@ public class BugSplatSettings : MonoBehaviour
         bugsplat.User = "Fred";
         bugsplat.Email = "fred@bugsplat.com";
 
-        if (!string.IsNullOrEmpty(Application.consoleLogPath))
-            bugsplat.AttachNativeLogFile(Application.consoleLogPath);
-
         var lastPost = new DateTime(0);
         bugsplat.ShouldPostException = (ex) =>
         {

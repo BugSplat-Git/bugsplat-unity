@@ -736,10 +736,20 @@ namespace BugSplatUnity
         /// Windows and macOS only. On iOS the native entry point is an empty stub, because BugSplat's iOS
         /// delegate suppresses attributes once it supplies attachments, and on Android there is no bridge
         /// call at all — so this is a no-op on both.
+        /// Passing Application.consoleLogPath goes through the same native attachment state CapturePlayerLog
+        /// manages, so Player.log cannot be attached twice and a later CapturePlayerLog = false still removes
+        /// it. On macOS the native bridge holds a single log file, so attaching any other file replaces the
+        /// one already attached.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
             if (!nativeCrashReportingEnabled) return;
+
+            if (!string.IsNullOrEmpty(path) && path == Application.consoleLogPath)
+            {
+                SetNativePlayerLogAttachment(true);
+                return;
+            }
 #if UNITY_IOS && !UNITY_EDITOR
             _attachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
