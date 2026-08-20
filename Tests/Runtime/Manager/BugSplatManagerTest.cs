@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Manager;
+using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using UnityEngine;
@@ -327,6 +329,53 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			finally
 			{
 				Application.logMessageReceived -= countDropWarnings;
+			}
+		}
+
+		[UnityTest]
+		public IEnumerator ReportingPipelineError_ReportsExactlyOnce()
+		{
+			CreateManager();
+			LogAssert.ignoreFailingMessages = true;
+
+			// The real reporter, so the diagnostic it logs when an upload fails travels back
+			// through Application.logMessageReceived and this manager, as it does in a player.
+			var exceptionClient = new FakeFailingDotNetExceptionClient(
+				new Exception("BugSplat manager test: upload failed"));
+			manager.BugSplat.exceptionReporter = new DotNetStandardExceptionReporter(
+				new WebGLClientSettingsRepository(),
+				exceptionClient)
+			{
+				reportUploadGuardService = new FakeTrueReportUploadGuardService()
+			};
+
+			var diagnosticLogged = false;
+			void watchForDiagnostic(string logMessage, string stackTrace, LogType type)
+			{
+				if (type == LogType.Error && logMessage.Contains("BugSplat error:"))
+				{
+					diagnosticLogged = true;
+				}
+			}
+
+			Application.logMessageReceived += watchForDiagnostic;
+			try
+			{
+				Debug.LogException(new Exception("BugSplat manager test: pipeline re-entrancy"));
+
+				// Waiting on the diagnostic rather than the call count also settles the upload
+				// task. The reporter logs it only after observing the faulted task, so the
+				// failure can't outlive this test as an unobserved exception and get reported
+				// against whichever test the finalizer happens to land in.
+				yield return WaitUntil(() => diagnosticLogged);
+				yield return null;
+				yield return null;
+
+				Assert.AreEqual(1, exceptionClient.Calls.Count);
+			}
+			finally
+			{
+				Application.logMessageReceived -= watchForDiagnostic;
 			}
 		}
 	}

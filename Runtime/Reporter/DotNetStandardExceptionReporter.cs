@@ -96,7 +96,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -115,7 +115,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -134,7 +134,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -161,7 +161,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -180,7 +180,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -199,7 +199,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -218,7 +218,7 @@ namespace BugSplatUnity.Runtime.Reporter
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                     }
                 }
                 else
@@ -346,7 +346,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
             catch (Exception ex)
             {
-                Debug.LogException(new Exception("Could not copy log tail to temp file", ex));
+                Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
                 return null;
             }
 
@@ -368,7 +368,7 @@ namespace BugSplatUnity.Runtime.Reporter
             }
             catch (Exception ex)
             {
-                Debug.LogException(new Exception("Could not delete temp files", ex));
+                Debug.LogError($"BugSplat error: Could not delete temp files {ex}");
             }
         }
 
