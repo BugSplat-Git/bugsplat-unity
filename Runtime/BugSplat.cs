@@ -108,7 +108,7 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
+        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 report every 3 seconds.
         /// </summary>
         public Func<Exception, bool> ShouldPostException
         {
@@ -185,7 +185,7 @@ namespace BugSplatUnity
             }
         }
 
-        // <summary>
+        /// <summary>
         /// A general purpose field that can be overridden by call to Post.
         /// </summary>
         public string Notes
@@ -733,7 +733,9 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
-        /// Supported on Windows, iOS, and macOS; no-op on Android.
+        /// Windows and macOS only. On iOS the native entry point is an empty stub, because BugSplat's iOS
+        /// delegate suppresses attributes once it supplies attachments, and on Android there is no bridge
+        /// call at all — so this is a no-op on both.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {

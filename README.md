@@ -44,9 +44,9 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 ## 🧑‍🏫 Sample
 
 > [!TIP]
-> BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings ) section.
+> BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings) section.
 
-After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#usage) instructions.
+After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](#-usage) instructions.
 
 To import the sample, click the caret next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
 
@@ -102,7 +102,7 @@ Finally, provide a valid `BugSplatOptions` to `BugSplatManager`.
 
 ## ⌨️ Usage
 
-If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#windows) from native crashes.
+If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](#-windows) from native crashes.
 
 ### Adding Metadata
 
@@ -306,11 +306,33 @@ When an exception occurs, a page similar to the following will open in the user'
 
 More information on support responses can be found [here](https://docs.bugsplat.com/introduction/production/setting-up-custom-support-responses).
 
+## 🧭 Platform Support
+
+What BugSplat captures on each platform. Setup for each one is covered in [Android](#-android), [iOS](#-ios), [macOS](#-macos), and [Windows](#-windows).
+
+| Capability | Windows | macOS | iOS | Android | Linux | WebGL |
+| --- | --- | --- | --- | --- | --- | --- |
+| Managed C# exceptions | Yes | Yes | Yes | Yes | Yes | Yes |
+| Native crashes | Yes (Mono or IL2CPP) | Yes (IL2CPP only) | Yes | Yes | No | No |
+| Hang / ANR reporting | Yes (opt-in) | No | Yes | Yes (Android 11+) | No | No |
+| Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
+| User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
+| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
+
+- **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
+- **Native crashes** require the matching option on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, or `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
+- **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on iOS and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS has no hang detection.
+- **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
+- **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.
+- **Automatic symbol upload** runs as a post-build step and needs [symbol upload credentials](#symbol-upload-credentials). Windows uploads `.pdb`, `.dll`, and `.exe` files only when the player is built from a **Windows editor** with **Copy PDB files** enabled. macOS uploads dSYMs when `UploadDebugSymbolsForMac` is set, unless the build is an Xcode project export. iOS adds an Xcode build phase that uploads dSYMs during the Xcode build when `UploadDebugSymbolsForIos` is set. Android uploads the generated symbols archive when `UploadDebugSymbolsForAndroid` is set, and skips it when **Export Project** is enabled or **Debug Symbols** is **None**. Linux and WebGL have no symbol upload step.
+
+Two things that don't fit the table: `Post(FileInfo minidump)` works on every platform except WebGL, where it logs that it isn't implemented and returns without uploading; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, and iOS only — the Android symbol upload sends native `.so` symbols alone.
+
 ## 🤖 Android
 
 The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android via Crashpad. To configure crash reporting for Android, set the `UseNativeCrashReportingForAndroid` and `UploadDebugSymbolsForAndroid` properties to `true` on the BugSplatManager instance.
 
-You'll also need to configure the scripting backend to use IL2CPP, target ARM64 (ARMV7a is not supported), and set the Minimum API Level to **Android 8.0 (API level 26)** or higher.
+You'll also need to configure the scripting backend to use IL2CPP, target **ARM64**, and set the Minimum API Level to **Android 8.0 (API level 26)** or higher. ARM64 is the only configuration BugSplat tests; the bundled `bugsplat-android-release.aar` also ships `armeabi-v7a` and `x86_64` native libraries, but those ABIs are untested and unsupported.
 
 ![Android Player Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec8f5b7-8dfd-43db-84e0-7e7d1229324a)
 
@@ -401,7 +423,7 @@ Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash re
 
 - `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
 - Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.
-- `Post(FileInfo minidump)` still works on all platforms for posting your own minidump files.
+- `Post(FileInfo minidump)` still works for posting your own minidump files on every platform except WebGL, where it logs that it isn't implemented and returns without uploading.
 - `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
 - Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](#symbol-upload-credentials).
 - **iOS projects exported with Append, or checked into version control, keep their old "Upload dSYM files to BugSplat" build phase.** Unity matches an existing phase on its script body, so the rewritten phase is not recognised as the same one. Delete the old phase and build again, or re-export with Replace. A phase generated before 5.0.0 contains your Client ID and Secret in plain text — **rotate them**.
@@ -435,10 +457,12 @@ The following API methods are available to help you customize BugSplat to fit yo
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
-| ShouldPostException | Settable guard function that is called before each BugSplat report is posted |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
+
+> [!NOTE]
+> `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](#preventing-repeated-reports).
 
 ### Player.log and privacy
 
