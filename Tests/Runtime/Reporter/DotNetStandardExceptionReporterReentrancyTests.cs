@@ -1,3 +1,4 @@
+using BugSplatUnity.Runtime.Manager;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
@@ -12,9 +13,10 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 {
 	/// <summary>
 	/// The reporter's own diagnostics travel back through Application.logMessageReceived, which is
-	/// what BugSplatManager forwards to this very reporter. These pin that a failing report can't
-	/// turn into a second report, and that the guard is narrow enough to leave the next genuine
-	/// exception alone.
+	/// what BugSplatManager forwards to this very reporter. What stops a failing report from
+	/// becoming a second report is the log type: the pipeline only ever acts on LogType.Exception,
+	/// so the diagnostics go out as LogType.Error. These pin that, and that the distinction is
+	/// narrow enough to leave the next genuine exception alone.
 	/// </summary>
 	public class DotNetStandardExceptionReporterReentrancyTests
 	{
@@ -58,7 +60,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		}
 
 		[UnityTest]
-		public IEnumerator Post_WhenUploadFails_ShouldNotRaiseTheDiagnosticAsAnException()
+		public IEnumerator Post_WhenUploadFails_ShouldLogTheDiagnosticAtATypeThePipelineIgnores()
 		{
 			IgnoreReporterErrorLogs();
 
@@ -67,39 +69,18 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
 			yield return sut.Post(new Exception("BugSplat test: original"));
 
-			CollectionAssert.Contains(types, LogType.Error);
+			CollectionAssert.IsNotEmpty(types, "the reporter should log a diagnostic when the upload fails");
 			CollectionAssert.DoesNotContain(types, LogType.Exception);
-		}
 
-		[UnityTest]
-		public IEnumerator Post_WhenUploadFails_ShouldNotReportTheDiagnosticItLogs()
-		{
-			IgnoreReporterErrorLogs();
-
-			ExceptionReporterPostResult reentrantResult = null;
-			var reentrantStarted = false;
-
-			OnLogMessageReceived((message, stackTrace, type) =>
+			// Asserted against the real filters rather than the reporter's own guard, which the
+			// permissive fake in SetUp replaces: these two are what a diagnostic would meet on
+			// the way back in, on the main thread and off it respectively.
+			var guard = new ReportUploadGuardService(new WebGLClientSettingsRepository());
+			foreach (var type in types)
 			{
-				if (type != LogType.Error)
-				{
-					return;
-				}
-
-				var reentrant = sut.LogMessageReceived(
-					message,
-					stackTrace,
-					LogType.Exception,
-					result => reentrantResult = result);
-				reentrantStarted = reentrant.MoveNext();
-			});
-
-			yield return sut.Post(new Exception("BugSplat test: original"));
-
-			Assert.IsFalse(reentrantStarted, "the re-entrant report should have completed without posting");
-			Assert.IsNotNull(reentrantResult, "the re-entrant report should have been skipped, not started");
-			Assert.IsFalse(reentrantResult.Uploaded);
-			Assert.AreEqual(1, exceptionClient.Calls.Count);
+				Assert.IsFalse(guard.ShouldPostLogMessage(type), $"{type} would be posted by the guard service");
+				Assert.IsFalse(BackgroundLogMessageQueue.IsReportable(type), $"{type} would be queued from a background thread");
+			}
 		}
 
 		[UnityTest]
