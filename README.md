@@ -474,6 +474,18 @@ bugsplat.CapturePlayerLog = false;
 
 > **Upgrading from 4.x:** `BugSplatOptions` assets created before 5.0.0 keep whatever value is already serialized in the asset file; only newly created assets pick up the new default. Check the field on your existing asset if you want the new behavior.
 
+### Attaching Files to Native Crash Reports
+
+`Attachments` adds files to managed posts. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list, so files for native reports are attached with `AttachNativeLogFile`:
+
+```cs
+bugsplat.AttachNativeLogFile("/path/to/support.log");
+```
+
+Windows attaches every file passed to it. On macOS the native bridge holds a single log file, so a second call replaces the first — including the `Player.log` that `CapturePlayerLog` attaches. The call is a no-op on iOS and Android, where the native reporters take no attachments; `Player.log` still ships with managed posts on those platforms.
+
+Passing `Application.consoleLogPath` is treated as the player log rather than as an extra file: it is attached at most once, and setting `CapturePlayerLog = false` afterwards still removes it. Prefer `CapturePlayerLog` for that file — see [Player.log and privacy](#playerlog-and-privacy).
+
 ### BugSplat Environment Variables
 
 | Variable | Description |
