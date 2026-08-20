@@ -340,6 +340,8 @@ The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat
 
 To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` and `UploadDebugSymbolsForMac` properties to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
 
+`Player.log` is attached to native macOS crash reports when `CapturePlayerLog` is enabled on your `BugSplatOptions` asset.
+
 ## 🪟 Windows
 
 The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
@@ -349,7 +351,7 @@ To configure native crash reporting for Windows, set the `UseNativeCrashReportin
 When native crash reporting is enabled:
 
 - Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
-- `Player.log` is attached to native crash reports automatically.
+- `Player.log` is attached to native crash reports when `CapturePlayerLog` is enabled on your `BugSplatOptions` asset. Setting the `CapturePlayerLog` property at runtime adds or removes the attachment.
 - The BugSplat crash dialog is shown by default. Set `WindowsShowCrashDialog` to `false` to send reports silently instead.
 - At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatRc.dll`, and `BugSplatWer.dll` next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
 - Fail-fast crashes — stack buffer overruns and heap corruption — bypass BugSplat's crash handler entirely and need one extra install-time step. See [Windows Error Reporting](#windows-error-reporting).

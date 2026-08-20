@@ -136,9 +136,11 @@ extern "C" {
         [bugsplat setValue:ver forKey:@"applicationVersion"];
 
         // Set up log file delegate BEFORE start so it's available when
-        // pending crash reports are processed on launch
+        // pending crash reports are processed on launch. Existence is not
+        // checked here: the delegate checks it lazily at attachment time,
+        // so a log file created after init still attaches.
         NSString *path = [NSString stringWithUTF8String:(logFilePath ?: "")];
-        if (path.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        if (path.length > 0) {
             _logFilePath = path;
             EnsureDelegateClass();
             if (!_delegateInstance) {
