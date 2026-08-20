@@ -133,7 +133,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [iOS](Documentation~/ios.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload |
 | [Windows](Documentation~/windows.md) | Native crash reporting, plugin and IL2CPP symbols, hang detection, Windows Error Reporting |
-| [API](Documentation~/api.md) | `BugSplatManager` settings, every `BugSplatOptions` field, `Player.log` and privacy |
+| [API](Documentation~/api.md) | `BugSplatManager` settings, every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
 
