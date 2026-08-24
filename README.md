@@ -480,11 +480,23 @@ bugsplat.CapturePlayerLog = false;
 
 ```cs
 bugsplat.AttachNativeLogFile("/path/to/support.log");
+bugsplat.DetachNativeLogFile("/path/to/support.log");
 ```
 
-Windows attaches every file passed to it. On macOS the native bridge holds a single log file, so a second call replaces the first — including the `Player.log` that `CapturePlayerLog` attaches. The call is a no-op on iOS and Android, where the native reporters take no attachments; `Player.log` still ships with managed posts on those platforms.
+Attaching is **additive and idempotent**. Every attached file is included in a native report, attaching one file never displaces another, and attaching the same file twice attaches it once. Paths are resolved to full paths before they are compared — and compared case-insensitively on Windows — so `"logs/support.log"` and `"C:\Game\Logs\Support.log"` are recognized as the file they name rather than as new attachments. `DetachNativeLogFile` removes one file and leaves the rest attached.
 
-Passing `Application.consoleLogPath` is treated as the player log rather than as an extra file: it is attached at most once, and setting `CapturePlayerLog = false` afterwards still removes it. Prefer `CapturePlayerLog` for that file — see [Player.log and privacy](#playerlog-and-privacy).
+Support by platform:
+
+| Platform | Native attachments |
+|---|---|
+| Windows | Multiple |
+| macOS | Multiple |
+| iOS | Multiple, once `BugSplat.xcframework` is updated to a build that includes [bugsplat-apple#70](https://github.com/BugSplat-Git/bugsplat-apple/pull/70) |
+| Android | Not supported — the call is a no-op |
+
+`Player.log` still ships with managed posts on every platform, including Android.
+
+`CapturePlayerLog` uses the same mechanism with `Application.consoleLogPath`, so the two cooperate: setting it `false` detaches only `Player.log`, and attaching your own file leaves `Player.log` alone. Prefer `CapturePlayerLog` for that file rather than attaching `Application.consoleLogPath` yourself — see [Player.log and privacy](#playerlog-and-privacy).
 
 ### BugSplat Environment Variables
 
