@@ -62,7 +62,8 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Upload Player.log when Post is called. On platforms whose native crash reporter attaches
-        /// Player.log (Windows and macOS), this also controls the native attachment.
+        /// Player.log (Windows and macOS), this also attaches or detaches it natively, leaving any
+        /// file attached with AttachNativeLogFile in place.
         /// </summary>
         public bool CapturePlayerLog
         {
@@ -217,12 +218,20 @@ namespace BugSplatUnity
             }
         }
 
+        private static readonly StringComparer nativeAttachmentPathComparer =
+#if UNITY_STANDALONE_WIN
+            StringComparer.OrdinalIgnoreCase;
+#else
+            StringComparer.Ordinal;
+#endif
+
         private IClientSettingsRepository clientSettings;
         internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
-        private bool nativePlayerLogAttached;
+        private readonly List<string> nativeAttachmentPaths = new List<string>();
+        private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
         /// <summary>
@@ -272,6 +281,9 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
+            // Resolved once here so no public member has to touch the Unity API, which is main-thread only.
+            consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
+
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (useNativeLibWin)
             {
@@ -319,10 +331,16 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             if (useNativeLibMac)
             {
-                var logPath = capturePlayerLog ? Application.consoleLogPath : null;
+                // The delegate is queried while start processes crash reports left by the previous
+                // session, so the player log has to be tracked before start rather than attached after it.
+                var logPath = capturePlayerLog ? consoleLogPath : null;
                 _startBugSplatMac(database, application, version, logPath ?? "");
                 nativeCrashReportingEnabled = true;
-                nativePlayerLogAttached = !string.IsNullOrEmpty(logPath);
+
+                if (logPath != null)
+                {
+                    nativeAttachmentPaths.Add(logPath);
+                }
             }
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
@@ -733,23 +751,94 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
-        /// Windows and macOS only. On iOS the native entry point is an empty stub, because BugSplat's iOS
-        /// delegate suppresses attributes once it supplies attachments, and on Android there is no bridge
-        /// call at all — so this is a no-op on both.
-        /// Passing Application.consoleLogPath goes through the same native attachment state CapturePlayerLog
-        /// manages, so Player.log cannot be attached twice and a later CapturePlayerLog = false still removes
-        /// it. On macOS the native bridge holds a single log file, so attaching any other file replaces the
-        /// one already attached.
+        /// Attaching is additive and idempotent: a path that is already attached is ignored, and attaching a
+        /// file never displaces one attached earlier — including the Player.log that CapturePlayerLog manages.
+        /// Paths are resolved to full paths before they are compared, so the same file named two ways is
+        /// attached once. Supported on Windows, macOS, and iOS; a no-op on Android, whose bridge has no
+        /// attachment API. Safe to call from any thread.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
             if (!nativeCrashReportingEnabled) return;
 
-            if (!string.IsNullOrEmpty(path) && path == Application.consoleLogPath)
+            var fullPath = NormalizeNativeAttachmentPath(path);
+            if (fullPath == null) return;
+
+            lock (nativeAttachmentPaths)
             {
-                SetNativePlayerLogAttachment(true);
-                return;
+                if (IndexOfNativeAttachment(fullPath) >= 0) return;
+
+                nativeAttachmentPaths.Add(fullPath);
+                AddNativeAttachment(fullPath);
             }
+        }
+
+        /// <summary>
+        /// Detach a log file previously attached with AttachNativeLogFile. Every other attachment is left
+        /// in place. Detaching a file that is not attached does nothing. Safe to call from any thread.
+        /// </summary>
+        public void DetachNativeLogFile(string path)
+        {
+            if (!nativeCrashReportingEnabled) return;
+
+            var fullPath = NormalizeNativeAttachmentPath(path);
+            if (fullPath == null) return;
+
+            lock (nativeAttachmentPaths)
+            {
+                var index = IndexOfNativeAttachment(fullPath);
+                if (index < 0) return;
+
+                // The native layer matches on the exact string it was given, which can differ in case
+                // from the path this caller supplied.
+                var attachedPath = nativeAttachmentPaths[index];
+                nativeAttachmentPaths.RemoveAt(index);
+                RemoveNativeAttachment(attachedPath);
+            }
+        }
+
+        private void SetNativePlayerLogAttachment(bool attach)
+        {
+            if (attach)
+            {
+                AttachNativeLogFile(consoleLogPath);
+            }
+            else
+            {
+                DetachNativeLogFile(consoleLogPath);
+            }
+        }
+
+        private int IndexOfNativeAttachment(string fullPath)
+        {
+            for (var i = 0; i < nativeAttachmentPaths.Count; i++)
+            {
+                if (nativeAttachmentPathComparer.Equals(nativeAttachmentPaths[i], fullPath))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static string NormalizeNativeAttachmentPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return null;
+
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"BugSplat warning: could not resolve native attachment path \"{path}\": {ex.Message}");
+                return null;
+            }
+        }
+
+        private void AddNativeAttachment(string path)
+        {
 #if UNITY_IOS && !UNITY_EDITOR
             _attachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
@@ -759,29 +848,14 @@ namespace BugSplatUnity
 #endif
         }
 
-        private void SetNativePlayerLogAttachment(bool attach)
+        private void RemoveNativeAttachment(string path)
         {
-            if (!nativeCrashReportingEnabled) return;
-            // BugSplat_AddAttachment does not de-duplicate, so a repeated add would attach Player.log twice.
-            if (nativePlayerLogAttached == attach) return;
-
-            var logPath = Application.consoleLogPath;
-            if (string.IsNullOrEmpty(logPath)) return;
-
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            if (attach)
-            {
-                BugSplat_AddAttachment(logPath);
-            }
-            else
-            {
-                BugSplat_RemoveAttachment(logPath);
-            }
-
-            nativePlayerLogAttached = attach;
+#if UNITY_IOS && !UNITY_EDITOR
+            _detachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _attachNativeLogFileMac(attach ? logPath : string.Empty);
-            nativePlayerLogAttached = attach;
+            _detachNativeLogFileMac(path);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_RemoveAttachment(path);
 #endif
         }
 
@@ -806,6 +880,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileIos(string path);
+
+        [DllImport("__Internal")]
+        static extern void _detachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplatMac(string database, string application, string version, string logFilePath);
@@ -827,6 +904,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileMac(string path);
+
+        [DllImport("__Internal")]
+        static extern void _detachNativeLogFileMac(string path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
         const string BugSplatDll = "BugSplat";
 
