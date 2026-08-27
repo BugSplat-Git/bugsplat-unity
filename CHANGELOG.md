@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.0] - Unreleased
 
-Upgrading from 4.x? See [Migrating from 4.x](README.md#migrating-from-4x).
+Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md).
 
 ### Added
 
