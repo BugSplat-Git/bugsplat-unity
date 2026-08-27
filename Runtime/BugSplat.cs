@@ -281,7 +281,8 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            // Resolved once here so no public member has to touch the Unity API, which is main-thread only.
+            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
+            // which is main-thread only.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
