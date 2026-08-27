@@ -30,6 +30,9 @@ namespace BugSplatUnity.Editor
 	{
 		static string _platform;
 
+		// Resource name the macOS crash dialog looks up; the file has to keep this name in the player.
+		const string LogoFileName = "bugsplat-logo.png";
+
 		const string SymUploaderWindows = "symbol-upload-windows.exe";
 		const string SymUploaderMacOS = "symbol-upload-macos";
 		const string SymUploaderLinux = "symbol-upload-linux";
@@ -87,7 +90,61 @@ namespace BugSplatUnity.Editor
 			}
 
 			if (target == BuildTarget.StandaloneOSX)
+			{
+				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
+			}
+		}
+
+		/// <summary>
+		/// Puts the BugSplat logo where the macOS crash dialog can find it.
+		///
+		/// The dialog loads its banner with [[NSBundle bundleForClass:self] imageForResource:@"bugsplat-logo"].
+		/// An app that links BugSplat.framework resolves that inside the framework's own Resources, but Unity
+		/// ships the SDK as a bare dylib, which carries no resources of its own — so the lookup lands on the
+		/// player's bundle instead, misses, and the dialog silently falls back to a programmatically drawn
+		/// logo. Copying the framework's own PNG into the player's Resources is what makes the real one resolve.
+		/// </summary>
+		private static void CopyMacCrashDialogLogo(string pathToBuiltProject, BugSplatOptions options)
+		{
+			if (!options.UseNativeCrashReportingForMac)
+				return;
+
+			// An Xcode project export has no .app yet — Xcode assembles Contents/Resources at its own build time.
+			if (!pathToBuiltProject.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+			{
+				Debug.Log("BugSplat: Xcode project export detected, skipping the macOS crash dialog logo. Add bugsplat-logo.png to the Xcode target's resources to show it.");
+				return;
+			}
+
+			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+			var source = Path.Combine(
+				packageRoot, "Editor", "IOS", "Frameworks", "BugSplat.xcframework",
+				"macos-arm64_x86_64", "BugSplat.framework", "Versions", "A", "Resources", LogoFileName);
+
+			if (!File.Exists(source))
+			{
+				Debug.LogWarning($"BugSplat. Missing {source}. The macOS crash dialog will draw its fallback logo.");
+				return;
+			}
+
+			var resourcesDir = Path.Combine(pathToBuiltProject, "Contents", "Resources");
+			if (!Directory.Exists(resourcesDir))
+			{
+				Debug.LogWarning($"BugSplat. {resourcesDir} does not exist. The macOS crash dialog will draw its fallback logo.");
+				return;
+			}
+
+			try
+			{
+				File.Copy(source, Path.Combine(resourcesDir, LogoFileName), true);
+				Debug.Log($"BugSplat. Copied {LogoFileName} into the player's Resources so the macOS crash dialog shows the BugSplat logo.");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"BugSplat. Could not copy {LogoFileName} into the player: {ex.Message}. The macOS crash dialog will draw its fallback logo.");
+			}
 		}
 
 		// Zips a single file with the entry at the archive root and writes it to destZip.
