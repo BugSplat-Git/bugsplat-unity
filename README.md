@@ -474,6 +474,30 @@ bugsplat.CapturePlayerLog = false;
 
 > **Upgrading from 4.x:** `BugSplatOptions` assets created before 5.0.0 keep whatever value is already serialized in the asset file; only newly created assets pick up the new default. Check the field on your existing asset if you want the new behavior.
 
+### Attaching Files to Native Crash Reports
+
+`Attachments` adds files to managed posts. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list, so files for native reports are attached with `AttachNativeLogFile`:
+
+```cs
+bugsplat.AttachNativeLogFile("/path/to/support.log");
+bugsplat.DetachNativeLogFile("/path/to/support.log");
+```
+
+Attaching is **additive and idempotent**. Every attached file is included in a native report, attaching one file never displaces another, and attaching the same file twice attaches it once. Paths are resolved to full paths before they are compared — and compared case-insensitively on Windows — so `"logs/support.log"` and `"C:\Game\Logs\Support.log"` are recognized as the file they name rather than as new attachments. `DetachNativeLogFile` removes one file and leaves the rest attached.
+
+Support by platform:
+
+| Platform | Native attachments |
+|---|---|
+| Windows | Multiple |
+| macOS | Multiple |
+| iOS | Multiple |
+| Android | Not supported — the call is a no-op |
+
+`Player.log` still ships with managed posts on every platform, including Android.
+
+`CapturePlayerLog` uses the same mechanism with `Application.consoleLogPath`, so the two cooperate: setting it `false` detaches only `Player.log`, and attaching your own file leaves `Player.log` alone. Prefer `CapturePlayerLog` for that file rather than attaching `Application.consoleLogPath` yourself — see [Player.log and privacy](#playerlog-and-privacy).
+
 ### BugSplat Environment Variables
 
 | Variable | Description |
