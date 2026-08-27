@@ -61,9 +61,9 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Upload Player.log when Post is called. On platforms whose native crash reporter attaches
-        /// Player.log (Windows and macOS), this also attaches or detaches it natively, leaving any
-        /// file attached with AttachNativeLogFile in place.
+        /// Upload Player.log when Post is called. On platforms whose native crash reporter takes
+        /// attachments (Windows, macOS, and iOS), this also attaches or detaches it natively, leaving
+        /// any file attached with AttachNativeLogFile in place.
         /// </summary>
         public bool CapturePlayerLog
         {
