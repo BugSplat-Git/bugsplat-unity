@@ -30,7 +30,8 @@ namespace BugSplatUnity.Editor
 	{
 		static string _platform;
 
-		// Resource name the macOS crash dialog looks up; the file has to keep this name in the player.
+		// On-disk filename to copy. The dialog resolves it by resource name - "bugsplat-logo",
+		// without the extension - so the base name is what has to survive into the player.
 		const string LogoFileName = "bugsplat-logo.png";
 
 		const string SymUploaderWindows = "symbol-upload-windows.exe";
