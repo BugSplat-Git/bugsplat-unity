@@ -1,11 +1,14 @@
 using UnityEngine;
 
-public class LockOrientation : MonoBehaviour
+namespace Crasher
 {
-    void Start()
+    public class LockOrientation : MonoBehaviour
     {
-        Screen.autorotateToPortrait = false;
-        Screen.autorotateToPortraitUpsideDown = false;
-        Screen.orientation = ScreenOrientation.AutoRotation;
+        void Start()
+        {
+            Screen.autorotateToPortrait = false;
+            Screen.autorotateToPortraitUpsideDown = false;
+            Screen.orientation = ScreenOrientation.AutoRotation;
+        }
     }
 }

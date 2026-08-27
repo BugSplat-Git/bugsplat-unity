@@ -7,6 +7,109 @@ extern "C" UIViewController* UnityGetGLViewController(void);
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
+// The array owns the tracked paths, so they stay alive whether or not this file is compiled with ARC.
+static NSMutableArray<NSString *> *LogFilePaths() {
+	static NSMutableArray<NSString *> *paths = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		paths = [[NSMutableArray alloc] init];
+	});
+	return paths;
+}
+
+static void AddLogFilePath(NSString *path) {
+	if (path.length == 0) return;
+
+	NSMutableArray<NSString *> *paths = LogFilePaths();
+	@synchronized (paths) {
+		if (![paths containsObject:path]) {
+			[paths addObject:path];
+		}
+	}
+}
+
+static void RemoveLogFilePath(NSString *path) {
+	if (path.length == 0) return;
+
+	NSMutableArray<NSString *> *paths = LogFilePaths();
+	@synchronized (paths) {
+		[paths removeObject:path];
+	}
+}
+
+static const unsigned long long kMaxLogAttachmentSizeBytes = 10ull * 1024ull * 1024ull;
+
+static NSData *ReadLogTail(NSString *path) {
+	NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:path];
+	if (!fh) return nil;
+
+	@try {
+		unsigned long long fileSize = [fh seekToEndOfFile];
+		unsigned long long readSize = MIN(fileSize, kMaxLogAttachmentSizeBytes);
+
+		if (fileSize > readSize) {
+			[fh seekToFileOffset:(fileSize - readSize)];
+		} else {
+			[fh seekToFileOffset:0];
+		}
+
+		NSData *data = [fh readDataToEndOfFile];
+		[fh closeFile];
+		return data;
+	} @catch (__unused NSException *e) {
+		[fh closeFile];
+		return nil;
+	}
+}
+
+@interface BugSplatUnityDelegate : NSObject <BugSplatDelegate>
+@end
+
+@implementation BugSplatUnityDelegate
+
+- (NSArray<BugSplatAttachment *> *)attachmentsForBugSplat:(BugSplat *)bugSplat {
+	NSMutableArray<NSString *> *tracked = LogFilePaths();
+	NSArray<NSString *> *paths = nil;
+	@synchronized (tracked) {
+		paths = [NSArray arrayWithArray:tracked];
+	}
+
+	NSMutableArray<BugSplatAttachment *> *attachments = [NSMutableArray array];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+
+	for (NSString *path in paths) {
+		// Existence is checked here rather than at attach time so a log file created after init still attaches.
+		if (![fileManager fileExistsAtPath:path]) continue;
+
+		NSData *data = ReadLogTail(path);
+		if (!data || data.length == 0) continue;
+
+		BugSplatAttachment *attachment = [[BugSplatAttachment alloc]
+			initWithFilename:[path lastPathComponent]
+			attachmentData:data
+			contentType:@"text/plain"];
+		[attachments addObject:attachment];
+#if !__has_feature(objc_arc)
+		[attachment release];
+#endif
+	}
+
+	return attachments;
+}
+
+@end
+
+static BugSplatUnityDelegate *_delegateInstance = nil;
+
+static BugSplatUnityDelegate *EnsureDelegate() {
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		// BugSplat's delegate property is weak, so this instance is never released.
+		_delegateInstance = [[BugSplatUnityDelegate alloc] init];
+	});
+	return _delegateInstance;
+}
+
 extern "C" {
 	NSString* createNSStringFrom(const char* cstring) {
 		return [NSString stringWithUTF8String:(cstring ?: "")];
@@ -22,6 +125,9 @@ extern "C" {
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
 		// Must be set before -start, which Unity calls on the main thread.
 		bugsplat.enableHangDetection = YES;
+		// Set up the attachment delegate BEFORE start so it's available when
+		// pending crash reports are processed on launch.
+		bugsplat.delegate = EnsureDelegate();
 		[bugsplat start];
 	}
 
@@ -46,9 +152,12 @@ extern "C" {
 	}
 
 	void _attachNativeLogFileIos(const char* path) {
-		// Log file attachment is not supported on iOS because the BugSplatDelegate's
-		// attachmentForBugSplat: method suppresses attributes from setValue:forAttribute:.
-		// The Player.log is still uploaded via the managed .NET exception reporter.
+		AddLogFilePath(createNSStringFrom(path));
+		[BugSplat shared].delegate = EnsureDelegate();
+	}
+
+	void _detachNativeLogFileIos(const char* path) {
+		RemoveLogFilePath(createNSStringFrom(path));
 	}
 
     void _crashNativeIos() {

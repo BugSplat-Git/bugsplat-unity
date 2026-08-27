@@ -1,9 +1,13 @@
 using System;
 using System.Collections;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Manager;
+using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using UnityEngine;
@@ -43,7 +47,10 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			}
 		}
 
-		void CreateManager(bool registerLogMessageReceived = true, bool captureExceptionsOnBackgroundThreads = true)
+		void CreateManager(
+			bool registerLogMessageReceived = true,
+			bool captureExceptionsOnBackgroundThreads = true,
+			bool captureUnobservedTaskExceptions = false)
 		{
 			var options = ScriptableObject.CreateInstance<BugSplatOptions>();
 			options.Database = "fred";
@@ -56,6 +63,9 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			manager.dontDestroyManagerOnSceneLoad = false;
 			manager.registerLogMessageReceived = registerLogMessageReceived;
 			manager.captureExceptionsOnBackgroundThreads = captureExceptionsOnBackgroundThreads;
+			// Off unless a test asks for it: TaskScheduler.UnobservedTaskException is process-wide,
+			// so a manager left subscribed would pick up faulted Tasks from unrelated tests.
+			manager.captureUnobservedTaskExceptions = captureUnobservedTaskExceptions;
 			gameObject.SetActive(true);
 
 			reporter = new FakeDotNetStandardExceptionReporter(new HttpResponseMessage());
@@ -196,6 +206,89 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			Assert.IsEmpty(reporter.Calls.LogMessageReceived);
 		}
 
+		// The queue-side formatting is covered deterministically in BackgroundLogMessageQueueTest.
+		// This one exercises the part only a live runtime can: that TaskScheduler raises the event
+		// at all and that the manager's subscription turns it into a report. The event fires only
+		// when a GC collects the faulted Task, which no test can force, so a runtime that declines
+		// to collect reports inconclusive rather than failing the build.
+		[UnityTest]
+		public IEnumerator UnobservedTaskException_IsReported()
+		{
+			CreateManager(captureUnobservedTaskExceptions: true);
+			LogAssert.ignoreFailingMessages = true;
+
+			faultedTaskThrew = false;
+			StartFaultedTask();
+
+			yield return WaitUntil(() => faultedTaskThrew);
+			if (!faultedTaskThrew)
+			{
+				Assert.Inconclusive("The faulted Task never ran, so there was nothing unobserved to collect.");
+			}
+
+			// The flag is set as the exception unwinds, a moment before the Task transitions to
+			// Faulted and its last reference goes out of scope. Collecting while it is still
+			// reachable raises nothing.
+			yield return null;
+
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			GC.Collect();
+
+			yield return WaitUntil(() => reporter.Calls.LogMessageReceived.Count >= 1);
+			if (reporter.Calls.LogMessageReceived.Count == 0)
+			{
+				Assert.Inconclusive("The runtime did not raise UnobservedTaskException within the timeout.");
+			}
+
+			Assert.AreEqual(1, reporter.Calls.LogMessageReceived.Count);
+			var call = reporter.Calls.LogMessageReceived[0];
+			StringAssert.Contains("BugSplat manager test: unobserved task", call.LogMessage);
+			Assert.AreEqual(LogType.Exception, call.Type);
+		}
+
+		[UnityTest]
+		public IEnumerator UnobservedTaskException_WhenCaptureDisabled_DoesNotReport()
+		{
+			CreateManager(captureUnobservedTaskExceptions: false);
+			LogAssert.ignoreFailingMessages = true;
+
+			faultedTaskThrew = false;
+			StartFaultedTask();
+
+			yield return WaitUntil(() => faultedTaskThrew);
+			yield return null;
+
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			GC.Collect();
+
+			yield return null;
+			yield return null;
+
+			Assert.IsEmpty(reporter.Calls.LogMessageReceived);
+		}
+
+		static volatile bool faultedTaskThrew;
+
+		// Kept out of the coroutine so the Task is unreachable by the time the GC runs — a Task
+		// still rooted on the stack never becomes garbage, so its finalizer never runs.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void StartFaultedTask()
+		{
+			Task.Run(() =>
+			{
+				try
+				{
+					throw new Exception("BugSplat manager test: unobserved task");
+				}
+				finally
+				{
+					faultedTaskThrew = true;
+				}
+			});
+		}
+
 		[UnityTest]
 		public IEnumerator BackgroundThreadFlood_DrainsOneQueuePerFrameAndWarnsOnceAboutDrops()
 		{
@@ -236,6 +329,53 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			finally
 			{
 				Application.logMessageReceived -= countDropWarnings;
+			}
+		}
+
+		[UnityTest]
+		public IEnumerator ReportingPipelineError_ReportsExactlyOnce()
+		{
+			CreateManager();
+			LogAssert.ignoreFailingMessages = true;
+
+			// The real reporter, so the diagnostic it logs when an upload fails travels back
+			// through Application.logMessageReceived and this manager, as it does in a player.
+			var exceptionClient = new FakeFailingDotNetExceptionClient(
+				new Exception("BugSplat manager test: upload failed"));
+			manager.BugSplat.exceptionReporter = new DotNetStandardExceptionReporter(
+				new WebGLClientSettingsRepository(),
+				exceptionClient)
+			{
+				reportUploadGuardService = new FakeTrueReportUploadGuardService()
+			};
+
+			var diagnosticLogged = false;
+			void watchForDiagnostic(string logMessage, string stackTrace, LogType type)
+			{
+				if (type == LogType.Error && logMessage.Contains("BugSplat error:"))
+				{
+					diagnosticLogged = true;
+				}
+			}
+
+			Application.logMessageReceived += watchForDiagnostic;
+			try
+			{
+				Debug.LogException(new Exception("BugSplat manager test: pipeline re-entrancy"));
+
+				// Waiting on the diagnostic rather than the call count also settles the upload
+				// task. The reporter logs it only after observing the faulted task, so the
+				// failure can't outlive this test as an unobserved exception and get reported
+				// against whichever test the finalizer happens to land in.
+				yield return WaitUntil(() => diagnosticLogged);
+				yield return null;
+				yield return null;
+
+				Assert.AreEqual(1, exceptionClient.Calls.Count);
+			}
+			finally
+			{
+				Application.logMessageReceived -= watchForDiagnostic;
 			}
 		}
 	}

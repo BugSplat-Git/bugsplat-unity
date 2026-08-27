@@ -38,11 +38,35 @@ static id GetBugSplatInstance() {
     return [cls performSelector:@selector(shared)];
 }
 
-// Log file path stored for delegate callback
-static NSString *_logFilePath = nil;
+// The array owns the tracked paths, so they stay alive whether or not this file is compiled with ARC.
+static NSMutableArray<NSString *> *LogFilePaths() {
+    static NSMutableArray<NSString *> *paths = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        paths = [[NSMutableArray alloc] init];
+    });
+    return paths;
+}
 
-// Delegate class created at runtime to provide log file attachment
-static Class _delegateClass = nil;
+static void AddLogFilePath(NSString *path) {
+    if (path.length == 0) return;
+
+    NSMutableArray<NSString *> *paths = LogFilePaths();
+    @synchronized (paths) {
+        if (![paths containsObject:path]) {
+            [paths addObject:path];
+        }
+    }
+}
+
+static void RemoveLogFilePath(NSString *path) {
+    if (path.length == 0) return;
+
+    NSMutableArray<NSString *> *paths = LogFilePaths();
+    @synchronized (paths) {
+        [paths removeObject:path];
+    }
+}
 
 static const unsigned long long kMaxLogAttachmentSizeBytes = 10ull * 1024ull * 1024ull;
 
@@ -70,13 +94,6 @@ static NSData *ReadLogTail(NSString *path) {
 }
 
 static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
-    if (!_logFilePath || ![[NSFileManager defaultManager] fileExistsAtPath:_logFilePath]) {
-        return @[];
-    }
-
-    NSData *data = ReadLogTail(_logFilePath);
-    if (!data || data.length == 0) return @[];
-
     Class attachmentClass = NSClassFromString(@"BugSplatAttachment");
     if (!attachmentClass) return @[];
 
@@ -84,40 +101,69 @@ static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
     NSMethodSignature *sig = [attachmentClass instanceMethodSignatureForSelector:initSel];
     if (!sig) return @[];
 
-    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-    [inv setSelector:initSel];
-    NSString *filename = @"Player.log";
-    NSString *contentType = @"text/plain";
-    [inv setArgument:&filename atIndex:2];
-    [inv setArgument:&data atIndex:3];
-    [inv setArgument:&contentType atIndex:4];
+    NSMutableArray<NSString *> *tracked = LogFilePaths();
+    NSArray<NSString *> *paths = nil;
+    @synchronized (tracked) {
+        paths = [NSArray arrayWithArray:tracked];
+    }
 
-    id rawAttachment = [attachmentClass alloc];
-    [inv invokeWithTarget:rawAttachment];
+    NSMutableArray *attachments = [NSMutableArray array];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
 
-    __unsafe_unretained id result = nil;
-    [inv getReturnValue:&result];
+    for (NSString *path in paths) {
+        // Existence is checked here rather than at attach time so a log file created after init still attaches.
+        if (![fileManager fileExistsAtPath:path]) continue;
 
-    return result ? @[result] : @[];
+        NSData *data = ReadLogTail(path);
+        if (!data || data.length == 0) continue;
+
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setSelector:initSel];
+        NSString *filename = [path lastPathComponent];
+        NSString *contentType = @"text/plain";
+        [inv setArgument:&filename atIndex:2];
+        [inv setArgument:&data atIndex:3];
+        [inv setArgument:&contentType atIndex:4];
+
+        id rawAttachment = [attachmentClass alloc];
+        [inv invokeWithTarget:rawAttachment];
+
+        __unsafe_unretained id result = nil;
+        [inv getReturnValue:&result];
+
+        if (result) {
+            [attachments addObject:result];
+#if !__has_feature(objc_arc)
+            [result release];
+#endif
+        }
+    }
+
+    return attachments;
 }
 
-static void EnsureDelegateClass() {
+// Delegate class built at runtime so the bridge does not have to link or import BugSplat's headers.
+static id _delegateInstance = nil;
+
+static id EnsureDelegate() {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _delegateClass = objc_allocateClassPair([NSObject class], "BugSplatUnityDelegate", 0);
-        if (_delegateClass) {
-            Protocol *proto = NSProtocolFromString(@"BugSplatDelegate");
-            if (proto) {
-                class_addProtocol(_delegateClass, proto);
-            }
-            class_addMethod(_delegateClass, @selector(attachmentsForBugSplat:),
-                           (IMP)DelegateAttachmentsForBugSplat, "@@:@");
-            objc_registerClassPair(_delegateClass);
-        }
-    });
-}
+        Class delegateClass = objc_allocateClassPair([NSObject class], "BugSplatUnityDelegate", 0);
+        if (!delegateClass) return;
 
-static id _delegateInstance = nil;
+        Protocol *proto = NSProtocolFromString(@"BugSplatDelegate");
+        if (proto) {
+            class_addProtocol(delegateClass, proto);
+        }
+        class_addMethod(delegateClass, @selector(attachmentsForBugSplat:),
+                        (IMP)DelegateAttachmentsForBugSplat, "@@:@");
+        objc_registerClassPair(delegateClass);
+
+        // BugSplat's delegate property is weak, so this instance is never released.
+        _delegateInstance = [[delegateClass alloc] init];
+    });
+    return _delegateInstance;
+}
 
 extern "C" {
     void _startBugSplatMac(const char* database, const char* application, const char* version, const char* logFilePath) {
@@ -135,18 +181,10 @@ extern "C" {
         [bugsplat setValue:app forKey:@"applicationName"];
         [bugsplat setValue:ver forKey:@"applicationVersion"];
 
-        // Set up log file delegate BEFORE start so it's available when
-        // pending crash reports are processed on launch
-        NSString *path = [NSString stringWithUTF8String:(logFilePath ?: "")];
-        if (path.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            _logFilePath = path;
-            EnsureDelegateClass();
-            if (!_delegateInstance) {
-                _delegateInstance = [[_delegateClass alloc] init];
-            }
-            [bugsplat setValue:_delegateInstance forKey:@"delegate"];
-            NSLog(@"BugSplat: Attached log file: %@", _logFilePath);
-        }
+        // Set up the attachment delegate BEFORE start so it's available when
+        // pending crash reports are processed on launch.
+        AddLogFilePath([NSString stringWithUTF8String:(logFilePath ?: "")]);
+        [bugsplat setValue:EnsureDelegate() forKey:@"delegate"];
 
         [bugsplat performSelector:@selector(start)];
     }
@@ -194,16 +232,16 @@ extern "C" {
     }
 
     void _attachNativeLogFileMac(const char* path) {
-        _logFilePath = [NSString stringWithUTF8String:(path ?: "")];
+        AddLogFilePath([NSString stringWithUTF8String:(path ?: "")]);
 
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
 
-        EnsureDelegateClass();
-        if (!_delegateInstance) {
-            _delegateInstance = [[_delegateClass alloc] init];
-        }
-        [bugsplat setValue:_delegateInstance forKey:@"delegate"];
+        [bugsplat setValue:EnsureDelegate() forKey:@"delegate"];
+    }
+
+    void _detachNativeLogFileMac(const char* path) {
+        RemoveLogFilePath([NSString stringWithUTF8String:(path ?: "")]);
     }
 
     void _crashNativeMac() {

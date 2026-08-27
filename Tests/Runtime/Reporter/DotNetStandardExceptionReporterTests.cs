@@ -192,5 +192,33 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
             Assert.IsTrue(invoked);
         }
+
+        [UnityTest]
+        public IEnumerator Post_WhenCaptureScreenshotsAndBatchMode_ShouldPostWithoutScreenshot()
+        {
+            var exception = new Exception("BugSplat rocks!");
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                CaptureScreenshots = true,
+                ShouldPostException = (ex) => true
+            };
+            var httpResponseMessage = new HttpResponseMessage
+            {
+                Content = new StringContent("{}")
+            };
+            var fakeExceptionClient = new FakeDotNetExceptionClient(httpResponseMessage);
+            var sut = new DotNetStandardExceptionReporter(clientSettings, fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService(),
+                isBatchMode = () => true
+            };
+
+            var completed = new Task<bool>(() => true);
+            yield return sut.Post(exception, callback: (_) => completed.Start());
+            yield return completed.AsCoroutine();
+
+            Assert.IsNotEmpty(fakeExceptionClient.Calls);
+            Assert.IsEmpty(fakeExceptionClient.Calls[0].Options.AdditionalFormDataParams);
+        }
     }
 }

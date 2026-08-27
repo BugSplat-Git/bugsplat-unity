@@ -35,10 +35,10 @@ namespace BugSplatUnity.RuntimeTests
 			options.Notes = "notes";
 			options.User = "fred";
 			options.CaptureEditorLog = true;
-			options.CapturePlayerLog = true;
+			options.CapturePlayerLog = false;
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
-			options.PostExceptionsInEditor = false;
+			options.PostExceptionsInEditor = true;
 
 			var sut = BugSplat.CreateFromOptions(options);
 
@@ -48,10 +48,39 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.AreEqual("notes", sut.Notes, nameof(options.Notes));
 			Assert.AreEqual("fred", sut.User, nameof(options.User));
 			Assert.True(sut.CaptureEditorLog, nameof(options.CaptureEditorLog));
-			Assert.True(sut.CapturePlayerLog, nameof(options.CapturePlayerLog));
+			Assert.False(sut.CapturePlayerLog, nameof(options.CapturePlayerLog));
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
+			Assert.True(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenPostExceptionsInEditorNotSet_ShouldNotPostExceptionsInEditor()
+		{
+			var sut = BugSplat.CreateFromOptions(options);
+
 			Assert.False(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
+		}
+
+		[Test]
+		public void NewBugSplat_ShouldNotPostExceptionsInEditor()
+		{
+			var sut = new BugSplat("database", "application", "version", false, false);
+
+			Assert.False(sut.PostExceptionsInEditor, nameof(BugSplat.PostExceptionsInEditor));
+		}
+
+		// CapturePlayerLog defaults to true in the client settings, so false is the direction that
+		// proves the option reached them. Whether the native reporter honors it cannot be asserted
+		// here — the native branches are compiled out in the editor.
+		[Test]
+		public void CreateFromOptions_WhenCapturePlayerLogIsFalse_ShouldNotCapturePlayerLog()
+		{
+			options.CapturePlayerLog = false;
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.False(sut.CapturePlayerLog);
 		}
 
 		// The constructor throws on an empty application, so completing at all is what proves the
@@ -148,5 +177,26 @@ namespace BugSplatUnity.RuntimeTests
 
 			Assert.IsEmpty(sut.Attachments);
 		}
+
+		// A default that differs by construction path is two privacy postures for one setting.
+		[Test]
+		public void CapturePlayerLog_ShouldDefaultToEnabledWhenCreatedFromOptions()
+		{
+			var fromOptions = BugSplat.CreateFromOptions(options);
+
+			Assert.True(options.CapturePlayerLog, "BugSplatOptions field default");
+			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
+		}
+
+#if !UNITY_WEBGL
+		// WebGL is excluded: it has no Player.log, so its repository defaults to off.
+		[Test]
+		public void CapturePlayerLog_ShouldDefaultToEnabledWhenConstructedInCode()
+		{
+			var fromCode = new BugSplat("database", "application", "version", false, false);
+
+			Assert.True(fromCode.CapturePlayerLog, "client created in code");
+		}
+#endif
 	}
 }

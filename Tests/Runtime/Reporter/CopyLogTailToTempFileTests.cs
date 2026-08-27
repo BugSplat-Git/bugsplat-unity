@@ -2,6 +2,7 @@ using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -16,6 +17,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
 		DotNetStandardExceptionReporter sut;
 		string workingDirectory;
+		List<string> tempCopyDirectories;
 
 		[SetUp]
 		public void SetUp()
@@ -26,6 +28,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
 			workingDirectory = Path.Combine(Path.GetTempPath(), "bugsplat-log-tail-tests", Path.GetRandomFileName());
 			Directory.CreateDirectory(workingDirectory);
+			tempCopyDirectories = new List<string>();
 		}
 
 		[TearDown]
@@ -35,6 +38,26 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			{
 				Directory.Delete(workingDirectory, true);
 			}
+
+			foreach (var tempCopyDirectory in tempCopyDirectories)
+			{
+				if (Directory.Exists(tempCopyDirectory))
+				{
+					Directory.Delete(tempCopyDirectory, true);
+				}
+			}
+		}
+
+		// CopyLogTailToTempFile writes each copy to its own generated directory
+		// that nothing cleans up in tests, so every non-null result must be
+		// tracked for TearDown.
+		FileInfo TrackTempCopy(FileInfo tempCopy)
+		{
+			if (tempCopy != null)
+			{
+				tempCopyDirectories.Add(tempCopy.DirectoryName);
+			}
+			return tempCopy;
 		}
 
 		FileInfo WriteLog(string name, byte[] contents)
@@ -61,7 +84,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Encoding.UTF8.GetBytes("a small log file");
 			var log = WriteLog("Player.log", contents);
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.NotNull(result);
 			Assert.AreEqual(contents.Length, result.Length);
@@ -74,7 +97,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Repeating(2 * OneMegabyte + 4096);
 			var log = WriteLog("Player.log", contents);
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.NotNull(result);
 			Assert.AreEqual(OneMegabyte, result.Length, "should be truncated to exactly the max size");
@@ -89,7 +112,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 		{
 			var log = WriteLog("Editor.log", Encoding.UTF8.GetBytes("contents"));
 
-			var result = sut.CopyLogTailToTempFile(log, 1);
+			var result = TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.AreEqual("Editor.log", result.Name);
 		}
@@ -100,7 +123,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			var contents = Repeating(2 * OneMegabyte);
 			var log = WriteLog("Player.log", contents);
 
-			sut.CopyLogTailToTempFile(log, 1);
+			TrackTempCopy(sut.CopyLogTailToTempFile(log, 1));
 
 			Assert.AreEqual(contents.Length, new FileInfo(log.FullName).Length);
 		}
@@ -121,6 +144,56 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
 
 			Assert.Null(sut.CopyLogTailToTempFile(null, 1));
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileExists_ShouldAddTempFileToAttachmentsAndTempFiles()
+		{
+			var contents = Encoding.UTF8.GetBytes("a small log file");
+			var log = WriteLog("Player.log", contents);
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			sut.AddLogTailAttachment(log, options, tempFiles);
+			foreach (var tempFile in tempFiles)
+			{
+				TrackTempCopy(tempFile);
+			}
+
+			Assert.AreEqual(1, options.AdditionalAttachments.Count);
+			Assert.AreEqual(1, tempFiles.Count);
+			Assert.AreSame(options.AdditionalAttachments[0], tempFiles[0]);
+			Assert.AreEqual("Player.log", options.AdditionalAttachments[0].Name);
+			CollectionAssert.AreEqual(contents, File.ReadAllBytes(options.AdditionalAttachments[0].FullName));
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileDoesNotExist_ShouldNotAddNullToAttachmentsOrTempFiles()
+		{
+			var missing = new FileInfo(Path.Combine(workingDirectory, "missing.log"));
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
+
+			sut.AddLogTailAttachment(missing, options, tempFiles);
+
+			Assert.IsEmpty(options.AdditionalAttachments);
+			Assert.IsEmpty(tempFiles);
+		}
+
+		[Test]
+		public void AddLogTailAttachment_WhenFileInfoIsNull_ShouldNotAddNullToAttachmentsOrTempFiles()
+		{
+			var options = new ReportPostOptions();
+			var tempFiles = new List<FileInfo>();
+
+			LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("does not exist"));
+
+			sut.AddLogTailAttachment(null, options, tempFiles);
+
+			Assert.IsEmpty(options.AdditionalAttachments);
+			Assert.IsEmpty(tempFiles);
 		}
 	}
 }

@@ -27,7 +27,7 @@ namespace BugSplatUnity.Runtime.Settings
 
         public int LogFileMaxSizeMB { get; set; } = 10;
 
-        public bool PostExceptionsInEditor { get; set; } = true;
+        public bool PostExceptionsInEditor { get; set; } = false;
 
         public Func<Exception, bool> ShouldPostException { get; set; } = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
 

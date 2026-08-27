@@ -61,17 +61,20 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Upload Player.log when Post is called
+        /// Upload Player.log when Post is called. On platforms whose native crash reporter attaches
+        /// Player.log (Windows and macOS), this also attaches or detaches it natively, leaving any
+        /// file attached with AttachNativeLogFile in place.
         /// </summary>
         public bool CapturePlayerLog
         {
-            get 
+            get
             {
                 return clientSettings.CapturePlayerLog;
             }
             set
             {
                 clientSettings.CapturePlayerLog = value;
+                SetNativePlayerLogAttachment(value);
             }
         }
 
@@ -106,7 +109,7 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 10 seconds.
+        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 report every 3 seconds.
         /// </summary>
         public Func<Exception, bool> ShouldPostException
         {
@@ -183,7 +186,7 @@ namespace BugSplatUnity
             }
         }
 
-        // <summary>
+        /// <summary>
         /// A general purpose field that can be overridden by call to Post.
         /// </summary>
         public string Notes
@@ -215,11 +218,20 @@ namespace BugSplatUnity
             }
         }
 
+        private static readonly StringComparer nativeAttachmentPathComparer =
+#if UNITY_STANDALONE_WIN
+            StringComparer.OrdinalIgnoreCase;
+#else
+            StringComparer.Ordinal;
+#endif
+
         private IClientSettingsRepository clientSettings;
         internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
+        private readonly List<string> nativeAttachmentPaths = new List<string>();
+        private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
         /// <summary>
@@ -242,6 +254,7 @@ namespace BugSplatUnity
         /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
         /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
         /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
+        /// <param name="capturePlayerLog">Whether to upload Player.log with reports. Applied while the native crash reporter initializes so that native crash reports honor it too.</param>
         public BugSplat(
             string database,
             string application,
@@ -249,7 +262,8 @@ namespace BugSplatUnity
             bool useNativeLibIos,
             bool useNativeLibAndroid,
             bool useNativeLibMac = false,
-            bool useNativeLibWin = false
+            bool useNativeLibWin = false,
+            bool capturePlayerLog = true
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -266,6 +280,10 @@ namespace BugSplatUnity
             {
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
+
+            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
+            // which is main-thread only.
+            consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (useNativeLibWin)
@@ -285,11 +303,7 @@ namespace BugSplatUnity
                     // backend applies LineNumberMappings.json to symbolicate C# frames.
                     BugSplat_SetCrashType(15);
 
-                    var logPath = Application.consoleLogPath;
-                    if (!string.IsNullOrEmpty(logPath))
-                    {
-                        BugSplat_AddAttachment(logPath);
-                    }
+                    SetNativePlayerLogAttachment(capturePlayerLog);
 
                     BugSplat_PostAllCrashesAsync();
                     ReportWindowsWerStatus();
@@ -300,7 +314,7 @@ namespace BugSplatUnity
                 }
             }
 
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_WEBGL
             var webGLClientSettings = new WebGLClientSettingsRepository();
             var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
@@ -314,41 +328,51 @@ namespace BugSplatUnity
                 nativeCrashReportingEnabled = true;
             }
 
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             if (useNativeLibMac)
             {
-                var logPath = Application.consoleLogPath;
+                // The delegate is queried while start processes crash reports left by the previous
+                // session, so the player log has to be tracked before start rather than attached after it.
+                var logPath = capturePlayerLog ? consoleLogPath : null;
                 _startBugSplatMac(database, application, version, logPath ?? "");
                 nativeCrashReportingEnabled = true;
+
+                if (logPath != null)
+                {
+                    nativeAttachmentPaths.Add(logPath);
+                }
             }
 
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
-                var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
                 
-                var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
                 javaClass.CallStatic("initBugSplat", activity, database, application, version);
                 nativeCrashReportingEnabled = true;
             }
 
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, capturePlayerLog);
 #else
-            UseDotNetHandler(database, application, version);
+            UseDotNetHandler(database, application, version, capturePlayerLog);
 #endif
         }
 
-        private void UseDotNetHandler(string database, string application, string version)
+        private void UseDotNetHandler(string database, string application, string version, bool capturePlayerLog)
         {
             var bugsplat = new BugSplatDotNetStandard.BugSplat(database, application, version)
             {
                 MinidumpType = BugSplatDotNetStandard.BugSplat.MinidumpTypeId.UnityNativeWindows,
                 ExceptionType = BugSplatDotNetStandard.BugSplat.ExceptionTypeId.Unity
             };
-            var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat);
+            var dotNetStandardClientSettings = new DotNetStandardClientSettingsRepository(bugsplat)
+            {
+                CapturePlayerLog = capturePlayerLog
+            };
             var dotNetStandardClient = new DotNetStandardClient(bugsplat);
             var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
 
@@ -380,7 +404,8 @@ namespace BugSplatUnity
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid,
                 options.UseNativeCrashReportingForMac,
-                options.UseNativeCrashReportingForWindows
+                options.UseNativeCrashReportingForWindows,
+                options.CapturePlayerLog
             )
             {
                 Description = options.Description,
@@ -560,7 +585,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
@@ -578,7 +603,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatUser", user);
 #endif
         }
@@ -596,7 +621,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
 #endif
         }
@@ -614,7 +639,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
 #endif
         }
@@ -634,19 +659,26 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
             javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
 #endif
         }
 
         /// <summary>
-        /// Set the description on the native crash reporter. Windows only; no-op on other platforms.
+        /// Set the description on the native crash reporter.
         /// </summary>
         public void SetNativeDescription(string description)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR
+            _setNativeAttributeIos("BugSplatDescription", description);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _setNativeAttributeMac("BugSplatDescription", description);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
 #endif
         }
 
@@ -720,17 +752,111 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
-        /// Supported on Windows, iOS, and macOS; no-op on Android.
+        /// Attaching is additive and idempotent: a path that is already attached is ignored, and attaching a
+        /// file never displaces one attached earlier — including the Player.log that CapturePlayerLog manages.
+        /// Paths are resolved to full paths before they are compared, so the same file named two ways is
+        /// attached once. Supported on Windows, macOS, and iOS; a no-op on Android, whose bridge has no
+        /// attachment API. Safe to call from any thread.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
             if (!nativeCrashReportingEnabled) return;
+
+            var fullPath = NormalizeNativeAttachmentPath(path);
+            if (fullPath == null) return;
+
+            lock (nativeAttachmentPaths)
+            {
+                if (IndexOfNativeAttachment(fullPath) >= 0) return;
+
+                nativeAttachmentPaths.Add(fullPath);
+                AddNativeAttachment(fullPath);
+            }
+        }
+
+        /// <summary>
+        /// Detach a log file previously attached with AttachNativeLogFile. Every other attachment is left
+        /// in place. Detaching a file that is not attached does nothing. Safe to call from any thread.
+        /// </summary>
+        public void DetachNativeLogFile(string path)
+        {
+            if (!nativeCrashReportingEnabled) return;
+
+            var fullPath = NormalizeNativeAttachmentPath(path);
+            if (fullPath == null) return;
+
+            lock (nativeAttachmentPaths)
+            {
+                var index = IndexOfNativeAttachment(fullPath);
+                if (index < 0) return;
+
+                // The native layer matches on the exact string it was given, which can differ in case
+                // from the path this caller supplied.
+                var attachedPath = nativeAttachmentPaths[index];
+                nativeAttachmentPaths.RemoveAt(index);
+                RemoveNativeAttachment(attachedPath);
+            }
+        }
+
+        private void SetNativePlayerLogAttachment(bool attach)
+        {
+            if (attach)
+            {
+                AttachNativeLogFile(consoleLogPath);
+            }
+            else
+            {
+                DetachNativeLogFile(consoleLogPath);
+            }
+        }
+
+        private int IndexOfNativeAttachment(string fullPath)
+        {
+            for (var i = 0; i < nativeAttachmentPaths.Count; i++)
+            {
+                if (nativeAttachmentPathComparer.Equals(nativeAttachmentPaths[i], fullPath))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static string NormalizeNativeAttachmentPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return null;
+
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"BugSplat warning: could not resolve native attachment path \"{path}\": {ex.Message}");
+                return null;
+            }
+        }
+
+        private void AddNativeAttachment(string path)
+        {
 #if UNITY_IOS && !UNITY_EDITOR
             _attachNativeLogFileIos(path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
             _attachNativeLogFileMac(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
+#endif
+        }
+
+        private void RemoveNativeAttachment(string path)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            _detachNativeLogFileIos(path);
+#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+            _detachNativeLogFileMac(path);
+#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            BugSplat_RemoveAttachment(path);
 #endif
         }
 
@@ -755,6 +881,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileIos(string path);
+
+        [DllImport("__Internal")]
+        static extern void _detachNativeLogFileIos(string path);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void _startBugSplatMac(string database, string application, string version, string logFilePath);
@@ -776,6 +905,9 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFileMac(string path);
+
+        [DllImport("__Internal")]
+        static extern void _detachNativeLogFileMac(string path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
         const string BugSplatDll = "BugSplat";
 
