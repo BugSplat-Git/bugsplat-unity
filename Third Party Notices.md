@@ -32,8 +32,10 @@ Shipped in:
 - `Editor/IOS/Frameworks/BugSplat.xcframework/**` (iOS, tvOS and macOS slices, plus their dSYMs)
 - `Runtime/Plugins/macOS/BugSplat-macOS.dylib`
 
-Built from [BugSplat-Git/bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple). The
-component list below comes from that project's `LICENSE.txt`, corroborated by the source paths and
+Built from [BugSplat-Git/bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), release
+**[3.5.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.5.0)** — both payloads are the
+`BugSplat.xcframework.zip` and `BugSplat-macOS.dylib` assets from that release, vendored unmodified.
+The component list below comes from that release's `LICENSE.txt`, corroborated by the source paths and
 symbols embedded in the shipped binaries (`Vendor/PLCrashReporter/Source/*`,
 `Vendor/PLCrashReporter/Dependencies/protobuf-c/protobuf-c/protobuf-c.c`, and `BugSplatPLCrash*` /
 `protobuf_c_*` symbols in the macOS dylib).
@@ -46,7 +48,7 @@ License Type: "MIT"
 
 Copyright (c) 2012-2014 HockeyApp, Bit Stadium GmbH. All rights reserved.
 
-[BugSplat for Apple platforms license](https://github.com/BugSplat-Git/bugsplat-apple/blob/main/LICENSE.txt)
+[BugSplat for Apple platforms license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
 
 ---------
 
@@ -58,20 +60,20 @@ Copyright (c) 2008 - 2014 Plausible Labs Cooperative, Inc.
 Copyright (c) 2012 - 2014 HockeyApp, Bit Stadium GmbH.
 All rights reserved.
 
-[PLCrashReporter license](https://github.com/BugSplat-Git/bugsplat-apple/blob/main/LICENSE.txt)
+[PLCrashReporter license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
 
 > Note: the 5.0.0 audit described this payload as BSD-licensed. The upstream `LICENSE.txt` in
 > bugsplat-apple states MIT for both BugSplat and PLCrashReporter. MIT is what is recorded here.
 
 ---------
 
-Component Name: protobuf-c
+Component Name: protobuf-c (and `PLCrashLogWriterEncoding.c`)
 
 License Type: "Apache-2.0"
 
 Copyright 2008, Dave Benson.
 
-[protobuf-c license](https://github.com/BugSplat-Git/bugsplat-apple/blob/main/LICENSE.txt)
+[protobuf-c license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
 
 ---------
 
@@ -300,11 +302,14 @@ They need a decision from the maintainers before this file can be considered com
    presumably Crashpad's. It should be given an attribution line saying so, or deleted in favor of the
    Crashpad entry in this file — leaving an unlabeled Apache-2.0 file next to an MIT `.aar` invites
    exactly the wrong reading.
-3. **Upstream revisions** — this repository records no build manifest for the vendored binaries, so
-   the exact upstream revisions of Crashpad, curl, BoringSSL, PLCrashReporter and protobuf-c that
-   went into the shipped payloads are not knowable from here. Only `libcurl/8.13.1-DEV` (from the
-   binary's own version string) and `BugSplatDotNetStandard 4.3.0.0` (from `deps.json`) are pinned by
-   evidence in-tree. Recording the source revisions at build time would make future audits mechanical.
+3. **Upstream revisions** — this repository records no build manifest for the vendored binaries. The
+   **Android** payload is the weak spot: the exact revisions of Crashpad, curl and BoringSSL compiled
+   into the `.aar` are not knowable from here, and neither is the `.aar`'s own version. Only
+   `libcurl/8.13.1-DEV` (from the binary's own version string) is pinned by in-tree evidence. The
+   Apple payload is pinned to bugsplat-apple 3.5.0, the Windows binaries report `8.1.0.0` in their
+   version resources, and `BugSplatDotNetStandard` reports `4.3.0.0` in `deps.json` — but those come
+   from the binaries and the vendoring commit, not from a manifest. Recording source revisions at
+   build time would make future audits mechanical instead of forensic.
 4. **BoringSSL** — its upstream `LICENSE` is Apache-2.0 with additional notices for portions of the
    tree. Whether any of those non-Apache portions end up in the statically linked copy inside
    `libcurl.so` was not determined.
