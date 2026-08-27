@@ -17,6 +17,7 @@ FOUNDATION_EXPORT const unsigned char BugSplatVersionString[];
 
 #import <BugSplat/BugSplatDelegate.h>
 #import <BugSplat/BugSplatAttachment.h>
+#import <BugSplat/BugSplatFeedbackResult.h>
 #if TARGET_OS_OSX
 #import <BugSplat/BugSplatMac.h>
 #endif
@@ -52,6 +53,34 @@ NS_ASSUME_NONNULL_BEGIN
  * @see BugSplatDelegate
  */
 @property (weak, nonatomic, nullable) id<BugSplatDelegate> delegate;
+
+/**
+ * A unique identifier for the current app session (process launch).
+ *
+ * A new value is generated every launch and remains stable for the lifetime
+ * of the process. It is embedded into any crash report captured during this
+ * session, which makes it the key for associating session-scoped data (such
+ * as per-session log files) with the crash that ended the session.
+ *
+ * Recommended usage:
+ * 1. `sessionID` is available as soon as the `BugSplat` instance is created
+ *    (e.g. via `+[BugSplat shared]`) and does not change for the lifetime of the
+ *    process — you do not need to wait for `start`. Read it and durably record a
+ *    mapping from it to any session-scoped files you may want to attach to a crash
+ *    report (e.g. this session's log file path). Use a per-session file name — a
+ *    fixed path that is overwritten each launch cannot be recovered later.
+ * 2. If the app crashes, the `BugSplatDelegate` callbacks for that crash
+ *    (`attachmentsForBugSplat:sessionID:`, `bugSplatDidFinishSendingCrashReport:sessionID:`,
+ *    etc.) are passed the **crashed** session's ID — not the current one — so you
+ *    can look up the recorded mapping, return the right files, and clean up
+ *    once the report has been sent.
+ *
+ * @note The session ID passed to delegate callbacks may be nil for crash
+ * reports recorded by versions of BugSplat that predate this property.
+ *
+ * @see BugSplatDelegate
+ */
+@property (nonatomic, readonly) NSUUID *sessionID;
 
 /**
  * The database name BugSplat will use to construct the BugSplatDatabase URL where crash reports will be submitted.
@@ -210,44 +239,28 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Add an attribute and value to a dictionary of attributes that will potentially be included in a crash report.
- * If the attribute is an invalid XML entity name, or the attribute+value pair cannot be set,
- * the method will return NO, otherwise it will return YES.
+ * If the attribute name is nil or empty, or the attribute+value pair cannot be set, the method will return NO,
+ * otherwise it will return YES.
  *
  * Attributes and values represent app supplied keys and values to associate with a crash report, should the app crash during this session.
- * Attributes and values will be bundled up in a BugSplatAttachment as NSData, with a filename of CrashContext.xml, MIME type of "application/xml" and encoding of "UTF-8".
- *
- * IMPORTANT: For iOS, only one BugSplatAttachment is currently supported.
- * If BugSplatDelegate's method `- (BugSplatAttachment *)attachmentForBugSplat:(BugSplat *)bugSplat` returns a non-nil BugSplatAttachment,
- * BugSplat will send that BugSplatAttachment, not the BugSplatAttachment that would otherwise be created due to adding attributes and values using this method.
+ * Attributes are sent with the crash report as form fields on the crash upload request, on both macOS and iOS.
+ * They are NOT sent as a BugSplatAttachment, so attributes and attachments are independent - supplying
+ * attachments via `BugSplatDelegate` never suppresses attributes, and attributes never consume an attachment slot.
  *
  * NOTES:
  *
  * This method may be called multiple times, once per attribute+value pair.
  * This method may be called at any time during the app session prior to a crash.
- * Attributes are persisted to NSUserDefaults within a NSDictionary<NSString *, NSString *>, so attribute names must be unique.
+ * Attributes are stored in an NSDictionary<NSString *, NSString *>, so attribute names must be unique.
  * If the attribute does not exist, it will be added to attributes dictionary.
  * If attribute already exists, the value will be replaced in the dictionary.
  * If attribute already exists, and the value is nil, the attribute will be removed from the dictionary.
  *
- * When this method is called, the following preprocessing occurs:
- * 1. attribute will be checked for XML entity name rules. If validation fails, method returns NO.
- *
- * 2. values will then be processed by an XML escaping routine which looks for escapable characters ",',&,<, and >
- * See: https://stackoverflow.com/questions/1091945/what-characters-do-i-need-to-escape-in-xml-documents
- * Any XML comment blocks or CDATA blocks found will disable XML escaping within the block.
- *
- * 3. After processing both attribute and value for XML escape characters, the attribute+value pair will be
- * persisted to NSUserDefaults within a NSDictionary<NSString *, NSString *>.
- *
- * 4. If the attribute or value cannot be set, the method will return NO, otherwise it will return YES.
- *
- * If a crash occurs, attributes and values will be bundled up in a BugSplatAttachment as NSData, with a filename of CrashContext.xml, MIME type of "application/xml"
- * and encoding of "UTF-8". The attachment will be included with the crash data (except as noted above regarding iOS BugSplatAttachment limitation).
+ * Attributes are recorded with the crash report when a crash occurs, and are uploaded with that report
+ * during the next launch of the app.
  *
  * Attributes and their values are only valid for the lifetime of the app session and only used in a crash report if the crash occurs during that app session.
- * Any attributes set in the prior app session will be bundled up in a BugSplatAttachment as NSData, with a filename of CrashContext.xml,
- * MIME type of "application/xml" and encoding of "UTF-8". The attachment will be added to the crash report when it is processed during the next launch of the app.
- * If the app terminates normally, any attributes persisted during the prior `normal` app session will be erased during the next app launch.
+ * If the app terminates normally, any attributes recorded during the prior `normal` app session are discarded.
  *
  */
 - (BOOL)setValue:(nullable NSString *)value forAttribute:(NSString *)attribute NS_SWIFT_NAME(set(_:for:));
@@ -267,6 +280,10 @@ NS_ASSUME_NONNULL_BEGIN
  * @param attachments Optional array of file attachments to include with the feedback.
  * @param completion Optional completion handler called when the upload finishes.
  *                   The error parameter is nil on success.
+ *
+ * @note To send custom attributes with the feedback, or to receive the report id
+ *       of the submitted feedback, use
+ *       `-postFeedback:description:userName:userEmail:appKey:attributes:attachments:completion:`.
  */
 - (void)postFeedback:(NSString *)title
          description:(nullable NSString *)description
@@ -276,6 +293,40 @@ NS_ASSUME_NONNULL_BEGIN
          attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
           completion:(nullable void (^)(NSError * _Nullable error))completion
     NS_SWIFT_NAME(postFeedback(title:description:userName:userEmail:appKey:attachments:completion:));
+
+/**
+ * Submits user feedback (non-crash) to BugSplat, with custom attributes, and reports
+ * the resulting report id.
+ *
+ * Behaves identically to
+ * `-postFeedback:description:userName:userEmail:appKey:attachments:completion:` with
+ * two additions:
+ *  - the supplied `attributes` are sent with the feedback and are searchable in the
+ *    BugSplat dashboard, and
+ *  - on success the completion handler receives a `BugSplatFeedbackResult` containing
+ *    the report id (`crashId`) and `infoUrl` of the submitted feedback.
+ *
+ * @param title The feedback title (required).
+ * @param description Optional description providing additional detail.
+ * @param userName Optional user name. Falls back to the `userName` property if nil.
+ * @param userEmail Optional user email. Falls back to the `userEmail` property if nil.
+ * @param appKey Optional application key. Falls back to the `appKey` property if nil.
+ * @param attributes Optional custom string key/value attributes to associate with the
+ *                   feedback, e.g. @{@"category": @"Bug"}.
+ * @param attachments Optional array of file attachments to include with the feedback.
+ * @param completion Optional completion handler called when the upload finishes.
+ *                   On success, `result` is non-nil and `error` is nil.
+ *                   On failure, `result` is nil and `error` is set.
+ */
+- (void)postFeedback:(NSString *)title
+         description:(nullable NSString *)description
+            userName:(nullable NSString *)userName
+           userEmail:(nullable NSString *)userEmail
+              appKey:(nullable NSString *)appKey
+          attributes:(nullable NSDictionary<NSString *, NSString *> *)attributes
+         attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
+          completion:(nullable void (^)(BugSplatFeedbackResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postFeedback(title:description:userName:userEmail:appKey:attributes:attachments:completion:));
 
 // macOS specific API
 #if TARGET_OS_OSX

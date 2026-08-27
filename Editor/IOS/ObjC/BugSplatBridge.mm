@@ -67,10 +67,6 @@ static NSData *ReadLogTail(NSString *path) {
 
 @implementation BugSplatUnityDelegate
 
-// attachmentsForBugSplat: is deliberately not declared anywhere in this file. The vendored
-// BugSplat.xcframework predates BugSplat-Git/bugsplat-apple#70 and its iOS slice still gates the
-// selector behind TARGET_OS_OSX, so declaring it would conflict once the framework is re-vendored.
-// Defining it here is enough for the framework to find it via respondsToSelector:.
 - (NSArray<BugSplatAttachment *> *)attachmentsForBugSplat:(BugSplat *)bugSplat {
 	NSMutableArray<NSString *> *tracked = LogFilePaths();
 	NSArray<NSString *> *paths = nil;
