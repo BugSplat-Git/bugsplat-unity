@@ -1,3 +1,21 @@
+## Scope
+
+The MIT license below covers the source code of this package only.
+
+It does **not** cover the prebuilt binaries distributed with this package, which are
+licensed separately. Those are:
+
+- `Runtime/Plugins/Windows/**` and `Runtime/Plugins/Windows/Support~/**`
+- `Runtime/Plugins/macOS/**`
+- `Runtime/Plugins/Android/**`
+- `Runtime/Plugins/BugSplatDotNetStandard.dll`
+- `Editor/IOS/Frameworks/**`
+
+See [Third Party Notices.md](./Third%20Party%20Notices.md) for the components inside each
+binary and the license that applies to it.
+
+---------
+
 MIT License
 
 Copyright (c) 2021 BugSplat
