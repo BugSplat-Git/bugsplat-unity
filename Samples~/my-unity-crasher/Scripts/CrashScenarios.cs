@@ -81,6 +81,7 @@ namespace Crasher
 			result.Add(BuildWindowsHang());
 #elif UNITY_STANDALONE_OSX
 			result.Add(BuildMacNative());
+			result.Add(BuildMacHang());
 #elif UNITY_IOS
 			result.Add(BuildIosNative());
 			result.Add(BuildIosHang());
@@ -562,16 +563,46 @@ namespace Crasher
 			}
 		};
 
+		static ScenarioGroup BuildMacHang() => new ScenarioGroup
+		{
+			Title = "HANG",
+			Subtitle =
+				"Detected by BugSplat's main-thread watchdog; reported on the next launch. macOS " +
+				"has no OS watchdog, so you have to force-quit the frozen app yourself.",
+			Scenarios =
+			{
+				new CrashScenario
+				{
+					Name = "Main-thread hang",
+					Expected =
+						"Wedges the main thread immediately. Force-quit the beachballing app " +
+						"(Option-Command-Escape) and relaunch: BugSplat uploads an App Hang (Fatal) " +
+						"report. Wait it out instead and nothing is sent.",
+					Run = _ => HangNativeMac()
+				}
+			}
+		};
+
 		static void CrashNativeMac()
 		{
 #if !UNITY_EDITOR
-			_crashNativeMac();
+			_crashNative();
+#endif
+		}
+
+		static void HangNativeMac()
+		{
+#if !UNITY_EDITOR
+			_hangNative();
 #endif
 		}
 
 #if !UNITY_EDITOR
 		[DllImport("__Internal")]
-		static extern void _crashNativeMac();
+		static extern void _crashNative();
+
+		[DllImport("__Internal")]
+		static extern void _hangNative();
 #endif
 
 #elif UNITY_IOS
@@ -615,23 +646,23 @@ namespace Crasher
 		static void CrashNativeIos()
 		{
 #if !UNITY_EDITOR
-			_crashNativeIos();
+			_crashNative();
 #endif
 		}
 
 		static void HangNativeIos()
 		{
 #if !UNITY_EDITOR
-			_hangNativeIos();
+			_hangNative();
 #endif
 		}
 
 #if !UNITY_EDITOR
 		[DllImport("__Internal")]
-		static extern void _crashNativeIos();
+		static extern void _crashNative();
 
 		[DllImport("__Internal")]
-		static extern void _hangNativeIos();
+		static extern void _hangNative();
 #endif
 
 #elif UNITY_ANDROID

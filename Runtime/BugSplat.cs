@@ -263,7 +263,9 @@ namespace BugSplatUnity
             bool useNativeLibAndroid,
             bool useNativeLibMac = false,
             bool useNativeLibWin = false,
-            bool capturePlayerLog = true
+            bool capturePlayerLog = true,
+            bool autoSubmitCrashReport = false,
+            bool autoSubmitFatalHangReport = true
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -284,6 +286,13 @@ namespace BugSplatUnity
             // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
             // which is main-thread only.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
+
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            // Applied before -start, which is where bugsplat-apple decides whether a pending
+            // report from the previous session gets a dialog or goes straight up.
+            var autoSubmit = autoSubmitCrashReport ? 1 : 0;
+            var autoSubmitHang = autoSubmitFatalHangReport ? 1 : 0;
+#endif
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (useNativeLibWin)
@@ -324,7 +333,7 @@ namespace BugSplatUnity
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
             {
-                _startBugSplat(database, application, version);
+                _startBugSplat(database, application, version, autoSubmit, autoSubmitHang);
                 nativeCrashReportingEnabled = true;
             }
 
@@ -335,7 +344,7 @@ namespace BugSplatUnity
                 // The delegate is queried while start processes crash reports left by the previous
                 // session, so the player log has to be tracked before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
-                _startBugSplatMac(database, application, version, logPath ?? "");
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null)
@@ -405,7 +414,9 @@ namespace BugSplatUnity
                 options.UseNativeCrashReportingForAndroid,
                 options.UseNativeCrashReportingForMac,
                 options.UseNativeCrashReportingForWindows,
-                options.CapturePlayerLog
+                options.CapturePlayerLog,
+                options.AutoSubmitCrashReport,
+                options.AutoSubmitFatalHangReport
             )
             {
                 Description = options.Description,
@@ -578,10 +589,8 @@ namespace BugSplatUnity
         public void SetNativeAttribute(string key, string value)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeAttributeIos(key, value);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeAttributeMac(key, value);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeAttribute(key, value);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -596,10 +605,8 @@ namespace BugSplatUnity
         public void SetNativeUser(string user)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeUserIos(user);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeUserMac(user);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeUser(user);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -614,10 +621,8 @@ namespace BugSplatUnity
         public void SetNativeEmail(string email)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeEmailIos(email);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeEmailMac(email);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeEmail(email);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -632,10 +637,8 @@ namespace BugSplatUnity
         public void SetNativeNotes(string notes)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeNotesIos(notes);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeNotesMac(notes);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeNotes(notes);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -652,10 +655,8 @@ namespace BugSplatUnity
         public void SetNativeKey(string key)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeKeyIos(key);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeKeyMac(key);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeKey(key);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -670,10 +671,8 @@ namespace BugSplatUnity
         public void SetNativeDescription(string description)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_IOS && !UNITY_EDITOR
-            _setNativeAttributeIos("BugSplatDescription", description);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _setNativeAttributeMac("BugSplatDescription", description);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _setNativeAttribute("BugSplatDescription", description);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -840,10 +839,8 @@ namespace BugSplatUnity
 
         private void AddNativeAttachment(string path)
         {
-#if UNITY_IOS && !UNITY_EDITOR
-            _attachNativeLogFileIos(path);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _attachNativeLogFileMac(path);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _attachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
 #endif
@@ -851,63 +848,45 @@ namespace BugSplatUnity
 
         private void RemoveNativeAttachment(string path)
         {
-#if UNITY_IOS && !UNITY_EDITOR
-            _detachNativeLogFileIos(path);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            _detachNativeLogFileMac(path);
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _detachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_RemoveAttachment(path);
 #endif
         }
 
-#if UNITY_IOS && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+        // Both Apple bridges export the same symbols; only -start differs, because the macOS
+        // bridge needs the log path in hand before start scans the previous session's reports.
+#if UNITY_IOS
         [DllImport("__Internal")]
-        static extern void _startBugSplat(string database, string application, string version);
+        static extern void _startBugSplat(string database, string application, string version, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
+#else
+        [DllImport("__Internal")]
+        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
+#endif
 
         [DllImport("__Internal")]
-        static extern void _setNativeAttributeIos(string key, string value);
+        static extern void _setNativeAttribute(string key, string value);
 
         [DllImport("__Internal")]
-        static extern void _setNativeUserIos(string user);
+        static extern void _setNativeUser(string user);
 
         [DllImport("__Internal")]
-        static extern void _setNativeEmailIos(string email);
+        static extern void _setNativeEmail(string email);
 
         [DllImport("__Internal")]
-        static extern void _setNativeNotesIos(string notes);
+        static extern void _setNativeNotes(string notes);
 
         [DllImport("__Internal")]
-        static extern void _setNativeKeyIos(string key);
+        static extern void _setNativeKey(string key);
 
         [DllImport("__Internal")]
-        static extern void _attachNativeLogFileIos(string path);
+        static extern void _attachNativeLogFile(string path);
 
         [DllImport("__Internal")]
-        static extern void _detachNativeLogFileIos(string path);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-        [DllImport("__Internal")]
-        static extern void _startBugSplatMac(string database, string application, string version, string logFilePath);
+        static extern void _detachNativeLogFile(string path);
 
-        [DllImport("__Internal")]
-        static extern void _setNativeAttributeMac(string key, string value);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeUserMac(string user);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeEmailMac(string email);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeNotesMac(string notes);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeKeyMac(string key);
-
-        [DllImport("__Internal")]
-        static extern void _attachNativeLogFileMac(string path);
-
-        [DllImport("__Internal")]
-        static extern void _detachNativeLogFileMac(string path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
         const string BugSplatDll = "BugSplat";
 

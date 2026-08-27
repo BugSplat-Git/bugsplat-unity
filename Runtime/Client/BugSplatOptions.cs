@@ -82,6 +82,12 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
 		public bool UploadDebugSymbolsForMac;
 
+		[Tooltip("Submit Apple (iOS and macOS) crash reports without asking the user. Off by default, so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple's autoSubmitCrashReport.")]
+		public bool AutoSubmitCrashReport;
+
+		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
+		public bool AutoSubmitFatalHangReport = true;
+
 		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForWindows;
 

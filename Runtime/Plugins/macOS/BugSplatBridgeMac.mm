@@ -166,7 +166,8 @@ static id EnsureDelegate() {
 }
 
 extern "C" {
-    void _startBugSplatMac(const char* database, const char* application, const char* version, const char* logFilePath) {
+    void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
+                           int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) {
             NSLog(@"BugSplat: BugSplat class not available");
@@ -181,6 +182,28 @@ extern "C" {
         [bugsplat setValue:app forKey:@"applicationName"];
         [bugsplat setValue:ver forKey:@"applicationVersion"];
 
+        // Report fatal main-thread hangs. Coupled to macOS native crash reporting:
+        // _startBugSplat is only invoked when UseNativeCrashReportingForMac is enabled.
+        // Must be set before -start, which Unity calls on the main thread — the tracker
+        // captures the main thread's Mach port there. respondsToSelector first: setValue:forKey:
+        // against an older BugSplat-macOS.dylib without the property would raise
+        // NSUnknownKeyException rather than silently doing nothing.
+        if ([bugsplat respondsToSelector:@selector(setEnableHangDetection:)]) {
+            [bugsplat setValue:@YES forKey:@"enableHangDetection"];
+        }
+
+        // Both of these are read while -start scans the previous session's pending reports, so they
+        // have to be applied here rather than by a setter called after the constructor returns.
+        [bugsplat setValue:(autoSubmitCrashReport ? @YES : @NO) forKey:@"autoSubmitCrashReport"];
+
+        if ([bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
+            [bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
+                        forKey:@"autoSubmitFatalHangReport"];
+        } else if (!autoSubmitFatalHangReport) {
+            NSLog(@"BugSplat: this BugSplat-macOS.dylib predates autoSubmitFatalHangReport; "
+                  @"fatal hang reports will continue to upload without asking.");
+        }
+
         // Set up the attachment delegate BEFORE start so it's available when
         // pending crash reports are processed on launch.
         AddLogFilePath([NSString stringWithUTF8String:(logFilePath ?: "")]);
@@ -189,7 +212,7 @@ extern "C" {
         [bugsplat performSelector:@selector(start)];
     }
 
-    void _setNativeAttributeMac(const char* key, const char* value) {
+    void _setNativeAttribute(const char* key, const char* value) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
 
@@ -207,31 +230,31 @@ extern "C" {
         }
     }
 
-    void _setNativeUserMac(const char* user) {
+    void _setNativeUser(const char* user) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
         [bugsplat setValue:[NSString stringWithUTF8String:(user ?: "")] forKey:@"userName"];
     }
 
-    void _setNativeEmailMac(const char* email) {
+    void _setNativeEmail(const char* email) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
         [bugsplat setValue:[NSString stringWithUTF8String:(email ?: "")] forKey:@"userEmail"];
     }
 
-    void _setNativeNotesMac(const char* notes) {
+    void _setNativeNotes(const char* notes) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
         [bugsplat setValue:[NSString stringWithUTF8String:(notes ?: "")] forKey:@"notes"];
     }
 
-    void _setNativeKeyMac(const char* key) {
+    void _setNativeKey(const char* key) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
         [bugsplat setValue:[NSString stringWithUTF8String:(key ?: "")] forKey:@"appKey"];
     }
 
-    void _attachNativeLogFileMac(const char* path) {
+    void _attachNativeLogFile(const char* path) {
         AddLogFilePath([NSString stringWithUTF8String:(path ?: "")]);
 
         id bugsplat = GetBugSplatInstance();
@@ -240,12 +263,27 @@ extern "C" {
         [bugsplat setValue:EnsureDelegate() forKey:@"delegate"];
     }
 
-    void _detachNativeLogFileMac(const char* path) {
+    void _detachNativeLogFile(const char* path) {
         RemoveLogFilePath([NSString stringWithUTF8String:(path ?: "")]);
     }
 
-    void _crashNativeMac() {
+    void _crashNative() {
         char *ptr = 0;
         *ptr += 1;
+    }
+
+    void _hangNative() {
+        // Sample test hook: wedge the main thread. Unlike iOS, macOS has no watchdog that kills a
+        // beachballing app, so a hang is only ever uploaded if the user force-quits it. The window
+        // is about to stop drawing, so the instructions go to the log rather than on screen — and
+        // deliberately not to an NSAlert, which would pull AppKit into a plugin that isn't linked
+        // against it.
+        NSLog(@"BugSplat: blocking the main thread indefinitely. To upload a hang report, force-quit "
+              @"this app while it is frozen (Option-Command-Escape), then relaunch. Waiting the hang "
+              @"out instead sends nothing - fatal hangs only.");
+
+        // sleepUntilDate keeps the CPU idle while frozen (unlike a spin loop); the runloop still
+        // stalls, so the hang tracker persists a report that uploads after a force-quit.
+        [NSThread sleepUntilDate:[NSDate distantFuture]];
     }
 }

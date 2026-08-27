@@ -115,12 +115,18 @@ extern "C" {
 		return [NSString stringWithUTF8String:(cstring ?: "")];
 	}
 
-	void _startBugSplat(const char* database, const char* application, const char* version) {
+	void _startBugSplat(const char* database, const char* application, const char* version,
+	                    int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
 		BugSplat *bugsplat = [BugSplat shared];
 		bugsplat.bugSplatDatabase = createNSStringFrom(database);
 		bugsplat.applicationName = createNSStringFrom(application);
 		bugsplat.applicationVersion = createNSStringFrom(version);
-		bugsplat.autoSubmitCrashReport = YES;
+		// Both are read while -start scans the previous session's pending reports, so they have to
+		// be set here rather than by a setter the C# side calls once the constructor has returned.
+		bugsplat.autoSubmitCrashReport = autoSubmitCrashReport ? YES : NO;
+		if ([bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
+			bugsplat.autoSubmitFatalHangReport = autoSubmitFatalHangReport ? YES : NO;
+		}
 		// Report fatal main-thread hangs. Coupled to iOS native crash reporting:
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
 		// Must be set before -start, which Unity calls on the main thread.
@@ -131,41 +137,41 @@ extern "C" {
 		[bugsplat start];
 	}
 
-	void _setNativeAttributeIos(const char* key, const char* value) {
+	void _setNativeAttribute(const char* key, const char* value) {
 		[[BugSplat shared] setValue:createNSStringFrom(value) forAttribute:createNSStringFrom(key)];
 	}
 
-	void _setNativeUserIos(const char* user) {
+	void _setNativeUser(const char* user) {
 		[BugSplat shared].userName = createNSStringFrom(user);
 	}
 
-	void _setNativeEmailIos(const char* email) {
+	void _setNativeEmail(const char* email) {
 		[BugSplat shared].userEmail = createNSStringFrom(email);
 	}
 
-	void _setNativeNotesIos(const char* notes) {
+	void _setNativeNotes(const char* notes) {
 		[BugSplat shared].notes = createNSStringFrom(notes);
 	}
 
-	void _setNativeKeyIos(const char* key) {
+	void _setNativeKey(const char* key) {
 		[BugSplat shared].appKey = createNSStringFrom(key);
 	}
 
-	void _attachNativeLogFileIos(const char* path) {
+	void _attachNativeLogFile(const char* path) {
 		AddLogFilePath(createNSStringFrom(path));
 		[BugSplat shared].delegate = EnsureDelegate();
 	}
 
-	void _detachNativeLogFileIos(const char* path) {
+	void _detachNativeLogFile(const char* path) {
 		RemoveLogFilePath(createNSStringFrom(path));
 	}
 
-    void _crashNativeIos() {
+    void _crashNative() {
         char *ptr = 0;
         *ptr += 1;
     }
 
-    void _hangNativeIos() {
+    void _hangNative() {
         // Sample test hook: confirm with an alert, then wedge the main thread.
         // A hang is only uploaded if the app is terminated while frozen, so the
         // alert tells the user to force-quit and relaunch to see the report.
