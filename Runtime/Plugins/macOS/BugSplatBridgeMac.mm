@@ -133,6 +133,9 @@ static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
 
         if (result) {
             [attachments addObject:result];
+#if !__has_feature(objc_arc)
+            [result release];
+#endif
         }
     }
 

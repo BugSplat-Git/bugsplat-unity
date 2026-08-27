@@ -89,6 +89,9 @@ static NSData *ReadLogTail(NSString *path) {
 			attachmentData:data
 			contentType:@"text/plain"];
 		[attachments addObject:attachment];
+#if !__has_feature(objc_arc)
+		[attachment release];
+#endif
 	}
 
 	return attachments;
