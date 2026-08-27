@@ -491,7 +491,7 @@ Support by platform:
 |---|---|
 | Windows | Multiple |
 | macOS | Multiple |
-| iOS | Multiple, once `BugSplat.xcframework` is updated to a build that includes [bugsplat-apple#70](https://github.com/BugSplat-Git/bugsplat-apple/pull/70) |
+| iOS | Multiple |
 | Android | Not supported — the call is a no-op |
 
 `Player.log` still ships with managed posts on every platform, including Android.
