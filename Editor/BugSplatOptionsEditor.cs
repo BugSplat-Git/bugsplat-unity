@@ -78,7 +78,7 @@ namespace BugSplatUnity.Editor
                     DrawSymbolUploadCredentialsSection();
                 }
 
-                EditorGUILayout.PropertyField(serializedObject.FindProperty(iterator.name), true);
+                EditorGUILayout.PropertyField(iterator, true);
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -91,12 +91,16 @@ namespace BugSplatUnity.Editor
             // Caught here as well as at runtime: this pair is configured in the Inspector, so the
             // Inspector is where noticing it costs nothing. The runtime warning only surfaces on a
             // device, after a build, which is a slow way to learn the option did nothing.
-            if (!options.IosAutoSubmitFatalHangReport && options.IosAutoSubmitCrashReport)
+            // Gated on native reporting, like the runtime warning: with it off these options never
+            // reach bugsplat-apple, so the combination has no effect to warn about.
+            if (options.UseNativeCrashReportingForIos &&
+                !options.IosAutoSubmitFatalHangReport && options.IosAutoSubmitCrashReport)
             {
                 EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "iOS"), MessageType.Warning);
             }
 
-            if (!options.MacAutoSubmitFatalHangReport && options.MacAutoSubmitCrashReport)
+            if (options.UseNativeCrashReportingForMac &&
+                !options.MacAutoSubmitFatalHangReport && options.MacAutoSubmitCrashReport)
             {
                 EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "macOS"), MessageType.Warning);
             }

@@ -67,6 +67,12 @@ namespace BugSplatUnity.RuntimeTests
 #elif UNITY_STANDALONE_OSX
 			Assert.True(sut.AutoSubmitCrashReportSetting, nameof(options.MacAutoSubmitCrashReport));
 			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.MacAutoSubmitFatalHangReport));
+#else
+			// Non-Apple targets are asserted rather than skipped: CreateFromOptions deliberately
+			// passes null so bugsplat-apple's own defaults survive, and that is worth pinning -
+			// it is also the only branch CI exercises, since no CI target is iOS or macOS.
+			Assert.IsNull(sut.AutoSubmitCrashReportSetting, nameof(sut.AutoSubmitCrashReportSetting));
+			Assert.IsNull(sut.AutoSubmitFatalHangReportSetting, nameof(sut.AutoSubmitFatalHangReportSetting));
 #endif
 		}
 

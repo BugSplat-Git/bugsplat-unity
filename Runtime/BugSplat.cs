@@ -313,11 +313,21 @@ namespace BugSplatUnity
             var autoSubmitHang = autoSubmitFatalHangReport.HasValue ? (autoSubmitFatalHangReport.Value ? 1 : 0) : -1;
             var hangThreshold = hangDetectionThresholdSeconds ?? 0f;
 
+            // Both warnings below are gated on this. With native reporting off these settings
+            // never reach bugsplat-apple at all, so warning about them would be noise about
+            // something that has no effect either way.
+#if UNITY_IOS
+            var nativeReportingForThisPlatform = useNativeLibIos;
+#else
+            var nativeReportingForThisPlatform = useNativeLibMac;
+#endif
+
             // A configured value of zero or less cannot be honoured - the bridges only apply a
             // positive threshold - so it silently becomes bugsplat-apple's own default. Say so,
             // rather than letting someone who typed 0 expecting the 0.1s floor wonder why hangs
             // are being declared at two seconds.
-            if (hangDetectionThresholdSeconds.HasValue && hangDetectionThresholdSeconds.Value <= 0f)
+            if (nativeReportingForThisPlatform &&
+                hangDetectionThresholdSeconds.HasValue && hangDetectionThresholdSeconds.Value <= 0f)
             {
                 Debug.LogWarning(
                     "BugSplat: a hang detection threshold of " + hangDetectionThresholdSeconds.Value +
@@ -329,7 +339,8 @@ namespace BugSplatUnity
             // hang's auto-submit flag routes it onto the normal submission path, and that path
             // then consults autoSubmitCrashReport - so leaving that on means the hang still
             // uploads without asking, which is the opposite of what was configured.
-            if (autoSubmitFatalHangReport == false && autoSubmitCrashReport == true)
+            if (nativeReportingForThisPlatform &&
+                autoSubmitFatalHangReport == false && autoSubmitCrashReport == true)
             {
                 Debug.LogWarning(
                     "BugSplat: the fatal hang report option is off while the crash report option is on, " +
