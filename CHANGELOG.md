@@ -42,6 +42,8 @@ Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md
 
 ### Removed
 
+- The orphaned `UNITY_WSA` player-log branch in `DotNetStandardExceptionReporter`. It was the only WSA/UWP code in the package — no options, no README claim, no platform-support row, no CI target — so it read as support that did not exist. Removing it in a release that is already breaking avoids either a needless break later or carrying dead code for two more versions ([#196](https://github.com/BugSplat-Git/bugsplat-unity/issues/196)).
+
 - **Breaking:** `WindowsReporter` and `INativeCrashReporter`. Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded — native Windows crashes are captured by bugsplat-windows instead.
 - **Breaking:** `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash`. Unsent native crash reports upload automatically at startup, so there is nothing to call at launch. Delete any calls to these methods.
 - **Breaking:** `BugSplatOptions.SymbolUploadClientId` and `BugSplatOptions.SymbolUploadClientSecret`. Set credentials from **BugSplat > Symbol Upload > Set Credentials**, or with the environment variables in CI.
