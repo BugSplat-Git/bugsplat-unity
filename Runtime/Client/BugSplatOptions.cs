@@ -66,13 +66,6 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
-		[Header("Apple (iOS and macOS)")]
-		[Tooltip("Submit Apple (iOS and macOS) crash reports without asking the user. Off by default, so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple\'s autoSubmitCrashReport.")]
-		public bool AppleAutoSubmitCrashReport;
-
-		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Apple Auto Submit Crash Report to be off. Maps to bugsplat-apple\'s autoSubmitFatalHangReport.")]
-		public bool AppleAutoSubmitFatalHangReport = true;
-
 		[Header("iOS")]
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
@@ -80,12 +73,24 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Add a build script phase to XCode project to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForIos;
 
+		[Tooltip("Submit iOS crash reports without asking the user. On by default - the convention on mobile, and bugsplat-apple's own iOS default. Turn this off to show the BugSplat dialog on the next launch instead. Maps to bugsplat-apple's autoSubmitCrashReport.")]
+		public bool IosAutoSubmitCrashReport = true;
+
+		[Tooltip("Submit iOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Ios Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
+		public bool IosAutoSubmitFatalHangReport = true;
+
 		[Header("macOS")]
 		[Tooltip("Use native crash reporting framework for macOS builds (requires IL2CPP). If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForMac;
 
 		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
 		public bool UploadDebugSymbolsForMac;
+
+		[Tooltip("Submit macOS crash reports without asking the user. Off by default - the convention on desktop, and bugsplat-apple's own macOS default - so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple's autoSubmitCrashReport.")]
+		public bool MacAutoSubmitCrashReport;
+
+		[Tooltip("Submit macOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Mac Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
+		public bool MacAutoSubmitFatalHangReport = true;
 
 		[Header("Android")]
 		[Tooltip("Use crash reporting library for Android builds. If set to false, will only use .NET handler.")]

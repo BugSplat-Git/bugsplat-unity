@@ -33,8 +33,6 @@ The following API methods are available to help you customize BugSplat to fit yo
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
-| AppleAutoSubmitCrashReport | Submit Apple (iOS and macOS) crash reports without asking the user. `false` by default, so a native crash shows the BugSplat dialog on the next launch. Mirrors bugsplat-apple's `autoSubmitCrashReport` |
-| AppleAutoSubmitFatalHangReport | Submit Apple fatal hang reports without asking the user. `true` by default. Turn it off to ask instead, which also needs `AppleAutoSubmitCrashReport` off. Mirrors bugsplat-apple's `autoSubmitFatalHangReport` |
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).
@@ -72,3 +70,7 @@ Support by platform:
 `Player.log` still ships with managed posts on every platform, including Android.
 
 `CapturePlayerLog` uses the same mechanism with `Application.consoleLogPath`, so the two cooperate: setting it `false` detaches only `Player.log`, and attaching your own file leaves `Player.log` alone. Prefer `CapturePlayerLog` for that file rather than attaching `Application.consoleLogPath` yourself — see [Player.log and privacy](#playerlog-and-privacy).
+| IosAutoSubmitCrashReport | Submit iOS crash reports without asking the user. `true` by default — the convention on mobile, and bugsplat-apple's own iOS default |
+| IosAutoSubmitFatalHangReport | Submit iOS fatal hang reports without asking the user. `true` by default. Needs `IosAutoSubmitCrashReport` off too before a dialog can appear |
+| MacAutoSubmitCrashReport | Submit macOS crash reports without asking the user. `false` by default — the convention on desktop, and bugsplat-apple's own macOS default |
+| MacAutoSubmitFatalHangReport | Submit macOS fatal hang reports without asking the user. `true` by default. Needs `MacAutoSubmitCrashReport` off too before a dialog can appear |
