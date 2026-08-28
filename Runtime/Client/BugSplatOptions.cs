@@ -68,10 +68,10 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Header("Apple (iOS and macOS)")]
 		[Tooltip("Submit Apple (iOS and macOS) crash reports without asking the user. Off by default, so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple\'s autoSubmitCrashReport.")]
-		public bool AutoSubmitCrashReport;
+		public bool AppleAutoSubmitCrashReport;
 
-		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Auto Submit Crash Report to be off. Maps to bugsplat-apple\'s autoSubmitFatalHangReport.")]
-		public bool AutoSubmitFatalHangReport = true;
+		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Apple Auto Submit Crash Report to be off. Maps to bugsplat-apple\'s autoSubmitFatalHangReport.")]
+		public bool AppleAutoSubmitFatalHangReport = true;
 
 		[Header("iOS")]
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
