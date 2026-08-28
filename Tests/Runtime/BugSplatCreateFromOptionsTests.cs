@@ -39,6 +39,8 @@ namespace BugSplatUnity.RuntimeTests
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
 			options.PostExceptionsInEditor = true;
+			options.AutoSubmitCrashReport = true;
+			options.AutoSubmitFatalHangReport = false;
 
 			var sut = BugSplat.CreateFromOptions(options);
 
@@ -52,6 +54,8 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
 			Assert.True(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
+			Assert.True(sut.AutoSubmitCrashReportSetting, nameof(options.AutoSubmitCrashReport));
+			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.AutoSubmitFatalHangReport));
 		}
 
 		[Test]

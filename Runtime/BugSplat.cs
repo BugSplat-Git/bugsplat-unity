@@ -231,6 +231,16 @@ namespace BugSplatUnity
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
         private readonly List<string> nativeAttachmentPaths = new List<string>();
+
+        /// <summary>
+        /// The Apple submission settings as constructed. Recorded on every platform, not just the
+        /// Apple ones, so CreateFromOptions' mapping stays observable in the editor - the blocks
+        /// that actually consume these are behind a platform #if and compile out there, which
+        /// would otherwise leave the mapping untestable by the suite written to catch exactly a
+        /// dropped argument.
+        /// </summary>
+        internal bool AutoSubmitCrashReportSetting { get; }
+        internal bool AutoSubmitFatalHangReportSetting { get; }
         private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
@@ -285,6 +295,9 @@ namespace BugSplatUnity
 
             // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
             // which is main-thread only.
+            AutoSubmitCrashReportSetting = autoSubmitCrashReport;
+            AutoSubmitFatalHangReportSetting = autoSubmitFatalHangReport;
+
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
