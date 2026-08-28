@@ -123,6 +123,69 @@ jobs:
   # Tests run inside the editor, so everything behind `&& !UNITY_EDITOR` — every native crash
   # path — is excluded from the assemblies they link against. Compiling the player scripts is
   # the only thing in CI that builds that code.
+  # The two ObjC bridges are the only native sources in the package, and nothing else in CI
+  # compiles them: the matrices above run Unity on Linux, which never invokes clang, and Unity
+  # only builds a .mm at player build time on a Mac. Every bridge change before this shipped
+  # verified by inspection alone - which is how a direct property access against a framework
+  # that predated the property reached a PR, breaking every iOS build.
+  #
+  # No Unity, no license, no Xcode project: clang plus the headers already vendored in the repo.
+  # Runs in parallel with everything else and finishes in seconds.
+  native-bridges:
+    name: Native bridges (clang)
+    runs-on: macos-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      # Both memory models on purpose. Unity's plugin importers pass no -fobjc-arc, so manual
+      # retain/release is what actually ships - but the bridges are written to compile either
+      # way, and holding that line is what keeps an ownership bug from depending on a flag.
+      - name: macOS bridge
+        run: |
+          for arc in "" "-fobjc-arc"; do
+            label=$([ -z "$arc" ] && echo "manual retain/release" || echo "ARC")
+            echo "::group::macOS bridge — $label"
+            # No -Wundeclared-selector here: this bridge reaches BugSplat entirely through
+            # NSClassFromString and @selector so it never imports the framework's headers, which
+            # makes every selector in it legitimately undeclared. The warning would be permanent
+            # noise, and a check that always warns is a check people stop reading.
+            clang -fsyntax-only -x objective-c++ -std=c++14 $arc \
+              -Wall \
+              Runtime/Plugins/macOS/BugSplatBridgeMac.mm
+            echo "::endgroup::"
+          done
+
+      # The iOS bridge links BugSplat.xcframework rather than resolving it at runtime, so it has
+      # to be compiled against the vendored headers. That is precisely the failure this job
+      # exists to catch: a property that does not exist in the pinned framework is a compile
+      # error here and invisible everywhere else.
+      - name: iOS bridge
+        run: |
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          FW=Editor/IOS/Frameworks/BugSplat.xcframework/ios-arm64
+          test -d "$FW/BugSplat.framework/Headers" || {
+            echo "Vendored xcframework headers not found at $FW — did LFS checkout fail?" >&2
+            exit 1
+          }
+          for arc in "" "-fobjc-arc"; do
+            label=$([ -z "$arc" ] && echo "manual retain/release" || echo "ARC")
+            echo "::group::iOS bridge — $label"
+            # -Wundeclared-selector is worth having here, unlike the macOS bridge: this file
+            # links the framework, so a selector that does not resolve is a real signal. The
+            # source carries a JetBrains IDE pragma clang does not recognize, hence -Wno-unknown-pragmas.
+            clang -fsyntax-only -x objective-c++ -std=c++14 $arc \
+              -Wall -Wundeclared-selector -Wno-unknown-pragmas \
+              -target arm64-apple-ios13.0 -isysroot "$SDK" -F "$FW" \
+              Editor/IOS/ObjC/BugSplatBridge.mm
+            echo "::endgroup::"
+          done
+
   compile:
     name: Compile ${{ matrix.targetPlatform }}
     runs-on: ubuntu-latest
