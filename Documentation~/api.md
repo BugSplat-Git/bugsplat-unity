@@ -36,10 +36,10 @@ The following API methods are available to help you customize BugSplat to fit yo
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
 | MacAutoSubmitCrashReport | Submit macOS crash reports without asking the user. `false` by default — the convention on desktop, and bugsplat-apple's own macOS default |
 | MacAutoSubmitFatalHangReport | Submit macOS fatal hang reports without asking the user. `true` by default. Needs `MacAutoSubmitCrashReport` off too before a dialog can appear |
-| MacHangDetectionThresholdSeconds | Seconds the macOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Values below 0.1 are clamped |
+| MacHangDetectionThresholdSeconds | Seconds the macOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
 | IosAutoSubmitCrashReport | Submit iOS crash reports without asking the user. `true` by default — the convention on mobile, and bugsplat-apple's own iOS default |
 | IosAutoSubmitFatalHangReport | Submit iOS fatal hang reports without asking the user. `true` by default. Needs `IosAutoSubmitCrashReport` off too before a dialog can appear |
-| IosHangDetectionThresholdSeconds | Seconds the iOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Values below 0.1 are clamped |
+| IosHangDetectionThresholdSeconds | Seconds the iOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).

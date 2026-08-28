@@ -92,14 +92,14 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Submit macOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Mac Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
 		public bool MacAutoSubmitFatalHangReport = true;
 
-		[Tooltip("Seconds the macOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Values below 0.1 are clamped by the tracker.")]
+		[Tooltip("Seconds the macOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Positive values below 0.1 are clamped to 0.1 by the tracker. Zero or less is not a usable threshold, so it falls back to bugsplat-apple's own default and logs a warning.")]
 		public float MacHangDetectionThresholdSeconds = 5f;
 
 		[Header("iOS")]
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
 
-		[Tooltip("Add a build script phase to XCode project to upload the Debug symbols to BugSplat.")]
+		[Tooltip("Add a build script phase to the Xcode project to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForIos;
 
 		[Tooltip("Submit iOS crash reports without asking the user. On by default - the convention on mobile, and bugsplat-apple's own iOS default. Turn this off to show the BugSplat dialog on the next launch instead. Maps to bugsplat-apple's autoSubmitCrashReport.")]
@@ -108,7 +108,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Submit iOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Ios Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
 		public bool IosAutoSubmitFatalHangReport = true;
 
-		[Tooltip("Seconds the iOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Values below 0.1 are clamped by the tracker.")]
+		[Tooltip("Seconds the iOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Positive values below 0.1 are clamped to 0.1 by the tracker. Zero or less is not a usable threshold, so it falls back to bugsplat-apple's own default and logs a warning.")]
 		public float IosHangDetectionThresholdSeconds = 5f;
 
 		[Header("Android")]
