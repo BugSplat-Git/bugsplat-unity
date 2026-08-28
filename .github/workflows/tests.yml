@@ -129,7 +129,7 @@ jobs:
   # verified by inspection alone - which is how a direct property access against a framework
   # that predated the property reached a PR, breaking every iOS build.
   #
-  # No Unity, no licence, no Xcode project: clang plus the headers already vendored in the repo.
+  # No Unity, no license, no Xcode project: clang plus the headers already vendored in the repo.
   # Runs in parallel with everything else and finishes in seconds.
   native-bridges:
     name: Native bridges (clang)
@@ -178,7 +178,7 @@ jobs:
             echo "::group::iOS bridge — $label"
             # -Wundeclared-selector is worth having here, unlike the macOS bridge: this file
             # links the framework, so a selector that does not resolve is a real signal. The
-            # source carries a JetBrains IDE pragma clang does not recognise, hence -Wno-unknown-pragmas.
+            # source carries a JetBrains IDE pragma clang does not recognize, hence -Wno-unknown-pragmas.
             clang -fsyntax-only -x objective-c++ -std=c++14 $arc \
               -Wall -Wundeclared-selector -Wno-unknown-pragmas \
               -target arm64-apple-ios13.0 -isysroot "$SDK" -F "$FW" \
