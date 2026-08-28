@@ -33,7 +33,7 @@ Shipped in:
 - `Runtime/Plugins/macOS/BugSplat-macOS.dylib`
 
 Built from [BugSplat-Git/bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), release
-**[3.5.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.5.0)** — both payloads are the
+**[3.6.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.6.0)** — both payloads are the
 `BugSplat.xcframework.zip` and `BugSplat-macOS.dylib` assets from that release, vendored unmodified.
 The component list below comes from that release's `LICENSE.txt`, corroborated by the source paths and
 symbols embedded in the shipped binaries (`Vendor/PLCrashReporter/Source/*`,
@@ -48,7 +48,7 @@ License Type: "MIT"
 
 Copyright (c) 2012-2014 HockeyApp, Bit Stadium GmbH. All rights reserved.
 
-[BugSplat for Apple platforms license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
+[BugSplat for Apple platforms license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.6.0/LICENSE.txt)
 
 ---------
 
@@ -60,7 +60,7 @@ Copyright (c) 2008 - 2014 Plausible Labs Cooperative, Inc.
 Copyright (c) 2012 - 2014 HockeyApp, Bit Stadium GmbH.
 All rights reserved.
 
-[PLCrashReporter license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
+[PLCrashReporter license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.6.0/LICENSE.txt)
 
 > Note: the 5.0.0 audit described this payload as BSD-licensed. The upstream `LICENSE.txt` in
 > bugsplat-apple states MIT for both BugSplat and PLCrashReporter. MIT is what is recorded here.
@@ -73,7 +73,7 @@ License Type: "Apache-2.0"
 
 Copyright 2008, Dave Benson.
 
-[protobuf-c license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.5.0/LICENSE.txt)
+[protobuf-c license](https://github.com/BugSplat-Git/bugsplat-apple/blob/3.6.0/LICENSE.txt)
 
 ---------
 
@@ -306,7 +306,7 @@ They need a decision from the maintainers before this file can be considered com
    **Android** payload is the weak spot: the exact revisions of Crashpad, curl and BoringSSL compiled
    into the `.aar` are not knowable from here, and neither is the `.aar`'s own version. Only
    `libcurl/8.13.1-DEV` (from the binary's own version string) is pinned by in-tree evidence. The
-   Apple payload is pinned to bugsplat-apple 3.5.0, the Windows binaries report `8.1.0.0` in their
+   Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `8.1.0.0` in their
    version resources, and `BugSplatDotNetStandard` reports `4.3.0.0` in `deps.json` — but those come
    from the binaries and the vendoring commit, not from a manifest. Recording source revisions at
    build time would make future audits mechanical instead of forensic.

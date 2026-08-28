@@ -238,6 +238,29 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) NSTimeInterval hangDetectionThreshold;
 
 /**
+ * Submit fatal hang reports without asking the user, the hang counterpart to
+ * `autoSubmitCrashReport`.
+ *
+ * Fatal hang reports are persisted while the main thread is wedged and uploaded on the next
+ * launch. They are auto-submitted by default: the user never had the chance to consent,
+ * because the app was frozen and then terminated, so the report is marked as already
+ * submitted when it is persisted and the next-launch scanner uploads it without a dialog.
+ *
+ * Set this to NO to ask instead. The report then takes the same submission path a crash report
+ * does, so the user can describe what the app was doing when it froze - usually the only thing
+ * that makes a hang actionable.
+ *
+ * Note that when this is NO, whether a dialog actually appears still follows
+ * `autoSubmitCrashReport`, exactly as it does for a crash: macOS defaults that to NO and shows
+ * the dialog, while iOS defaults it to YES and submits silently either way.
+ *
+ * Has no effect unless `enableHangDetection` is YES.
+ *
+ * Default: YES
+ */
+@property (nonatomic, assign) BOOL autoSubmitFatalHangReport;
+
+/**
  * Add an attribute and value to a dictionary of attributes that will potentially be included in a crash report.
  * If the attribute name is nil or empty, or the attribute+value pair cannot be set, the method will return NO,
  * otherwise it will return YES.
