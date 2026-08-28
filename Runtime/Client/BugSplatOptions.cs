@@ -18,16 +18,17 @@ namespace BugSplatUnity.Runtime.Client
 	[CreateAssetMenu(menuName = "BugSplat Options")]
 	public class BugSplatOptions : ScriptableObject
 	{
-		[Header("Required")] [Tooltip("The name of your BugSplat database.")]
+		[Header("BugSplat Account")]
+		[Tooltip("The name of your BugSplat database. Required.")]
 		public string Database;
 
-		[Header("Optional")]
 		[Tooltip("The name of your BugSplat application. Defaults to Application.productName if no value is set.")]
 		public string Application;
 
 		[Tooltip("The version of your BugSplat application. Defaults to Application.version if no value is set.")]
 		public string Version;
 
+		[Header("Report Metadata")]
 		[Tooltip("A default description that can be overridden by call to Post.")]
 		public string Description;
 
@@ -37,22 +38,26 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("A default key that can be overridden by call to Post.")]
 		public string Key;
 
-        [Tooltip("A default general purpose field that can be overridden by call to Post.")]
-        public string Notes;
+		[Tooltip("A default general purpose field that can be overridden by call to Post.")]
+		public string Notes;
 
-        [Tooltip("A default user that can be overridden by call to Post")]
+		[Tooltip("A default user that can be overridden by call to Post")]
 		public string User;
 
+		[Tooltip("Attributes to attach to reports")]
+		public List<BugSplatAttribute> Attributes = new List<BugSplatAttribute>();
+
+		[Header("Capture")]
 		[Tooltip("Upload Editor.log when Post is called")]
 		public bool CaptureEditorLog;
 
 		[Tooltip("Upload Player.log when Post is called (default). Player.log paths contain the OS username - uncheck to opt out. Not available on WebGL.")]
 		public bool CapturePlayerLog = true;
 
-        [Tooltip("Maximum size of the log files to upload in MB. Defaults to 10MB if not set.")]
+		[Tooltip("Maximum size of the log files to upload in MB. Defaults to 10MB if not set.")]
 		public int LogFileMaxSizeMB = 10;
 
-        [Tooltip("Take a screenshot and upload it when Post is called")]
+		[Tooltip("Take a screenshot and upload it when Post is called")]
 		public bool CaptureScreenshots;
 
 		[Tooltip("Should BugSplat upload exceptions when in editor. Off by default so play mode exceptions stay out of your database.")]
@@ -61,33 +66,35 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
-		[Tooltip("Attributes to attach to reports")]
-		public List<BugSplatAttribute> Attributes = new List<BugSplatAttribute>();
-		
+		[Header("Apple (iOS and macOS)")]
+		[Tooltip("Submit Apple (iOS and macOS) crash reports without asking the user. Off by default, so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple\'s autoSubmitCrashReport.")]
+		public bool AutoSubmitCrashReport;
+
+		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Auto Submit Crash Report to be off. Maps to bugsplat-apple\'s autoSubmitFatalHangReport.")]
+		public bool AutoSubmitFatalHangReport = true;
+
+		[Header("iOS")]
 		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForIos;
 
 		[Tooltip("Add a build script phase to XCode project to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForIos;
 
-		[Tooltip("Use crash reporting library for Android builds. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForAndroid;
-
-		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
-		public bool UploadDebugSymbolsForAndroid;
-
+		[Header("macOS")]
 		[Tooltip("Use native crash reporting framework for macOS builds (requires IL2CPP). If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForMac;
 
 		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
 		public bool UploadDebugSymbolsForMac;
 
-		[Tooltip("Submit Apple (iOS and macOS) crash reports without asking the user. Off by default, so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple's autoSubmitCrashReport.")]
-		public bool AutoSubmitCrashReport;
+		[Header("Android")]
+		[Tooltip("Use crash reporting library for Android builds. If set to false, will only use .NET handler.")]
+		public bool UseNativeCrashReportingForAndroid;
 
-		[Tooltip("Submit Apple (iOS and macOS) fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
-		public bool AutoSubmitFatalHangReport = true;
+		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
+		public bool UploadDebugSymbolsForAndroid;
 
+		[Header("Windows")]
 		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForWindows;
 
