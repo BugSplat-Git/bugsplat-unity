@@ -239,8 +239,8 @@ namespace BugSplatUnity
         /// would otherwise leave the mapping untestable by the suite written to catch exactly a
         /// dropped argument.
         /// </summary>
-        internal bool AutoSubmitCrashReportSetting { get; }
-        internal bool AutoSubmitFatalHangReportSetting { get; }
+        internal bool? AutoSubmitCrashReportSetting { get; }
+        internal bool? AutoSubmitFatalHangReportSetting { get; }
         private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
@@ -294,11 +294,11 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
-            // which is main-thread only.
             AutoSubmitCrashReportSetting = autoSubmitCrashReport;
             AutoSubmitFatalHangReportSetting = autoSubmitFatalHangReport;
 
+            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
+            // which is main-thread only.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
