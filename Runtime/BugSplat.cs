@@ -292,6 +292,18 @@ namespace BugSplatUnity
             // report from the previous session gets a dialog or goes straight up.
             var autoSubmit = autoSubmitCrashReport ? 1 : 0;
             var autoSubmitHang = autoSubmitFatalHangReport ? 1 : 0;
+
+            // Asking for a hang prompt only works if crashes are prompting too. Withholding the
+            // hang's auto-submit flag routes it onto the normal submission path, and that path
+            // then consults autoSubmitCrashReport - so leaving that on means the hang still
+            // uploads without asking, which is the opposite of what was configured.
+            if (!autoSubmitFatalHangReport && autoSubmitCrashReport)
+            {
+                Debug.LogWarning(
+                    "BugSplat: AutoSubmitFatalHangReport is off, but AutoSubmitCrashReport is on, " +
+                    "so fatal hangs will still upload without asking. Turn AutoSubmitCrashReport " +
+                    "off as well to be prompted.");
+            }
 #endif
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR

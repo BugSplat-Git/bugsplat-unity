@@ -133,6 +133,9 @@ extern "C" {
 		if ([bugsplat respondsToSelector:NSSelectorFromString(@"setAutoSubmitFatalHangReport:")]) {
 			[bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
 			            forKey:@"autoSubmitFatalHangReport"];
+		} else if (!autoSubmitFatalHangReport) {
+			NSLog(@"BugSplat: this BugSplat.xcframework predates autoSubmitFatalHangReport; "
+			      @"fatal hang reports will continue to upload without asking.");
 		}
 		// Report fatal main-thread hangs. Coupled to iOS native crash reporting:
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
