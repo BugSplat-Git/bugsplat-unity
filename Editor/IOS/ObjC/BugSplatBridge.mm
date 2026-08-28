@@ -124,8 +124,15 @@ extern "C" {
 		// Both are read while -start scans the previous session's pending reports, so they have to
 		// be set here rather than by a setter the C# side calls once the constructor has returned.
 		bugsplat.autoSubmitCrashReport = autoSubmitCrashReport ? YES : NO;
-		if ([bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
-			bugsplat.autoSubmitFatalHangReport = autoSubmitFatalHangReport ? YES : NO;
+		// Set through KVC rather than the property. The vendored BugSplat.xcframework predates
+		// autoSubmitFatalHangReport, and unlike the macOS bridge - which reaches BugSplat purely
+		// at runtime - this file links the framework, so a direct property access would not
+		// compile at all. respondsToSelector: keeps it a runtime no-op until a framework
+		// carrying the property is vendored, and NSSelectorFromString avoids
+		// -Wundeclared-selector on the same undeclared name.
+		if ([bugsplat respondsToSelector:NSSelectorFromString(@"setAutoSubmitFatalHangReport:")]) {
+			[bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
+			            forKey:@"autoSubmitFatalHangReport"];
 		}
 		// Report fatal main-thread hangs. Coupled to iOS native crash reporting:
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
