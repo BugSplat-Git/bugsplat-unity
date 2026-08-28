@@ -167,7 +167,8 @@ static id EnsureDelegate() {
 
 extern "C" {
     void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
-                           int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
+                           int autoSubmitCrashReport, int autoSubmitFatalHangReport,
+                           float hangDetectionThresholdSeconds) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) {
             NSLog(@"BugSplat: BugSplat class not available");
@@ -190,6 +191,8 @@ extern "C" {
         // NSUnknownKeyException rather than silently doing nothing.
         if ([bugsplat respondsToSelector:@selector(setEnableHangDetection:)]) {
             [bugsplat setValue:@YES forKey:@"enableHangDetection"];
+            // Must be set before -start, same as the flags above: the tracker reads it at start.
+            [bugsplat setValue:@(hangDetectionThresholdSeconds) forKey:@"hangDetectionThreshold"];
         }
 
         // Both of these are read while -start scans the previous session's pending reports, so they

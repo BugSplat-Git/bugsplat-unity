@@ -116,7 +116,8 @@ extern "C" {
 	}
 
 	void _startBugSplat(const char* database, const char* application, const char* version,
-	                    const char* logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
+	                    const char* logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport,
+	                    float hangDetectionThresholdSeconds) {
 		BugSplat *bugsplat = [BugSplat shared];
 		bugsplat.bugSplatDatabase = createNSStringFrom(database);
 		bugsplat.applicationName = createNSStringFrom(application);
@@ -141,6 +142,8 @@ extern "C" {
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
 		// Must be set before -start, which Unity calls on the main thread.
 		bugsplat.enableHangDetection = YES;
+		// Must be set before -start, same as the flags above: the tracker reads it when it starts.
+		bugsplat.hangDetectionThreshold = hangDetectionThresholdSeconds;
 		// Track the log BEFORE start as well as the delegate. start processes the crash reports
 		// left by the previous session and asks the delegate for attachments while it does, so a
 		// path added afterwards arrives too late for the very reports it was meant to accompany.

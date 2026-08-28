@@ -275,7 +275,8 @@ namespace BugSplatUnity
             bool useNativeLibWin = false,
             bool capturePlayerLog = true,
             bool autoSubmitCrashReport = true,
-            bool autoSubmitFatalHangReport = true
+            bool autoSubmitFatalHangReport = true,
+            float hangDetectionThresholdSeconds = 5f
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -305,6 +306,7 @@ namespace BugSplatUnity
             // report from the previous session gets a dialog or goes straight up.
             var autoSubmit = autoSubmitCrashReport ? 1 : 0;
             var autoSubmitHang = autoSubmitFatalHangReport ? 1 : 0;
+            var hangThreshold = hangDetectionThresholdSeconds;
 
             // Asking for a hang prompt only works if crashes are prompting too. Withholding the
             // hang's auto-submit flag routes it onto the normal submission path, and that path
@@ -362,7 +364,7 @@ namespace BugSplatUnity
                 // crash reports left by the previous session, so the player log has to be tracked
                 // before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null)
@@ -384,7 +386,7 @@ namespace BugSplatUnity
                 // The delegate is queried while start processes crash reports left by the previous
                 // session, so the player log has to be tracked before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null)
@@ -463,13 +465,16 @@ namespace BugSplatUnity
                 options.CapturePlayerLog,
 #if UNITY_IOS
                 options.IosAutoSubmitCrashReport,
-                options.IosAutoSubmitFatalHangReport
+                options.IosAutoSubmitFatalHangReport,
+                options.IosHangDetectionThresholdSeconds
 #elif UNITY_STANDALONE_OSX
                 options.MacAutoSubmitCrashReport,
-                options.MacAutoSubmitFatalHangReport
+                options.MacAutoSubmitFatalHangReport,
+                options.MacHangDetectionThresholdSeconds
 #else
                 true,
-                true
+                true,
+                5f
 #endif
             )
             {
@@ -912,7 +917,7 @@ namespace BugSplatUnity
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
         // Both Apple bridges now export identical symbols with identical signatures.
         [DllImport("__Internal")]
-        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
+        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport, float hangDetectionThresholdSeconds);
 
         [DllImport("__Internal")]
         static extern void _setNativeAttribute(string key, string value);
