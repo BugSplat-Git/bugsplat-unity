@@ -18,6 +18,39 @@ namespace BugSplatUnity.Editor
         private const int integrationsPaddingTop = 5;
         private const int integrationsPaddingBottom = 5;
 
+        private void DrawSymbolUploadCredentialsSection()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.HelpBox(credentialsInfoMessage, MessageType.Info);
+
+            // Read through the serialized property rather than the target: this runs before
+            // ApplyModifiedProperties, so the target still holds the pre-edit value.
+            var database = serializedObject.FindProperty(nameof(BugSplatOptions.Database))?.stringValue;
+            var queryString = !string.IsNullOrEmpty(database)
+                ? string.Format(integrationsQueryString, database)
+                : string.Empty;
+            var integrationsURL = string.Format(integrationsURLFormat, queryString);
+
+            var style = new GUIStyle()
+            {
+                richText = true,
+                wordWrap = true,
+                margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom)
+            };
+
+            if (GUILayout.Button(integrationsText, style))
+            {
+                Application.OpenURL(integrationsURL);
+            }
+
+            // Make the generated link read as clickable.
+            var rect = GUILayoutUtility.GetLastRect();
+            rect.width = style.CalcSize(new GUIContent(integrationsText)).x;
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+
+            EditorGUILayout.Space();
+        }
+
         public override void OnInspectorGUI()
         {
             var options = target as BugSplatOptions;
@@ -36,6 +69,15 @@ namespace BugSplatUnity.Editor
             while (iterator.NextVisible(traverseChildren))
             {
                 traverseChildren = false;
+
+                // The credentials notice belongs next to the symbol upload toggles it is about,
+                // not stranded at the bottom of the asset. Windows is the first platform section,
+                // so emit it just before that section opens.
+                if (iterator.name == nameof(BugSplatOptions.UseNativeCrashReportingForWindows))
+                {
+                    DrawSymbolUploadCredentialsSection();
+                }
+
                 EditorGUILayout.PropertyField(serializedObject.FindProperty(iterator.name), true);
             }
 
@@ -59,29 +101,6 @@ namespace BugSplatUnity.Editor
                 EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "Mac"), MessageType.Warning);
             }
 
-            EditorGUILayout.Space();
-            EditorGUILayout.HelpBox(credentialsInfoMessage, MessageType.Info);
-
-            var queryString = !string.IsNullOrEmpty(options.Database)
-                ? string.Format(integrationsQueryString, options.Database)
-                : string.Empty;
-            var integrationsURL = string.Format(integrationsURLFormat, queryString);
-
-            var style = new GUIStyle()
-            {
-                richText = true,
-                wordWrap = true,
-                margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom)
-            };
-
-            if (GUILayout.Button(integrationsText, style))
-            {
-                Application.OpenURL(integrationsURL);
-            }
-
-            var rect = GUILayoutUtility.GetLastRect();
-            rect.width = style.CalcSize(new GUIContent(integrationsText)).x;
-            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
         }
     }
 }

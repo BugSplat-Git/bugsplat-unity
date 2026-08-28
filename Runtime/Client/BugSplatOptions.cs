@@ -70,6 +70,9 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForWindows;
 
+		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default, unlike the other platforms - Windows has always uploaded automatically, so defaulting this off would silently stop existing projects symbolicating. Also requires Copy PDB Files in Build Settings, and a Windows editor.")]
+		public bool UploadDebugSymbolsForWindows = true;
+
 		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently.")]
 		public bool WindowsShowCrashDialog = true;
 

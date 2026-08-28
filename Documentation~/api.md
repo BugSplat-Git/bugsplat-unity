@@ -31,6 +31,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
+| UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files** and a Windows editor |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
 
