@@ -8,4 +8,4 @@ To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` 
 
 `Player.log` is attached to native macOS crash reports when `CapturePlayerLog` is enabled on your `BugSplatOptions` asset.
 
-When `UseNativeCrashReportingForMac` is enabled, the post-build step also copies `bugsplat-logo.png` into the built player's `Contents/Resources`. The crash dialog looks its banner up in the app bundle, so without that file it falls back to a plain drawn logo. Xcode project exports are skipped — add the file to your Xcode target's resources yourself if you want the logo there.
+When `UseNativeCrashReportingForMac` is enabled, the post-build step also copies `bugsplat-logo.png` into the built player's `Contents/Resources`. The crash dialog looks up its banner in the app bundle, so without that file it falls back to a plain drawn logo. Xcode project exports are skipped — add the file to your Xcode target's resources yourself if you want the logo there.

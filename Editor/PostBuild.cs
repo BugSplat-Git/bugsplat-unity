@@ -111,10 +111,15 @@ namespace BugSplatUnity.Editor
 			if (!options.UseNativeCrashReportingForMac)
 				return;
 
+			// Trailing separators are trimmed before the suffix test. Unity has never supplied one,
+			// but if it did the check would misfire on a real .app build - skipping the copy and
+			// logging an Xcode export as the reason, which is a poor way to discover the bug.
+			var builtAppPath = pathToBuiltProject.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
 			// An Xcode project export has no .app yet — Xcode assembles Contents/Resources at its own build time.
-			if (!pathToBuiltProject.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+			if (!builtAppPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
 			{
-				Debug.Log("BugSplat: Xcode project export detected, skipping the macOS crash dialog logo. Add bugsplat-logo.png to the Xcode target's resources to show it.");
+				Debug.Log($"BugSplat: Xcode project export detected, skipping the macOS crash dialog logo. Add {LogoFileName} to the Xcode target's resources to show it.");
 				return;
 			}
 
@@ -130,7 +135,7 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			var resourcesDir = Path.Combine(pathToBuiltProject, "Contents", "Resources");
+			var resourcesDir = Path.Combine(builtAppPath, "Contents", "Resources");
 			if (!Directory.Exists(resourcesDir))
 			{
 				Debug.LogWarning($"BugSplat. {resourcesDir} does not exist. The macOS crash dialog will draw its fallback logo.");
