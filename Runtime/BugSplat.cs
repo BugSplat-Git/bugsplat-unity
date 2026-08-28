@@ -358,8 +358,17 @@ namespace BugSplatUnity
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
             {
-                _startBugSplat(database, application, version, autoSubmit, autoSubmitHang);
+                // Same ordering constraint as macOS: the delegate is queried while start processes
+                // crash reports left by the previous session, so the player log has to be tracked
+                // before start rather than attached after it.
+                var logPath = capturePlayerLog ? consoleLogPath : null;
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
                 nativeCrashReportingEnabled = true;
+
+                if (logPath != null)
+                {
+                    nativeAttachmentPaths.Add(logPath);
+                }
             }
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
@@ -881,15 +890,9 @@ namespace BugSplatUnity
         }
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-        // Both Apple bridges export the same symbols; only -start differs, because the macOS
-        // bridge needs the log path in hand before start scans the previous session's reports.
-#if UNITY_IOS
-        [DllImport("__Internal")]
-        static extern void _startBugSplat(string database, string application, string version, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
-#else
+        // Both Apple bridges now export identical symbols with identical signatures.
         [DllImport("__Internal")]
         static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
-#endif
 
         [DllImport("__Internal")]
         static extern void _setNativeAttribute(string key, string value);
