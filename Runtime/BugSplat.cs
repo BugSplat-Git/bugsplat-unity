@@ -367,7 +367,13 @@ namespace BugSplatUnity
 
                 if (logPath != null)
                 {
-                    nativeAttachmentPaths.Add(logPath);
+                    // Uncontended - nothing else can reach this instance yet - but taken anyway so
+                    // "every mutation of nativeAttachmentPaths happens under its lock" holds without
+                    // exception. An invariant with two documented escapes is one nobody can audit.
+                    lock (nativeAttachmentPaths)
+                    {
+                        nativeAttachmentPaths.Add(logPath);
+                    }
                 }
             }
 
@@ -383,7 +389,13 @@ namespace BugSplatUnity
 
                 if (logPath != null)
                 {
-                    nativeAttachmentPaths.Add(logPath);
+                    // Uncontended - nothing else can reach this instance yet - but taken anyway so
+                    // "every mutation of nativeAttachmentPaths happens under its lock" holds without
+                    // exception. An invariant with two documented escapes is one nobody can audit.
+                    lock (nativeAttachmentPaths)
+                    {
+                        nativeAttachmentPaths.Add(logPath);
+                    }
                 }
             }
 
