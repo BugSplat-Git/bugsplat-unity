@@ -11,6 +11,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
 | RegisterLogMessageReceived | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
 | CaptureExceptionsOnBackgroundThreads | Also capture unhandled exceptions thrown on background threads (default). Requires RegisterLogMessageReceived. See [Background thread exceptions](usage.md#background-thread-exceptions).|
+| CaptureUnobservedTaskExceptions | Also capture exceptions from Tasks that faulted and were never awaited (default). These never reach Unity's log at all. Requires RegisterLogMessageReceived. See [Unobserved task exceptions](usage.md#unobserved-task-exceptions).|
 
 ## BugSplat Options
 
