@@ -148,7 +148,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
             if (clientSettings.CapturePlayerLog)
             {
-#if  UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN
                 var localLowId = new Guid("A520A1A4-1780-4FF6-BD18-167343C5AF16");
                 var localLow = GetKnownFolderPath(localLowId);
                 var playerLogFilePath = Path.Combine(localLow, Application.companyName, Application.productName, "Player.log");
@@ -190,25 +190,6 @@ namespace BugSplatUnity.Runtime.Reporter
 #elif UNITY_STANDALONE_LINUX
                 var home = Environment.GetEnvironmentVariable("HOME");
                 var playerLogFilePath = Path.Combine(home, ".config", "unity3d", Application.companyName, Application.productName, "Player.log");
-                var playerLogFileInfo = new FileInfo(playerLogFilePath);
-                if (playerLogFileInfo.Exists)
-                {
-                    try
-                    {
-                        AddLogTailAttachment(playerLogFileInfo, options, tempFiles);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"BugSplat error: Could not copy log tail to temp file {ex}");
-                    }
-                }
-                else
-                {
-                    Debug.Log($"BugSplat info: Could not find {playerLogFileInfo.FullName}, skipping...");
-                }
-#elif UNITY_WSA
-                var tempState = Application.temporaryCachePath;
-                var playerLogFilePath = Path.Combine(tempState, "UnityPlayer.log");
                 var playerLogFileInfo = new FileInfo(playerLogFilePath);
                 if (playerLogFileInfo.Exists)
                 {

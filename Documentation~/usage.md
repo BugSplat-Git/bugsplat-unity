@@ -182,7 +182,7 @@ private void OpenUrl(string url)
 {
     var escaped = url.Replace("?", "\\?").Replace("&", "\\&").Replace(" ", "%20").Replace("!", "\\!");
 
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN || UNITY_WSA
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     Process.Start(url);
 #elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
     Process.Start("open", escaped);
