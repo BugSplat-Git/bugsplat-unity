@@ -192,17 +192,24 @@ extern "C" {
         if ([bugsplat respondsToSelector:@selector(setEnableHangDetection:)]) {
             [bugsplat setValue:@YES forKey:@"enableHangDetection"];
             // Must be set before -start, same as the flags above: the tracker reads it at start.
-            [bugsplat setValue:@(hangDetectionThresholdSeconds) forKey:@"hangDetectionThreshold"];
+            if (hangDetectionThresholdSeconds > 0) {
+                [bugsplat setValue:@(hangDetectionThresholdSeconds) forKey:@"hangDetectionThreshold"];
+            }
         }
 
         // Both of these are read while -start scans the previous session's pending reports, so they
         // have to be applied here rather than by a setter called after the constructor returns.
-        [bugsplat setValue:(autoSubmitCrashReport ? @YES : @NO) forKey:@"autoSubmitCrashReport"];
+        // Negative means the caller expressed no preference, so leave bugsplat-apple's own
+        // per-platform default in place rather than picking one for them.
+        if (autoSubmitCrashReport >= 0) {
+            [bugsplat setValue:(autoSubmitCrashReport ? @YES : @NO) forKey:@"autoSubmitCrashReport"];
+        }
 
-        if ([bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
+        if (autoSubmitFatalHangReport >= 0 &&
+            [bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
             [bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
                         forKey:@"autoSubmitFatalHangReport"];
-        } else if (!autoSubmitFatalHangReport) {
+        } else if (autoSubmitFatalHangReport == 0) {
             NSLog(@"BugSplat: this BugSplat-macOS.dylib predates autoSubmitFatalHangReport; "
                   @"fatal hang reports will continue to upload without asking.");
         }

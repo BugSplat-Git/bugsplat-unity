@@ -274,9 +274,9 @@ namespace BugSplatUnity
             bool useNativeLibMac = false,
             bool useNativeLibWin = false,
             bool capturePlayerLog = true,
-            bool autoSubmitCrashReport = true,
-            bool autoSubmitFatalHangReport = true,
-            float hangDetectionThresholdSeconds = 5f
+            bool? autoSubmitCrashReport = null,
+            bool? autoSubmitFatalHangReport = null,
+            float? hangDetectionThresholdSeconds = null
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -304,15 +304,18 @@ namespace BugSplatUnity
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             // Applied before -start, which is where bugsplat-apple decides whether a pending
             // report from the previous session gets a dialog or goes straight up.
-            var autoSubmit = autoSubmitCrashReport ? 1 : 0;
-            var autoSubmitHang = autoSubmitFatalHangReport ? 1 : 0;
-            var hangThreshold = hangDetectionThresholdSeconds;
+            // -1 and 0 mean "leave it alone", so a caller who passes nothing keeps bugsplat-apple's
+            // own defaults - which differ per platform, and which this class has no business
+            // overriding on their behalf. CreateFromOptions always passes the platform's values.
+            var autoSubmit = autoSubmitCrashReport.HasValue ? (autoSubmitCrashReport.Value ? 1 : 0) : -1;
+            var autoSubmitHang = autoSubmitFatalHangReport.HasValue ? (autoSubmitFatalHangReport.Value ? 1 : 0) : -1;
+            var hangThreshold = hangDetectionThresholdSeconds ?? 0f;
 
             // Asking for a hang prompt only works if crashes are prompting too. Withholding the
             // hang's auto-submit flag routes it onto the normal submission path, and that path
             // then consults autoSubmitCrashReport - so leaving that on means the hang still
             // uploads without asking, which is the opposite of what was configured.
-            if (!autoSubmitFatalHangReport && autoSubmitCrashReport)
+            if (autoSubmitFatalHangReport == false && autoSubmitCrashReport == true)
             {
                 Debug.LogWarning(
                     "BugSplat: the fatal hang report option is off while the crash report option is on, " +
@@ -472,9 +475,9 @@ namespace BugSplatUnity
                 options.MacAutoSubmitFatalHangReport,
                 options.MacHangDetectionThresholdSeconds
 #else
-                true,
-                true,
-                5f
+                null,
+                null,
+                null
 #endif
             )
             {

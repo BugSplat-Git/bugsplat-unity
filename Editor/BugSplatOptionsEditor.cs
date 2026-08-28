@@ -12,7 +12,7 @@ namespace BugSplatUnity.Editor
         private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
-        private const string hangDialogConflictFormat = "{0} Auto Submit Fatal Hang Report is off, but {0} Auto Submit Crash Report is on, so fatal hangs will still upload without asking. Turn {0} Auto Submit Crash Report off as well to be prompted.";
+        private const string hangDialogConflictFormat = "{0} fatal hang reports are set not to auto-submit, but {0} crash reports still are, so fatal hangs will keep uploading without asking. Turn off auto-submit for {0} crash reports as well to be prompted.";
         private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
         private const int integrationsPaddingTop = 5;
@@ -93,12 +93,12 @@ namespace BugSplatUnity.Editor
             // device, after a build, which is a slow way to learn the option did nothing.
             if (!options.IosAutoSubmitFatalHangReport && options.IosAutoSubmitCrashReport)
             {
-                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "Ios"), MessageType.Warning);
+                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "iOS"), MessageType.Warning);
             }
 
             if (!options.MacAutoSubmitFatalHangReport && options.MacAutoSubmitCrashReport)
             {
-                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "Mac"), MessageType.Warning);
+                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "macOS"), MessageType.Warning);
             }
 
         }

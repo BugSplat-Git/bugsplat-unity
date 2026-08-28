@@ -29,26 +29,26 @@ namespace BugSplatUnity.Runtime.Client
 		public string Version;
 
 		[Header("Report Metadata")]
-		[Tooltip("A default description that can be overridden by call to Post.")]
+		[Tooltip("A default description that can be overridden by a call to Post.")]
 		public string Description;
 
-		[Tooltip("A default email that can be overridden by call to Post.")]
+		[Tooltip("A default email that can be overridden by a call to Post.")]
 		public string Email;
 
-		[Tooltip("A default key that can be overridden by call to Post.")]
+		[Tooltip("A default key that can be overridden by a call to Post.")]
 		public string Key;
 
-		[Tooltip("A default general purpose field that can be overridden by call to Post.")]
+		[Tooltip("A default general purpose field that can be overridden by a call to Post.")]
 		public string Notes;
 
-		[Tooltip("A default user that can be overridden by call to Post")]
+		[Tooltip("A default user that can be overridden by a call to Post.")]
 		public string User;
 
-		[Tooltip("Attributes to attach to reports")]
+		[Tooltip("Attributes to attach to reports.")]
 		public List<BugSplatAttribute> Attributes = new List<BugSplatAttribute>();
 
 		[Header("Capture")]
-		[Tooltip("Upload Editor.log when Post is called")]
+		[Tooltip("Upload Editor.log when Post is called.")]
 		public bool CaptureEditorLog;
 
 		[Tooltip("Upload Player.log when Post is called (default). Player.log paths contain the OS username - uncheck to opt out. Not available on WebGL.")]
@@ -57,13 +57,13 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Maximum size of the log files to upload in MB. Defaults to 10MB if not set.")]
 		public int LogFileMaxSizeMB = 10;
 
-		[Tooltip("Take a screenshot and upload it when Post is called")]
+		[Tooltip("Take a screenshot and upload it when Post is called.")]
 		public bool CaptureScreenshots;
 
 		[Tooltip("Should BugSplat upload exceptions when in editor. Off by default so play mode exceptions stay out of your database.")]
 		public bool PostExceptionsInEditor;
 
-		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report")]
+		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report.")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
 		[Header("Windows")]
