@@ -304,9 +304,11 @@ namespace BugSplatUnity
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             // Applied before -start, which is where bugsplat-apple decides whether a pending
             // report from the previous session gets a dialog or goes straight up.
-            // -1 and 0 mean "leave it alone", so a caller who passes nothing keeps bugsplat-apple's
-            // own defaults - which differ per platform, and which this class has no business
-            // overriding on their behalf. CreateFromOptions always passes the platform's values.
+            // Sentinels differ by type: for the two flags -1 means "no preference" while 0 is an
+            // explicit false; for the threshold, which has no meaningful zero, 0 means "no
+            // preference". A caller who passes nothing keeps bugsplat-apple's own defaults, which
+            // differ per platform and are not this class's to override. CreateFromOptions always
+            // passes the platform's configured values.
             var autoSubmit = autoSubmitCrashReport.HasValue ? (autoSubmitCrashReport.Value ? 1 : 0) : -1;
             var autoSubmitHang = autoSubmitFatalHangReport.HasValue ? (autoSubmitFatalHangReport.Value ? 1 : 0) : -1;
             var hangThreshold = hangDetectionThresholdSeconds ?? 0f;

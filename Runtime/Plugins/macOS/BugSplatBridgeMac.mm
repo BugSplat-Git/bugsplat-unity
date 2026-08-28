@@ -192,7 +192,11 @@ extern "C" {
         if ([bugsplat respondsToSelector:@selector(setEnableHangDetection:)]) {
             [bugsplat setValue:@YES forKey:@"enableHangDetection"];
             // Must be set before -start, same as the flags above: the tracker reads it at start.
-            if (hangDetectionThresholdSeconds > 0) {
+            // Guarded separately from enableHangDetection - the two are different keys, and
+            // setValue:forKey: on a key the dylib lacks raises NSUnknownKeyException rather than
+            // failing quietly. They shipped together, but that is not something to rely on.
+            if (hangDetectionThresholdSeconds > 0 &&
+                [bugsplat respondsToSelector:@selector(setHangDetectionThreshold:)]) {
                 [bugsplat setValue:@(hangDetectionThresholdSeconds) forKey:@"hangDetectionThreshold"];
             }
         }
