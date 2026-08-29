@@ -239,8 +239,8 @@ namespace BugSplatUnity
         /// would otherwise leave the mapping untestable by the suite written to catch exactly a
         /// dropped argument.
         /// </summary>
-        internal bool AutoSubmitCrashReportSetting { get; }
-        internal bool AutoSubmitFatalHangReportSetting { get; }
+        internal bool? AutoSubmitCrashReportSetting { get; }
+        internal bool? AutoSubmitFatalHangReportSetting { get; }
         private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
@@ -274,8 +274,9 @@ namespace BugSplatUnity
             bool useNativeLibMac = false,
             bool useNativeLibWin = false,
             bool capturePlayerLog = true,
-            bool autoSubmitCrashReport = false,
-            bool autoSubmitFatalHangReport = true
+            bool? autoSubmitCrashReport = null,
+            bool? autoSubmitFatalHangReport = null,
+            float? hangDetectionThresholdSeconds = null
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -293,29 +294,58 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
-            // which is main-thread only.
             AutoSubmitCrashReportSetting = autoSubmitCrashReport;
             AutoSubmitFatalHangReportSetting = autoSubmitFatalHangReport;
 
+            // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
+            // which is main-thread only.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             // Applied before -start, which is where bugsplat-apple decides whether a pending
             // report from the previous session gets a dialog or goes straight up.
-            var autoSubmit = autoSubmitCrashReport ? 1 : 0;
-            var autoSubmitHang = autoSubmitFatalHangReport ? 1 : 0;
+            // Sentinels differ by type: for the two flags -1 means "no preference" while 0 is an
+            // explicit false; for the threshold, which has no meaningful zero, 0 means "no
+            // preference". A caller who passes nothing keeps bugsplat-apple's own defaults, which
+            // differ per platform and are not this class's to override. CreateFromOptions always
+            // passes the platform's configured values.
+            var autoSubmit = autoSubmitCrashReport.HasValue ? (autoSubmitCrashReport.Value ? 1 : 0) : -1;
+            var autoSubmitHang = autoSubmitFatalHangReport.HasValue ? (autoSubmitFatalHangReport.Value ? 1 : 0) : -1;
+            var hangThreshold = hangDetectionThresholdSeconds ?? 0f;
+
+            // Both warnings below are gated on this. With native reporting off these settings
+            // never reach bugsplat-apple at all, so warning about them would be noise about
+            // something that has no effect either way.
+#if UNITY_IOS
+            var nativeReportingForThisPlatform = useNativeLibIos;
+#else
+            var nativeReportingForThisPlatform = useNativeLibMac;
+#endif
+
+            // A configured value of zero or less cannot be honoured - the bridges only apply a
+            // positive threshold - so it silently becomes bugsplat-apple's own default. Say so,
+            // rather than letting someone who typed 0 expecting the 0.1s floor wonder why hangs
+            // are being declared at two seconds.
+            if (nativeReportingForThisPlatform &&
+                hangDetectionThresholdSeconds.HasValue && hangDetectionThresholdSeconds.Value <= 0f)
+            {
+                Debug.LogWarning(
+                    "BugSplat: a hang detection threshold of " + hangDetectionThresholdSeconds.Value +
+                    "s is not usable, so bugsplat-apple's own default applies instead. Set a positive " +
+                    "value to override it.");
+            }
 
             // Asking for a hang prompt only works if crashes are prompting too. Withholding the
             // hang's auto-submit flag routes it onto the normal submission path, and that path
             // then consults autoSubmitCrashReport - so leaving that on means the hang still
             // uploads without asking, which is the opposite of what was configured.
-            if (!autoSubmitFatalHangReport && autoSubmitCrashReport)
+            if (nativeReportingForThisPlatform &&
+                autoSubmitFatalHangReport == false && autoSubmitCrashReport == true)
             {
                 Debug.LogWarning(
-                    "BugSplat: AutoSubmitFatalHangReport is off, but AutoSubmitCrashReport is on, " +
-                    "so fatal hangs will still upload without asking. Turn AutoSubmitCrashReport " +
-                    "off as well to be prompted.");
+                    "BugSplat: the fatal hang report option is off while the crash report option is on, " +
+                    "so fatal hangs will still upload without asking. Turn auto-submit off for crash " +
+                    "reports on this platform as well to be prompted.");
             }
 #endif
 
@@ -362,7 +392,7 @@ namespace BugSplatUnity
                 // crash reports left by the previous session, so the player log has to be tracked
                 // before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null)
@@ -384,7 +414,7 @@ namespace BugSplatUnity
                 // The delegate is queried while start processes crash reports left by the previous
                 // session, so the player log has to be tracked before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang);
+                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null)
@@ -461,8 +491,19 @@ namespace BugSplatUnity
                 options.UseNativeCrashReportingForMac,
                 options.UseNativeCrashReportingForWindows,
                 options.CapturePlayerLog,
-                options.AutoSubmitCrashReport,
-                options.AutoSubmitFatalHangReport
+#if UNITY_IOS
+                options.IosAutoSubmitCrashReport,
+                options.IosAutoSubmitFatalHangReport,
+                options.IosHangDetectionThresholdSeconds
+#elif UNITY_STANDALONE_OSX
+                options.MacAutoSubmitCrashReport,
+                options.MacAutoSubmitFatalHangReport,
+                options.MacHangDetectionThresholdSeconds
+#else
+                null,
+                null,
+                null
+#endif
             )
             {
                 Description = options.Description,
@@ -904,7 +945,7 @@ namespace BugSplatUnity
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
         // Both Apple bridges now export identical symbols with identical signatures.
         [DllImport("__Internal")]
-        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport);
+        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport, float hangDetectionThresholdSeconds);
 
         [DllImport("__Internal")]
         static extern void _setNativeAttribute(string key, string value);

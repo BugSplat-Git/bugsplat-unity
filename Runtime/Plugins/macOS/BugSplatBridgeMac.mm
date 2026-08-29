@@ -167,7 +167,8 @@ static id EnsureDelegate() {
 
 extern "C" {
     void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
-                           int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
+                           int autoSubmitCrashReport, int autoSubmitFatalHangReport,
+                           float hangDetectionThresholdSeconds) {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) {
             NSLog(@"BugSplat: BugSplat class not available");
@@ -190,16 +191,29 @@ extern "C" {
         // NSUnknownKeyException rather than silently doing nothing.
         if ([bugsplat respondsToSelector:@selector(setEnableHangDetection:)]) {
             [bugsplat setValue:@YES forKey:@"enableHangDetection"];
+            // Must be set before -start, same as the flags above: the tracker reads it at start.
+            // Guarded separately from enableHangDetection - the two are different keys, and
+            // setValue:forKey: on a key the dylib lacks raises NSUnknownKeyException rather than
+            // failing quietly. They shipped together, but that is not something to rely on.
+            if (hangDetectionThresholdSeconds > 0 &&
+                [bugsplat respondsToSelector:@selector(setHangDetectionThreshold:)]) {
+                [bugsplat setValue:@(hangDetectionThresholdSeconds) forKey:@"hangDetectionThreshold"];
+            }
         }
 
         // Both of these are read while -start scans the previous session's pending reports, so they
         // have to be applied here rather than by a setter called after the constructor returns.
-        [bugsplat setValue:(autoSubmitCrashReport ? @YES : @NO) forKey:@"autoSubmitCrashReport"];
+        // Negative means the caller expressed no preference, so leave bugsplat-apple's own
+        // per-platform default in place rather than picking one for them.
+        if (autoSubmitCrashReport >= 0) {
+            [bugsplat setValue:(autoSubmitCrashReport ? @YES : @NO) forKey:@"autoSubmitCrashReport"];
+        }
 
-        if ([bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
+        if (autoSubmitFatalHangReport >= 0 &&
+            [bugsplat respondsToSelector:@selector(setAutoSubmitFatalHangReport:)]) {
             [bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
                         forKey:@"autoSubmitFatalHangReport"];
-        } else if (!autoSubmitFatalHangReport) {
+        } else if (autoSubmitFatalHangReport == 0) {
             NSLog(@"BugSplat: this BugSplat-macOS.dylib predates autoSubmitFatalHangReport; "
                   @"fatal hang reports will continue to upload without asking.");
         }

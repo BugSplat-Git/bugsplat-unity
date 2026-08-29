@@ -31,10 +31,15 @@ The following API methods are available to help you customize BugSplat to fit yo
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
+| UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files** and a Windows editor |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
-| AutoSubmitCrashReport | Submit Apple (iOS and macOS) crash reports without asking the user. `false` by default, so a native crash shows the BugSplat dialog on the next launch. Mirrors bugsplat-apple's `autoSubmitCrashReport` |
-| AutoSubmitFatalHangReport | Submit Apple fatal hang reports without asking the user. `true` by default. Turn it off to ask instead, which also needs `AutoSubmitCrashReport` off. Mirrors bugsplat-apple's `autoSubmitFatalHangReport` |
+| MacAutoSubmitCrashReport | Submit macOS crash reports without asking the user. `false` by default — the convention on desktop, and bugsplat-apple's own macOS default |
+| MacAutoSubmitFatalHangReport | Submit macOS fatal hang reports without asking the user. `true` by default. Needs `MacAutoSubmitCrashReport` off too before a dialog can appear |
+| MacHangDetectionThresholdSeconds | Seconds the macOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
+| IosAutoSubmitCrashReport | Submit iOS crash reports without asking the user. `true` by default — the convention on mobile, and bugsplat-apple's own iOS default |
+| IosAutoSubmitFatalHangReport | Submit iOS fatal hang reports without asking the user. `true` by default. Needs `IosAutoSubmitCrashReport` off too before a dialog can appear |
+| IosHangDetectionThresholdSeconds | Seconds the iOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).

@@ -171,6 +171,9 @@ namespace BugSplatUnity.Editor
 
 		private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 		{
+			if (!options.UploadDebugSymbolsForWindows)
+				return;
+
 #if UNITY_EDITOR_WIN
 			if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
 			{

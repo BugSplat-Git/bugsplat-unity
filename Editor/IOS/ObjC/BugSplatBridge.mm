@@ -116,24 +116,30 @@ extern "C" {
 	}
 
 	void _startBugSplat(const char* database, const char* application, const char* version,
-	                    const char* logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport) {
+	                    const char* logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport,
+	                    float hangDetectionThresholdSeconds) {
 		BugSplat *bugsplat = [BugSplat shared];
 		bugsplat.bugSplatDatabase = createNSStringFrom(database);
 		bugsplat.applicationName = createNSStringFrom(application);
 		bugsplat.applicationVersion = createNSStringFrom(version);
 		// Both are read while -start scans the previous session's pending reports, so they have to
 		// be set here rather than by a setter the C# side calls once the constructor has returned.
-		bugsplat.autoSubmitCrashReport = autoSubmitCrashReport ? YES : NO;
+		// Negative means the caller expressed no preference, so leave bugsplat-apple's own
+		// per-platform default in place rather than picking one for them.
+		if (autoSubmitCrashReport >= 0) {
+			bugsplat.autoSubmitCrashReport = autoSubmitCrashReport ? YES : NO;
+		}
 		// Set through KVC rather than the property. The vendored BugSplat.xcframework predates
 		// autoSubmitFatalHangReport, and unlike the macOS bridge - which reaches BugSplat purely
 		// at runtime - this file links the framework, so a direct property access would not
 		// compile at all. respondsToSelector: keeps it a runtime no-op until a framework
 		// carrying the property is vendored, and NSSelectorFromString avoids
 		// -Wundeclared-selector on the same undeclared name.
-		if ([bugsplat respondsToSelector:NSSelectorFromString(@"setAutoSubmitFatalHangReport:")]) {
+		if (autoSubmitFatalHangReport >= 0 &&
+		    [bugsplat respondsToSelector:NSSelectorFromString(@"setAutoSubmitFatalHangReport:")]) {
 			[bugsplat setValue:(autoSubmitFatalHangReport ? @YES : @NO)
 			            forKey:@"autoSubmitFatalHangReport"];
-		} else if (!autoSubmitFatalHangReport) {
+		} else if (autoSubmitFatalHangReport == 0) {
 			NSLog(@"BugSplat: this BugSplat.xcframework predates autoSubmitFatalHangReport; "
 			      @"fatal hang reports will continue to upload without asking.");
 		}
@@ -141,6 +147,10 @@ extern "C" {
 		// _startBugSplat is only invoked when UseNativeCrashReportingForIos is enabled.
 		// Must be set before -start, which Unity calls on the main thread.
 		bugsplat.enableHangDetection = YES;
+		// Must be set before -start, same as the flags above: the tracker reads it when it starts.
+		if (hangDetectionThresholdSeconds > 0) {
+			bugsplat.hangDetectionThreshold = hangDetectionThresholdSeconds;
+		}
 		// Track the log BEFORE start as well as the delegate. start processes the crash reports
 		// left by the previous session and asks the delegate for attachments while it does, so a
 		// path added afterwards arrives too late for the very reports it was meant to accompany.

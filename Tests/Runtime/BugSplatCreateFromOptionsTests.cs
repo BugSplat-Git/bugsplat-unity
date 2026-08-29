@@ -39,8 +39,13 @@ namespace BugSplatUnity.RuntimeTests
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
 			options.PostExceptionsInEditor = true;
-			options.AutoSubmitCrashReport = true;
-			options.AutoSubmitFatalHangReport = false;
+#if UNITY_IOS
+			options.IosAutoSubmitCrashReport = false;
+			options.IosAutoSubmitFatalHangReport = false;
+#elif UNITY_STANDALONE_OSX
+			options.MacAutoSubmitCrashReport = true;
+			options.MacAutoSubmitFatalHangReport = false;
+#endif
 
 			var sut = BugSplat.CreateFromOptions(options);
 
@@ -54,8 +59,21 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
 			Assert.True(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
-			Assert.True(sut.AutoSubmitCrashReportSetting, nameof(options.AutoSubmitCrashReport));
-			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.AutoSubmitFatalHangReport));
+			// CreateFromOptions picks the pair for the active build target, so the assertions
+			// follow it. On a non-Apple target there is no mapping to check.
+#if UNITY_IOS
+			Assert.False(sut.AutoSubmitCrashReportSetting, nameof(options.IosAutoSubmitCrashReport));
+			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.IosAutoSubmitFatalHangReport));
+#elif UNITY_STANDALONE_OSX
+			Assert.True(sut.AutoSubmitCrashReportSetting, nameof(options.MacAutoSubmitCrashReport));
+			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.MacAutoSubmitFatalHangReport));
+#else
+			// Non-Apple targets are asserted rather than skipped: CreateFromOptions deliberately
+			// passes null so bugsplat-apple's own defaults survive, and that is worth pinning -
+			// it is also the only branch CI exercises, since no CI target is iOS or macOS.
+			Assert.IsNull(sut.AutoSubmitCrashReportSetting, nameof(sut.AutoSubmitCrashReportSetting));
+			Assert.IsNull(sut.AutoSubmitFatalHangReportSetting, nameof(sut.AutoSubmitFatalHangReportSetting));
+#endif
 		}
 
 		[Test]
