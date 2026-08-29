@@ -52,6 +52,7 @@ Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md
 
 ### Fixed
 
+- The macOS crash dialog showed a drawn placeholder instead of the BugSplat logo. The dialog resolves its banner against the bundle its own class came from, which works for apps linking `BugSplat.framework` but not for Unity, which ships the SDK as a bare dylib with no resources. The macOS post-build step now copies `bugsplat-logo.png` into the player's `Contents/Resources`, where the lookup finds it.
 - Android native crash reporting was never actually enabled — the Android init branch never set the flag every native setter guards on, so all of them silently no-oped, including the attribute-sync callback. Runtime attributes, user, email, key, and notes now reach the native reporter.
 - `SetNativeKey` had no iOS or macOS branch, so `Key` never reached Apple native reports. Both now assign bugsplat-apple's `appKey` property directly.
 - `BugSplatOptions.Attributes` were never read by `CreateFromOptions`, so attributes authored on an options asset never reached a report.
