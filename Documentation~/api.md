@@ -44,6 +44,9 @@ The following API methods are available to help you customize BugSplat to fit yo
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).
 
+> [!NOTE]
+> `PersistentDataFileAttachmentPaths` entries are relative to `Application.persistentDataPath`, so write `logs/session.log`, not `/Users/you/Desktop/session.log`. An absolute path is skipped with a warning that quotes the entry as you wrote it: a path from the machine that authored the options asset would not exist on a teammate's machine, in CI, or on a player's device, and the sandboxed platforms cannot read outside their own container at all.
+
 ## Player.log and privacy
 
 `CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. WebGL is the exception: the platform has no `Player.log`, so a `BugSplat` created in code there defaults to off and the setting has no effect. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:

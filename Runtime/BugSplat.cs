@@ -542,18 +542,33 @@ namespace BugSplatUnity
 			{
                 foreach (var filePath in options.PersistentDataFileAttachmentPaths)
                 {
-                    var trimmedFilePath = filePath.TrimStart('/', '\\');
-                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
+                    // An empty row in the Inspector list is not an attempt to attach anything.
+                    if (string.IsNullOrWhiteSpace(filePath))
+                    {
+                        continue;
+                    }
+
+                    // Entries are relative to Application.persistentDataPath. An absolute path is rejected rather
+                    // than resolved: it belongs to the machine that authored the options asset, so it would not
+                    // exist on a teammate's machine, in CI, or on a player's device, and the sandboxed platforms
+                    // cannot read outside their own container at all.
+                    if (Path.IsPathRooted(filePath))
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" is an absolute path, skipping... Paths are relative to Application.persistentDataPath (\"{Application.persistentDataPath}\"), for example \"logs/session.log\".");
+                        continue;
+                    }
+
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, filePath);
                     var fileInfo = new FileInfo(fullFilePath);
                     var sizeLimit = 100 * 1024 * 1024; // 100 MB
                     if (!fileInfo.Exists)
                     {
-                        Debug.LogWarning($"Persistent data file attachment does not exist at {fileInfo.FullName}, skipping...");
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" does not exist at \"{fileInfo.FullName}\", skipping...");
                         continue;
                     }
                     if (fileInfo.Length > sizeLimit)
                     {
-                        Debug.LogWarning($"Persistent data file attachment {fileInfo.FullName} size limit exceeded. Limit is {sizeLimit}, size was {fileInfo.Length}. Skipping...");
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" (\"{fileInfo.FullName}\") size limit exceeded. Limit is {sizeLimit}, size was {fileInfo.Length}. Skipping...");
                         continue;
                     }
 
