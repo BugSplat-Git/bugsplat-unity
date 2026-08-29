@@ -108,14 +108,14 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 | --- | --- | --- | --- | --- | --- | --- |
 | Managed C# exceptions | Yes | Yes | Yes | Yes | Yes | Yes |
 | Native crashes | Yes (Mono or IL2CPP) | Yes (IL2CPP only) | Yes | Yes | No | No |
-| Hang / ANR reporting | Yes (opt-in) | No | Yes | Yes (Android 11+) | No | No |
+| Hang / ANR reporting | Yes (opt-in) | Yes | Yes | Yes (Android 11+) | No | No |
 | Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
 | Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
 - **Native crashes** require the matching option on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, or `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
-- **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on iOS and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS has no hang detection.
+- **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on macOS, iOS, and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS reports a hang only when the frozen app is force-quit, since nothing on macOS terminates an unresponsive app on its own.
 - **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
 - **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.
 - **Automatic symbol upload** runs as a post-build step and needs [symbol upload credentials](Documentation~/symbol-upload.md#symbol-upload-credentials). Windows uploads `.pdb`, `.dll`, and `.exe` files. **Copy PDB files** (Build Settings → Windows) can only be read from a Windows editor, so that is the only host where the upload is skipped when it's off; from any other host the upload runs regardless and a warning is logged, because a build made without it contains no `.pdb` files and its crash reports will not symbolicate. macOS uploads dSYMs when `UploadDebugSymbolsForMac` is set, unless the build is an Xcode project export. iOS adds an Xcode build phase that uploads dSYMs during the Xcode build when `UploadDebugSymbolsForIos` is set. Android uploads the generated symbols archive when `UploadDebugSymbolsForAndroid` is set, and skips it when **Export Project** is enabled or **Debug Symbols** is **None**. Linux and WebGL have no symbol upload step.
@@ -131,7 +131,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [Usage](Documentation~/usage.md) | Adding metadata, try/catch reporting, throttling, background thread and unobserved task exceptions, support responses |
 | [Android](Documentation~/android.md) | Native crash reporting via Crashpad, player settings, `symbols.zip`, ANR reporting |
 | [iOS](Documentation~/ios.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
-| [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload |
+| [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [Windows](Documentation~/windows.md) | Native crash reporting, plugin and IL2CPP symbols, hang detection, Windows Error Reporting |
 | [API](Documentation~/api.md) | `BugSplatManager` settings, every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
