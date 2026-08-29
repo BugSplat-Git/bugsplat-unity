@@ -23,7 +23,9 @@ namespace BugSplatUnity
     public class BugSplat
     {
         /// <summary>
-        /// A list of files to be uploaded every time Post is called
+        /// A list of files to be uploaded every time Post is called. These files reach reports posted from
+        /// managed code only — a native crash is captured and uploaded by the platform's crash reporter,
+        /// which never sees this list. Use AttachNativeLogFile to attach files to native crash reports.
         /// </summary>
         public List<FileInfo> Attachments
         {

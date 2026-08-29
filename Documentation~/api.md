@@ -29,7 +29,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | CapturePlayerLog| Should BugSplat upload Player.log when Post is called. Enabled by default — see [Player.log and privacy](#playerlog-and-privacy) |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
-| PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
+| PersistentDataFileAttachmentPaths | Paths to files (relative to Application.persistentDataPath) to attach to reports posted from managed code — exception reports, feedback, and minidumps you post yourself. Native crash reports are assembled by the platform's crash reporter and never see this list; attach files to those with [AttachNativeLogFile](#attaching-files-to-native-crash-reports) |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files** and a Windows editor |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
@@ -56,12 +56,19 @@ bugsplat.CapturePlayerLog = false;
 
 ## Attaching Files to Native Crash Reports
 
-`Attachments` adds files to managed posts. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list, so files for native reports are attached with `AttachNativeLogFile`:
+`Attachments` — and the `PersistentDataFileAttachmentPaths` on your options asset, which populates it — adds files to managed posts. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list, so files for native reports are attached with `AttachNativeLogFile`:
 
 ```cs
 bugsplat.AttachNativeLogFile("/path/to/support.log");
 bugsplat.DetachNativeLogFile("/path/to/support.log");
 ```
+
+The separation runs both ways: a file attached with `AttachNativeLogFile` reaches native crash reports only, and never appears on a managed exception report or a feedback post. Nothing bridges the two lists, so a file you want on both kinds of report has to be registered with both mechanisms.
+
+| Mechanism | Reaches | Does not reach |
+|---|---|---|
+| `Attachments`, `PersistentDataFileAttachmentPaths` | Managed exception reports, feedback, and minidumps you post with `Post(FileInfo)` | Native crash reports |
+| `AttachNativeLogFile` | Native crash reports on Windows, macOS, and iOS | Managed exception reports and feedback |
 
 Attaching is **additive and idempotent**. Every attached file is included in a native report, attaching one file never displaces another, and attaching the same file twice attaches it once. Paths are resolved to full paths before they are compared — and compared case-insensitively on Windows — so `"logs/support.log"` and `"C:\Game\Logs\Support.log"` are recognized as the file they name rather than as new attachments. `DetachNativeLogFile` removes one file and leaves the rest attached.
 
