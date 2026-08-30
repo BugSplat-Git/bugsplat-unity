@@ -29,7 +29,7 @@ The following API methods are available to help you customize BugSplat to fit yo
 | CapturePlayerLog| Should BugSplat upload Player.log when Post is called. Enabled by default — see [Player.log and privacy](#playerlog-and-privacy) |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
-| PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to upload with each report |
+| PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to attach to both managed reports and native crash reports |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP |
 | UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files** and a Windows editor |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
@@ -59,7 +59,7 @@ bugsplat.CapturePlayerLog = false;
 
 ## Attaching Files to Native Crash Reports
 
-`Attachments` adds files to managed posts. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list, so files for native reports are attached with `AttachNativeLogFile`:
+`Attachments` adds files to managed posts only. A native crash is captured and uploaded by the platform's crash reporter, which never sees that list. Two things do reach native reports: `PersistentDataFileAttachmentPaths` on your options asset, which is applied to both mechanisms at startup, and `AttachNativeLogFile` in code:
 
 ```cs
 bugsplat.AttachNativeLogFile("/path/to/support.log");
@@ -76,6 +76,10 @@ Support by platform:
 | macOS | Multiple |
 | iOS | Multiple |
 | Android | Not supported — the call is a no-op |
+
+On macOS and iOS each attachment is truncated to its last 10 MB.
+
+> **Register native attachments during initialization.** On macOS and iOS a crash report is uploaded at the *next* launch, and BugSplat asks for that report's attachments then, in a fresh process. A path registered part-way through a session is not remembered across the crash, so it never reaches the report. `PersistentDataFileAttachmentPaths` is applied on every launch and is unaffected by this. On Windows the handler captures attachments at crash time, so `AttachNativeLogFile` takes effect whenever you call it.
 
 `Player.log` still ships with managed posts on every platform, including Android.
 

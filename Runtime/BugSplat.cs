@@ -241,6 +241,14 @@ namespace BugSplatUnity
         /// </summary>
         internal bool? AutoSubmitCrashReportSetting { get; }
         internal bool? AutoSubmitFatalHangReportSetting { get; }
+
+        /// <summary>
+        /// Paths from PersistentDataFileAttachmentPaths that were resolved and handed to the native
+        /// crash reporter. Native registration is compiled out in the editor, so this is the only part
+        /// of that wiring a PlayMode test can observe.
+        /// </summary>
+        internal IReadOnlyList<string> NativePersistentDataAttachmentPaths => nativePersistentDataAttachmentPaths;
+        private readonly List<string> nativePersistentDataAttachmentPaths = new List<string>();
         private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
@@ -573,6 +581,14 @@ namespace BugSplatUnity
                     }
 
                     bugSplat.Attachments.Add(fileInfo);
+
+                    // Managed and native reports are assembled by different code paths, so a file has to
+                    // be registered with both. Native registration belongs here, at startup, rather than
+                    // anywhere later: on Apple the report uploads at the next launch and the attachment
+                    // delegate is asked then, in a fresh process, so a path registered mid-session never
+                    // reaches it. This runs on every launch, which is exactly what that model needs.
+                    bugSplat.nativePersistentDataAttachmentPaths.Add(fileInfo.FullName);
+                    bugSplat.AttachNativeLogFile(fileInfo.FullName);
                 }
             }
 
