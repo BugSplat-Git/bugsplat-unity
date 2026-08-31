@@ -37,9 +37,9 @@ namespace Crasher
             {
                 var now = DateTime.Now;
 
-                // Set to a long TimeSpan for demonstration purposes
-                // In production BugSplat recommends 3 seconds between posts
-                if (now - lastPost < TimeSpan.FromSeconds(7))
+                // Kept short so the crash menu can be tapped repeatedly while testing.
+                // In production BugSplat recommends 3 seconds between posts.
+                if (now - lastPost < TimeSpan.FromSeconds(1))
                 {
                     Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
                     return false;

@@ -242,7 +242,14 @@ namespace BugSplatUnity.Runtime.Reporter
             var task = Task.Run(
                 async () =>
                 {
+                    // BugSplatDotNetStandard swallows send failures and returns null, so treat a
+                    // null response as a failed upload rather than dereferencing it.
                     var result = await exceptionClient.Post(stackTrace, options);
+                    if (result == null)
+                    {
+                        return new KeyValuePair<System.Net.HttpStatusCode, string>(default, null);
+                    }
+
                     var contents = await result.Content.ReadAsStringAsync();
                     return new KeyValuePair<System.Net.HttpStatusCode, string>(result.StatusCode, contents);
                 }
@@ -260,17 +267,32 @@ namespace BugSplatUnity.Runtime.Reporter
                 var result = task.GetAwaiter().GetResult();
                 var status = result.Key;
                 var contents = result.Value;
-                var uploaded = status == System.Net.HttpStatusCode.OK;
-                var message = uploaded ? "Crash successfully uploaded to BugSplat!" : $"BugSplat upload failed with code {status}";
-                var response = JsonUtility.FromJson<BugSplatResponse>(contents);
-                Debug.Log($"BugSplat info: status {status}\n {contents}");
-                callback?.Invoke(new ExceptionReporterPostResult()
+
+                if (contents == null)
                 {
-                    Uploaded = uploaded,
-                    Exception = stackTrace,
-                    Message = message,
-                    Response = response
-                });
+                    var sendFailedMessage = "BugSplat upload failed. The request could not be sent, see the preceding \"Error posting exception to BugSplat\" log entry for the underlying error.";
+                    Debug.LogError($"BugSplat error: {sendFailedMessage}");
+                    callback?.Invoke(new ExceptionReporterPostResult()
+                    {
+                        Uploaded = false,
+                        Exception = stackTrace,
+                        Message = sendFailedMessage,
+                    });
+                }
+                else
+                {
+                    var uploaded = status == System.Net.HttpStatusCode.OK;
+                    var message = uploaded ? "Crash successfully uploaded to BugSplat!" : $"BugSplat upload failed with code {status}";
+                    var response = JsonUtility.FromJson<BugSplatResponse>(contents);
+                    Debug.Log($"BugSplat info: status {status}\n {contents}");
+                    callback?.Invoke(new ExceptionReporterPostResult()
+                    {
+                        Uploaded = uploaded,
+                        Exception = stackTrace,
+                        Message = message,
+                        Response = response
+                    });
+                }
             }
             catch (Exception ex)
             {
