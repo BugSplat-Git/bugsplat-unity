@@ -62,8 +62,9 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Upload Player.log when Post is called. On platforms whose native crash reporter takes
-        /// attachments (Windows, macOS, and iOS), this also attaches or detaches it natively, leaving
-        /// any file attached with AttachNativeLogFile in place.
+        /// attachments (Windows, macOS, iOS, and Android), this also attaches or detaches it natively,
+        /// leaving any file attached with AttachNativeLogFile in place. Android is a special case: Unity
+        /// writes no Player.log there, so consoleLogPath is empty and there is nothing to attach.
         /// </summary>
         public bool CapturePlayerLog
         {
@@ -444,8 +445,8 @@ namespace BugSplatUnity
                 using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
                 using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
                 
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-                javaClass.CallStatic("initBugSplat", activity, database, application, version);
+                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                javaClass.CallStatic("init", activity, database, application, version);
                 nativeCrashReportingEnabled = true;
             }
 
@@ -712,7 +713,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
             javaClass.CallStatic("setAttribute", key, value);
 #endif
         }
@@ -728,8 +729,8 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatUser", user);
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("setUser", user);
 #endif
         }
 
@@ -744,8 +745,8 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("setEmail", email);
 #endif
         }
 
@@ -760,15 +761,13 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("setNotes", notes);
 #endif
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. iOS, macOS, and Windows use the platform SDK's own
-        /// key setter; Android's bridge has none, so there the key travels as the reserved
-        /// BugSplatApplicationKey attribute that the backend promotes to the report's key.
+        /// Set the key on the native crash reporter. Every native platform uses its own SDK's key setter.
         /// </summary>
         public void SetNativeKey(string key)
         {
@@ -778,8 +777,8 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("setKey", key);
 #endif
         }
 
@@ -794,7 +793,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
             javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
 #endif
         }
@@ -872,8 +871,7 @@ namespace BugSplatUnity
         /// Attaching is additive and idempotent: a path that is already attached is ignored, and attaching a
         /// file never displaces one attached earlier — including the Player.log that CapturePlayerLog manages.
         /// Paths are resolved to full paths before they are compared, so the same file named two ways is
-        /// attached once. Supported on Windows, macOS, and iOS; a no-op on Android, whose bridge has no
-        /// attachment API. Safe to call from any thread.
+        /// attached once. Supported on Windows, macOS, iOS, and Android. Safe to call from any thread.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
@@ -961,6 +959,9 @@ namespace BugSplatUnity
             _attachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("addAttachment", path);
 #endif
         }
 
@@ -970,6 +971,9 @@ namespace BugSplatUnity
             _detachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_RemoveAttachment(path);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+            javaClass.CallStatic("removeAttachment", path);
 #endif
         }
 
