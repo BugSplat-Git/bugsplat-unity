@@ -107,7 +107,7 @@ namespace Crasher
 					Name = "Unhandled managed exception",
 					Expected = "Reported via the log callback. The player keeps running.",
 					RunsInEditor = true,
-					Run = _ => ThrowFromSampleFrames()
+					Run = _ => ThrowFromSampleFrames(ManagedScenario.Unhandled)
 				},
 				new CrashScenario
 				{
@@ -124,7 +124,7 @@ namespace Crasher
 						"once, not twice. Requires Capture Exceptions On Background Threads.",
 					RunsInEditor = true,
 					Run = _ => RunOnBackgroundThread(
-						() => throw new Exception("BugSplat sample: exception on a background thread"))
+						() => ThrowFromSampleFrames(ManagedScenario.BackgroundThread))
 				},
 				new CrashScenario
 				{
@@ -168,15 +168,69 @@ namespace Crasher
 
 		// ---- Managed implementations ----
 
-		static void ThrowFromSampleFrames() => SampleStackFrame0();
-		static void SampleStackFrame0() => SampleStackFrame1();
-		static void SampleStackFrame1() => SampleStackFrame2();
-		static void SampleStackFrame2() => throw new Exception("BugSplat rocks!");
+		/// <summary>
+		/// Which managed row is being run. Threaded through the shared sample frames so the frame that
+		/// actually throws is named after the scenario, putting that name at the top of the reported
+		/// stack. Without it every managed row reports the same SampleStackFrame2 and the rows are
+		/// indistinguishable on the dashboard.
+		/// </summary>
+		enum ManagedScenario
+		{
+			Unhandled,
+			Coroutine,
+			BackgroundThread,
+			UnobservedTask,
+			CaughtAndPosted
+		}
+
+		// NoInlining throughout: these are one-line calls, and IL2CPP inlines them in release builds,
+		// which is exactly where these stacks get read.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowFromSampleFrames(ManagedScenario scenario) => SampleStackFrame0(scenario);
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void SampleStackFrame0(ManagedScenario scenario) => SampleStackFrame1(scenario);
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void SampleStackFrame1(ManagedScenario scenario) => SampleStackFrame2(scenario);
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void SampleStackFrame2(ManagedScenario scenario)
+		{
+			switch (scenario)
+			{
+				case ManagedScenario.Coroutine: ThrowCoroutineException(); break;
+				case ManagedScenario.BackgroundThread: ThrowBackgroundThreadException(); break;
+				case ManagedScenario.UnobservedTask: ThrowUnobservedTaskException(); break;
+				case ManagedScenario.CaughtAndPosted: ThrowCaughtAndPostedException(); break;
+				default: ThrowUnhandledManagedException(); break;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowUnhandledManagedException() =>
+			throw new Exception("BugSplat sample: unhandled managed exception");
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowCoroutineException() =>
+			throw new Exception("BugSplat sample: exception inside a coroutine");
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowBackgroundThreadException() =>
+			throw new Exception("BugSplat sample: exception on a background thread");
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowUnobservedTaskException() =>
+			throw new Exception("BugSplat sample: unobserved Task exception");
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void ThrowCaughtAndPostedException() =>
+			throw new Exception("BugSplat sample: caught exception, posted manually");
 
 		static IEnumerator ThrowNextFrame()
 		{
 			yield return null;
-			throw new Exception("BugSplat sample: exception inside a coroutine");
+			ThrowFromSampleFrames(ManagedScenario.Coroutine);
 		}
 
 		/// <summary>
@@ -228,7 +282,7 @@ namespace Crasher
 			{
 				try
 				{
-					throw new Exception("BugSplat sample: unobserved Task exception");
+					ThrowFromSampleFrames(ManagedScenario.UnobservedTask);
 				}
 				finally
 				{
@@ -242,7 +296,7 @@ namespace Crasher
 		{
 			try
 			{
-				ThrowFromSampleFrames();
+				ThrowFromSampleFrames(ManagedScenario.CaughtAndPosted);
 			}
 			catch (Exception ex)
 			{
