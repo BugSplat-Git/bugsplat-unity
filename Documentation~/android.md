@@ -14,7 +14,7 @@ When you build your app for Android, be sure to set `Create symbols.zip` to `Deb
 
 ## Attachments
 
-Paths listed in `BugSplatOptions.PersistentDataFileAttachmentPaths` are resolved against `Application.persistentDataPath` and registered with the native crash reporter at startup, so they ride along with native Android crash reports as well as managed ones.
+With `UseNativeCrashReportingForAndroid` enabled, paths listed in `BugSplatOptions.PersistentDataFileAttachmentPaths` are resolved against `Application.persistentDataPath` and registered with the native crash reporter at startup, so they ride along with native Android crash reports as well as managed ones. With it disabled they still reach managed reports, and nothing is registered natively.
 
 `AttachNativeLogFile` and `DetachNativeLogFile` work on Android as they do on Windows, macOS, and iOS. Files are read when a crash is uploaded, so a log can be attached before anything has written to it.
 
