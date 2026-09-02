@@ -74,14 +74,24 @@ static void RemoveLogFilePath(NSString *path) {
 // Player-prev.log and started a fresh Player.log that knows nothing about the crash.
 static NSString *_playerLogPath = nil;
 
+static void SetPlayerLogPath(NSString *path) {
+    if (path.length == 0) return;
+#if !__has_feature(objc_arc)
+    [_playerLogPath release];
+#endif
+    _playerLogPath = [path copy];
+}
+
 // Unity keeps exactly one rotated log, as a sibling of Player.log.
 static NSString *PreviousSessionPlayerLogPath(NSString *playerLogPath) {
     if (playerLogPath.length == 0) return nil;
     return [[playerLogPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Player-prev.log"];
 }
 
-// Each launch records which file Player.log was, keyed by session ID, so the delegate can tell
-// whether Player-prev.log is the crashed session's log. Unity rotates by renaming, which keeps
+// Each launch records which file Player.log was, together with the session ID it belongs to, so
+// the delegate can tell whether Player-prev.log is the crashed session's log. It is a single
+// record under one defaults key, not a per-session map: Unity keeps exactly one rotated log, so
+// only the most recent launch's record can ever match. Unity rotates by renaming, which keeps
 // the inode and creation date, so the identity survives to the next launch. The case this
 // catches: the app crashes again before BugSplat starts, so that session is never recorded and
 // its rotation leaves a different file behind. Attaching that file would describe the wrong
@@ -328,12 +338,7 @@ extern "C" {
         // Set up the attachment delegate BEFORE start so it's available when
         // pending crash reports are processed on launch.
         NSString *playerLog = [NSString stringWithUTF8String:(logFilePath ?: "")];
-        if (playerLog.length > 0) {
-#if !__has_feature(objc_arc)
-            [_playerLogPath release];
-#endif
-            _playerLogPath = [playerLog copy];
-        }
+        SetPlayerLogPath(playerLog);
         AddLogFilePath(playerLog);
         [bugsplat setValue:EnsureDelegate() forKey:@"delegate"];
 
@@ -389,6 +394,14 @@ extern "C" {
         id bugsplat = GetBugSplatInstance();
         if (!bugsplat) return;
         [bugsplat setValue:[NSString stringWithUTF8String:(key ?: "")] forKey:@"appKey"];
+    }
+
+    // Tells the bridge which tracked path is Unity's Player.log without attaching it, so the
+    // Player-prev.log substitution applies even when CapturePlayerLog was off at start and is
+    // turned on later through AttachNativeLogFile. Called before _startBugSplat regardless of
+    // whether the log is being captured.
+    void _setNativePlayerLogPath(const char* path) {
+        SetPlayerLogPath([NSString stringWithUTF8String:(path ?: "")]);
     }
 
     void _attachNativeLogFile(const char* path) {
