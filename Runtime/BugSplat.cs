@@ -472,17 +472,30 @@ namespace BugSplatUnity
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
-                using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic("init", activity, database, application, version);
-                nativeCrashReportingEnabled = true;
-
-                // Android captures attachments at crash time, so after init is early enough.
-                foreach (var path in seededNativeAttachments)
+                // Guarded so a missing or mismatched AAR costs native reporting only. Left to
+                // propagate, the exception would abandon the constructor before UseDotNetHandler
+                // below, and managed exception reporting would be lost along with it.
+                try
                 {
-                    AddNativeAttachment(path);
+                    using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                    using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+                    using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                    javaClass.CallStatic("init", activity, database, application, version);
+                    nativeCrashReportingEnabled = true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"BugSplat error: could not start native Android crash reporting: {ex.Message}. Native crashes will not be reported; managed exception reporting continues. This needs the bugsplat-android AAR bundled with this package (1.4.0 or later).");
+                }
+
+                if (nativeCrashReportingEnabled)
+                {
+                    // Android captures attachments at crash time, so after init is early enough.
+                    foreach (var path in seededNativeAttachments)
+                    {
+                        AddNativeAttachment(path);
+                    }
                 }
             }
 
@@ -669,7 +682,7 @@ namespace BugSplatUnity
                     // cannot read outside their own container at all.
                     if (Path.IsPathRooted(filePath))
                     {
-                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" is an absolute path, skipping... Paths are relative to Application.persistentDataPath (\"{Application.persistentDataPath}\"), for example \"logs/session.log\".");
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" is not a relative path, skipping... Paths are relative to Application.persistentDataPath (\"{Application.persistentDataPath}\"), for example \"logs/session.log\".");
                         continue;
                     }
 
