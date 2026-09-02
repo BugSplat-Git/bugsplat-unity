@@ -68,6 +68,18 @@ static void RemoveLogFilePath(NSString *path) {
     }
 }
 
+// The path Unity writes this session's Player.log to. Kept apart from the generic list because it
+// is the one tracked path whose contents are wrong by the time the delegate runs: a macOS crash
+// report uploads at the NEXT launch, and by then Unity has renamed the crashed session's log to
+// Player-prev.log and started a fresh Player.log that knows nothing about the crash.
+static NSString *_playerLogPath = nil;
+
+// Unity keeps exactly one rotated log, as a sibling of Player.log.
+static NSString *PreviousSessionPlayerLogPath(NSString *playerLogPath) {
+    if (playerLogPath.length == 0) return nil;
+    return [[playerLogPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Player-prev.log"];
+}
+
 static const unsigned long long kMaxLogAttachmentSizeBytes = 10ull * 1024ull * 1024ull;
 
 static NSData *ReadLogTail(NSString *path) {
@@ -110,7 +122,20 @@ static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
     NSMutableArray *attachments = [NSMutableArray array];
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
-    for (NSString *path in paths) {
+    for (NSString *trackedPath in paths) {
+        NSString *path = trackedPath;
+        // Reported under the tracked name: on the report this is the crashed session's Player.log,
+        // and "-prev" only describes when it was read.
+        NSString *filename = [trackedPath lastPathComponent];
+
+        if (_playerLogPath && [trackedPath isEqualToString:_playerLogPath]) {
+            // Read the crashed session's log, not the one this launch is writing. If a relaunch
+            // happened between the crash and this upload, Player-prev.log belongs to that later
+            // session instead; only bugsplat-apple's sessionID can tell them apart, and this
+            // bridge does not use it yet.
+            path = PreviousSessionPlayerLogPath(trackedPath);
+        }
+
         // Existence is checked here rather than at attach time so a log file created after init still attaches.
         if (![fileManager fileExistsAtPath:path]) continue;
 
@@ -119,7 +144,6 @@ static NSArray *DelegateAttachmentsForBugSplat(id self, SEL _cmd, id bugSplat) {
 
         NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
         [inv setSelector:initSel];
-        NSString *filename = [path lastPathComponent];
         NSString *contentType = @"text/plain";
         [inv setArgument:&filename atIndex:2];
         [inv setArgument:&data atIndex:3];
@@ -220,7 +244,14 @@ extern "C" {
 
         // Set up the attachment delegate BEFORE start so it's available when
         // pending crash reports are processed on launch.
-        AddLogFilePath([NSString stringWithUTF8String:(logFilePath ?: "")]);
+        NSString *playerLog = [NSString stringWithUTF8String:(logFilePath ?: "")];
+        if (playerLog.length > 0) {
+#if !__has_feature(objc_arc)
+            [_playerLogPath release];
+#endif
+            _playerLogPath = [playerLog copy];
+        }
+        AddLogFilePath(playerLog);
         [bugsplat setValue:EnsureDelegate() forKey:@"delegate"];
 
         [bugsplat performSelector:@selector(start)];
