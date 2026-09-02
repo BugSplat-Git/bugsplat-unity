@@ -63,7 +63,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Should BugSplat upload exceptions when in editor. Off by default so play mode exceptions stay out of your database.")]
 		public bool PostExceptionsInEditor;
 
-		[Tooltip("Paths to files (relative to Application.persistentDataPath) to upload with each report.")]
+		[Tooltip("Paths to files, relative to Application.persistentDataPath, to attach to managed reports, and to native crash reports where native crash reporting is enabled. Absolute paths are skipped with a warning.")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
 		[Header("Windows")]
