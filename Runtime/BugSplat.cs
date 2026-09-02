@@ -244,9 +244,10 @@ namespace BugSplatUnity
         internal bool? AutoSubmitFatalHangReportSetting { get; }
 
         /// <summary>
-        /// Paths from PersistentDataFileAttachmentPaths that were resolved and handed to the native
-        /// crash reporter. Native registration is compiled out in the editor, so this is the only part
-        /// of that wiring a PlayMode test can observe.
+        /// Paths resolved from PersistentDataFileAttachmentPaths and passed to the constructor for native
+        /// registration, de-duplicated the way the native list is. Registration itself happens only when
+        /// native crash reporting is enabled for the platform, and is compiled out in the editor entirely,
+        /// so this is the only part of that wiring a PlayMode test can observe.
         /// </summary>
         internal IReadOnlyList<string> NativePersistentDataAttachmentPaths => nativePersistentDataAttachmentPaths.AsReadOnly();
         private readonly List<string> nativePersistentDataAttachmentPaths = new List<string>();
@@ -632,7 +633,13 @@ namespace BugSplatUnity
                 // nativePersistentDataAttachmentPaths records what was handed over, because native
                 // registration is compiled out in the editor and this is what a PlayMode test can observe.
                 bugSplat.Attachments.Add(fileInfo);
-                bugSplat.nativePersistentDataAttachmentPaths.Add(fileInfo.FullName);
+
+                var alreadyRecorded = bugSplat.nativePersistentDataAttachmentPaths.FindIndex(
+                    recorded => nativeAttachmentPathComparer.Equals(recorded, fileInfo.FullName)) >= 0;
+                if (!alreadyRecorded)
+                {
+                    bugSplat.nativePersistentDataAttachmentPaths.Add(fileInfo.FullName);
+                }
             }
 
             return bugSplat;
@@ -804,8 +811,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setAttribute", key, value);
+            CallAndroid("setAttribute", key, value);
 #endif
         }
 
@@ -820,8 +826,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setUser", user);
+            CallAndroid("setUser", user);
 #endif
         }
 
@@ -836,8 +841,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setEmail", email);
+            CallAndroid("setEmail", email);
 #endif
         }
 
@@ -852,8 +856,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setNotes", notes);
+            CallAndroid("setNotes", notes);
 #endif
         }
 
@@ -868,8 +871,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setKey", key);
+            CallAndroid("setKey", key);
 #endif
         }
 
@@ -884,8 +886,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-            javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
+            CallAndroid("setAttribute", "BugSplatDescription", description);
 #endif
         }
 
@@ -1044,6 +1045,26 @@ namespace BugSplatUnity
             }
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+        /// <summary>
+        /// Calls a static method on com.bugsplat.android.BugSplat, logging instead of throwing when the
+        /// bundled AAR lacks it. Every Android call after init goes through here so a mismatched AAR
+        /// degrades to missing data on a report rather than an exception in the game.
+        /// </summary>
+        private static void CallAndroid(string method, params object[] args)
+        {
+            try
+            {
+                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                javaClass.CallStatic(method, args);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
+            }
+        }
+#endif
+
         private void AddNativeAttachment(string path)
         {
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
@@ -1051,17 +1072,9 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            // CreateFromOptions attaches at startup, so an AAR without these methods would take the
-            // game down on launch. A crash reporter must never be the reason an app fails to start.
-            try
-            {
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic("addAttachment", path);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"BugSplat warning: could not attach \"{path}\" to native crash reports: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
-            }
+            // CreateFromOptions attaches at startup, so an AAR without this method would otherwise
+            // take the game down on launch; CallAndroid turns that into a warning.
+            CallAndroid("addAttachment", path);
 #endif
         }
 
@@ -1072,15 +1085,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_RemoveAttachment(path);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            try
-            {
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic("removeAttachment", path);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"BugSplat warning: could not detach \"{path}\" from native crash reports: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
-            }
+            CallAndroid("removeAttachment", path);
 #endif
         }
 
