@@ -75,11 +75,11 @@ Support by platform:
 | Windows | Multiple |
 | macOS | Multiple |
 | iOS | Multiple |
-| Android | Not supported — the call is a no-op |
+| Android | Multiple |
 
 On macOS and iOS each attachment is truncated to its last 10 MB.
 
-> **Register native attachments during initialization.** On macOS and iOS a crash report is uploaded at the *next* launch, and BugSplat asks for that report's attachments then, in a fresh process. A path registered part-way through a session is not remembered across the crash, so it never reaches the report. `PersistentDataFileAttachmentPaths` is applied on every launch and is unaffected by this. On Windows the handler captures attachments at crash time, so `AttachNativeLogFile` takes effect whenever you call it.
+> **Register native attachments during initialization.** On macOS and iOS a crash report is uploaded at the *next* launch, and BugSplat asks for that report's attachments then, in a fresh process. A path registered part-way through a session is not remembered across the crash, so it never reaches the report. `PersistentDataFileAttachmentPaths` is applied on every launch and is unaffected by this. On Windows and Android the handler captures attachments at crash time, so `AttachNativeLogFile` takes effect whenever you call it.
 
 `Player.log` still ships with managed posts on every platform, including Android.
 
