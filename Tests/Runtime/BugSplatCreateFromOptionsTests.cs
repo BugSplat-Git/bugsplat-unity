@@ -287,6 +287,77 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
 		}
 
+		// The native reporter is compiled out in the editor, so AttachNativeLogFile itself is a no-op
+		// here. NativePersistentDataAttachmentPaths records what CreateFromOptions resolved and handed
+		// to it, which is the part of the wiring a PlayMode test can actually observe.
+		[Test]
+		public void CreateFromOptions_WhenAttachmentIsRelativeAndExists_ShouldOfferItToTheNativeReporter()
+		{
+			var fileName = System.IO.Path.GetRandomFileName();
+			var fullPath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+			System.IO.Directory.CreateDirectory(Application.persistentDataPath);
+			System.IO.File.WriteAllText(fullPath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					fileName
+				};
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.AreEqual(1, sut.NativePersistentDataAttachmentPaths.Count);
+				Assert.AreEqual(new System.IO.FileInfo(fullPath).FullName, sut.NativePersistentDataAttachmentPaths[0]);
+			}
+			finally
+			{
+				System.IO.File.Delete(fullPath);
+			}
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttachmentPathIsAbsolute_ShouldNotOfferItToTheNativeReporter()
+		{
+			var absolutePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+			System.IO.File.WriteAllText(absolutePath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					absolutePath
+				};
+
+				LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+					System.Text.RegularExpressions.Regex.Escape($"\"{absolutePath}\"") + ".*persistentDataPath"));
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.IsEmpty(sut.NativePersistentDataAttachmentPaths);
+			}
+			finally
+			{
+				System.IO.File.Delete(absolutePath);
+			}
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttachmentDoesNotExist_ShouldNotOfferItToTheNativeReporter()
+		{
+			options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+			{
+				"does-not-exist.txt"
+			};
+
+			LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+				@"does-not-exist\.txt"));
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.IsEmpty(sut.NativePersistentDataAttachmentPaths);
+		}
+
 #if !UNITY_WEBGL
 		// WebGL is excluded: it has no Player.log, so its repository defaults to off.
 		[Test]
