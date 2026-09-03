@@ -448,6 +448,8 @@ namespace BugSplatUnity.Editor
 		///
 		/// Per file rather than per target: Unity disables Objective-C exceptions for the whole framework
 		/// deliberately, and one bridge needing them is no reason to change how Unity's own code compiles.
+		/// The exception is a project where the file cannot be located, where the target property is set
+		/// instead - a wider change than wanted, but better than an iOS build that does not compile.
 		/// </summary>
 		private static void EnableObjectiveCExceptionsForBridge(PBXProject project, string targetGuid)
 		{
