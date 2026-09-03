@@ -62,8 +62,9 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Upload Player.log when Post is called. On platforms whose native crash reporter takes
-        /// attachments (Windows, macOS, and iOS), this also attaches or detaches it natively, leaving
-        /// any file attached with AttachNativeLogFile in place.
+        /// attachments (Windows, macOS, iOS, and Android), this also attaches or detaches it natively,
+        /// leaving any file attached with AttachNativeLogFile in place. Android is a special case: Unity
+        /// writes no Player.log there, so consoleLogPath is empty and there is nothing to attach.
         /// </summary>
         public bool CapturePlayerLog
         {
@@ -225,6 +226,14 @@ namespace BugSplatUnity
             StringComparer.Ordinal;
 #endif
 
+        // The same case rule as nativeAttachmentPathComparer, for the APIs that take a comparison.
+        private const StringComparison nativeAttachmentPathComparison =
+#if UNITY_STANDALONE_WIN
+            StringComparison.OrdinalIgnoreCase;
+#else
+            StringComparison.Ordinal;
+#endif
+
         private IClientSettingsRepository clientSettings;
         internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
@@ -241,6 +250,15 @@ namespace BugSplatUnity
         /// </summary>
         internal bool? AutoSubmitCrashReportSetting { get; }
         internal bool? AutoSubmitFatalHangReportSetting { get; }
+
+        /// <summary>
+        /// Paths resolved from PersistentDataFileAttachmentPaths and passed to the constructor for native
+        /// registration, de-duplicated the way the native list is. Registration itself happens only when
+        /// native crash reporting is enabled for the platform, and is compiled out in the editor entirely,
+        /// so this is the only part of that wiring a PlayMode test can observe.
+        /// </summary>
+        internal IReadOnlyList<string> NativePersistentDataAttachmentPaths => nativePersistentDataAttachmentPaths.AsReadOnly();
+        private readonly List<string> nativePersistentDataAttachmentPaths = new List<string>();
         private readonly string consoleLogPath;
         private bool windowsWerEnabled;
 
@@ -265,6 +283,7 @@ namespace BugSplatUnity
         /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
         /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
         /// <param name="capturePlayerLog">Whether to upload Player.log with reports. Applied while the native crash reporter initializes so that native crash reports honor it too.</param>
+        /// <param name="nativeAttachments">Files to attach to native crash reports, registered before the native reporter starts. On macOS and iOS that is the only time that counts: a report uploads at the next launch and its attachments are gathered while the reporter starts, so a path attached after construction never reaches it. Behaves exactly like AttachNativeLogFile on every platform otherwise.</param>
         public BugSplat(
             string database,
             string application,
@@ -276,7 +295,8 @@ namespace BugSplatUnity
             bool capturePlayerLog = true,
             bool? autoSubmitCrashReport = null,
             bool? autoSubmitFatalHangReport = null,
-            float? hangDetectionThresholdSeconds = null
+            float? hangDetectionThresholdSeconds = null,
+            IEnumerable<string> nativeAttachments = null
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -300,6 +320,11 @@ namespace BugSplatUnity
             // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
             // which is main-thread only.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
+
+            // Seeded before the native reporter starts. On Apple the reporter gathers a pending report's
+            // attachments synchronously inside start, once, and persists them with the report, so a path
+            // registered after construction returns has already missed the only moment it could matter.
+            var seededNativeAttachments = SeedNativeAttachments(nativeAttachments);
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             // Applied before -start, which is where bugsplat-apple decides whether a pending
@@ -355,6 +380,12 @@ namespace BugSplatUnity
                 if (BugSplat_Init(database, application, version) == 1)
                 {
                     nativeCrashReportingEnabled = true;
+
+                    // Windows captures attachments at crash time, so after init is early enough.
+                    foreach (var path in seededNativeAttachments)
+                    {
+                        AddNativeAttachment(path);
+                    }
                     // Show the native crash dialog by default; CreateFromOptions
                     // overrides this from WindowsShowCrashDialog.
                     BugSplat_SetQuietMode(0);
@@ -392,10 +423,18 @@ namespace BugSplatUnity
                 // crash reports left by the previous session, so the player log has to be tracked
                 // before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
+
+                // Before start, for the reason in the constructor comment above. The bridge only records
+                // the path and installs its delegate here, so this is safe ahead of start.
+                foreach (var path in seededNativeAttachments)
+                {
+                    AddNativeAttachment(path);
+                }
+
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
-                if (logPath != null)
+                if (logPath != null && IndexOfNativeAttachment(logPath) < 0)
                 {
                     // Uncontended - nothing else can reach this instance yet - but taken anyway so
                     // "every mutation of nativeAttachmentPaths happens under its lock" holds without
@@ -414,10 +453,18 @@ namespace BugSplatUnity
                 // The delegate is queried while start processes crash reports left by the previous
                 // session, so the player log has to be tracked before start rather than attached after it.
                 var logPath = capturePlayerLog ? consoleLogPath : null;
+
+                // Before start, for the reason in the constructor comment above. The bridge only records
+                // the path and installs its delegate here, so this is safe ahead of start.
+                foreach (var path in seededNativeAttachments)
+                {
+                    AddNativeAttachment(path);
+                }
+
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
-                if (logPath != null)
+                if (logPath != null && IndexOfNativeAttachment(logPath) < 0)
                 {
                     // Uncontended - nothing else can reach this instance yet - but taken anyway so
                     // "every mutation of nativeAttachmentPaths happens under its lock" holds without
@@ -433,18 +480,69 @@ namespace BugSplatUnity
 #elif UNITY_ANDROID && !UNITY_EDITOR
             if (useNativeLibAndroid)
             {
-                using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-                javaClass.CallStatic("initBugSplat", activity, database, application, version);
-                nativeCrashReportingEnabled = true;
+                // Guarded so a missing or mismatched AAR costs native reporting only. Left to
+                // propagate, the exception would abandon the constructor before UseDotNetHandler
+                // below, and managed exception reporting would be lost along with it.
+                try
+                {
+                    using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                    using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+                    using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                    javaClass.CallStatic("init", activity, database, application, version);
+                    nativeCrashReportingEnabled = true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"BugSplat error: could not start native Android crash reporting: {ex.Message}. Native crashes will not be reported; managed exception reporting continues. This needs the bugsplat-android AAR bundled with this package (1.4.0 or later).");
+                }
+
+                if (nativeCrashReportingEnabled)
+                {
+                    // Android captures attachments at crash time, so after init is early enough.
+                    foreach (var path in seededNativeAttachments)
+                    {
+                        AddNativeAttachment(path);
+                    }
+                }
             }
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #else
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #endif
+        }
+
+        /// <summary>
+        /// Normalizes and de-duplicates the constructor's native attachments into the tracked list, and
+        /// returns them so each platform can hand them to its reporter at the right moment.
+        /// </summary>
+        private string[] SeedNativeAttachments(IEnumerable<string> paths)
+        {
+            if (paths == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            var seeded = new List<string>();
+
+            lock (nativeAttachmentPaths)
+            {
+                foreach (var path in paths)
+                {
+                    var fullPath = NormalizeNativeAttachmentPath(path);
+
+                    if (fullPath == null || IndexOfNativeAttachment(fullPath) >= 0)
+                    {
+                        continue;
+                    }
+
+                    nativeAttachmentPaths.Add(fullPath);
+                    seeded.Add(fullPath);
+                }
+            }
+
+            return seeded.ToArray();
         }
 
         private void UseDotNetHandler(string database, string application, string version, bool capturePlayerLog)
@@ -481,6 +579,16 @@ namespace BugSplatUnity
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
+            // Resolved before construction so the files reach the native reporter before it starts. On
+            // macOS and iOS a pending report's attachments are gathered during start and never again, so
+            // anything registered after the constructor returns is absent from that report.
+            var persistentDataAttachments = ResolvePersistentDataAttachments(options.PersistentDataFileAttachmentPaths);
+            var nativeAttachments = new List<string>();
+
+            foreach (var fileInfo in persistentDataAttachments)
+            {
+                nativeAttachments.Add(fileInfo.FullName);
+            }
 
             var bugSplat = new BugSplat(
                 options.Database,
@@ -494,16 +602,17 @@ namespace BugSplatUnity
 #if UNITY_IOS
                 options.IosAutoSubmitCrashReport,
                 options.IosAutoSubmitFatalHangReport,
-                options.IosHangDetectionThresholdSeconds
+                options.IosHangDetectionThresholdSeconds,
 #elif UNITY_STANDALONE_OSX
                 options.MacAutoSubmitCrashReport,
                 options.MacAutoSubmitFatalHangReport,
-                options.MacHangDetectionThresholdSeconds
+                options.MacHangDetectionThresholdSeconds,
 #else
                 null,
                 null,
-                null
+                null,
 #endif
+                nativeAttachments
             )
             {
                 Description = options.Description,
@@ -538,30 +647,85 @@ namespace BugSplatUnity
                 bugSplat.SetWindowsHangDetectionTimeout(options.WindowsHangDetectionTimeoutMs);
             }
 
-            if (options.PersistentDataFileAttachmentPaths != null)
-			{
-                foreach (var filePath in options.PersistentDataFileAttachmentPaths)
-                {
-                    var trimmedFilePath = filePath.TrimStart('/', '\\');
-                    var fullFilePath = Path.Combine(Application.persistentDataPath, trimmedFilePath); 
-                    var fileInfo = new FileInfo(fullFilePath);
-                    var sizeLimit = 100 * 1024 * 1024; // 100 MB
-                    if (!fileInfo.Exists)
-                    {
-                        Debug.LogWarning($"Persistent data file attachment does not exist at {fileInfo.FullName}, skipping...");
-                        continue;
-                    }
-                    if (fileInfo.Length > sizeLimit)
-                    {
-                        Debug.LogWarning($"Persistent data file attachment {fileInfo.FullName} size limit exceeded. Limit is {sizeLimit}, size was {fileInfo.Length}. Skipping...");
-                        continue;
-                    }
+            foreach (var fileInfo in persistentDataAttachments)
+            {
+                // Managed reports read Attachments; native reports were handed these paths through the
+                // constructor, before the native reporter started (see nativeAttachments there).
+                // nativePersistentDataAttachmentPaths records what was handed over, because native
+                // registration is compiled out in the editor and this is what a PlayMode test can observe.
+                bugSplat.Attachments.Add(fileInfo);
 
-                    bugSplat.Attachments.Add(fileInfo);
+                var alreadyRecorded = bugSplat.nativePersistentDataAttachmentPaths.FindIndex(
+                    recorded => nativeAttachmentPathComparer.Equals(recorded, fileInfo.FullName)) >= 0;
+                if (!alreadyRecorded)
+                {
+                    bugSplat.nativePersistentDataAttachmentPaths.Add(fileInfo.FullName);
                 }
             }
 
             return bugSplat;
+        }
+
+        /// <summary>
+        /// Resolves PersistentDataFileAttachmentPaths against persistentDataPath, dropping entries that are
+        /// absolute, missing, or over the size limit, with a warning for each.
+        /// </summary>
+        private static List<FileInfo> ResolvePersistentDataAttachments(List<string> persistentDataFileAttachmentPaths)
+        {
+            var attachments = new List<FileInfo>();
+
+            if (persistentDataFileAttachmentPaths != null)
+            {
+                foreach (var filePath in persistentDataFileAttachmentPaths)
+                {
+                    // An empty row in the Inspector list is not an attempt to attach anything.
+                    if (string.IsNullOrWhiteSpace(filePath))
+                    {
+                        continue;
+                    }
+
+                    // Entries are relative to Application.persistentDataPath. An absolute path is rejected rather
+                    // than resolved: it belongs to the machine that authored the options asset, so it would not
+                    // exist on a teammate's machine, in CI, or on a player's device, and the sandboxed platforms
+                    // cannot read outside their own container at all.
+                    if (Path.IsPathRooted(filePath))
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" is not a relative path, skipping... Paths are relative to Application.persistentDataPath (\"{Application.persistentDataPath}\"), for example \"logs/session.log\".");
+                        continue;
+                    }
+
+                    var fullFilePath = Path.Combine(Application.persistentDataPath, filePath);
+                    var fileInfo = new FileInfo(fullFilePath);
+
+                    // Path.Combine resolves "../outside.log" to a sibling of persistentDataPath, so a
+                    // relative-looking entry can still name a file outside it. That is the same problem
+                    // as a rooted entry - a path that exists on the authoring machine and nowhere else,
+                    // and unreadable on the sandboxed platforms - so it is refused the same way.
+                    var persistentDataRoot = new DirectoryInfo(Application.persistentDataPath).FullName
+                        .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                    if (!fileInfo.FullName.StartsWith(persistentDataRoot, nativeAttachmentPathComparison))
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" resolves to \"{fileInfo.FullName}\", outside Application.persistentDataPath (\"{Application.persistentDataPath}\"), skipping... Paths may not escape it, for example with \"..\".");
+                        continue;
+                    }
+
+                    var sizeLimit = 100 * 1024 * 1024; // 100 MB
+                    if (!fileInfo.Exists)
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" does not exist at \"{fileInfo.FullName}\", skipping...");
+                        continue;
+                    }
+                    if (fileInfo.Length > sizeLimit)
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" (\"{fileInfo.FullName}\") size limit exceeded. Limit is {sizeLimit}, size was {fileInfo.Length}. Skipping...");
+                        continue;
+                    }
+
+                    attachments.Add(fileInfo);
+                }
+            }
+
+            return attachments;
         }
 
         /// <summary>
@@ -681,8 +845,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", key, value);
+            CallAndroid("setAttribute", key, value);
 #endif
         }
 
@@ -697,8 +860,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatUser", user);
+            CallAndroid("setUser", user);
 #endif
         }
 
@@ -713,8 +875,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatEmail", email);
+            CallAndroid("setEmail", email);
 #endif
         }
 
@@ -729,15 +890,12 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatNotes", notes);
+            CallAndroid("setNotes", notes);
 #endif
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. iOS, macOS, and Windows use the platform SDK's own
-        /// key setter; Android's bridge has none, so there the key travels as the reserved
-        /// BugSplatApplicationKey attribute that the backend promotes to the report's key.
+        /// Set the key on the native crash reporter. Every native platform uses its own SDK's key setter.
         /// </summary>
         public void SetNativeKey(string key)
         {
@@ -747,8 +905,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatApplicationKey", key);
+            CallAndroid("setKey", key);
 #endif
         }
 
@@ -763,8 +920,7 @@ namespace BugSplatUnity
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
 #elif UNITY_ANDROID && !UNITY_EDITOR
-            using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-            javaClass.CallStatic("setAttribute", "BugSplatDescription", description);
+            CallAndroid("setAttribute", "BugSplatDescription", description);
 #endif
         }
 
@@ -841,8 +997,7 @@ namespace BugSplatUnity
         /// Attaching is additive and idempotent: a path that is already attached is ignored, and attaching a
         /// file never displaces one attached earlier — including the Player.log that CapturePlayerLog manages.
         /// Paths are resolved to full paths before they are compared, so the same file named two ways is
-        /// attached once. Supported on Windows, macOS, and iOS; a no-op on Android, whose bridge has no
-        /// attachment API. Safe to call from any thread.
+        /// attached once. Supported on Windows, macOS, iOS, and Android. Safe to call from any thread.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
@@ -924,12 +1079,36 @@ namespace BugSplatUnity
             }
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+        /// <summary>
+        /// Calls a static method on com.bugsplat.android.BugSplat, logging instead of throwing when the
+        /// bundled AAR lacks it. Every Android call after init goes through here so a mismatched AAR
+        /// degrades to missing data on a report rather than an exception in the game.
+        /// </summary>
+        private static void CallAndroid(string method, params object[] args)
+        {
+            try
+            {
+                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                javaClass.CallStatic(method, args);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
+            }
+        }
+#endif
+
         private void AddNativeAttachment(string path)
         {
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _attachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            // CreateFromOptions attaches at startup, so an AAR without this method would otherwise
+            // take the game down on launch; CallAndroid turns that into a warning.
+            CallAndroid("addAttachment", path);
 #endif
         }
 
@@ -939,6 +1118,8 @@ namespace BugSplatUnity
             _detachNativeLogFile(path);
 #elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
             BugSplat_RemoveAttachment(path);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            CallAndroid("removeAttachment", path);
 #endif
         }
 

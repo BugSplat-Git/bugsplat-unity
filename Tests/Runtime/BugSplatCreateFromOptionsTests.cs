@@ -185,18 +185,95 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.DoesNotThrow(() => BugSplat.CreateFromOptions(options));
 		}
 
+		// The warning has to quote the entry as it was written as well as the path it resolved to.
+		// Reporting only the resolved path names a directory the reader has never typed, which makes
+		// the cause harder to find rather than easier.
 		[Test]
-		public void CreateFromOptions_WhenAttachmentDoesNotExist_ShouldSkipIt()
+		public void CreateFromOptions_WhenAttachmentDoesNotExist_ShouldSkipItAndQuoteTheEntryAsWritten()
 		{
 			options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
 			{
 				"does-not-exist.txt"
 			};
 
-			LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("does not exist"));
+			LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+				System.Text.RegularExpressions.Regex.Escape("\"does-not-exist.txt\" does not exist at")));
 
 			var sut = BugSplat.CreateFromOptions(options);
 
+			Assert.IsEmpty(sut.Attachments);
+		}
+
+		// Entries are relative to Application.persistentDataPath. An absolute path is machine-specific,
+		// so accepting it would produce an options asset that works only on the machine that authored it.
+		// The file below really exists, so the only reason to skip it is that it is rooted.
+		[Test]
+		public void CreateFromOptions_WhenAttachmentPathIsAbsolute_ShouldSkipItAndExplainWhy()
+		{
+			var absolutePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+			System.IO.File.WriteAllText(absolutePath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					absolutePath
+				};
+
+				LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+					System.Text.RegularExpressions.Regex.Escape($"\"{absolutePath}\"") + ".*persistentDataPath"));
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.IsEmpty(sut.Attachments);
+			}
+			finally
+			{
+				System.IO.File.Delete(absolutePath);
+			}
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttachmentIsRelativeAndExists_ShouldAttachIt()
+		{
+			var fileName = System.IO.Path.GetRandomFileName();
+			var fullPath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+			System.IO.Directory.CreateDirectory(Application.persistentDataPath);
+			System.IO.File.WriteAllText(fullPath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					fileName
+				};
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.AreEqual(1, sut.Attachments.Count);
+				Assert.AreEqual(new System.IO.FileInfo(fullPath).FullName, sut.Attachments[0].FullName);
+			}
+			finally
+			{
+				System.IO.File.Delete(fullPath);
+			}
+		}
+
+		// Clicking + on the Inspector list leaves an empty row behind, and code can hand us a null.
+		// Neither is an attempt to attach anything, and neither should throw.
+		[Test]
+		public void CreateFromOptions_WhenAttachmentPathIsBlank_ShouldSkipIt()
+		{
+			options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+			{
+				null,
+				string.Empty,
+				"   "
+			};
+
+			BugSplat sut = null;
+
+			Assert.DoesNotThrow(() => sut = BugSplat.CreateFromOptions(options));
 			Assert.IsEmpty(sut.Attachments);
 		}
 
@@ -208,6 +285,77 @@ namespace BugSplatUnity.RuntimeTests
 
 			Assert.True(options.CapturePlayerLog, "BugSplatOptions field default");
 			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
+		}
+
+		// The native reporter is compiled out in the editor, so AttachNativeLogFile itself is a no-op
+		// here. NativePersistentDataAttachmentPaths records what CreateFromOptions resolved and handed
+		// to it, which is the part of the wiring a PlayMode test can actually observe.
+		[Test]
+		public void CreateFromOptions_WhenAttachmentIsRelativeAndExists_ShouldOfferItToTheNativeReporter()
+		{
+			var fileName = System.IO.Path.GetRandomFileName();
+			var fullPath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+			System.IO.Directory.CreateDirectory(Application.persistentDataPath);
+			System.IO.File.WriteAllText(fullPath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					fileName
+				};
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.AreEqual(1, sut.NativePersistentDataAttachmentPaths.Count);
+				Assert.AreEqual(new System.IO.FileInfo(fullPath).FullName, sut.NativePersistentDataAttachmentPaths[0]);
+			}
+			finally
+			{
+				System.IO.File.Delete(fullPath);
+			}
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttachmentPathIsAbsolute_ShouldNotOfferItToTheNativeReporter()
+		{
+			var absolutePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+			System.IO.File.WriteAllText(absolutePath, "attach me");
+
+			try
+			{
+				options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+				{
+					absolutePath
+				};
+
+				LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+					System.Text.RegularExpressions.Regex.Escape($"\"{absolutePath}\"") + ".*persistentDataPath"));
+
+				var sut = BugSplat.CreateFromOptions(options);
+
+				Assert.IsEmpty(sut.NativePersistentDataAttachmentPaths);
+			}
+			finally
+			{
+				System.IO.File.Delete(absolutePath);
+			}
+		}
+
+		[Test]
+		public void CreateFromOptions_WhenAttachmentDoesNotExist_ShouldNotOfferItToTheNativeReporter()
+		{
+			options.PersistentDataFileAttachmentPaths = new System.Collections.Generic.List<string>
+			{
+				"does-not-exist.txt"
+			};
+
+			LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(
+				@"does-not-exist\.txt"));
+
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.IsEmpty(sut.NativePersistentDataAttachmentPaths);
 		}
 
 #if !UNITY_WEBGL
