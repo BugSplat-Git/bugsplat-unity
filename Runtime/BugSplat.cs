@@ -226,6 +226,14 @@ namespace BugSplatUnity
             StringComparer.Ordinal;
 #endif
 
+        // The same case rule as nativeAttachmentPathComparer, for the APIs that take a comparison.
+        private const StringComparison nativeAttachmentPathComparison =
+#if UNITY_STANDALONE_WIN
+            StringComparison.OrdinalIgnoreCase;
+#else
+            StringComparison.Ordinal;
+#endif
+
         private IClientSettingsRepository clientSettings;
         internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
@@ -688,6 +696,19 @@ namespace BugSplatUnity
 
                     var fullFilePath = Path.Combine(Application.persistentDataPath, filePath);
                     var fileInfo = new FileInfo(fullFilePath);
+
+                    // Path.Combine resolves "../outside.log" to a sibling of persistentDataPath, so a
+                    // relative-looking entry can still name a file outside it. That is the same problem
+                    // as a rooted entry - a path that exists on the authoring machine and nowhere else,
+                    // and unreadable on the sandboxed platforms - so it is refused the same way.
+                    var persistentDataRoot = new DirectoryInfo(Application.persistentDataPath).FullName
+                        .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                    if (!fileInfo.FullName.StartsWith(persistentDataRoot, nativeAttachmentPathComparison))
+                    {
+                        Debug.LogWarning($"Persistent data file attachment \"{filePath}\" resolves to \"{fileInfo.FullName}\", outside Application.persistentDataPath (\"{Application.persistentDataPath}\"), skipping... Paths may not escape it, for example with \"..\".");
+                        continue;
+                    }
+
                     var sizeLimit = 100 * 1024 * 1024; // 100 MB
                     if (!fileInfo.Exists)
                     {
