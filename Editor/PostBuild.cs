@@ -374,11 +374,7 @@ namespace BugSplatUnity.Editor
 
 			var targetGuid = project.GetUnityFrameworkTargetGuid();
 
-			// BugSplatBridge.mm guards its NSFileHandle reads with @try, which does not compile
-			// under UnityFramework's default GCC_ENABLE_OBJC_EXCEPTIONS = NO. The plugin importer
-			// carries -fobjc-exceptions for the file itself; this covers projects that imported it
-			// before that setting existed, where Unity reuses the cached importer settings.
-			project.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");
+			EnableObjectiveCExceptionsForBridge(project, targetGuid);
 
 			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
 			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lz");
@@ -442,6 +438,40 @@ namespace BugSplatUnity.Editor
 				File.WriteAllText(crashReporterPath, modified);
 				Debug.Log("BugSplat: Disabled Unity's built-in crash reporter to prevent PLCrashReporter conflict.");
 			}
+		}
+
+		/// <summary>
+		/// BugSplatBridge.mm guards its NSFileHandle reads with @try, and Unity compiles UnityFramework
+		/// with GCC_ENABLE_OBJC_EXCEPTIONS = NO. The plugin importer carries -fobjc-exceptions for the
+		/// file, but a project that imported the plugin before that setting existed can still be building
+		/// with the old flags, so it is set on the file here as well.
+		///
+		/// Per file rather than per target: Unity disables Objective-C exceptions for the whole framework
+		/// deliberately, and one bridge needing them is no reason to change how Unity's own code compiles.
+		/// </summary>
+		private static void EnableObjectiveCExceptionsForBridge(PBXProject project, string targetGuid)
+		{
+			const string flag = "-fobjc-exceptions";
+			const string bridgePath = "Libraries/com.bugsplat.unity/Editor/IOS/ObjC/BugSplatBridge.mm";
+
+			var bridgeGuid = project.FindFileGuidByProjectPath(bridgePath);
+			if (bridgeGuid == null)
+			{
+				// The package is somewhere this did not predict. Falling back to the target property keeps
+				// the build working, which matters more than the narrower scope.
+				Debug.Log($"BugSplat info: could not find {bridgePath} in the Xcode project; enabling Objective-C exceptions for the whole UnityFramework target instead.");
+				project.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");
+				return;
+			}
+
+			var flags = project.GetCompileFlagsForFile(targetGuid, bridgeGuid) ?? new List<string>();
+			if (flags.Contains(flag))
+			{
+				return;
+			}
+
+			flags.Add(flag);
+			project.SetCompileFlagsForFile(targetGuid, bridgeGuid, flags);
 		}
 
 		private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
