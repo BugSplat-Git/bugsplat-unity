@@ -120,7 +120,8 @@ static BOOL IdentityMatches(NSDictionary *record, NSDictionary *identity) {
     // Sessions are launches apart; one second of slack covers any plist round-trip loss.
     double recorded = [record[kRecordCreated] doubleValue];
     double actual = [identity[kRecordCreated] doubleValue];
-    return fabs(recorded - actual) < 1.0;
+    double drift = recorded - actual;
+    return (drift < 0 ? -drift : drift) < 1.0;
 }
 
 // YES when Player-prev.log is shown to be the crashed session's log, or when there is nothing to
