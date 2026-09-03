@@ -374,6 +374,12 @@ namespace BugSplatUnity.Editor
 
 			var targetGuid = project.GetUnityFrameworkTargetGuid();
 
+			// BugSplatBridge.mm guards its NSFileHandle reads with @try, which does not compile
+			// under UnityFramework's default GCC_ENABLE_OBJC_EXCEPTIONS = NO. The plugin importer
+			// carries -fobjc-exceptions for the file itself; this covers projects that imported it
+			// before that setting existed, where Unity reuses the cached importer settings.
+			project.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");
+
 			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
 			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lz");
 			project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");

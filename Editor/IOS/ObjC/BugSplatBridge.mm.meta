@@ -74,7 +74,7 @@ PluginImporter:
       settings:
         AddToEmbeddedBinaries: false
         CPU: AnyCPU
-        CompileFlags: 
+        CompileFlags: -fobjc-exceptions
         FrameworkDependencies: 
   userData: 
   assetBundleName: 
