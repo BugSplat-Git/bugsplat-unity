@@ -8,6 +8,8 @@ To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` 
 
 `Player.log` is attached to native macOS crash reports when both `UseNativeCrashReportingForMac` and `CapturePlayerLog` are enabled on your `BugSplatOptions` asset. Managed .NET exception reports attach it through the reporter instead, so they are unaffected by the native setting.
 
+A native crash report uploads at the **next launch**, and by then Unity has renamed the crashed session's log to `Player-prev.log` and started a fresh `Player.log`. BugSplat therefore reads `Player-prev.log` for that report; when the SDK provides the crashed session ID it verifies the file identity before attaching, and otherwise it attaches on best effort. Reports that fail to upload keep their copy of the log and retry it later. The one case with no log: the app crashes again before BugSplat initializes, so Unity's rotation replaces the file first — the report then carries no `Player.log` rather than a misleading one.
+
 When `UseNativeCrashReportingForMac` is enabled, the post-build step also copies `bugsplat-logo.png` into the built player's `Contents/Resources`. The crash dialog looks up its banner in the app bundle, so without that file it falls back to a plain drawn logo. Xcode project exports are skipped — add the file to your Xcode target's resources yourself if you want the logo there.
 
 ## Attachments

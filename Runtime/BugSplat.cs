@@ -461,6 +461,10 @@ namespace BugSplatUnity
                     AddNativeAttachment(path);
                 }
 
+                // Named even when not captured, so a later CapturePlayerLog = true still gets the
+                // crashed session's log rather than the live one.
+                _setNativePlayerLogPath(consoleLogPath ?? "");
+
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
                 nativeCrashReportingEnabled = true;
 
@@ -1145,6 +1149,12 @@ namespace BugSplatUnity
 
         [DllImport("__Internal")]
         static extern void _attachNativeLogFile(string path);
+
+#if UNITY_STANDALONE_OSX
+        // macOS bridge only: the Player-prev.log substitution lives there.
+        [DllImport("__Internal")]
+        static extern void _setNativePlayerLogPath(string path);
+#endif
 
         [DllImport("__Internal")]
         static extern void _detachNativeLogFile(string path);
