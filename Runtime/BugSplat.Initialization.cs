@@ -144,6 +144,13 @@ namespace BugSplatUnity
                 return;
             }
 
+            if (string.IsNullOrEmpty(options.Database))
+            {
+                Debug.LogWarning(
+                    $"BugSplat: {options.name} has an empty Database, so nothing will be reported. {BugSplatOptions.ConfigureHint}");
+                return;
+            }
+
             Initialize(options);
 #endif
         }
