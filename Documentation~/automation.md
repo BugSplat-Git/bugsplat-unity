@@ -54,6 +54,10 @@ Nothing is picked silently — a build fails and tells you so. Select one explic
 
 Or, from an editor script: `BugSplatUnity.Editor.BugSplatProjectOptions.Set(asset)`.
 
+### Do not add the asset to Preloaded Assets yourself
+
+BugSplat adds the selected asset to **Player Settings > Preloaded Assets** for the duration of a build and removes it again afterwards — that is how a player, which has no Project Settings to read, finds it. Leaving a `BugSplatOptions` in that list yourself is what you want to avoid: a player takes its options from the first one loaded, so two of them would make the choice depend on load order. A build that finds a `BugSplatOptions` there other than the selected one **fails** and names it.
+
 ## 2. Run one command
 
 The editor can do all of the above for you in batch mode:

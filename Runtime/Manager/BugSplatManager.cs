@@ -40,6 +40,11 @@ namespace BugSplatUnity.Runtime.Manager
 		// this component's to end.
 		private bool ownsInstance;
 
+		// This property has the same name as its type, so every "BugSplat.X" below is read under C#'s
+		// identical-simple-names-and-type-names rule: a static X binds to the type, an instance X to
+		// this property. Instance, IsInitialized, Initialize and Shutdown are all static, so they bind
+		// to the type. Binding to the property instead could not compile, let alone recurse - reaching
+		// a static member through an instance reference is CS0176.
 		public BugSplat BugSplat => BugSplat.Instance;
 
 		private void Awake()

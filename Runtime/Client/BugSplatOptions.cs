@@ -152,19 +152,34 @@ namespace BugSplatUnity.Runtime.Client
 			"single asset is selected automatically. Scripted setup: " +
 			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
 
+#if !UNITY_EDITOR
 		private static BugSplatOptions preloaded;
 
 		// In a player the configured asset arrives as a preloaded asset, loaded before
 		// RuntimeInitializeOnLoadMethod(BeforeSceneLoad) runs, and OnEnable is where a preloaded
 		// ScriptableObject can announce itself. First wins: preloaded assets load ahead of any scene,
 		// so an asset referenced by an obsolete BugSplatManager in a scene never displaces it.
+		//
+		// Player-only. In the editor the selection comes from EditorBuildSettings, and OnEnable runs
+		// for any asset the editor happens to load - merely inspecting one would set this.
 		private void OnEnable()
 		{
 			if (preloaded == null)
 			{
 				preloaded = this;
+				return;
+			}
+
+			if (preloaded != this)
+			{
+				// The build refuses this, so reaching it means the asset was preloaded some other
+				// way. Say so rather than let load order decide silently.
+				Debug.LogWarning(
+					$"BugSplat: more than one BugSplatOptions was loaded before the first scene, and \"{preloaded.name}\" " +
+					$"won on load order; \"{name}\" is ignored. Preload exactly one.");
 			}
 		}
+#endif
 
 		/// <summary>
 		/// The options asset the project initializes from, or null when none is selected. In the editor
