@@ -83,7 +83,15 @@ namespace BugSplatUnity.Editor
 
 		private static void DrawStatus(BugSplatOptions options)
 		{
-#if BUGSPLAT_MANUAL_INITIALIZE
+#if BUGSPLAT_DISABLED
+			EditorGUILayout.HelpBox(
+				$"{BugSplatOptions.DisabledDefine} is defined for this build target, so BugSplat is off: it does not initialize itself and builds are not validated.",
+				MessageType.Info);
+			if (options == null)
+			{
+				return;
+			}
+#elif BUGSPLAT_MANUAL_INITIALIZE
 			EditorGUILayout.HelpBox(
 				$"{BugSplatOptions.ManualInitializeDefine} is defined for this build target, so BugSplat does not initialize itself and builds are not checked for an options asset. Your code is responsible for calling BugSplat.Initialize.",
 				MessageType.Info);
@@ -97,16 +105,24 @@ namespace BugSplatUnity.Editor
 				var count = BugSplatProjectOptions.FindAll().Length;
 				EditorGUILayout.HelpBox(
 					count > 1
-						? $"{count} BugSplat Options assets exist and none is selected. Choose one above. Until then BugSplat is not initialized, nothing is reported, and builds fail."
-						: "No BugSplat Options asset is selected. Click Create, or choose an existing asset. Until then BugSplat is not initialized, nothing is reported, and builds fail.",
+						? $"{count} BugSplatOptions assets exist and none is selected. Choose one above. Until then BugSplat is not initialized and nothing is reported; a release build fails, a development build warns."
+						: $"No BugSplatOptions asset is selected. Click Create, or choose an existing asset. Until then BugSplat is not initialized and nothing is reported; a release build fails, a development build warns. To ship without BugSplat at all, define {BugSplatOptions.DisabledDefine}.",
 					MessageType.Error);
+				return;
+			}
+
+			if (!options.Enabled)
+			{
+				EditorGUILayout.HelpBox(
+					"BugSplat is turned off on this asset: it will not initialize and builds are not validated. Check Enabled below to turn it on. To turn it off for one build configuration instead of the whole project, define " + BugSplatOptions.DisabledDefine + " for that target.",
+					MessageType.Info);
 				return;
 			}
 
 			if (string.IsNullOrEmpty(options.Database))
 			{
 				EditorGUILayout.HelpBox(
-					"Database is empty, so nothing can be reported and builds fail. Enter the name of your BugSplat database below.",
+					"Database is empty, so nothing can be reported. A release build fails; a development build only warns. Enter the name of your BugSplat database below, or uncheck Enabled to leave BugSplat out of this project for now.",
 					MessageType.Error);
 				return;
 			}

@@ -106,8 +106,10 @@ namespace BugSplatUnity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void AutoInitialize()
         {
-#if BUGSPLAT_MANUAL_INITIALIZE
-            // The project owns initialization and calls Initialize itself.
+#if BUGSPLAT_MANUAL_INITIALIZE || BUGSPLAT_DISABLED
+            // BUGSPLAT_MANUAL_INITIALIZE: the project calls Initialize itself.
+            // BUGSPLAT_DISABLED: BugSplat is off for this build target.
+            // Either way nothing here runs, and nothing reads the options asset.
             return;
 #else
             if (Instance != null)
@@ -119,6 +121,21 @@ namespace BugSplatUnity
             if (options == null)
             {
                 Debug.LogWarning(NotConfiguredMessage);
+                return;
+            }
+
+            if (!options.Enabled)
+            {
+                // Said out loud where a developer will see it, so a build that reports nothing is
+                // never a mystery. Kept out of release players, which is where Enabled is usually on
+                // anyway.
+                if (Debug.isDebugBuild)
+                {
+                    Debug.Log(
+                        $"BugSplat is turned off on {options.name} (Enabled is unchecked), so nothing will be " +
+                        "reported. Check Enabled in Edit > Project Settings > BugSplat to turn it back on.");
+                }
+
                 return;
             }
 

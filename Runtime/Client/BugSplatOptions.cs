@@ -29,6 +29,9 @@ namespace BugSplatUnity.Runtime.Client
 		public string Version;
 
 		[Header("Initialization")]
+		[Tooltip("Whether this project uses BugSplat at all. Off means BugSplat does not start itself and builds are not checked for a database, so you can keep it out of development builds without filling anything in. An explicit BugSplat.Initialize call is still honored. For per-build-target control from a build script, define BUGSPLAT_DISABLED instead.")]
+		public bool Enabled = true;
+
 		[Tooltip("Initialize BugSplat from this asset before the first scene loads. On by default, so nothing has to be placed in a scene. Turn it off to call BugSplat.Initialize yourself - after a consent screen, for example.")]
 		public bool InitializeAutomatically = true;
 
@@ -142,6 +145,12 @@ namespace BugSplatUnity.Runtime.Client
 		/// nor fails a build for a missing asset. For code that calls BugSplat.Initialize itself.
 		/// </summary>
 		internal const string ManualInitializeDefine = "BUGSPLAT_MANUAL_INITIALIZE";
+
+		/// <summary>
+		/// Scripting define that turns BugSplat off for a build target: it does not initialize itself
+		/// and builds are not validated. The per-build-configuration form of <see cref="Enabled"/>.
+		/// </summary>
+		internal const string DisabledDefine = "BUGSPLAT_DISABLED";
 
 		/// <summary>
 		/// The fix every "not configured" message ends with. It names the menu and the file, because the

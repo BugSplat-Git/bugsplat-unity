@@ -88,7 +88,9 @@ If **Application** or **Version** are left empty, BugSplat defaults them to `App
 
 Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **Post Exceptions In Editor** on the options asset (or set `BugSplat.Instance.PostExceptionsInEditor = true` in code) while you verify your integration.
 
-A build fails if no options asset is selected or its database is empty, so a misconfigured project cannot ship a player that silently reports nothing.
+A **release** build fails if no options asset is selected or its database is empty, so a misconfigured project cannot ship a player that silently reports nothing. A **development** build only warns, so iterating never requires BugSplat to be filled in first.
+
+Not using BugSplat yet, or only in QA and release? Uncheck **Enabled** on the asset, or define `BUGSPLAT_DISABLED` for the build targets you want it off for. Both mean no initialization and no build validation — see [Turning BugSplat on and off](Documentation~/api.md#turning-bugsplat-on-and-off).
 
 Your code reaches the client through `BugSplat.Instance`, which is ready inside any `Awake`:
 

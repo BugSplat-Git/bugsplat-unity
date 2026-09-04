@@ -227,6 +227,25 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().InitializeAutomatically);
 		}
 
+		[Test]
+		public void Options_Enabled_DefaultsToTrue()
+		{
+			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().Enabled);
+		}
+
+		// Enabled is about whether BugSplat is used at all, so it does not veto a call the project
+		// makes on purpose - that is what makes it different from a hard compile-time switch.
+		[Test]
+		public void Initialize_WhenEnabledIsOff_StillHonorsAnExplicitCall()
+		{
+			options.Enabled = false;
+
+			var bugSplat = BugSplat.Initialize(options);
+
+			Assert.IsTrue(BugSplat.IsInitialized);
+			Assert.AreSame(bugSplat, BugSplat.Instance);
+		}
+
 #if UNITY_EDITOR
 		// The editor half of the resolution path: AutoInitialize reads the Project Settings
 		// selection, which is an EditorBuildSettings config object and has to be a saved asset.
@@ -267,6 +286,30 @@ namespace BugSplatUnity.RuntimeTests
 			SelectAsSavedAsset(options);
 			try
 			{
+				BugSplat.AutoInitialize();
+
+				Assert.IsFalse(BugSplat.IsInitialized);
+				LogAssert.NoUnexpectedReceived();
+			}
+			finally
+			{
+				ClearSelection();
+			}
+		}
+
+		// The off switch: a project that has not filled BugSplat in, or wants it out of development
+		// builds, must not initialize and must not be nagged. It does say so once at Log level, so a
+		// build that reports nothing is never a mystery - expecting that here also proves nothing
+		// louder was emitted, since NoUnexpectedReceived fails on any log it was not told about.
+		[Test]
+		public void AutoInitialize_WhenEnabledIsOff_DoesNotInitializeAndSaysSoWithoutWarning()
+		{
+			options.Enabled = false;
+			SelectAsSavedAsset(options);
+			try
+			{
+				LogAssert.Expect(LogType.Log, new Regex("turned off"));
+
 				BugSplat.AutoInitialize();
 
 				Assert.IsFalse(BugSplat.IsInitialized);

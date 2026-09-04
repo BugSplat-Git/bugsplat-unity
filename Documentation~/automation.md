@@ -92,7 +92,9 @@ options.Database = "my-database";
 BugSplat.Initialize(options);
 ```
 
-With the define, BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset; the project owns all of it. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
+With the define, BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset; the project owns all of it.
+
+To turn BugSplat **off** rather than hand over initialization, define **`BUGSPLAT_DISABLED`** instead — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
 
 If you would rather keep an asset for the field values but control the timing, leave the define out, turn **Initialize Automatically** off on the asset, and call `BugSplat.Initialize(options)` with it when ready.
 
@@ -101,5 +103,5 @@ If you would rather keep an asset for the field values but control the timing, l
 Every message names both fixes, so a log is enough to act on:
 
 - At startup with nothing configured: a warning, `BugSplat is not configured, so nothing will be reported. Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ …`
-- At build time with nothing selected, several assets and none selected, or an empty database: the build **fails** with the same guidance.
+- At build time with nothing selected, several assets and none selected, or an empty database: a **release** build fails with the same guidance; a **development** build (`BuildOptions.Development`) only warns, so iterating never requires BugSplat to be configured first.
 - A leftover `BugSplatManager` in a scene: a warning that it is no longer needed. It still works; see [Migrating from 4.x](migrating-from-4x.md).
