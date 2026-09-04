@@ -1,5 +1,4 @@
 using BugSplatUnity;
-using BugSplatUnity.Runtime.Manager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +13,13 @@ namespace Crasher
         // Start is called before the first frame update
         void Start()
         {
-            var manager = FindAnyObjectByType<BugSplatManager>();
-            bugsplat = manager != null ? manager.BugSplat : null;
-            if (bugsplat == null)
+            if (!BugSplat.IsInitialized)
             {
-                Debug.LogError("[BugSplat] BugSplatManager not found in scene. Attributes and settings will not be applied.");
+                Debug.LogError("[BugSplat] BugSplat is not initialized, so no exceptions will be reported. Select or create a BugSplat Options asset in Edit > Project Settings > BugSplat.");
                 return;
             }
+
+            bugsplat = BugSplat.Instance;
 
             bugsplat.Attributes.Add("OS", SystemInfo.operatingSystem);
             bugsplat.Attributes.Add("CPU", SystemInfo.processorType);

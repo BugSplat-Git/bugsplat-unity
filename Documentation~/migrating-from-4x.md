@@ -2,6 +2,13 @@
 
 # 🚚 Migrating from 4.x
 
+Version 5.0.0 changes how BugSplat starts. Nothing needs to be in a scene anymore:
+
+- **`BugSplatManager` is obsolete.** BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit > Project Settings > BugSplat**, before the first scene loads. Open that page — a project with exactly one options asset has it selected already — and remove the `BugSplatManager` from your scene. Until you do, it keeps working: it adopts the instance created at startup and logs a warning that it is no longer needed. **Capture Exceptions On Background Threads** and **Capture Unobserved Task Exceptions** moved from the manager to the options asset.
+- **Replace `FindAnyObjectByType<BugSplatManager>().BugSplat` with `BugSplat.Instance`.** It is set before the first scene loads, so it is safe to read in any `Awake` — nothing depends on `Start` running after a manager's `Awake` anymore.
+- **Builds fail when no options asset is selected, or the selected one has an empty database.** A misconfigured project used to build a player that silently reported nothing. If your code calls `BugSplat.Initialize` itself, select an asset with **Initialize Automatically** off.
+- `BugSplatRef` has been removed. It was an implementation detail of `BugSplatManager`.
+
 Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
 
 - `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.

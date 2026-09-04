@@ -28,6 +28,19 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("The version of your BugSplat application. Defaults to Application.version if no value is set.")]
 		public string Version;
 
+		[Header("Initialization")]
+		[Tooltip("Initialize BugSplat from this asset before the first scene loads. On by default, so nothing has to be placed in a scene. Turn it off to call BugSplat.Initialize yourself - after a consent screen, for example.")]
+		public bool InitializeAutomatically = true;
+
+		[Tooltip("Register a callback and report LogType.Exception log messages as they happen.")]
+		public bool RegisterLogMessageReceived = true;
+
+		[Tooltip("Also capture unhandled exceptions thrown on background threads. Unity only raises logMessageReceived for main-thread logs, so without this those exceptions are written to the log but never reported. Requires Register Log Message Received.")]
+		public bool CaptureExceptionsOnBackgroundThreads = true;
+
+		[Tooltip("Also capture exceptions from Tasks that faulted and were never awaited. These never reach Unity's log at all, so they are otherwise invisible. They surface only after a garbage collection notices the Task, so they are reported late and are not guaranteed to be reported before the process exits. Requires Register Log Message Received.")]
+		public bool CaptureUnobservedTaskExceptions = true;
+
 		[Header("Report Metadata")]
 		[Tooltip("A default description that can be overridden by a call to Post.")]
 		public string Description;
@@ -118,5 +131,40 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForAndroid;
 
+		/// <summary>
+		/// The key under which the editor stores the project's options asset in EditorBuildSettings.
+		/// The build step carries that asset into the player as a preloaded asset.
+		/// </summary>
+		internal const string ConfigObjectKey = "com.bugsplat.unity.options";
+
+		private static BugSplatOptions preloaded;
+
+		// In a player the configured asset arrives as a preloaded asset, loaded before
+		// RuntimeInitializeOnLoadMethod(BeforeSceneLoad) runs, and OnEnable is where a preloaded
+		// ScriptableObject can announce itself. First wins: preloaded assets load ahead of any scene,
+		// so an asset referenced by an obsolete BugSplatManager in a scene never displaces it.
+		private void OnEnable()
+		{
+			if (preloaded == null)
+			{
+				preloaded = this;
+			}
+		}
+
+		/// <summary>
+		/// The options asset the project initializes from, or null when none is selected. In the editor
+		/// this is the Project Settings selection; in a player it is the preloaded asset the build step
+		/// added from that selection.
+		/// </summary>
+		internal static BugSplatOptions ResolveConfigured()
+		{
+#if UNITY_EDITOR
+			return UnityEditor.EditorBuildSettings.TryGetConfigObject(ConfigObjectKey, out BugSplatOptions options)
+				? options
+				: null;
+#else
+			return preloaded;
+#endif
+		}
 	}
 }

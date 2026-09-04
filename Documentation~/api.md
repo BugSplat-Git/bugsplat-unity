@@ -4,14 +4,18 @@
 
 The following API methods are available to help you customize BugSplat to fit your needs.
 
-## BugSplatManager
+## Initialization
 
-| Setting | Description |
+BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit > Project Settings > BugSplat**, before the first scene loads. Nothing needs to be placed in a scene.
+
+| Member | Description |
 | --------------- | --------------- |
-| DontDestroyManagerOnSceneLoad | Should the BugSplat Manager persist through scene loads? | 
-| RegisterLogMessageReceived | Register a callback function and allow BugSplat to capture instances of LogType.Exception.|
-| CaptureExceptionsOnBackgroundThreads | Also capture unhandled exceptions thrown on background threads (default). Requires RegisterLogMessageReceived. See [Background thread exceptions](usage.md#background-thread-exceptions).|
-| CaptureUnobservedTaskExceptions | Also capture exceptions from Tasks that faulted and were never awaited (default). These never reach Unity's log at all. Requires RegisterLogMessageReceived. See [Unobserved task exceptions](usage.md#unobserved-task-exceptions).|
+| `BugSplat.Instance` | The live client, or `null` before initialization. Set before the first scene loads when **Initialize Automatically** is on, so it is ready inside any `Awake`. |
+| `BugSplat.IsInitialized` | Whether `Instance` is set. |
+| `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Calling it again logs a warning and returns the existing instance. |
+
+> [!NOTE]
+> `BugSplatManager` is obsolete. A 4.x scene that still has one keeps working: the component adopts the instance created at startup, or initializes from its own asset when **Initialize Automatically** is off. Remove it when convenient — see [Migrating from 4.x](migrating-from-4x.md).
 
 ## BugSplat Options
 
@@ -20,6 +24,10 @@ The following API methods are available to help you customize BugSplat to fit yo
 | Database  | The name of your BugSplat database. | 
 | Application| The name of your BugSplat application. Defaults to Application.productName if no value is set.|
 | Version | The version of your BugSplat application. Defaults to Application.version if no value is set.|
+| InitializeAutomatically | Initialize BugSplat from this asset before the first scene loads. `true` by default. Turn it off to call `BugSplat.Initialize` yourself, for example after a consent screen |
+| RegisterLogMessageReceived | Register a callback and report `LogType.Exception` log messages as they happen. `true` by default |
+| CaptureExceptionsOnBackgroundThreads | Also capture unhandled exceptions thrown on background threads. `true` by default. Requires RegisterLogMessageReceived. See [Background thread exceptions](usage.md#background-thread-exceptions) |
+| CaptureUnobservedTaskExceptions | Also capture exceptions from Tasks that faulted and were never awaited — these never reach Unity's log at all. `true` by default. Requires RegisterLogMessageReceived. See [Unobserved task exceptions](usage.md#unobserved-task-exceptions) |
 | Description | A default description that can be overridden by call to Post.|
 | Email | A default email that can be overridden by call to Post.|
 | Key | A default key that can be overridden by call to Post.|

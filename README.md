@@ -55,7 +55,7 @@ To import the sample, click the caret next to **Samples** to reveal the **my-uni
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **BugSplatOptions** object. Click BugSplatOptions and replace the database value with your BugSplat database.
+Next, open **Edit > Project Settings > BugSplat**. The sample's `BugSplatOptions` asset (under `Samples > BugSplat > Version > my-unity-crasher`) is selected automatically when it is the only one in the project — otherwise pick it — and replace the database value with your BugSplat database.
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
@@ -82,23 +82,24 @@ To optimize your game for crash reporting, open `Player Settings` (`Edit > Playe
 
 ## ⚙️ Configuration
 
-BugSplat's Unity integration is flexible and can be used in various ways. The easiest way to get started is to attach the `BugSplatManager` MonoBehaviour to a GameObject.
+Open **Edit > Project Settings > BugSplat** and click **Create**, or select an existing `BugSplatOptions` asset, then enter your BugSplat database. That is the whole setup: BugSplat initializes itself from that asset before the first scene loads, in the editor and in every player, and nothing needs to be placed in a scene.
 
-![BugSplat Manager](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ef5240a6-9676-43c6-a482-51216cb34401)
+If **Application** or **Version** are left empty, BugSplat defaults them to `Application.productName` and `Application.version`.
 
-`BugSplatManager` needs to be initialized with a `BugSplatOptions` serialized object. A new instance of `BugSplatOptions` can be created through the Asset Create menu.
+Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **Post Exceptions In Editor** on the options asset (or set `BugSplat.Instance.PostExceptionsInEditor = true` in code) while you verify your integration.
 
-![BugSplat Create Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec402d1-4b8a-49cf-96e9-00d951717771)
+A build fails if no options asset is selected or its database is empty, so a misconfigured project cannot ship a player that silently reports nothing.
 
-Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will default these values to `Application.productName` and `Application.version`, respectively.
+Your code reaches the client through `BugSplat.Instance`, which is ready inside any `Awake`:
 
-Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **PostExceptionsInEditor** on the options asset (or set `bugsplat.PostExceptionsInEditor = true` in code) while you verify your integration.
+```cs
+BugSplat.Instance.Attributes["level"] = currentLevel;
+```
 
-![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
+To start BugSplat yourself — after a consent screen, for example — turn off **Initialize Automatically** on the asset and call `BugSplat.Initialize(options)` when you are ready.
 
-Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
-
-![BugSplat Manager Configured](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/67bed7b5-e2a9-4f52-b5bb-bdc8eebd35a0)
+> [!NOTE]
+> Upgrading from 4.x? A `BugSplatManager` left in a scene keeps working but is no longer needed. See [Migrating from 4.x](Documentation~/migrating-from-4x.md).
 
 ## 🧭 Platform Support
 
@@ -133,7 +134,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [iOS](Documentation~/ios.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [Windows](Documentation~/windows.md) | Native crash reporting, plugin and IL2CPP symbols, hang detection, Windows Error Reporting |
-| [API](Documentation~/api.md) | `BugSplatManager` settings, every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
+| [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
 

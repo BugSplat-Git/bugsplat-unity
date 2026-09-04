@@ -13,10 +13,13 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+#pragma warning disable 618 // BugSplatManager is obsolete; these tests pin its compatibility behavior.
+
 namespace BugSplatUnity.RuntimeTests.Manager
 {
 	/// <summary>
-	/// Play-mode tests for the manager's log-event wiring. The queue's policy is covered by
+	/// Play-mode tests for the log-event wiring, driven through the obsolete BugSplatManager so a
+	/// 4.x scene's configuration is what is exercised. The queue's policy is covered by
 	/// BackgroundLogMessageQueueTest; what these pin is the part unit tests can't — Unity's own
 	/// event contract (logMessageReceivedThreaded fires on the logging thread, both events fire
 	/// for main-thread logs) and the exactly-once delivery built on top of it.

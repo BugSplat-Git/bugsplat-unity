@@ -15,12 +15,13 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
+[assembly: InternalsVisibleTo("BugSplat.Unity.Editor")]
 namespace BugSplatUnity
 {
     /// <summary>
     /// A BugSplat implementation for Unity crash and exception reporting
     /// </summary>
-    public class BugSplat
+    public partial class BugSplat
     {
         /// <summary>
         /// A list of files to be uploaded every time Post is called

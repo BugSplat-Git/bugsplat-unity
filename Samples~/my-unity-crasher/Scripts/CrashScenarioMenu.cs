@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using BugSplatUnity.Runtime.Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,9 +50,9 @@ namespace Crasher
 		[SerializeField] Sprite buttonPressedSprite;
 
 		/// <summary>
-		/// Rows are built in Awake but whether each one can run depends on the BugSplat client,
-		/// which is only resolvable in Start (Awake order between components is undefined). Keep
-		/// what each row needs to restyle itself so availability can be applied afterwards.
+		/// Rows are built in Awake; whether each one can run depends on the BugSplat client and is
+		/// applied in Start alongside the status line. Keep what each row needs to restyle itself
+		/// so availability can be applied afterwards.
 		/// </summary>
 		sealed class Row
 		{
@@ -79,8 +78,7 @@ namespace Crasher
 
 		void Start()
 		{
-			var manager = FindAnyObjectByType<BugSplatManager>();
-			bugsplat = manager != null ? manager.BugSplat : null;
+			bugsplat = BugSplat.IsInitialized ? BugSplat.Instance : null;
 			RefreshStatus();
 			ApplyAvailability();
 		}
@@ -113,7 +111,7 @@ namespace Crasher
 
 			if (bugsplat == null)
 			{
-				Debug.LogError("[BugSplat] BugSplatManager not found in scene. Cannot run crash scenarios.");
+				Debug.LogError("[BugSplat] BugSplat is not initialized, so nothing can be reported. Select or create a BugSplat Options asset in Edit > Project Settings > BugSplat.");
 				return;
 			}
 
@@ -149,7 +147,7 @@ namespace Crasher
 
 			if (bugsplat == null)
 			{
-				statusText.text = "BugSplat is not initialized in this scene.";
+				statusText.text = "BugSplat is not initialized — nothing will be reported. Select an options asset in Edit > Project Settings > BugSplat.";
 				statusText.color = BugSplatRed;
 				return;
 			}

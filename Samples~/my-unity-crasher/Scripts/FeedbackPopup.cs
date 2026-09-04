@@ -1,7 +1,6 @@
 using System.IO;
 using System.Net.Http;
 using BugSplatUnity;
-using BugSplatUnity.Runtime.Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,14 +30,13 @@ namespace Crasher
 
         private void OnSubmit()
         {
-            var manager = FindAnyObjectByType<BugSplatManager>();
-            if (manager == null || manager.BugSplat == null)
+            if (!BugSplat.IsInitialized)
             {
-                Debug.LogError("[BugSplat] BugSplatManager not found in scene. Feedback cannot be submitted.");
+                Debug.LogError("[BugSplat] BugSplat is not initialized, so feedback cannot be submitted. Select or create a BugSplat Options asset in Edit > Project Settings > BugSplat.");
                 return;
             }
 
-            var bugsplat = manager.BugSplat;
+            var bugsplat = BugSplat.Instance;
             var title = string.IsNullOrEmpty(titleInput.text) ? "User Feedback" : titleInput.text;
             var description = descriptionInput.text;
 
