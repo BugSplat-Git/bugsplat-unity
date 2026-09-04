@@ -50,8 +50,8 @@ namespace BugSplatUnity.Runtime.Manager
 				// instance instead of installing a second set of log hooks.
 				Debug.LogWarning(
 					$"BugSplat: the BugSplatManager on \"{gameObject.name}\" is no longer needed - BugSplat was " +
-					"already initialized before it ran. Remove the component; configuration lives in " +
-					"Edit > Project Settings > BugSplat.");
+					"already initialized before it ran. Remove the component; configuration lives in the " +
+					"project's BugSplatOptions asset (Edit > Project Settings > BugSplat).");
 			}
 			else
 			{
@@ -70,8 +70,9 @@ namespace BugSplatUnity.Runtime.Manager
 
 				Debug.Log(
 					$"BugSplat: initialized from the BugSplatManager on \"{gameObject.name}\". That component is " +
-					"obsolete: select its options asset in Edit > Project Settings > BugSplat and remove it, and " +
-					"BugSplat will initialize itself before the first scene loads.");
+					"obsolete: remove it, and BugSplat will initialize itself from that asset before the first " +
+					"scene loads - a project's single BugSplatOptions asset is selected automatically, or pick one " +
+					"in Edit > Project Settings > BugSplat.");
 			}
 
 			if (dontDestroyManagerOnSceneLoad)

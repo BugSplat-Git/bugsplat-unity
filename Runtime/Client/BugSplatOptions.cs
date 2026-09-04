@@ -137,6 +137,21 @@ namespace BugSplatUnity.Runtime.Client
 		/// </summary>
 		internal const string ConfigObjectKey = "com.bugsplat.unity.options";
 
+		/// <summary>
+		/// Scripting define that hands initialization to the project: BugSplat neither initializes itself
+		/// nor fails a build for a missing asset. For code that calls BugSplat.Initialize itself.
+		/// </summary>
+		internal const string ManualInitializeDefine = "BUGSPLAT_MANUAL_INITIALIZE";
+
+		/// <summary>
+		/// The fix every "not configured" message ends with. It names the menu and the file, because the
+		/// reader may be a person at the editor or a script reading a log - and both fixes work.
+		/// </summary>
+		internal const string ConfigureHint =
+			"Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a " +
+			"single asset is selected automatically. Scripted setup: " +
+			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
+
 		private static BugSplatOptions preloaded;
 
 		// In a player the configured asset arrives as a preloaded asset, loaded before

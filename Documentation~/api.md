@@ -13,6 +13,7 @@ BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit 
 | `BugSplat.Instance` | The live client, or `null` before initialization. Set before the first scene loads when **Initialize Automatically** is on, so it is ready inside any `Awake`. |
 | `BugSplat.IsInitialized` | Whether `Instance` is set. |
 | `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Calling it again logs a warning and returns the existing instance. |
+| `BUGSPLAT_MANUAL_INITIALIZE` | Scripting define. The project owns initialization: BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset. See [Automation](automation.md#3-initialize-from-code-only). |
 
 > [!NOTE]
 > `BugSplatManager` is obsolete. A 4.x scene that still has one keeps working: the component adopts the instance created at startup, or initializes from its own asset when **Initialize Automatically** is off. Remove it when convenient — see [Migrating from 4.x](migrating-from-4x.md).

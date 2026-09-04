@@ -20,9 +20,9 @@ namespace BugSplatUnity
         public static bool IsInitialized => Instance != null;
 
         private const string NotConfiguredMessage =
-            "BugSplat is not configured, so nothing will be reported. Open Edit > Project Settings > BugSplat " +
-            "and select or create a BugSplat Options asset. If you call BugSplat.Initialize yourself, select " +
-            "an asset with Initialize Automatically turned off and this warning goes away.";
+            "BugSplat is not configured, so nothing will be reported. " + BugSplatOptions.ConfigureHint +
+            " If your code calls BugSplat.Initialize itself, define " + BugSplatOptions.ManualInitializeDefine +
+            " and this warning goes away.";
 
         private const string AlreadyInitializedMessage =
             "BugSplat.Initialize was called but BugSplat is already initialized; the existing instance is " +
@@ -106,6 +106,10 @@ namespace BugSplatUnity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void AutoInitialize()
         {
+#if BUGSPLAT_MANUAL_INITIALIZE
+            // The project owns initialization and calls Initialize itself.
+            return;
+#else
             if (Instance != null)
             {
                 return;
@@ -124,6 +128,7 @@ namespace BugSplatUnity
             }
 
             Initialize(options);
+#endif
         }
     }
 }

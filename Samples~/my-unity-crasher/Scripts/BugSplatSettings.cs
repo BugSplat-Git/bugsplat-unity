@@ -15,7 +15,7 @@ namespace Crasher
         {
             if (!BugSplat.IsInitialized)
             {
-                Debug.LogError("[BugSplat] BugSplat is not initialized, so no exceptions will be reported. Select or create a BugSplat Options asset in Edit > Project Settings > BugSplat.");
+                Debug.LogError("[BugSplat] BugSplat is not initialized, so no exceptions will be reported. Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a single asset is selected automatically.");
                 return;
             }
 

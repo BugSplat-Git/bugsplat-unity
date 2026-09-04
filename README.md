@@ -98,6 +98,8 @@ BugSplat.Instance.Attributes["level"] = currentLevel;
 
 To start BugSplat yourself — after a consent screen, for example — turn off **Initialize Automatically** on the asset and call `BugSplat.Initialize(options)` when you are ready.
 
+Scripts, CI, and AI agents can do all of this without the Editor UI: one options asset on disk is enough, and there is a batch-mode command. See [Automation](Documentation~/automation.md).
+
 > [!NOTE]
 > Upgrading from 4.x? A `BugSplatManager` left in a scene keeps working but is no longer needed. See [Migrating from 4.x](Documentation~/migrating-from-4x.md).
 
@@ -137,6 +139,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
+| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — for scripts, CI, and AI agents |
 
 ## 🧑‍💻 Contributing
 

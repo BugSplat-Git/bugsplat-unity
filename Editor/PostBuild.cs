@@ -73,7 +73,7 @@ namespace BugSplatUnity.Editor
 
 			if (options == null)
 			{
-				Debug.LogWarning("No BugSplat Options asset is selected in Edit > Project Settings > BugSplat! Skipping build post-process tasks...");
+				Debug.LogWarning("BugSplat: no BugSplatOptions asset is selected, skipping build post-process tasks. " + BugSplatOptions.ConfigureHint);
 				return;
 			}
 

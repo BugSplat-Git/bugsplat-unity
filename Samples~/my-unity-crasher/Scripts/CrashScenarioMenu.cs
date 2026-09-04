@@ -111,7 +111,7 @@ namespace Crasher
 
 			if (bugsplat == null)
 			{
-				Debug.LogError("[BugSplat] BugSplat is not initialized, so nothing can be reported. Select or create a BugSplat Options asset in Edit > Project Settings > BugSplat.");
+				Debug.LogError("[BugSplat] BugSplat is not initialized, so nothing can be reported. Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a single asset is selected automatically.");
 				return;
 			}
 
@@ -147,7 +147,7 @@ namespace Crasher
 
 			if (bugsplat == null)
 			{
-				statusText.text = "BugSplat is not initialized — nothing will be reported. Select an options asset in Edit > Project Settings > BugSplat.";
+				statusText.text = "BugSplat is not initialized — nothing will be reported. Add a BugSplatOptions asset under Assets/, or select one in Edit > Project Settings > BugSplat.";
 				statusText.color = BugSplatRed;
 				return;
 			}

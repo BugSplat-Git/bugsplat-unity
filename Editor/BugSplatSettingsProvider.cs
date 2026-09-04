@@ -1,4 +1,3 @@
-using System.IO;
 using System.Linq;
 using BugSplatUnity.Runtime.Client;
 using BugSplatUnity.Runtime.Manager;
@@ -15,8 +14,6 @@ namespace BugSplatUnity.Editor
 	internal static class BugSplatSettingsProvider
 	{
 		private const string SettingsPath = "Project/BugSplat";
-		private const string DefaultAssetDirectory = "Assets/BugSplat";
-		private const string DefaultAssetPath = DefaultAssetDirectory + "/BugSplatOptions.asset";
 
 		private static UnityEditor.Editor optionsEditor;
 
@@ -66,7 +63,8 @@ namespace BugSplatUnity.Editor
 
 				if (GUILayout.Button("Create", GUILayout.Width(70)))
 				{
-					options = CreateAsset();
+					options = BugSplatSetup.CreateAsset();
+					EditorGUIUtility.PingObject(options);
 				}
 			}
 
@@ -85,6 +83,15 @@ namespace BugSplatUnity.Editor
 
 		private static void DrawStatus(BugSplatOptions options)
 		{
+#if BUGSPLAT_MANUAL_INITIALIZE
+			EditorGUILayout.HelpBox(
+				$"{BugSplatOptions.ManualInitializeDefine} is defined for this build target, so BugSplat does not initialize itself and builds are not checked for an options asset. Your code is responsible for calling BugSplat.Initialize.",
+				MessageType.Info);
+			if (options == null)
+			{
+				return;
+			}
+#endif
 			if (options == null)
 			{
 				var count = BugSplatProjectOptions.FindAll().Length;
@@ -131,20 +138,6 @@ namespace BugSplatUnity.Editor
 			EditorGUILayout.HelpBox(
 				$"The open scene has a BugSplatManager on {names}. BugSplat no longer needs one - it initializes itself before the first scene loads - so the component can be removed.",
 				MessageType.Warning);
-		}
-
-		private static BugSplatOptions CreateAsset()
-		{
-			Directory.CreateDirectory(DefaultAssetDirectory);
-
-			var path = AssetDatabase.GenerateUniqueAssetPath(DefaultAssetPath);
-			var options = ScriptableObject.CreateInstance<BugSplatOptions>();
-			AssetDatabase.CreateAsset(options, path);
-			AssetDatabase.SaveAssets();
-
-			BugSplatProjectOptions.Set(options);
-			EditorGUIUtility.PingObject(options);
-			return options;
 		}
 	}
 }

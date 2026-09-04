@@ -6,12 +6,14 @@ using UnityEngine;
 namespace BugSplatUnity.Editor
 {
 	/// <summary>
-	/// The one place the editor answers "which options asset does this project use". Stored as an
-	/// EditorBuildSettings config object, which is what Unity's own packages use for a per-project
-	/// asset selection: it lives in ProjectSettings, so it is versioned with the project, and it
-	/// survives the asset being moved or renamed.
+	/// Which options asset this project initializes from. Public so scripts, CI, and agents can do
+	/// what the Project Settings page does without the page; see Documentation~/automation.md.
+	///
+	/// Stored as an EditorBuildSettings config object, which is what Unity's own packages use for a
+	/// per-project asset selection: it lives in ProjectSettings/EditorBuildSettings.asset, so it is
+	/// versioned with the project, and it survives the asset being moved or renamed.
 	/// </summary>
-	internal static class BugSplatProjectOptions
+	public static class BugSplatProjectOptions
 	{
 		/// <summary>
 		/// The selected asset, or null. A project with exactly one options asset and no selection
@@ -19,7 +21,7 @@ namespace BugSplatUnity.Editor
 		/// and it should need no clicks. More than one and none selected stays null: picking one
 		/// silently is the arbitrary-asset problem this replaces.
 		/// </summary>
-		internal static BugSplatOptions Get()
+		public static BugSplatOptions Get()
 		{
 			if (EditorBuildSettings.TryGetConfigObject(BugSplatOptions.ConfigObjectKey, out BugSplatOptions selected)
 				&& selected != null)
@@ -37,7 +39,11 @@ namespace BugSplatUnity.Editor
 			return null;
 		}
 
-		internal static void Set(BugSplatOptions options)
+		/// <summary>
+		/// Selects <paramref name="options"/> as the project's asset, or clears the selection when null.
+		/// The asset must be saved under Assets/; an unsaved instance cannot be a config object.
+		/// </summary>
+		public static void Set(BugSplatOptions options)
 		{
 			if (options == null)
 			{
@@ -48,7 +54,10 @@ namespace BugSplatUnity.Editor
 			EditorBuildSettings.AddConfigObject(BugSplatOptions.ConfigObjectKey, options, true);
 		}
 
-		internal static BugSplatOptions[] FindAll()
+		/// <summary>
+		/// Every options asset in the project, selected or not.
+		/// </summary>
+		public static BugSplatOptions[] FindAll()
 		{
 			return AssetDatabase.FindAssets("t:" + nameof(BugSplatOptions))
 				.Select(AssetDatabase.GUIDToAssetPath)
