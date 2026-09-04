@@ -73,7 +73,7 @@ namespace BugSplatUnity.Editor
 
 			if (options == null)
 			{
-				Debug.LogWarning("No BugSplatOptions ScriptableObject found! Skipping build post-process tasks...");
+				Debug.LogWarning("BugSplat: no BugSplatOptions asset is selected, skipping build post-process tasks. " + BugSplatOptions.ConfigureHint);
 				return;
 			}
 
@@ -351,18 +351,7 @@ namespace BugSplatUnity.Editor
 			});
 		}
 
-		internal static BugSplatOptions GetBugSplatOptions()
-		{
-			var guids = AssetDatabase.FindAssets("t:BugSplatOptions");
-
-			if (guids.Length == 0)
-			{
-				return null;
-			}
-
-			var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-			return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
-		}
+		internal static BugSplatOptions GetBugSplatOptions() => BugSplatProjectOptions.Get();
 
 #if UNITY_IOS
 		private static void PostProcessIos(string pathToBuiltProject, BugSplatOptions options)

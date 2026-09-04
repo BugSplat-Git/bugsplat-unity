@@ -25,14 +25,13 @@ MonoBehaviour:
   CaptureScreenshots: 1
   PostExceptionsInEditor: 1
   PersistentDataFileAttachmentPaths: []
-  SymbolUploadClientId: 
-  SymbolUploadClientSecret: 
   UseNativeCrashReportingForIos: 1
   UploadDebugSymbolsForIos: 1
   UseNativeCrashReportingForAndroid: 1
-  UploadDebugSymbolsForAndroid: 0
+  UploadDebugSymbolsForAndroid: 1
   UseNativeCrashReportingForMac: 1
-  UploadDebugSymbolsForMac: 0
+  UploadDebugSymbolsForMac: 1
   UseNativeCrashReportingForWindows: 1
+  UploadDebugSymbolsForWindows: 1
   WindowsShowCrashDialog: 1
   WindowsHangDetectionTimeoutMs: 0
