@@ -130,12 +130,20 @@ This is on by default. Uncheck **Capture Unobserved Task Exceptions** on your `B
 
 Two things are worth knowing about the timing. The runtime raises this event only when a garbage collection notices the faulted `Task`, so reports arrive well after the failure and a `Task` that is never collected is never reported. And BugSplat deliberately does **not** call `SetObserved()` on these — marking the exception observed would suppress whatever your project does with it next, and reporting a failure must not change whether that failure happens.
 
-## Windows Crashes
+## Native Crashes, Hangs and Captures
 
-BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](windows.md) section for setup details.
+In a player, BugSplat captures native crashes out of process on every platform through [bugsplat-native](native.md); nothing beyond `UseNativeCrashReporting` (on by default) is needed. Hang detection is opt-in (`HangDetectionTimeoutMs`), and `bugsplat.CaptureReport()` reports the live process without crashing:
+
+```cs
+if (somethingLooksWrong)
+{
+    bugsplat.Attributes["state"] = DescribeState();
+    bugsplat.CaptureReport();   // the game keeps running
+}
+```
 
 > [!IMPORTANT]
-> `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
+> `Utils.ForceCrash` goes through Unity's internal crash pipeline and may **not** reach the native crash reporter. Use a real native fault (the sample's null pointer write, for instance) to test crash reporting.
 
 ## Support Response
 

@@ -2,13 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using BugSplat = BugSplatUnity.BugSplat;
-
-#if UNITY_STANDALONE_WIN || ((UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR)
-using System.Runtime.InteropServices;
-#endif
 
 namespace Crasher
 {
@@ -39,9 +36,9 @@ namespace Crasher
 		public bool RequiresWer;
 
 		/// <summary>
-		/// Safe to run inside the editor. False for anything native: the native reporters are
-		/// excluded from the editor, so there would be no report anyway, and the crash would take
-		/// the editor down with any unsaved work.
+		/// Safe to run inside the editor. False for anything native: bugsplat-native does not run
+		/// in the editor, so there would be no report anyway, and the crash would take the editor
+		/// down with any unsaved work.
 		/// </summary>
 		public bool RunsInEditor;
 
@@ -60,10 +57,10 @@ namespace Crasher
 	}
 
 	/// <summary>
-	/// The scenario table, built per platform: groups compile for the active build target, so a
-	/// Windows player offers Windows' native, fail-fast, and hang scenarios while an Android
-	/// player offers Android's. In the editor the native rows for the current build target are
-	/// listed but disabled.
+	/// The scenario table, built per platform. Every player platform shares bugsplat-native, so
+	/// the NATIVE, CAPTURE and HANG sections are the same everywhere; Windows adds the fail-fast
+	/// rows that only Windows Error Reporting can deliver. In the editor the native rows for the
+	/// current build target are listed but disabled.
 	/// </summary>
 	public static class CrashScenarios
 	{
@@ -75,19 +72,14 @@ namespace Crasher
 		{
 			var result = new List<ScenarioGroup> { BuildManaged() };
 
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY_ANDROID
+			result.Add(BuildNative());
+#endif
 #if UNITY_STANDALONE_WIN
-			result.Add(BuildWindowsNative());
 			result.Add(BuildWindowsFailFast());
-			result.Add(BuildWindowsHang());
-#elif UNITY_STANDALONE_OSX
-			result.Add(BuildMacNative());
-			result.Add(BuildMacHang());
-#elif UNITY_IOS
-			result.Add(BuildIosNative());
-			result.Add(BuildIosHang());
-#elif UNITY_ANDROID
-			result.Add(BuildAndroidNative());
-			result.Add(BuildAndroidHang());
+#endif
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY_ANDROID
+			result.Add(BuildHang());
 #endif
 
 			result.Add(BuildFeedback());
@@ -99,7 +91,7 @@ namespace Crasher
 		static ScenarioGroup BuildManaged() => new ScenarioGroup
 		{
 			Title = "MANAGED",
-			Subtitle = "C# exceptions, captured by BugSplat's .NET handler. The player keeps running.",
+			Subtitle = "C# exceptions, captured by BugSplat's .NET handler and posted as structured reports. The player keeps running.",
 			Scenarios =
 			{
 				new CrashScenario
@@ -322,72 +314,178 @@ namespace Crasher
 			thread.Start();
 		}
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY_ANDROID
 
-		// ---- Windows ----
+		// ---- Native: the same bugsplat-native mechanism on every player platform ----
 
-		static ScenarioGroup BuildWindowsNative() => new ScenarioGroup
+		static ScenarioGroup BuildNative()
 		{
-			Title = "NATIVE",
+			var group = new ScenarioGroup
+			{
+				Title = "NATIVE",
+#if UNITY_IOS
+				Subtitle = "Captured by bugsplat-native's in-process handler; the report uploads on the next launch. Terminates the player.",
+#else
+				Subtitle = "Captured out of process by BugSplatMonitor and dumped while the player is frozen. Terminates the player.",
+#endif
+			};
+
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Capture report (no crash)",
+				Expected =
+					"bugsplat.CaptureReport(): the monitor dumps the live process and the report flows " +
+					"like a crash, but the player keeps running. The cube keeps spinning.",
+				Run = host =>
+				{
+					Describe(host, "CaptureReport");
+					var ok = host.BugSplat.CaptureReport();
+					Debug.Log($"BugSplat sample: CaptureReport returned {ok}");
+				}
+			});
+
+#if UNITY_STANDALONE_WIN
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Access violation — write",
+				Expected = "Native report: EXCEPTION_ACCESS_VIOLATION writing address 0.",
+				Run = host => Crash(host, "AccessViolationWrite", AccessViolationWrite)
+			});
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Access violation — read",
+				Expected = "Native report: EXCEPTION_ACCESS_VIOLATION reading address 0.",
+				Run = host => Crash(host, "AccessViolationRead", AccessViolationRead)
+			});
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Access violation — background thread",
+				Expected = "Native report whose faulting thread is not the main thread.",
+				Run = host =>
+				{
+					Describe(host, "AccessViolationBackgroundThread");
+					RunOnBackgroundThread(AccessViolationWrite);
+				}
+			});
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Custom SEH exception",
+				Expected = "Native report with code 0xE0BADBAD — proves the handler is not AV-specific.",
+				Run = host => Crash(host, "CustomSehException",
+					() => RaiseException(0xE0BADBAD, 0, 0, IntPtr.Zero))
+			});
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Stack overflow",
+#if ENABLE_MONO
+				// Mono guards the stack and raises a managed StackOverflowException rather than
+				// letting the fault reach the native handler, so what arrives - if anything -
+				// is a managed report and the player may survive. Say so rather than promising
+				// a native crash the backend will not produce.
+				Expected =
+					"Mono: the runtime guards the stack, so expect a managed report (or nothing) " +
+					"rather than a native crash. Check Player.log. Build with IL2CPP for 0xC00000FD.",
+#else
+				Expected = "Native report: EXCEPTION_STACK_OVERFLOW (0xC00000FD).",
+#endif
+				Run = host => Crash(host, "StackOverflow", () => Sink = Overflow(0))
+			});
+#else
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Null pointer write (SIGSEGV)",
+#if ENABLE_MONO
+				Expected =
+					"A write to address 0 inside the marshaling layer. Mono turns faults in managed " +
+					"code into NullReferenceException; this one happens in native code, so it reaches " +
+					"bugsplat-native. Build with IL2CPP for the most faithful native crash.",
+#else
+				Expected = "Native report: SIGSEGV / EXC_BAD_ACCESS writing address 0.",
+#endif
+				Run = host => Crash(host, "NullPointerWrite", NullPointerWrite)
+			});
+			group.Scenarios.Add(new CrashScenario
+			{
+				Name = "Null pointer write — background thread",
+				Expected = "Native report whose faulting thread is not the main thread.",
+				Run = host =>
+				{
+					Describe(host, "NullPointerWriteBackgroundThread");
+					RunOnBackgroundThread(NullPointerWrite);
+				}
+			});
+#endif
+			return group;
+		}
+
+		static ScenarioGroup BuildHang() => new ScenarioGroup
+		{
+			Title = "HANG",
 			Subtitle =
-				"Captured in-process by BugSplat's crash handler and dumped by BugSplatMonitor. " +
-				"Terminates the player.",
+				"Detected by bugsplat-native's watchdog when BugSplatManager's per-frame heartbeat stops " +
+				"for longer than Hang Detection Timeout Ms (the sample's options asset uses 5 s).",
 			Scenarios =
 			{
 				new CrashScenario
 				{
-					Name = "Access violation — write",
-					Expected = "Native report: EXCEPTION_ACCESS_VIOLATION writing address 0.",
-					Run = host => Crash(host, "AccessViolationWrite", AccessViolationWrite)
-				},
-				new CrashScenario
-				{
-					Name = "Access violation — read",
-					Expected = "Native report: EXCEPTION_ACCESS_VIOLATION reading address 0.",
-					Run = host => Crash(host, "AccessViolationRead", AccessViolationRead)
-				},
-				new CrashScenario
-				{
-					Name = "Access violation — background thread",
-					Expected = "Native report whose faulting thread is not the main thread.",
-					Run = host =>
-					{
-						Describe(host, "AccessViolationBackgroundThread");
-						RunOnBackgroundThread(AccessViolationWrite);
-					}
-				},
-				new CrashScenario
-				{
-					Name = "Custom SEH exception",
-					Expected = "Native report with code 0xE0BADBAD — proves the filter is not AV-specific.",
-					Run = host => Crash(host, "CustomSehException",
-						() => RaiseException(0xE0BADBAD, 0, 0, IntPtr.Zero))
-				},
-				new CrashScenario
-				{
-					Name = "Stack overflow",
-#if ENABLE_MONO
-					// Mono guards the stack and raises a managed StackOverflowException rather than
-					// letting the fault reach the native handler, so what arrives - if anything -
-					// is a managed report and the player may survive. Say so rather than promising
-					// a native crash the backend will not produce.
+					Name = "Main-thread hang",
 					Expected =
-						"Mono: the runtime guards the stack, so expect a managed report (or nothing) " +
-						"rather than a native crash. Check Player.log. Build with IL2CPP for 0xC00000FD.",
-#else
-					Expected = "Native report: EXCEPTION_STACK_OVERFLOW (0xC00000FD).",
-#endif
-					Run = host => Crash(host, "StackOverflow", () => Sink = Overflow(0))
+						"Blocks the main thread for 15 s. After the timeout the monitor dumps the live " +
+						"process and uploads a hang report (reportKind=hang). With Hang Policy = Report " +
+						"the player resumes when the sleep ends; with Report And Terminate the dialog " +
+						"offers Wait / Close.",
+					Run = host => host.Run(HangMainThread(host))
 				}
 			}
 		};
+
+		// Every fail-fast scenario faults at the same address inside ntdll, so without a
+		// distinguishing field they all collapse into one bucket in the dashboard.
+		static void Describe(ICrashScenarioHost host, string scenarioKey)
+		{
+			host.BugSplat.Key = scenarioKey;
+			host.BugSplat.Description = $"BugSplat sample scenario: {scenarioKey}";
+		}
+
+		static void Crash(ICrashScenarioHost host, string scenarioKey, Action crash)
+		{
+			Describe(host, scenarioKey);
+			crash();
+		}
+
+		static IEnumerator HangMainThread(ICrashScenarioHost host)
+		{
+			if (host.BugSplat.NativeSettings.HangDetectionTimeoutMs <= 0)
+			{
+				Debug.LogWarning(
+					"BugSplat sample: Hang Detection Timeout Ms is 0 on the options asset, so nothing " +
+					"will notice this hang. Set it (the sample uses 5000) and rebuild.");
+			}
+
+			Describe(host, "MainThreadHang");
+
+			// Let this frame finish rendering before wedging the main thread.
+			yield return null;
+			yield return null;
+
+			System.Threading.Thread.Sleep(15000);
+			Debug.Log("BugSplat sample: the main thread is responsive again.");
+		}
+
+		// A valid buffer for the non-null side of a copy, so the only bad address is the one the
+		// scenario is testing.
+		static readonly IntPtr ScratchBuffer = Marshal.AllocHGlobal(64);
+
+#if UNITY_STANDALONE_WIN
+
+		// ---- Windows-specific: fail-fast, and the fault primitives ----
 
 		static ScenarioGroup BuildWindowsFailFast() => new ScenarioGroup
 		{
 			Title = "FAIL-FAST",
 			Subtitle =
-				"Bypass every in-process handler; reported only when the WER handler is " +
-				"registered. Terminates the player.",
+				"Bypass every in-process handler; reported only when BugSplatWer.dll is " +
+				"registered with Windows Error Reporting. Terminates the player.",
 			Scenarios =
 			{
 				new CrashScenario
@@ -411,45 +509,13 @@ namespace Crasher
 				new CrashScenario
 				{
 					Name = "Heap corruption (0xC0000374)",
-					RequiresWer = true,
 					Expected =
-						"WER only. A double free on the process heap. On Win8+ the heap reports " +
-						"corruption via a fail-fast, so this bypasses the filter too.",
+						"A double free on the process heap. bugsplat-native catches STATUS_HEAP_CORRUPTION " +
+						"in-process (a first-position vectored handler), so this reports with or without WER.",
 					Run = host => Crash(host, "HeapCorruption", CorruptProcessHeap)
 				}
 			}
 		};
-
-		static ScenarioGroup BuildWindowsHang() => new ScenarioGroup
-		{
-			Title = "HANG",
-			Subtitle = "Detected out of process by BugSplatMonitor's watchdog.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Main-thread hang",
-					Expected =
-						"Arms hang detection at 5s, then blocks the main thread for 30s. BugSplatMonitor " +
-						"notices the window stopped pumping, uploads a hang report, and terminates.",
-					Run = host => host.Run(HangAfterArmingDetection(host))
-				}
-			}
-		};
-
-		// Every fail-fast scenario faults at the same address inside ntdll, so without a
-		// distinguishing field they all collapse into one bucket in the dashboard.
-		static void Describe(ICrashScenarioHost host, string scenarioKey)
-		{
-			host.BugSplat.Key = scenarioKey;
-			host.BugSplat.Description = $"BugSplat sample scenario: {scenarioKey}";
-		}
-
-		static void Crash(ICrashScenarioHost host, string scenarioKey, Action crash)
-		{
-			Describe(host, scenarioKey);
-			crash();
-		}
 
 		// The fault has to happen in code the runtime does not own, or it never becomes a crash.
 		//
@@ -462,8 +528,8 @@ namespace Crasher
 		//
 		// Routing the same null dereference through RtlMoveMemory puts the faulting instruction
 		// inside ntdll instead. Mono has no JIT info for that address, so its handler declines,
-		// the exception continues to the SEH chain, and BugSplat's unhandled exception filter
-		// gets it - on both Mono and IL2CPP. This is the same reason the custom SEH scenario
+		// the exception continues to the SEH chain, and bugsplat-native's unhandled exception
+		// filter gets it - on both Mono and IL2CPP. This is the same reason the custom SEH scenario
 		// works: RaiseException also faults outside managed code.
 		//
 		// NoInlining keeps the frames distinct through IL2CPP and MSVC optimization so the report
@@ -483,10 +549,6 @@ namespace Crasher
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		static void AccessViolationRead() => RtlMoveMemory(ScratchBuffer, IntPtr.Zero, (UIntPtr)4);
-
-		// A valid buffer for the non-null side of the copy, so the only bad address is the one
-		// the scenario is testing.
-		static readonly IntPtr ScratchBuffer = Marshal.AllocHGlobal(64);
 
 		// '+ depth' makes the call non-tail-recursive, so it cannot be rewritten into a loop —
 		// which would hang instead of overflowing.
@@ -552,21 +614,8 @@ namespace Crasher
 				"player is still running. Use one of the fail-fast scenarios to exercise WER instead.");
 		}
 
-		static IEnumerator HangAfterArmingDetection(ICrashScenarioHost host)
-		{
-			host.BugSplat.SetWindowsHangDetectionTimeout(5000);
-			Describe(host, "MainThreadHang");
-
-			// Let the timeout reach the monitor through shared memory, and let this frame finish
-			// rendering, before wedging the main thread.
-			yield return null;
-			yield return null;
-
-			System.Threading.Thread.Sleep(30000);
-		}
-
 		// kernel32 exports are WINAPI, which is stdcall on x86 — leave CallingConvention at the
-		// default Winapi rather than copying Cdecl from the BugSplat.dll imports.
+		// default Winapi.
 
 		const uint FailFastGenerateExceptionAddress = 0x1;
 		const int HeapEnableTerminationOnCorruption = 1;
@@ -596,183 +645,27 @@ namespace Crasher
 		[return: MarshalAs(UnmanagedType.Bool)]
 		static extern bool HeapSetInformation(IntPtr heap, int infoClass, IntPtr info, UIntPtr infoLength);
 
-#elif UNITY_STANDALONE_OSX
+#else
 
-		// ---- macOS ----
+		// ---- POSIX fault primitive (macOS, Linux, iOS, Android) ----
 
-		static ScenarioGroup BuildMacNative() => new ScenarioGroup
-		{
-			Title = "NATIVE",
-			Subtitle =
-				"Captured by BugSplat's macOS crash reporter. Terminates the app; the report " +
-				"uploads on the next launch.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Native crash",
-					Expected = "A crash raised in the BugSplat-macOS bridge, reported with a native call stack.",
-					Run = _ => CrashNativeMac()
-				}
-			}
-		};
+		// The write happens inside the marshaling layer's native memcpy, not in JIT'd or IL2CPP
+		// code, so neither runtime can turn it into a NullReferenceException: it is a real
+		// SIGSEGV / EXC_BAD_ACCESS for bugsplat-native to capture. Same NoInlining reasoning as
+		// the Windows frames: the report should show a game-code stack above the fault.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void NullPointerWrite() => NativeCrashFrame0();
 
-		static ScenarioGroup BuildMacHang() => new ScenarioGroup
-		{
-			Title = "HANG",
-			Subtitle =
-				"Detected by BugSplat's main-thread watchdog; reported on the next launch. macOS " +
-				"has no OS watchdog, so you have to force-quit the frozen app yourself.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Main-thread hang",
-					Expected =
-						"Wedges the main thread immediately. Force-quit the beachballing app " +
-						"(Option-Command-Escape) and relaunch: BugSplat uploads an App Hang (Fatal) " +
-						"report. Wait it out instead and nothing is sent.",
-					Run = _ => HangNativeMac()
-				}
-			}
-		};
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void NativeCrashFrame0() => NativeCrashFrame1();
 
-		static void CrashNativeMac()
-		{
-#if !UNITY_EDITOR
-			_crashNative();
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void NativeCrashFrame1() => NativeCrashFrame2();
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		static void NativeCrashFrame2() => Marshal.Copy(new byte[] { 1, 2, 3, 4 }, 0, IntPtr.Zero, 4);
+
 #endif
-		}
-
-		static void HangNativeMac()
-		{
-#if !UNITY_EDITOR
-			_hangNative();
-#endif
-		}
-
-#if !UNITY_EDITOR
-		[DllImport("__Internal")]
-		static extern void _crashNative();
-
-		[DllImport("__Internal")]
-		static extern void _hangNative();
-#endif
-
-#elif UNITY_IOS
-
-		// ---- iOS ----
-
-		static ScenarioGroup BuildIosNative() => new ScenarioGroup
-		{
-			Title = "NATIVE",
-			Subtitle =
-				"Captured by BugSplat's iOS crash reporter. Terminates the app; the report " +
-				"uploads on the next launch.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Native crash",
-					Expected = "A crash raised in the BugSplat iOS wrapper, reported with a native call stack.",
-					Run = _ => CrashNativeIos()
-				}
-			}
-		};
-
-		static ScenarioGroup BuildIosHang() => new ScenarioGroup
-		{
-			Title = "HANG",
-			Subtitle = "Detected by the OS watchdog; reported on the next launch.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Main-thread hang",
-					Expected =
-						"Wedges the main thread until the OS watchdog terminates the app. BugSplat " +
-						"uploads an App Hang (Fatal) report on the next launch.",
-					Run = _ => HangNativeIos()
-				}
-			}
-		};
-
-		static void CrashNativeIos()
-		{
-#if !UNITY_EDITOR
-			_crashNative();
-#endif
-		}
-
-		static void HangNativeIos()
-		{
-#if !UNITY_EDITOR
-			_hangNative();
-#endif
-		}
-
-#if !UNITY_EDITOR
-		[DllImport("__Internal")]
-		static extern void _crashNative();
-
-		[DllImport("__Internal")]
-		static extern void _hangNative();
-#endif
-
-#elif UNITY_ANDROID
-
-		// ---- Android ----
-
-		static ScenarioGroup BuildAndroidNative() => new ScenarioGroup
-		{
-			Title = "NATIVE",
-			Subtitle = "Captured by BugSplat's Android crash reporter. Terminates the app.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "Native crash",
-					Expected = "A crash raised in the BugSplat Android bridge, reported with a native call stack.",
-					Run = _ => CrashNativeAndroid()
-				}
-			}
-		};
-
-		static ScenarioGroup BuildAndroidHang() => new ScenarioGroup
-		{
-			Title = "HANG",
-			Subtitle = "An Application Not Responding (ANR) raised by the OS.",
-			Scenarios =
-			{
-				new CrashScenario
-				{
-					Name = "UI-thread hang",
-					Expected =
-						"Blocks the Android UI thread until the OS raises an ANR, which BugSplat reports.",
-					Run = _ => HangNativeAndroid()
-				}
-			}
-		};
-
-		static void CrashNativeAndroid()
-		{
-			using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-			javaClass.CallStatic("crash");
-		}
-
-		static void HangNativeAndroid()
-		{
-			// BugSplatBridge.hang() blocks whatever thread calls it. Unity runs C# on its own
-			// player thread, not the Android UI thread, so the call must be dispatched to the UI
-			// thread for the OS to register an ANR.
-			using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-			using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-			activity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
-			{
-				using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplatBridge");
-				javaClass.CallStatic("hang");
-			}));
-		}
 #endif
 	}
 }

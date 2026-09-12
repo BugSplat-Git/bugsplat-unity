@@ -27,7 +27,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
         {
             try
             {
-                var bugsplatRef = new BugSplatRef(new BugSplat("database", "application", "version", false, false));
+                var bugsplatRef = new BugSplatRef(new BugSplat("database", "application", "version"));
             }
             catch
             {
@@ -38,7 +38,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
         [Test]
         public void Constructor_WhenBugSplatArgIsNotNull_BugSplatPropertyShouldBeNonNull()
         {
-            var bugsplatRef = new BugSplatRef(new BugSplat("database", "application", "version", false, false));
+            var bugsplatRef = new BugSplatRef(new BugSplat("database", "application", "version"));
             Assert.NotNull(bugsplatRef.BugSplat);
         }
     }

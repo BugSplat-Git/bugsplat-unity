@@ -3,18 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Threading;
-using System.Threading.Tasks;
-using BugSplatDotNetStandard;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
 using Debug = UnityEngine.Debug;
-using BugSplatDotNetStandard.Api;
-using BugSplatDotNetStandard.Http;
 using System.Net;
-
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -26,17 +20,28 @@ using UnityEditor.WindowsStandalone;
 
 namespace BugSplatUnity.Editor
 {
+	/// <summary>
+	/// Two jobs after every player build: put the BugSplat native runtime where bugsplat_init()
+	/// looks for it, and upload symbols.
+	///
+	/// The runtime is the same set of files on every desktop platform - BugSplatMonitor (captures
+	/// the crash out of process), BugSplatReporter with its theme folder (the dialog and the
+	/// upload), and on Windows BugSplatWer.dll (fail-fast crashes via Windows Error Reporting).
+	/// They live under Runtime/Plugins/&lt;platform&gt;/Support~, which Unity ignores (the tilde) so it
+	/// never tries to import an executable as a plugin, and are copied next to the built player
+	/// here. Missing them is the number-one field failure: the SDK refuses to start without them
+	/// and says so in the log.
+	/// </summary>
 	public class BuildPostprocessors
 	{
-		static string _platform;
-
-		// On-disk filename to copy. The dialog resolves it by resource name - "bugsplat-logo",
-		// without the extension - so the base name is what has to survive into the player.
-		const string LogoFileName = "bugsplat-logo.png";
-
 		const string SymUploaderWindows = "symbol-upload-windows.exe";
 		const string SymUploaderMacOS = "symbol-upload-macos";
 		const string SymUploaderLinux = "symbol-upload-linux";
+
+		// The desktop runtime, per platform. Directories are copied recursively.
+		static readonly string[] WindowsRuntimeFiles = { "BugSplatMonitor.exe", "BugSplatReporter.exe", "theme" };
+		static readonly string[] MacRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter.app", "theme" };
+		static readonly string[] LinuxRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter", "theme" };
 
 		internal static string GetSymUploaderName() =>
 			Application.platform switch
@@ -47,25 +52,39 @@ namespace BugSplatUnity.Editor
 				_ => throw new InvalidOperationException($"BugSplat. Failed to obtain symbol uploader for {Application.platform}")
 			};
 
+		internal static string GetPackageRoot()
+		{
+			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+			return packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+		}
+
 		internal static string GetSymUploaderPath()
 		{
 			var uploaderName = GetSymUploaderName();
-			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
-			var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
+			var packagePath = Path.Combine(GetPackageRoot(), "Editor", uploaderName);
 
 			// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
-			// re-extract, so anything we have to download has to land outside the package.
-			return File.Exists(packagePath)
+			// rewrite at any time, so a download there does not survive. Temp/ is the project's own.
+			return Directory.Exists(Path.GetDirectoryName(packagePath)) && IsWritable(Path.GetDirectoryName(packagePath))
 				? packagePath
 				: Path.GetFullPath(Path.Combine("Temp", uploaderName));
 		}
 
-		/// <summary>
-		/// Upload Asset/Plugin symbol files to BugSplat. 
-		/// We don't upload Unity symbol files because the build output only contains public symbol information.
-		/// BugSplat is configured to use the Unity symbol server which has private symbols containing file, function, and line information.
-		/// </summary>
+		static bool IsWritable(string directory)
+		{
+			try
+			{
+				var probe = Path.Combine(directory, ".bugsplat-write-probe");
+				File.WriteAllText(probe, string.Empty);
+				File.Delete(probe);
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+
 		[PostProcessBuild(1)]
 		public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
 		{
@@ -90,66 +109,14 @@ namespace BugSplatUnity.Editor
 				UploadSymbolFilesWin(pathToBuiltProject, options);
 			}
 
+			if (target == BuildTarget.StandaloneLinux64)
+			{
+				PostProcessLinux(pathToBuiltProject, options);
+			}
+
 			if (target == BuildTarget.StandaloneOSX)
 			{
-				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
-			}
-		}
-
-		/// <summary>
-		/// Puts the BugSplat logo where the macOS crash dialog can find it.
-		///
-		/// The dialog loads its banner with [[NSBundle bundleForClass:self] imageForResource:@"bugsplat-logo"].
-		/// An app that links BugSplat.framework resolves that inside the framework's own Resources, but Unity
-		/// ships the SDK as a bare dylib, which carries no resources of its own — so the lookup lands on the
-		/// player's bundle instead, misses, and the dialog silently falls back to a programmatically drawn
-		/// logo. Copying the framework's own PNG into the player's Resources is what makes the real one resolve.
-		/// </summary>
-		private static void CopyMacCrashDialogLogo(string pathToBuiltProject, BugSplatOptions options)
-		{
-			if (!options.UseNativeCrashReportingForMac)
-				return;
-
-			// Trailing separators are trimmed before the suffix test. Unity has never supplied one,
-			// but if it did the check would misfire on a real .app build - skipping the copy and
-			// logging an Xcode export as the reason, which is a poor way to discover the bug.
-			var builtAppPath = pathToBuiltProject.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-			// An Xcode project export has no .app yet — Xcode assembles Contents/Resources at its own build time.
-			if (!builtAppPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
-			{
-				Debug.Log($"BugSplat: Xcode project export detected, skipping the macOS crash dialog logo. Add {LogoFileName} to the Xcode target's resources to show it.");
-				return;
-			}
-
-			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
-			var source = Path.Combine(
-				packageRoot, "Editor", "IOS", "Frameworks", "BugSplat.xcframework",
-				"macos-arm64_x86_64", "BugSplat.framework", "Versions", "A", "Resources", LogoFileName);
-
-			if (!File.Exists(source))
-			{
-				Debug.LogWarning($"BugSplat. Missing {source}. The macOS crash dialog will draw its fallback logo.");
-				return;
-			}
-
-			var resourcesDir = Path.Combine(builtAppPath, "Contents", "Resources");
-			if (!Directory.Exists(resourcesDir))
-			{
-				Debug.LogWarning($"BugSplat. {resourcesDir} does not exist. The macOS crash dialog will draw its fallback logo.");
-				return;
-			}
-
-			try
-			{
-				File.Copy(source, Path.Combine(resourcesDir, LogoFileName), true);
-				Debug.Log($"BugSplat. Copied {LogoFileName} into the player's Resources so the macOS crash dialog shows the BugSplat logo.");
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarning($"BugSplat. Could not copy {LogoFileName} into the player: {ex.Message}. The macOS crash dialog will draw its fallback logo.");
 			}
 		}
 
@@ -169,31 +136,95 @@ namespace BugSplatUnity.Editor
 			}
 		}
 
-		private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
+		// ---- the native runtime ----------------------------------------------------------------
+
+		/// <summary>
+		/// Copies the platform's runtime files from Runtime/Plugins/&lt;platform&gt;/Support~/&lt;arch&gt; into
+		/// destinationDir. Returns false when any file is missing, which the caller reports once.
+		/// </summary>
+		internal static bool CopyRuntime(string platformFolder, string arch, string[] files, string destinationDir, string description)
 		{
-			if (!options.UploadDebugSymbolsForWindows)
-				return;
-
-#if UNITY_EDITOR_WIN
-			if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
+			var supportDir = Path.Combine(GetPackageRoot(), "Runtime", "Plugins", platformFolder, "Support~");
+			if (!string.IsNullOrEmpty(arch))
 			{
-				Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
-				return;
+				supportDir = Path.Combine(supportDir, arch);
 			}
-#else
-			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
-#endif
 
-			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			if (!Directory.Exists(supportDir))
 			{
-				if (uploadExitCode != 0)
-				{
-					Debug.LogError("BugSplat. Could not upload symbols.");
-					return;
-				}
+				Debug.LogError(
+					$"BugSplat. The native runtime for {description} is not in this package ({supportDir}). " +
+					"Run Tools~/fetch-native-runtime to download the bugsplat-native release for this platform, " +
+					"or the built player will refuse to start native crash reporting.");
+				return false;
+			}
 
-				Debug.Log("BugSplat. Symbols uploading completed.");
-			});
+			Directory.CreateDirectory(destinationDir);
+
+			var complete = true;
+			foreach (var name in files)
+			{
+				var source = Path.Combine(supportDir, name);
+				var destination = Path.Combine(destinationDir, name);
+
+				if (Directory.Exists(source))
+				{
+					CopyDirectory(source, destination);
+				}
+				else if (File.Exists(source))
+				{
+					File.Copy(source, destination, true);
+					MarkExecutable(destination);
+				}
+				else
+				{
+					Debug.LogError($"BugSplat. Missing native runtime file {source}. Native crash reports will not be captured or uploaded.");
+					complete = false;
+				}
+			}
+
+			return complete;
+		}
+
+		private static void CopyDirectory(string source, string destination)
+		{
+			Directory.CreateDirectory(destination);
+			foreach (var file in Directory.GetFiles(source))
+			{
+				var target = Path.Combine(destination, Path.GetFileName(file));
+				File.Copy(file, target, true);
+				MarkExecutable(target);
+			}
+			foreach (var dir in Directory.GetDirectories(source))
+			{
+				CopyDirectory(dir, Path.Combine(destination, Path.GetFileName(dir)));
+			}
+		}
+
+		/// <summary>
+		/// Git and zip round-trips lose the execute bit; without it macOS and Linux cannot spawn the
+		/// monitor. Only meaningful on a POSIX editor, where chmod exists.
+		/// </summary>
+		private static void MarkExecutable(string path)
+		{
+			if (Application.platform == RuntimePlatform.WindowsEditor)
+				return;
+
+			var extension = Path.GetExtension(path);
+			if (extension == ".json" || extension == ".plist" || extension == ".png")
+				return;
+
+			try
+			{
+				using (var chmod = Process.Start(new ProcessStartInfo("chmod", $"+x \"{path}\"") { UseShellExecute = false, CreateNoWindow = true }))
+				{
+					chmod?.WaitForExit();
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"BugSplat. Could not mark {path} executable: {ex.Message}");
+			}
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -207,7 +238,7 @@ namespace BugSplatUnity.Editor
 
 			CopyWindowsLineNumberMappings(buildDir);
 
-			if (!options.UseNativeCrashReportingForWindows)
+			if (!options.UseNativeCrashReporting)
 				return;
 
 			string arch;
@@ -217,94 +248,118 @@ namespace BugSplatUnity.Editor
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError($"BugSplat. Could not determine built executable architecture: {ex.Message}. Skipping native runtime support file copy.");
+				Debug.LogError($"BugSplat. Could not determine built executable architecture: {ex.Message}. Skipping native runtime copy.");
 				return;
 			}
 
-			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
-			var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
-
-			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatRc.dll", "BugSplatWer.dll" })
+			// Monitor, reporter and theme go next to the executable, the first place the SDK looks.
+			// BugSplatWer.dll goes next to BugSplat.dll: the SDK registers <library dir>/BugSplatWer.dll
+			// with Windows Error Reporting, and Unity places the library under <Game>_Data/Plugins.
+			var copied = CopyRuntime("Windows", arch, WindowsRuntimeFiles, buildDir, $"Windows {arch}");
+			var pluginDir = FindWindowsPluginDirectory(pathToBuiltProject);
+			if (pluginDir == null)
 			{
-				var source = Path.Combine(supportDir, fileName);
-				if (!File.Exists(source))
-				{
-					Debug.LogError($"BugSplat. Missing native runtime support file {source}. Native crash reports may not upload.");
-					continue;
-				}
-
-				File.Copy(source, Path.Combine(buildDir, fileName), true);
+				Debug.LogError("BugSplat. Could not find BugSplat.dll under the player's Plugins folder, so BugSplatWer.dll was not placed. Fail-fast crashes will not be reported.");
+				copied = false;
+			}
+			else
+			{
+				copied &= CopyRuntime("Windows", arch, new[] { "BugSplatWer.dll" }, pluginDir, $"Windows {arch}");
 			}
 
-			Debug.Log($"BugSplat. Copied Windows native runtime support files ({arch}) next to the built executable.");
+			if (copied)
+			{
+				Debug.Log($"BugSplat. Copied the Windows native runtime ({arch}): BugSplatMonitor.exe, BugSplatReporter.exe and theme/ next to the executable, BugSplatWer.dll next to BugSplat.dll in {pluginDir}. Ship all of them with your game.");
+			}
 		}
 
-		private static void CopyWindowsLineNumberMappings(string buildDir)
+		/// <summary>
+		/// The folder Unity placed BugSplat.dll in: &lt;Game&gt;_Data/Plugins/x86_64 (or x86 / ARM64), searched rather
+		/// than assumed because the architecture folder name is Unity's to choose.
+		/// </summary>
+		internal static string FindWindowsPluginDirectory(string pathToBuiltProject)
 		{
-			// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
-			var mappingSearchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			};
+			var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+			var dataDir = Path.Combine(buildDir ?? string.Empty, Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data");
+			var pluginsDir = Path.Combine(dataDir, "Plugins");
+			if (!Directory.Exists(pluginsDir))
+				return null;
 
-			foreach (var searchPath in mappingSearchPaths)
+			foreach (var candidate in Directory.GetFiles(pluginsDir, "BugSplat.dll", SearchOption.AllDirectories))
 			{
-				var fullPath = Path.GetFullPath(searchPath);
-				if (File.Exists(fullPath))
+				return Path.GetDirectoryName(candidate);
+			}
+
+			return null;
+		}
+
+		private static void PostProcessLinux(string pathToBuiltProject, BugSplatOptions options)
+		{
+			var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+			if (buildDir == null)
+			{
+				Debug.LogError("BugSplat. Could not find build directory. Skipping Linux post-build tasks.");
+				return;
+			}
+
+			if (options.UseNativeCrashReporting &&
+				CopyRuntime("Linux", "x86_64", LinuxRuntimeFiles, buildDir, "Linux x86_64"))
+			{
+				Debug.Log("BugSplat. Copied the Linux native runtime next to the built executable. Ship BugSplatMonitor, BugSplatReporter and theme/ with your game.");
+			}
+
+			if (!options.UploadDebugSymbolsForLinux)
+				return;
+
+			// Unity ships a stripped player; the debug information is in the .debug files next to
+			// it when debug symbols are on. dump_syms turns either into .sym.
+			UploadSymbols(buildDir, "**/{*.so,*.debug,*.x86_64}", options, uploadExitCode =>
+			{
+				if (uploadExitCode != 0)
 				{
-					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
-					ZipForUpload(fullPath, destZip);
-					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
+					Debug.LogError("BugSplat. Could not upload Linux symbols.");
 					return;
 				}
-			}
 
-			Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
-		}
-
-		private static string GetPEMachineArchitecture(string exePath)
-		{
-			// Read the COFF machine field from the PE header: 0x014C = x86, 0x8664 = x64, 0xAA64 = ARM64
-			using (var stream = File.OpenRead(exePath))
-			using (var reader = new BinaryReader(stream))
-			{
-				stream.Seek(0x3C, SeekOrigin.Begin);
-				var peHeaderOffset = reader.ReadInt32();
-				stream.Seek(peHeaderOffset + 4, SeekOrigin.Begin);
-				var machine = reader.ReadUInt16();
-
-				switch (machine)
-				{
-					case 0x014C:
-						return "x86";
-					case 0x8664:
-						return "x64";
-					case 0xAA64:
-						return "ARM64";
-					default:
-						throw new InvalidOperationException($"Unsupported PE machine type 0x{machine:X4}");
-				}
-			}
+				Debug.Log("BugSplat. Linux symbols uploading completed.");
+			}, dumpSyms: true);
 		}
 
 		private static void PostProcessMac(string pathToBuiltProject, BugSplatOptions options)
 		{
+			var builtAppPath = pathToBuiltProject.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+			// An Xcode project export has no .app yet; Xcode assembles the bundle at its own build time.
+			var isBundle = builtAppPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase);
+
+			if (options.UseNativeCrashReporting)
+			{
+				if (isBundle)
+				{
+					// Contents/Helpers is where the SDK looks inside a bundle, and where the helper
+					// executables have to live to be code-signed with the app.
+					var helpers = Path.Combine(builtAppPath, "Contents", "Helpers");
+					if (CopyRuntime("macOS", null, MacRuntimeFiles, helpers, "macOS"))
+					{
+						Debug.Log("BugSplat. Copied the macOS native runtime into Contents/Helpers. Sign BugSplatMonitor and BugSplatReporter.app along with the app (Developer ID, hardened runtime) before notarizing.");
+					}
+				}
+				else
+				{
+					Debug.Log("BugSplat. Xcode project export detected: add Runtime/Plugins/macOS/Support~ (BugSplatMonitor, BugSplatReporter.app, theme) to the app's Contents/Helpers in the Xcode target.");
+				}
+			}
+
 			if (!options.UploadDebugSymbolsForMac)
 				return;
 
-			// Skip symbol upload for Xcode project exports — dSYMs don't exist yet
-			if (Directory.GetFiles(pathToBuiltProject, "*.xcodeproj", SearchOption.TopDirectoryOnly).Length > 0
-				|| Directory.GetDirectories(pathToBuiltProject, "*.xcodeproj", SearchOption.TopDirectoryOnly).Length > 0)
+			if (!isBundle)
 			{
 				Debug.Log("BugSplat: Xcode project export detected, skipping symbol upload. Symbols will be available after building in Xcode.");
 				return;
 			}
 
-			var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+			var buildDir = Path.GetDirectoryName(builtAppPath);
 			if (buildDir == null)
 			{
 				Debug.LogError("BugSplat. Could not find build directory. Will not upload macOS debug symbols.");
@@ -339,6 +394,7 @@ namespace BugSplatUnity.Editor
 				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
 			}
 
+			// Breakpad .sym files everywhere Crashpad runs: the dSYM is only dump_syms' input.
 			UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json.zip}", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
@@ -348,7 +404,85 @@ namespace BugSplatUnity.Editor
 				}
 
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
+			}, dumpSyms: true);
+		}
+
+		private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
+		{
+			if (!options.UploadDebugSymbolsForWindows)
+				return;
+
+#if UNITY_EDITOR_WIN
+			if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
+			{
+				Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
+				return;
+			}
+#else
+			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
+#endif
+
+			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			{
+				if (uploadExitCode != 0)
+				{
+					Debug.LogError("BugSplat. Could not upload symbols.");
+					return;
+				}
+
+				Debug.Log("BugSplat. Symbols uploading completed.");
 			});
+		}
+
+		private static void CopyWindowsLineNumberMappings(string buildDir)
+		{
+			// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
+			var mappingSearchPaths = new[]
+			{
+				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			};
+
+			foreach (var searchPath in mappingSearchPaths)
+			{
+				var fullPath = Path.GetFullPath(searchPath);
+				if (File.Exists(fullPath))
+				{
+					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
+					ZipForUpload(fullPath, destZip);
+					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
+					return;
+				}
+			}
+
+			Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+		}
+
+		internal static string GetPEMachineArchitecture(string exePath)
+		{
+			// Read the COFF machine field from the PE header: 0x014C = x86, 0x8664 = x64, 0xAA64 = ARM64
+			using (var stream = File.OpenRead(exePath))
+			using (var reader = new BinaryReader(stream))
+			{
+				stream.Seek(0x3C, SeekOrigin.Begin);
+				var peHeaderOffset = reader.ReadInt32();
+				stream.Seek(peHeaderOffset + 4, SeekOrigin.Begin);
+				var machine = reader.ReadUInt16();
+
+				switch (machine)
+				{
+					case 0x014C:
+						return "x86";
+					case 0x8664:
+						return "x64";
+					case 0xAA64:
+						return "ARM64";
+					default:
+						throw new InvalidOperationException($"Unsupported PE machine type 0x{machine:X4}");
+				}
+			}
 		}
 
 		internal static BugSplatOptions GetBugSplatOptions()
@@ -374,9 +508,8 @@ namespace BugSplatUnity.Editor
 
 			var targetGuid = project.GetUnityFrameworkTargetGuid();
 
-			EnableObjectiveCExceptionsForBridge(project, targetGuid);
-
-			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
+			// bugsplat-native for iOS is a static library over Crashpad's in-process handler; it
+			// needs the system zlib and the C++ runtime UnityFramework already links.
 			project.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-lz");
 			project.AddBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
 
@@ -392,7 +525,7 @@ namespace BugSplatUnity.Editor
 
 			CopyLineNumberMappings(pathToBuiltProject);
 
-			if (options.UseNativeCrashReportingForIos)
+			if (options.UseNativeCrashReporting)
 				DisableUnityCrashReporter(pathToBuiltProject);
 		}
 
@@ -419,6 +552,10 @@ namespace BugSplatUnity.Editor
 			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available. Ensure Scripting Backend is set to IL2CPP.");
 		}
 
+		/// <summary>
+		/// Two in-process crash handlers cannot share a process: Unity's own would claim the
+		/// signals before bugsplat-native's Crashpad handler saw them.
+		/// </summary>
 		private static void DisableUnityCrashReporter(string pathToBuiltProject)
 		{
 			var crashReporterPath = Path.Combine(pathToBuiltProject, "Classes", "CrashReporter.h");
@@ -436,44 +573,8 @@ namespace BugSplatUnity.Editor
 			if (content != modified)
 			{
 				File.WriteAllText(crashReporterPath, modified);
-				Debug.Log("BugSplat: Disabled Unity's built-in crash reporter to prevent PLCrashReporter conflict.");
+				Debug.Log("BugSplat: Disabled Unity's built-in crash reporter so bugsplat-native's handler sees crashes first.");
 			}
-		}
-
-		/// <summary>
-		/// BugSplatBridge.mm guards its NSFileHandle reads with @try, and Unity compiles UnityFramework
-		/// with GCC_ENABLE_OBJC_EXCEPTIONS = NO. The plugin importer carries -fobjc-exceptions for the
-		/// file, but a project that imported the plugin before that setting existed can still be building
-		/// with the old flags, so it is set on the file here as well.
-		///
-		/// Per file rather than per target: Unity disables Objective-C exceptions for the whole framework
-		/// deliberately, and one bridge needing them is no reason to change how Unity's own code compiles.
-		/// The exception is a project where the file cannot be located, where the target property is set
-		/// instead - a wider change than wanted, but better than an iOS build that does not compile.
-		/// </summary>
-		private static void EnableObjectiveCExceptionsForBridge(PBXProject project, string targetGuid)
-		{
-			const string flag = "-fobjc-exceptions";
-			const string bridgePath = "Libraries/com.bugsplat.unity/Editor/IOS/ObjC/BugSplatBridge.mm";
-
-			var bridgeGuid = project.FindFileGuidByProjectPath(bridgePath);
-			if (bridgeGuid == null)
-			{
-				// The package is somewhere this did not predict. Falling back to the target property keeps
-				// the build working, which matters more than the narrower scope.
-				Debug.Log($"BugSplat info: could not find {bridgePath} in the Xcode project; enabling Objective-C exceptions for the whole UnityFramework target instead.");
-				project.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");
-				return;
-			}
-
-			var flags = project.GetCompileFlagsForFile(targetGuid, bridgeGuid) ?? new List<string>();
-			if (flags.Contains(flag))
-			{
-				return;
-			}
-
-			flags.Add(flag);
-			project.SetCompileFlagsForFile(targetGuid, bridgeGuid, flags);
 		}
 
 		private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
@@ -521,12 +622,14 @@ namespace BugSplatUnity.Editor
 				$"    curl -sL -o \"$SYMBOL_UPLOAD\" \"https://app.bugsplat.com/download/$VARIANT\"\n" +
 				$"    chmod +x \"$SYMBOL_UPLOAD\"\n" +
 				$"fi\n\n" +
+				$"# Breakpad .sym files: the dSYM is dump_syms' input, so pass --dumpSyms.\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
 				$"    --database \"{options.Database}\" \\\n" +
 				$"    --application \"{application}\" \\\n" +
 				$"    --version \"{version}\" \\\n" +
 				$"    --files \"**/*.dSYM\" \\\n" +
-				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
+				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\" \\\n" +
+				$"    --dumpSyms\n\n" +
 				$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
 				$"# symbol-upload skips the raw .json (no dbgId), so zip it; the .zip uploads via the versions path.\n" +
 				$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
@@ -545,8 +648,7 @@ namespace BugSplatUnity.Editor
 
 			// GetShellScriptBuildPhaseForTarget matches on name, shellPath *and* script body, so a phase
 			// written by an older version does not match this one. Inserting regardless would leave two
-			// phases, with the older one still uploading - and, before this change, still carrying
-			// credentials inlined into project.pbxproj.
+			// phases, with the older one still uploading.
 			if (HasBuildPhaseNamed(project, targetGuid, name))
 			{
 				Debug.LogWarning(
@@ -654,11 +756,11 @@ namespace BugSplatUnity.Editor
 				}
 
 				Debug.Log("BugSplat. Symbols uploading completed.");
-			});
+			}, dumpSyms: true);
 		}
 #endif
 
-		private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
+		private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted, bool dumpSyms = false)
 		{
 			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
 			{
@@ -693,7 +795,9 @@ namespace BugSplatUnity.Editor
 			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
 			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
 
-			if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
+			// Every platform Crashpad runs on is symbolicated from Breakpad .sym files; PDBs stay
+			// PDBs for the Windows pipeline.
+			if (dumpSyms)
 			{
 				symUploadProcessInfo.Arguments += " --dumpSyms";
 			}
@@ -760,42 +864,7 @@ namespace BugSplatUnity.Editor
 				return false;
 			}
 
-			if (Application.platform == RuntimePlatform.WindowsEditor)
-			{
-				return true;
-			}
-
-			try
-			{
-				var absolutePath = Path.GetFullPath(destinationPath);
-
-				// Run chmod +x to make the file executable
-				var process = new Process();
-				process.StartInfo.FileName = "chmod";
-				process.StartInfo.Arguments = $"+x \"{absolutePath}\"";
-				process.StartInfo.UseShellExecute = false;
-				process.StartInfo.RedirectStandardOutput = true;
-				process.StartInfo.RedirectStandardError = true;
-				process.Start();
-
-				var output = process.StandardOutput.ReadToEnd();
-				var error = process.StandardError.ReadToEnd();
-				process.WaitForExit();
-
-				if (process.ExitCode != 0)
-				{
-					Debug.LogError($"BugSplat. Failed to make {destinationPath} executable. Error: {error}");
-					return false;
-				}
-
-				Debug.Log($"BugSplat. Successfully made {destinationPath} executable. Output: {output}");
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError($"BugSplat. Error setting executable permission for {destinationPath}. Error: {ex}");
-				return false;
-			}
-
+			MarkExecutable(destinationPath);
 			return true;
 		}
 	}

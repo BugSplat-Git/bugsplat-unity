@@ -12,7 +12,6 @@ namespace BugSplatUnity.Editor
         private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
-        private const string hangDialogConflictFormat = "Auto-submit is off for {0} fatal hang reports but still on for {0} crash reports, so hangs will keep uploading without asking. Turn off auto-submit for {0} crash reports as well to be prompted.";
         private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
         private const int integrationsPaddingTop = 5;
@@ -71,9 +70,8 @@ namespace BugSplatUnity.Editor
                 traverseChildren = false;
 
                 // The credentials notice belongs next to the symbol upload toggles it is about,
-                // not stranded at the bottom of the asset. Windows is the first platform section,
-                // so emit it just before that section opens.
-                if (iterator.name == nameof(BugSplatOptions.UseNativeCrashReportingForWindows))
+                // not stranded at the bottom of the asset, so emit it just before that section opens.
+                if (iterator.name == nameof(BugSplatOptions.UploadDebugSymbolsForWindows))
                 {
                     DrawSymbolUploadCredentialsSection();
                 }
@@ -87,24 +85,6 @@ namespace BugSplatUnity.Editor
             {
                 EditorGUILayout.HelpBox(emptyDatabaseErrorMessage, MessageType.Error);
             }
-
-            // Caught here as well as at runtime: this pair is configured in the Inspector, so the
-            // Inspector is where noticing it costs nothing. The runtime warning only surfaces on a
-            // device, after a build, which is a slow way to learn the option did nothing.
-            // Gated on native reporting, like the runtime warning: with it off these options never
-            // reach bugsplat-apple, so the combination has no effect to warn about.
-            if (options.UseNativeCrashReportingForIos &&
-                !options.IosAutoSubmitFatalHangReport && options.IosAutoSubmitCrashReport)
-            {
-                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "iOS"), MessageType.Warning);
-            }
-
-            if (options.UseNativeCrashReportingForMac &&
-                !options.MacAutoSubmitFatalHangReport && options.MacAutoSubmitCrashReport)
-            {
-                EditorGUILayout.HelpBox(string.Format(hangDialogConflictFormat, "macOS"), MessageType.Warning);
-            }
-
         }
     }
 }

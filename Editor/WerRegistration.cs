@@ -141,12 +141,12 @@ namespace BugSplatUnity.Editor
 
 			var werDll = NormalizeWerDllPath(exePath);
 
-			if (!File.Exists(werDll))
+			if (werDll == null || !File.Exists(werDll))
 			{
 				var message =
-					$"{WerDllName} was not found next to {Path.GetFileName(exePath)}.\n\n" +
-					"Enable UseNativeCrashReportingForWindows on your BugSplatOptions asset and rebuild — " +
-					"the post-build step copies it next to the executable.";
+					$"{WerDllName} was not found under {Path.GetFileNameWithoutExtension(exePath)}_Data/Plugins next to {Path.GetFileName(exePath)}.\n\n" +
+					"Enable Use Native Crash Reporting on your BugSplatOptions asset and rebuild — " +
+					"the post-build step copies it next to BugSplat.dll.";
 
 				Debug.LogError($"BugSplat. {message}");
 				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");
@@ -157,15 +157,17 @@ namespace BugSplatUnity.Editor
 		}
 
 		/// <summary>
-		/// Returns the full, backslash-separated path to BugSplatWer.dll beside the given executable.
-		/// The separator matters: the SDK builds the path it looks up with GetModuleFileNameW, which
-		/// yields backslashes, so a value named with forward slashes (as EditorUtility.OpenFilePanel
-		/// returns) never matches and WER stays silently disarmed.
+		/// Returns the full, backslash-separated path to the BugSplatWer.dll the SDK registers for the
+		/// given player: next to BugSplat.dll under &lt;Game&gt;_Data/Plugins. The separator matters: the SDK
+		/// builds the path it looks up with GetModuleFileNameW, which yields backslashes, so a value
+		/// named with forward slashes (as EditorUtility.OpenFilePanel returns) never matches and WER
+		/// stays silently disarmed. Null when the player has no BugSplat.dll.
 		/// </summary>
 		internal static string NormalizeWerDllPath(string exePath)
 		{
-			var buildDir = Path.GetDirectoryName(Path.GetFullPath(exePath));
-			return Path.GetFullPath(Path.Combine(buildDir, WerDllName)).Replace('/', '\\');
+			var pluginDir = BuildPostprocessors.FindWindowsPluginDirectory(Path.GetFullPath(exePath));
+			if (pluginDir == null) return null;
+			return Path.GetFullPath(Path.Combine(pluginDir, WerDllName)).Replace('/', '\\');
 		}
 
 		/// <summary>

@@ -160,7 +160,14 @@ namespace Crasher
 				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
 			statusText.color = Amber;
 #elif UNITY_STANDALONE_WIN
-			if (bugsplat.WindowsWerEnabled)
+			if (!bugsplat.NativeCrashReportingEnabled)
+			{
+				statusText.text =
+					"Windows player — native crash reporting did not start (see the log). Native, " +
+					"fail-fast, capture, and hang scenarios will not report; managed scenarios still do.";
+				statusText.color = BugSplatRed;
+			}
+			else if (bugsplat.WindowsWerEnabled)
 			{
 				statusText.text = "Windows player — WER is ARMED. Fail-fast scenarios will report.";
 				statusText.color = BugSplatGreen;
@@ -172,9 +179,19 @@ namespace Crasher
 					"Use BugSplat > Windows > Register WER Handler in the editor.";
 				statusText.color = BugSplatRed;
 			}
-#elif UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
-			statusText.text = $"{PlatformName} player — native crash reporting is active.";
-			statusText.color = BugSplatGreen;
+#elif UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY_ANDROID
+			if (bugsplat.NativeCrashReportingEnabled)
+			{
+				statusText.text = $"{PlatformName} player — native crash reporting is active (bugsplat-native {bugsplat.NativeVersion}).";
+				statusText.color = BugSplatGreen;
+			}
+			else
+			{
+				statusText.text =
+					$"{PlatformName} player — native crash reporting did not start (see the log). Native, " +
+					"capture, and hang scenarios will not report; managed scenarios still do.";
+				statusText.color = BugSplatRed;
+			}
 #else
 			statusText.text =
 				$"{PlatformName} — native crash reporting is not yet supported on this platform; " +
