@@ -39,13 +39,13 @@ namespace BugSplatUnity.RuntimeTests
 			options.CaptureScreenshots = true;
 			options.LogFileMaxSizeMB = 42;
 			options.PostExceptionsInEditor = true;
-#if UNITY_IOS
-			options.IosAutoSubmitCrashReport = false;
-			options.IosAutoSubmitFatalHangReport = false;
-#elif UNITY_STANDALONE_OSX
-			options.MacAutoSubmitCrashReport = true;
-			options.MacAutoSubmitFatalHangReport = false;
-#endif
+			options.UseNativeCrashReporting = false;
+			options.UploadPolicy = UploadPolicy.Quiet;
+			options.DumpType = DumpType.Heap;
+			options.HangDetectionTimeoutMs = 4321;
+			options.HangPolicy = HangPolicy.ReportAndTerminate;
+			options.OpenSupportUrl = false;
+			options.ManagedReportFormat = ManagedReportFormat.Json;
 
 			var sut = BugSplat.CreateFromOptions(options);
 
@@ -59,21 +59,40 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(sut.CaptureScreenshots, nameof(options.CaptureScreenshots));
 			Assert.AreEqual(42, sut.LogFileMaxSizeMB, nameof(options.LogFileMaxSizeMB));
 			Assert.True(sut.PostExceptionsInEditor, nameof(options.PostExceptionsInEditor));
-			// CreateFromOptions picks the pair for the active build target, so the assertions
-			// follow it. On a non-Apple target there is no mapping to check.
-#if UNITY_IOS
-			Assert.False(sut.AutoSubmitCrashReportSetting, nameof(options.IosAutoSubmitCrashReport));
-			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.IosAutoSubmitFatalHangReport));
-#elif UNITY_STANDALONE_OSX
-			Assert.True(sut.AutoSubmitCrashReportSetting, nameof(options.MacAutoSubmitCrashReport));
-			Assert.False(sut.AutoSubmitFatalHangReportSetting, nameof(options.MacAutoSubmitFatalHangReport));
-#else
-			// Non-Apple targets are asserted rather than skipped: CreateFromOptions deliberately
-			// passes null so bugsplat-apple's own defaults survive, and that is worth pinning -
-			// it is also the only branch CI exercises, since no CI target is iOS or macOS.
-			Assert.IsNull(sut.AutoSubmitCrashReportSetting, nameof(sut.AutoSubmitCrashReportSetting));
-			Assert.IsNull(sut.AutoSubmitFatalHangReportSetting, nameof(sut.AutoSubmitFatalHangReportSetting));
-#endif
+			// The native settings are recorded on the instance even though the native SDK never
+			// starts in the editor: this is the only place the mapping can be observed by a test.
+			Assert.AreEqual(UploadPolicy.Quiet, sut.NativeSettings.UploadPolicy, nameof(options.UploadPolicy));
+			Assert.AreEqual(DumpType.Heap, sut.NativeSettings.DumpType, nameof(options.DumpType));
+			Assert.AreEqual(4321, sut.NativeSettings.HangDetectionTimeoutMs, nameof(options.HangDetectionTimeoutMs));
+			Assert.AreEqual(HangPolicy.ReportAndTerminate, sut.NativeSettings.HangPolicy, nameof(options.HangPolicy));
+			Assert.False(sut.NativeSettings.OpenSupportUrl, nameof(options.OpenSupportUrl));
+			Assert.AreEqual(ManagedReportFormat.Json, sut.NativeSettings.ManagedReportFormat, nameof(options.ManagedReportFormat));
+			Assert.False(sut.NativeCrashReportingEnabled, "native crash reporting never runs in the editor");
+		}
+
+		[Test]
+		public void CreateFromOptions_ShouldUseNativeDefaultsWhenOptionsAreFresh()
+		{
+			var sut = BugSplat.CreateFromOptions(options);
+
+			Assert.AreEqual(UploadPolicy.Dialog, sut.NativeSettings.UploadPolicy);
+			Assert.AreEqual(DumpType.Normal, sut.NativeSettings.DumpType);
+			Assert.AreEqual(0, sut.NativeSettings.HangDetectionTimeoutMs);
+			Assert.AreEqual(HangPolicy.Report, sut.NativeSettings.HangPolicy);
+			Assert.True(sut.NativeSettings.OpenSupportUrl);
+			Assert.AreEqual(ManagedReportFormat.Xml, sut.NativeSettings.ManagedReportFormat);
+		}
+
+		// The instance owns a copy: a caller mutating the settings object it passed in must not
+		// be able to change what the instance reports it was constructed with.
+		[Test]
+		public void NewBugSplat_ShouldCopyNativeSettings()
+		{
+			var settings = new NativeSettings { HangDetectionTimeoutMs = 1000 };
+			var sut = new BugSplat("database", "application", "version", nativeSettings: settings);
+			settings.HangDetectionTimeoutMs = 2000;
+
+			Assert.AreEqual(1000, sut.NativeSettings.HangDetectionTimeoutMs);
 		}
 
 		[Test]
@@ -87,7 +106,7 @@ namespace BugSplatUnity.RuntimeTests
 		[Test]
 		public void NewBugSplat_ShouldNotPostExceptionsInEditor()
 		{
-			var sut = new BugSplat("database", "application", "version", false, false);
+			var sut = new BugSplat("database", "application", "version");
 
 			Assert.False(sut.PostExceptionsInEditor, nameof(BugSplat.PostExceptionsInEditor));
 		}
@@ -363,7 +382,7 @@ namespace BugSplatUnity.RuntimeTests
 		[Test]
 		public void CapturePlayerLog_ShouldDefaultToEnabledWhenConstructedInCode()
 		{
-			var fromCode = new BugSplat("database", "application", "version", false, false);
+			var fromCode = new BugSplat("database", "application", "version");
 
 			Assert.True(fromCode.CapturePlayerLog, "client created in code");
 		}

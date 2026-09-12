@@ -1,4 +1,5 @@
 using BugSplatUnity.Runtime.Client;
+using BugSplatUnity.Runtime.Native;
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.Runtime.Util;
@@ -8,17 +9,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN) && !UNITY_EDITOR
-using System.Runtime.InteropServices;
-#endif
-using System.Threading.Tasks;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
 namespace BugSplatUnity
 {
     /// <summary>
-    /// A BugSplat implementation for Unity crash and exception reporting
+    /// BugSplat crash and exception reporting for Unity.
+    ///
+    /// Two layers over one native SDK. Native crashes, hangs and non-fatal captures are handled by
+    /// bugsplat-native: an out-of-process BugSplatMonitor writes the dump on Windows, macOS, Linux
+    /// and Android (an in-process handler does on iOS), BugSplatReporter shows the dialog on
+    /// desktop, and every report uploads through BugSplat's presigned-URL flow. Managed exceptions
+    /// are captured by the .NET handler and, in a player, posted through the same native SDK as
+    /// structured reports; in the editor and on WebGL they post directly over HTTP.
     /// </summary>
     public class BugSplat
     {
@@ -35,7 +39,8 @@ namespace BugSplatUnity
 
         /// <summary>
         /// A dictionary of key values pairs to be added every time Post is called.
-        /// On platforms with native crash reporting, attributes are automatically synced to the native crash reporter.
+        /// Attributes are synced to the native crash reporter as they change, so the value at the
+        /// instant of a crash is what the crash report carries.
         /// </summary>
         public IDictionary<string, string> Attributes
         {
@@ -61,10 +66,8 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Upload Player.log when Post is called. On platforms whose native crash reporter takes
-        /// attachments (Windows, macOS, iOS, and Android), this also attaches or detaches it natively,
-        /// leaving any file attached with AttachNativeLogFile in place. Android is a special case: Unity
-        /// writes no Player.log there, so consoleLogPath is empty and there is nothing to attach.
+        /// Upload Player.log when Post is called. With native crash reporting running this also
+        /// attaches or detaches it from native crash reports, so the two stay in agreement.
         /// </summary>
         public bool CapturePlayerLog
         {
@@ -110,7 +113,7 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 report every 3 seconds.
+        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 crash every 3 seconds.
         /// </summary>
         public Func<Exception, bool> ShouldPostException
         {
@@ -124,9 +127,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// A default description that can be overridden by call to Post
-        /// </summary>
         public string Description
         {
             get
@@ -140,9 +140,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// A default email that can be overridden by call to Post
-        /// </summary>
         public string Email
         {
             get
@@ -156,9 +153,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// A default key that can be overridden by call to Post
-        /// </summary>
         public string Key
         {
             get
@@ -172,9 +166,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// BugSplat truncates log files to this size in MB. Default is 10 MB.
-        /// </summary>
         public int LogFileMaxSizeMB
         {
             get
@@ -187,9 +178,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// A general purpose field that can be overridden by call to Post.
-        /// </summary>
         public string Notes
         {
             get
@@ -203,9 +191,6 @@ namespace BugSplatUnity
             }
         }
 
-        /// <summary>
-        /// A default user that can be overridden by call to Post
-        /// </summary>
         public string User
         {
             get
@@ -216,6 +201,25 @@ namespace BugSplatUnity
             {
                 clientSettings.User = value;
                 SetNativeUser(value);
+            }
+        }
+
+        /// <summary>
+        /// The OS and hardware the game is running on, as a first-class report property next to
+        /// User and Email - "Windows 11 (10.0.26200) x64", "Android 14 (API 34) arm64-v8a; Google
+        /// Pixel 8". Detected by the native SDK; set it to override, or set null to restore
+        /// detection. Empty when native crash reporting is not running.
+        /// </summary>
+        public string Environment
+        {
+            get
+            {
+                return environmentOverride ?? NativeCrashReporter.GetEnvironment() ?? string.Empty;
+            }
+            set
+            {
+                environmentOverride = value;
+                NativeCrashReporter.SetEnvironment(value);
             }
         }
 
@@ -239,23 +243,19 @@ namespace BugSplatUnity
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
         private bool nativeCrashReportingEnabled;
+        private string environmentOverride;
         private readonly List<string> nativeAttachmentPaths = new List<string>();
 
         /// <summary>
-        /// The Apple submission settings as constructed. Recorded on every platform, not just the
-        /// Apple ones, so CreateFromOptions' mapping stays observable in the editor - the blocks
-        /// that actually consume these are behind a platform #if and compile out there, which
-        /// would otherwise leave the mapping untestable by the suite written to catch exactly a
-        /// dropped argument.
+        /// The native settings this instance was constructed with. Read-only in intent: the native
+        /// SDK reads them once at startup, so changing a field afterwards has no effect.
         /// </summary>
-        internal bool? AutoSubmitCrashReportSetting { get; }
-        internal bool? AutoSubmitFatalHangReportSetting { get; }
+        public NativeSettings NativeSettings { get; }
 
         /// <summary>
         /// Paths resolved from PersistentDataFileAttachmentPaths and passed to the constructor for native
-        /// registration, de-duplicated the way the native list is. Registration itself happens only when
-        /// native crash reporting is enabled for the platform, and is compiled out in the editor entirely,
-        /// so this is the only part of that wiring a PlayMode test can observe.
+        /// registration, de-duplicated the way the native list is. Registration itself is a no-op in the
+        /// editor, so this is the only part of that wiring a PlayMode test can observe.
         /// </summary>
         internal IReadOnlyList<string> NativePersistentDataAttachmentPaths => nativePersistentDataAttachmentPaths.AsReadOnly();
         private readonly List<string> nativePersistentDataAttachmentPaths = new List<string>();
@@ -263,9 +263,20 @@ namespace BugSplatUnity
         private bool windowsWerEnabled;
 
         /// <summary>
+        /// True when bugsplat-native started for this process: native crashes, hangs and captures
+        /// are reported, and managed reports post through the native SDK. Always false in the
+        /// editor and on WebGL; false in a player when the native runtime is missing next to it
+        /// (the error is logged at construction).
+        /// </summary>
+        public bool NativeCrashReportingEnabled => nativeCrashReportingEnabled;
+
+        /// <summary>The bugsplat-native version behind this instance, or empty when it is not running.</summary>
+        public string NativeVersion => nativeCrashReportingEnabled ? NativeCrashReporter.Version : string.Empty;
+
+        /// <summary>
         /// True when BugSplat's Windows Error Reporting handler is registered for this process.
         /// Fail-fast terminations — stack buffer overrun (0xC0000409), heap corruption (0xC0000374),
-        /// and __fastfail — bypass BugSplat's crash handler entirely and are reported only when this
+        /// and __fastfail — bypass every in-process crash handler and are reported only when this
         /// is true. Registration requires BugSplatWer.dll next to the game executable and a
         /// machine-wide registry value naming its full path. Always false in the editor and on
         /// non-Windows platforms.
@@ -273,29 +284,22 @@ namespace BugSplatUnity
         public bool WindowsWerEnabled => windowsWerEnabled;
 
         /// <summary>
-        /// Post Exceptions and minidump files to BugSplat
+        /// Post Exceptions, native crashes and feedback to BugSplat
         /// </summary>
         /// <param name="database">The BugSplat database for your organization</param>
         /// <param name="application">Your application's name (must match value used to upload symbols)</param>
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
-        /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on iOS</param>
-        /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
-        /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
-        /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
-        /// <param name="capturePlayerLog">Whether to upload Player.log with reports. Applied while the native crash reporter initializes so that native crash reports honor it too.</param>
-        /// <param name="nativeAttachments">Files to attach to native crash reports, registered before the native reporter starts. On macOS and iOS that is the only time that counts: a report uploads at the next launch and its attachments are gathered while the reporter starts, so a path attached after construction never reaches it. Behaves exactly like AttachNativeLogFile on every platform otherwise.</param>
+        /// <param name="useNativeCrashReporting">Start bugsplat-native for native crash, hang and capture reporting. Has no effect in the editor or on WebGL.</param>
+        /// <param name="capturePlayerLog">Whether to upload Player.log with reports, managed and native alike.</param>
+        /// <param name="nativeSettings">Upload policy, dump type, hang detection and the other settings the native SDK reads at startup. Null uses the defaults.</param>
+        /// <param name="nativeAttachments">Files to attach to native crash reports from the first moment the reporter runs. Behaves exactly like AttachNativeLogFile afterwards.</param>
         public BugSplat(
             string database,
             string application,
             string version,
-            bool useNativeLibIos,
-            bool useNativeLibAndroid,
-            bool useNativeLibMac = false,
-            bool useNativeLibWin = false,
+            bool useNativeCrashReporting = true,
             bool capturePlayerLog = true,
-            bool? autoSubmitCrashReport = null,
-            bool? autoSubmitFatalHangReport = null,
-            float? hangDetectionThresholdSeconds = null,
+            NativeSettings nativeSettings = null,
             IEnumerable<string> nativeAttachments = null
         )
         {
@@ -314,212 +318,57 @@ namespace BugSplatUnity
                 throw new ArgumentException("BugSplat error: version cannot be null or empty");
             }
 
-            AutoSubmitCrashReportSetting = autoSubmitCrashReport;
-            AutoSubmitFatalHangReportSetting = autoSubmitFatalHangReport;
+            NativeSettings = (nativeSettings ?? new NativeSettings()).Clone();
 
             // Resolved once here so AttachNativeLogFile and DetachNativeLogFile never touch the Unity API,
-            // which is main-thread only.
+            // which is main-thread only. Empty on Android, which has no Player.log.
             consoleLogPath = NormalizeNativeAttachmentPath(Application.consoleLogPath);
 
-            // Seeded before the native reporter starts. On Apple the reporter gathers a pending report's
-            // attachments synchronously inside start, once, and persists them with the report, so a path
-            // registered after construction returns has already missed the only moment it could matter.
-            var seededNativeAttachments = SeedNativeAttachments(nativeAttachments);
+            var startupAttachments = new List<string>(SeedNativeAttachments(nativeAttachments));
 
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            // Applied before -start, which is where bugsplat-apple decides whether a pending
-            // report from the previous session gets a dialog or goes straight up.
-            // Sentinels differ by type: for the two flags -1 means "no preference" while 0 is an
-            // explicit false; for the threshold, which has no meaningful zero, 0 means "no
-            // preference". A caller who passes nothing keeps bugsplat-apple's own defaults, which
-            // differ per platform and are not this class's to override. CreateFromOptions always
-            // passes the platform's configured values.
-            var autoSubmit = autoSubmitCrashReport.HasValue ? (autoSubmitCrashReport.Value ? 1 : 0) : -1;
-            var autoSubmitHang = autoSubmitFatalHangReport.HasValue ? (autoSubmitFatalHangReport.Value ? 1 : 0) : -1;
-            var hangThreshold = hangDetectionThresholdSeconds ?? 0f;
-
-            // Both warnings below are gated on this. With native reporting off these settings
-            // never reach bugsplat-apple at all, so warning about them would be noise about
-            // something that has no effect either way.
-#if UNITY_IOS
-            var nativeReportingForThisPlatform = useNativeLibIos;
-#else
-            var nativeReportingForThisPlatform = useNativeLibMac;
-#endif
-
-            // A configured value of zero or less cannot be honoured - the bridges only apply a
-            // positive threshold - so it silently becomes bugsplat-apple's own default. Say so,
-            // rather than letting someone who typed 0 expecting the 0.1s floor wonder why hangs
-            // are being declared at two seconds.
-            if (nativeReportingForThisPlatform &&
-                hangDetectionThresholdSeconds.HasValue && hangDetectionThresholdSeconds.Value <= 0f)
+            if (capturePlayerLog && consoleLogPath != null && IndexOfNativeAttachment(consoleLogPath) < 0)
             {
-                Debug.LogWarning(
-                    "BugSplat: a hang detection threshold of " + hangDetectionThresholdSeconds.Value +
-                    "s is not usable, so bugsplat-apple's own default applies instead. Set a positive " +
-                    "value to override it.");
+                lock (nativeAttachmentPaths)
+                {
+                    nativeAttachmentPaths.Add(consoleLogPath);
+                }
+                startupAttachments.Add(consoleLogPath);
             }
 
-            // Asking for a hang prompt only works if crashes are prompting too. Withholding the
-            // hang's auto-submit flag routes it onto the normal submission path, and that path
-            // then consults autoSubmitCrashReport - so leaving that on means the hang still
-            // uploads without asking, which is the opposite of what was configured.
-            if (nativeReportingForThisPlatform &&
-                autoSubmitFatalHangReport == false && autoSubmitCrashReport == true)
+            if (useNativeCrashReporting && NativeCrashReporter.IsSupportedPlatform)
             {
-                Debug.LogWarning(
-                    "BugSplat: the fatal hang report option is off while the crash report option is on, " +
-                    "so fatal hangs will still upload without asking. Turn auto-submit off for crash " +
-                    "reports on this platform as well to be prompted.");
-            }
-#endif
-
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            if (useNativeLibWin)
-            {
-                if (BugSplat_Init(database, application, version) == 1)
-                {
-                    nativeCrashReportingEnabled = true;
-
-                    // Windows captures attachments at crash time, so after init is early enough.
-                    foreach (var path in seededNativeAttachments)
-                    {
-                        AddNativeAttachment(path);
-                    }
-                    // Show the native crash dialog by default; CreateFromOptions
-                    // overrides this from WindowsShowCrashDialog.
-                    BugSplat_SetQuietMode(0);
-                    BugSplat_SetHangDetectionTimeout(0);
-                    // Hard-terminate after a crash report uploads; a standalone Windows
-                    // player's CRT shutdown can hang on the SDK's default exit() path.
-                    // 1 == BUGSPLAT_CRASH_TERMINATE.
-                    BugSplat_SetCrashCompletionBehavior(1);
-                    // Tag native crashes as UnityNative (BugSplat crash type 15) so the
-                    // backend applies LineNumberMappings.json to symbolicate C# frames.
-                    BugSplat_SetCrashType(15);
-
-                    SetNativePlayerLogAttachment(capturePlayerLog);
-
-                    BugSplat_PostAllCrashesAsync();
-                    ReportWindowsWerStatus();
-                }
-                else
-                {
-                    Debug.LogError("BugSplat error: failed to initialize native Windows crash reporting");
-                }
-            }
-
-            UseDotNetHandler(database, application, version, capturePlayerLog);
-#elif UNITY_WEBGL
-            var webGLClientSettings = new WebGLClientSettingsRepository();
-            var webGLExceptionClient = new WebGLExceptionClient(database, application, version);
-            var webGLReporter = new WebGLReporter(webGLClientSettings, webGLExceptionClient);
-            clientSettings = webGLClientSettings;
-            exceptionReporter = webGLReporter;
-#elif UNITY_IOS && !UNITY_EDITOR
-            if (useNativeLibIos)
-            {
-                // Same ordering constraint as macOS: the delegate is queried while start processes
-                // crash reports left by the previous session, so the player log has to be tracked
-                // before start rather than attached after it.
-                var logPath = capturePlayerLog ? consoleLogPath : null;
-
-                // Before start, for the reason in the constructor comment above. The bridge only records
-                // the path and installs its delegate here, so this is safe ahead of start.
-                foreach (var path in seededNativeAttachments)
-                {
-                    AddNativeAttachment(path);
-                }
-
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
-                nativeCrashReportingEnabled = true;
-
-                if (logPath != null && IndexOfNativeAttachment(logPath) < 0)
-                {
-                    // Uncontended - nothing else can reach this instance yet - but taken anyway so
-                    // "every mutation of nativeAttachmentPaths happens under its lock" holds without
-                    // exception. An invariant with two documented escapes is one nobody can audit.
-                    lock (nativeAttachmentPaths)
-                    {
-                        nativeAttachmentPaths.Add(logPath);
-                    }
-                }
-            }
-
-            UseDotNetHandler(database, application, version, capturePlayerLog);
-#elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-            if (useNativeLibMac)
-            {
-                // The delegate is queried while start processes crash reports left by the previous
-                // session, so the player log has to be tracked before start rather than attached after it.
-                var logPath = capturePlayerLog ? consoleLogPath : null;
-
-                // Before start, for the reason in the constructor comment above. The bridge only records
-                // the path and installs its delegate here, so this is safe ahead of start.
-                foreach (var path in seededNativeAttachments)
-                {
-                    AddNativeAttachment(path);
-                }
-
-                // Named even when not captured, so a later CapturePlayerLog = true still gets the
-                // crashed session's log rather than the live one.
-                _setNativePlayerLogPath(consoleLogPath ?? "");
-
-                _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
-                nativeCrashReportingEnabled = true;
-
-                if (logPath != null && IndexOfNativeAttachment(logPath) < 0)
-                {
-                    // Uncontended - nothing else can reach this instance yet - but taken anyway so
-                    // "every mutation of nativeAttachmentPaths happens under its lock" holds without
-                    // exception. An invariant with two documented escapes is one nobody can audit.
-                    lock (nativeAttachmentPaths)
-                    {
-                        nativeAttachmentPaths.Add(logPath);
-                    }
-                }
-            }
-
-            UseDotNetHandler(database, application, version, capturePlayerLog);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            if (useNativeLibAndroid)
-            {
-                // Guarded so a missing or mismatched AAR costs native reporting only. Left to
-                // propagate, the exception would abandon the constructor before UseDotNetHandler
-                // below, and managed exception reporting would be lost along with it.
-                try
-                {
-                    using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                    using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-
-                    using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                    javaClass.CallStatic("init", activity, database, application, version);
-                    nativeCrashReportingEnabled = true;
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"BugSplat error: could not start native Android crash reporting: {ex.Message}. Native crashes will not be reported; managed exception reporting continues. This needs the bugsplat-android AAR bundled with this package (1.4.0 or later).");
-                }
+                // Attachments are handed over at init so a crash in the very first frame carries
+                // them; everything registered later reaches the reporter through the same
+                // per-session manifest, on every platform.
+                nativeCrashReportingEnabled = NativeCrashReporter.Initialize(
+                    database, application, version, NativeSettings,
+                    null, null, null, null, null, null, startupAttachments);
 
                 if (nativeCrashReportingEnabled)
                 {
-                    // Android captures attachments at crash time, so after init is early enough.
-                    foreach (var path in seededNativeAttachments)
-                    {
-                        AddNativeAttachment(path);
-                    }
+                    windowsWerEnabled = NativeCrashReporter.HasCapability(BugSplatNative.Capability.Wer);
+                    ReportWindowsWerStatus();
+
+                    // Reports an earlier session could not send (offline, MANUAL policy that was
+                    // never drained) go out now, on a background thread.
+                    NativeCrashReporter.PostPendingReportsAsync();
+                }
+                else
+                {
+                    // A packaging problem, not a runtime one: the player was built without the
+                    // BugSplat runtime next to it. Managed exception reporting continues over HTTP.
+                    Debug.LogError(
+                        $"BugSplat error: native crash reporting could not start: {NativeCrashReporter.LastError} " +
+                        "Native crashes will not be reported; managed exception reporting continues.");
                 }
             }
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
-#else
-            UseDotNetHandler(database, application, version, capturePlayerLog);
-#endif
         }
 
         /// <summary>
         /// Normalizes and de-duplicates the constructor's native attachments into the tracked list, and
-        /// returns them so each platform can hand them to its reporter at the right moment.
+        /// returns them so they can be handed to the native reporter at startup.
         /// </summary>
         private string[] SeedNativeAttachments(IEnumerable<string> paths)
         {
@@ -560,13 +409,26 @@ namespace BugSplatUnity
             {
                 CapturePlayerLog = capturePlayerLog
             };
-            var dotNetStandardClient = new DotNetStandardClient(bugsplat);
-            var dotNetStandardExceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, dotNetStandardClient);
+            var httpClient = new DotNetStandardClient(bugsplat);
+
+            IDotNetStandardExceptionClient exceptionClient = httpClient;
+            IDotNetStandardFeedbackClient feedback = httpClient;
+            INativeCrashReportClient minidumpClient = httpClient;
+
+            if (nativeCrashReportingEnabled)
+            {
+                // One upload path per player: managed exceptions and feedback go through the native
+                // SDK's store and uploader. Minidump files posted by hand keep the HTTP client.
+                var nativeClient = new NativeReportClient(dotNetStandardClientSettings, httpClient, NativeSettings.ManagedReportFormat);
+                exceptionClient = nativeClient;
+                feedback = nativeClient;
+                minidumpClient = nativeClient;
+            }
 
             clientSettings = dotNetStandardClientSettings;
-            exceptionReporter = dotNetStandardExceptionReporter;
-            feedbackClient = dotNetStandardClient;
-            nativeCrashReportClient = dotNetStandardClient;
+            exceptionReporter = new DotNetStandardExceptionReporter(dotNetStandardClientSettings, exceptionClient);
+            feedbackClient = feedback;
+            nativeCrashReportClient = minidumpClient;
 
             if (clientSettings.Attributes is NativeSyncDictionary<string, string> syncDict)
             {
@@ -583,9 +445,7 @@ namespace BugSplatUnity
             var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
             var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
 
-            // Resolved before construction so the files reach the native reporter before it starts. On
-            // macOS and iOS a pending report's attachments are gathered during start and never again, so
-            // anything registered after the constructor returns is absent from that report.
+            // Resolved before construction so the files reach the native reporter before it starts.
             var persistentDataAttachments = ResolvePersistentDataAttachments(options.PersistentDataFileAttachmentPaths);
             var nativeAttachments = new List<string>();
 
@@ -594,28 +454,23 @@ namespace BugSplatUnity
                 nativeAttachments.Add(fileInfo.FullName);
             }
 
+            var nativeSettings = new NativeSettings
+            {
+                UploadPolicy = options.UploadPolicy,
+                DumpType = options.DumpType,
+                HangDetectionTimeoutMs = options.HangDetectionTimeoutMs,
+                HangPolicy = options.HangPolicy,
+                OpenSupportUrl = options.OpenSupportUrl,
+                ManagedReportFormat = options.ManagedReportFormat,
+            };
+
             var bugSplat = new BugSplat(
                 options.Database,
                 application,
                 version,
-                options.UseNativeCrashReportingForIos,
-                options.UseNativeCrashReportingForAndroid,
-                options.UseNativeCrashReportingForMac,
-                options.UseNativeCrashReportingForWindows,
+                options.UseNativeCrashReporting,
                 options.CapturePlayerLog,
-#if UNITY_IOS
-                options.IosAutoSubmitCrashReport,
-                options.IosAutoSubmitFatalHangReport,
-                options.IosHangDetectionThresholdSeconds,
-#elif UNITY_STANDALONE_OSX
-                options.MacAutoSubmitCrashReport,
-                options.MacAutoSubmitFatalHangReport,
-                options.MacHangDetectionThresholdSeconds,
-#else
-                null,
-                null,
-                null,
-#endif
+                nativeSettings,
                 nativeAttachments
             )
             {
@@ -644,19 +499,12 @@ namespace BugSplatUnity
                 }
             }
 
-            bugSplat.SetWindowsCrashDialogEnabled(options.WindowsShowCrashDialog);
-
-            if (options.WindowsHangDetectionTimeoutMs > 0)
-            {
-                bugSplat.SetWindowsHangDetectionTimeout(options.WindowsHangDetectionTimeoutMs);
-            }
-
             foreach (var fileInfo in persistentDataAttachments)
             {
                 // Managed reports read Attachments; native reports were handed these paths through the
                 // constructor, before the native reporter started (see nativeAttachments there).
                 // nativePersistentDataAttachmentPaths records what was handed over, because native
-                // registration is compiled out in the editor and this is what a PlayMode test can observe.
+                // registration is a no-op in the editor and this is what a PlayMode test can observe.
                 bugSplat.Attachments.Add(fileInfo);
 
                 var alreadyRecorded = bugSplat.nativePersistentDataAttachmentPaths.FindIndex(
@@ -748,7 +596,7 @@ namespace BugSplatUnity
         /// </summary>
         /// <param name="exception">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <param name="callback">Optional callback that will be invoked with an HttpResponseMessage after exception is posted to BugSplat</param>
+        /// <param name="callback">Optional callback that will be invoked with the result after the exception is posted to BugSplat</param>
         public IEnumerator Post(Exception exception, IReportPostOptions options = null, Action<ExceptionReporterPostResult> callback = null)
         {
             return exceptionReporter.Post(exception, options, callback);
@@ -800,7 +648,8 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// Post a minidump file to BugSplat
+        /// Post a minidump file to BugSplat over HTTP. Native crashes captured by bugsplat-native
+        /// upload themselves; this is for dumps produced elsewhere.
         /// </summary>
         /// <param name="minidump">The minidump file to post</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
@@ -838,19 +687,56 @@ namespace BugSplatUnity
                 callback?.Invoke(task.Result);
             }
         }
+
+        /// <summary>
+        /// Dump the live process out of process and report it like a crash, without crashing. The
+        /// game keeps running. Use it to capture the state behind a condition you can detect but
+        /// not explain. Returns false when native crash reporting is not running.
+        /// </summary>
+        public bool CaptureReport()
+        {
+            return nativeCrashReportingEnabled && NativeCrashReporter.CaptureReport();
+        }
+
+        /// <summary>
+        /// Tell the hang detector the main thread is alive. BugSplatManager calls this every frame;
+        /// call it yourself when you drive BugSplat without the manager and have hang detection on.
+        /// </summary>
+        public void Heartbeat()
+        {
+            if (nativeCrashReportingEnabled) NativeCrashReporter.Heartbeat();
+        }
+
+        /// <summary>
+        /// Watch the calling thread for hangs in addition to the main thread; the thread then calls
+        /// Heartbeat at least once per hang timeout. The name appears in the hang report.
+        /// </summary>
+        public bool WatchThread(string name)
+        {
+            return nativeCrashReportingEnabled && NativeCrashReporter.WatchThread(name);
+        }
+
+        public void UnwatchThread()
+        {
+            if (nativeCrashReportingEnabled) NativeCrashReporter.UnwatchThread();
+        }
+
+        /// <summary>
+        /// Upload reports left on disk by earlier sessions (offline, or the MANUAL upload policy),
+        /// on a background thread. Runs automatically at construction.
+        /// </summary>
+        public void PostPendingReportsAsync()
+        {
+            if (nativeCrashReportingEnabled) NativeCrashReporter.PostPendingReportsAsync();
+        }
+
         /// <summary>
         /// Set a key-value attribute on the native crash reporter. Attributes are included in native crash reports.
         /// </summary>
         public void SetNativeAttribute(string key, string value)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeAttribute(key, value);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetAttribute(key, value);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setAttribute", key, value);
-#endif
+            NativeCrashReporter.SetAttribute(key, value);
         }
 
         /// <summary>
@@ -859,13 +745,7 @@ namespace BugSplatUnity
         public void SetNativeUser(string user)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeUser(user);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetUser(user);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setUser", user);
-#endif
+            NativeCrashReporter.SetUser(user);
         }
 
         /// <summary>
@@ -874,13 +754,7 @@ namespace BugSplatUnity
         public void SetNativeEmail(string email)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeEmail(email);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetEmail(email);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setEmail", email);
-#endif
+            NativeCrashReporter.SetEmail(email);
         }
 
         /// <summary>
@@ -889,28 +763,16 @@ namespace BugSplatUnity
         public void SetNativeNotes(string notes)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeNotes(notes);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetNotes(notes);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setNotes", notes);
-#endif
+            NativeCrashReporter.SetNotes(notes);
         }
 
         /// <summary>
-        /// Set the key on the native crash reporter. Every native platform uses its own SDK's key setter.
+        /// Set the key on the native crash reporter.
         /// </summary>
         public void SetNativeKey(string key)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeKey(key);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetKey(key);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setKey", key);
-#endif
+            NativeCrashReporter.SetKey(key);
         }
 
         /// <summary>
@@ -919,40 +781,23 @@ namespace BugSplatUnity
         public void SetNativeDescription(string description)
         {
             if (!nativeCrashReportingEnabled) return;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _setNativeAttribute("BugSplatDescription", description);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetUserDescription(description);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("setAttribute", "BugSplatDescription", description);
-#endif
+            NativeCrashReporter.SetDescription(description);
         }
 
         /// <summary>
-        /// Show or hide the BugSplat crash dialog when a native crash occurs on Windows.
-        /// Defaults to shown. Windows only; no-op on other platforms.
+        /// Show or hide the BugSplat crash dialog when a native crash occurs on desktop platforms.
+        /// Defaults to the upload policy the instance was constructed with. No-op on mobile, where
+        /// there is no dialog at crash time.
         /// </summary>
-        public void SetWindowsCrashDialogEnabled(bool show)
+        public void SetCrashDialogEnabled(bool show)
         {
             if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetQuietMode(show ? 0 : 1);
-#endif
+            NativeCrashReporter.SetQuietMode(!show);
         }
 
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
         private void ReportWindowsWerStatus()
         {
-            try
-            {
-                windowsWerEnabled = BugSplat_IsWerEnabled() == 1;
-            }
-            catch (EntryPointNotFoundException)
-            {
-                // BugSplat.dll predates the BugSplat_IsWerEnabled export (added in 8.1.0).
-                windowsWerEnabled = false;
-            }
-
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (windowsWerEnabled) return;
 
             var werDll = Path.Combine(
@@ -962,7 +807,7 @@ namespace BugSplatUnity
             var message =
                 "BugSplat: Windows Error Reporting is not armed, so fail-fast crashes — stack buffer " +
                 "overrun (0xC0000409), heap corruption (0xC0000374), and __fastfail — will not be " +
-                $"reported. They bypass BugSplat's crash handler entirely. To arm it, \"{werDll}\" must " +
+                $"reported. They bypass every in-process crash handler. To arm it, \"{werDll}\" must " +
                 "exist and be named by a REG_DWORD value under HKLM\\SOFTWARE\\Microsoft\\Windows\\" +
                 "Windows Error Reporting\\RuntimeExceptionHelperModules, which requires administrator " +
                 "rights. Your installer should add that value and remove it on uninstall; for local " +
@@ -979,29 +824,17 @@ namespace BugSplatUnity
             {
                 Debug.Log(message);
             }
-        }
-#endif
-
-        /// <summary>
-        /// Set the native hang detection timeout in milliseconds on Windows. 0 disables hang detection (default).
-        /// When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a
-        /// timeout longer than your longest expected frame — long frames such as loading screens are otherwise
-        /// falsely reported as hangs. Windows only; no-op on other platforms.
-        /// </summary>
-        public void SetWindowsHangDetectionTimeout(int ms)
-        {
-            if (!nativeCrashReportingEnabled) return;
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_SetHangDetectionTimeout(ms);
 #endif
         }
 
         /// <summary>
-        /// Attach a log file to native crash reports. The file is read and included when a crash is uploaded.
-        /// Attaching is additive and idempotent: a path that is already attached is ignored, and attaching a
-        /// file never displaces one attached earlier — including the Player.log that CapturePlayerLog manages.
-        /// Paths are resolved to full paths before they are compared, so the same file named two ways is
-        /// attached once. Supported on Windows, macOS, iOS, and Android. Safe to call from any thread.
+        /// Attach a log file to native crash reports. The file is copied into the report by the
+        /// monitor right after the dump, so it can be attached before anything has written to it,
+        /// and attaching at any point in the session counts. Attaching is additive and idempotent: a
+        /// path that is already attached is ignored, and attaching a file never displaces one attached
+        /// earlier — including the Player.log that CapturePlayerLog manages. Paths are resolved to
+        /// full paths before they are compared, so the same file named two ways is attached once.
+        /// Safe to call from any thread.
         /// </summary>
         public void AttachNativeLogFile(string path)
         {
@@ -1015,7 +848,7 @@ namespace BugSplatUnity
                 if (IndexOfNativeAttachment(fullPath) >= 0) return;
 
                 nativeAttachmentPaths.Add(fullPath);
-                AddNativeAttachment(fullPath);
+                NativeCrashReporter.AddAttachment(fullPath);
             }
         }
 
@@ -1039,12 +872,14 @@ namespace BugSplatUnity
                 // from the path this caller supplied.
                 var attachedPath = nativeAttachmentPaths[index];
                 nativeAttachmentPaths.RemoveAt(index);
-                RemoveNativeAttachment(attachedPath);
+                NativeCrashReporter.RemoveAttachment(attachedPath);
             }
         }
 
         private void SetNativePlayerLogAttachment(bool attach)
         {
+            if (consoleLogPath == null) return;
+
             if (attach)
             {
                 AttachNativeLogFile(consoleLogPath);
@@ -1082,130 +917,5 @@ namespace BugSplatUnity
                 return null;
             }
         }
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        /// <summary>
-        /// Calls a static method on com.bugsplat.android.BugSplat, logging instead of throwing when the
-        /// bundled AAR lacks it. Every Android call after init goes through here so a mismatched AAR
-        /// degrades to missing data on a report rather than an exception in the game.
-        /// </summary>
-        private static void CallAndroid(string method, params object[] args)
-        {
-            try
-            {
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic(method, args);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
-            }
-        }
-#endif
-
-        private void AddNativeAttachment(string path)
-        {
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _attachNativeLogFile(path);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_AddAttachment(path);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            // CreateFromOptions attaches at startup, so an AAR without this method would otherwise
-            // take the game down on launch; CallAndroid turns that into a warning.
-            CallAndroid("addAttachment", path);
-#endif
-        }
-
-        private void RemoveNativeAttachment(string path)
-        {
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-            _detachNativeLogFile(path);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            BugSplat_RemoveAttachment(path);
-#elif UNITY_ANDROID && !UNITY_EDITOR
-            CallAndroid("removeAttachment", path);
-#endif
-        }
-
-#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-        // Both Apple bridges now export identical symbols with identical signatures.
-        [DllImport("__Internal")]
-        static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport, float hangDetectionThresholdSeconds);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeAttribute(string key, string value);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeUser(string user);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeEmail(string email);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeNotes(string notes);
-
-        [DllImport("__Internal")]
-        static extern void _setNativeKey(string key);
-
-        [DllImport("__Internal")]
-        static extern void _attachNativeLogFile(string path);
-
-#if UNITY_STANDALONE_OSX
-        // macOS bridge only: the Player-prev.log substitution lives there.
-        [DllImport("__Internal")]
-        static extern void _setNativePlayerLogPath(string path);
-#endif
-
-        [DllImport("__Internal")]
-        static extern void _detachNativeLogFile(string path);
-
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
-        const string BugSplatDll = "BugSplat";
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern int BugSplat_Init(string database, string application, string version);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetKey(string key);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetUser(string user);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetEmail(string email);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetUserDescription(string description);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetNotes(string notes);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetAttribute(string key, string value);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern int BugSplat_AddAttachment(string path);
-
-        [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        static extern int BugSplat_RemoveAttachment(string path);
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetQuietMode(int quiet);
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetHangDetectionTimeout(int ms);
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetCrashCompletionBehavior(int behavior);
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern void BugSplat_SetCrashType(int crashTypeId);
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern int BugSplat_PostAllCrashesAsync();
-
-        [DllImport(BugSplatDll, CallingConvention = CallingConvention.Cdecl)]
-        static extern int BugSplat_IsWerEnabled();
-#endif
     }
 }

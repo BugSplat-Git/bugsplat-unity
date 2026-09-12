@@ -15,7 +15,7 @@ namespace BugSplatUnity.RuntimeTests
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK);
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(response);
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             HttpResponseMessage callbackResult = null;
@@ -39,7 +39,7 @@ namespace BugSplatUnity.RuntimeTests
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK);
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(response);
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             var options = new ReportPostOptions
@@ -67,7 +67,7 @@ namespace BugSplatUnity.RuntimeTests
         public IEnumerator PostFeedback_NullTitle_ShouldLogErrorAndInvokeCallbackWithNull()
         {
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(new HttpResponseMessage());
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             HttpResponseMessage callbackResult = new HttpResponseMessage();
@@ -82,7 +82,7 @@ namespace BugSplatUnity.RuntimeTests
         public IEnumerator PostFeedback_EmptyTitle_ShouldLogErrorAndInvokeCallbackWithNull()
         {
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(new HttpResponseMessage());
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             HttpResponseMessage callbackResult = new HttpResponseMessage();
@@ -96,7 +96,7 @@ namespace BugSplatUnity.RuntimeTests
         [UnityTest]
         public IEnumerator PostFeedback_NullFeedbackClient_ShouldLogErrorAndInvokeCallbackWithNull()
         {
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = null;
 
             HttpResponseMessage callbackResult = new HttpResponseMessage();
@@ -112,7 +112,7 @@ namespace BugSplatUnity.RuntimeTests
             var tcs = new TaskCompletionSource<HttpResponseMessage>();
             tcs.SetException(new System.Exception("network failure"));
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(tcs.Task);
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             HttpResponseMessage callbackResult = new HttpResponseMessage();
@@ -128,7 +128,7 @@ namespace BugSplatUnity.RuntimeTests
             var tcs = new TaskCompletionSource<HttpResponseMessage>();
             tcs.SetCanceled();
             var fakeFeedbackClient = new FakeDotNetFeedbackClient(tcs.Task);
-            var sut = new BugSplat("database", "application", "version", false, false);
+            var sut = new BugSplat("database", "application", "version");
             sut.feedbackClient = fakeFeedbackClient;
 
             HttpResponseMessage callbackResult = new HttpResponseMessage();

@@ -80,6 +80,10 @@ namespace BugSplatUnity.Runtime.Manager
 
 		private void Update()
 		{
+			// One call per frame keeps the native hang detector quiet; it is a no-op while hang
+			// detection is off or native crash reporting is not running.
+			bugsplatRef.BugSplat.Heartbeat();
+
 			if (backgroundLogMessages == null)
 			{
 				return;
