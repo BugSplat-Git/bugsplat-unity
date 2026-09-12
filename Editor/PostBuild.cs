@@ -39,7 +39,7 @@ namespace BugSplatUnity.Editor
 		const string SymUploaderLinux = "symbol-upload-linux";
 
 		// The desktop runtime, per platform. Directories are copied recursively.
-		static readonly string[] WindowsRuntimeFiles = { "BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll", "theme" };
+		static readonly string[] WindowsRuntimeFiles = { "BugSplatMonitor.exe", "BugSplatReporter.exe", "theme" };
 		static readonly string[] MacRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter.app", "theme" };
 		static readonly string[] LinuxRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter", "theme" };
 
@@ -252,12 +252,45 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// Next to the executable: the first place the SDK looks, and where BugSplatWer.dll has
-			// to be for the WER registry value to name a stable path.
-			if (CopyRuntime("Windows", arch, WindowsRuntimeFiles, buildDir, $"Windows {arch}"))
+			// Monitor, reporter and theme go next to the executable, the first place the SDK looks.
+			// BugSplatWer.dll goes next to BugSplat.dll: the SDK registers <library dir>/BugSplatWer.dll
+			// with Windows Error Reporting, and Unity places the library under <Game>_Data/Plugins.
+			var copied = CopyRuntime("Windows", arch, WindowsRuntimeFiles, buildDir, $"Windows {arch}");
+			var pluginDir = FindWindowsPluginDirectory(pathToBuiltProject);
+			if (pluginDir == null)
 			{
-				Debug.Log($"BugSplat. Copied the Windows native runtime ({arch}) next to the built executable. Ship BugSplatMonitor.exe, BugSplatReporter.exe, BugSplatWer.dll and theme/ with your game.");
+				Debug.LogError("BugSplat. Could not find BugSplat.dll under the player's Plugins folder, so BugSplatWer.dll was not placed. Fail-fast crashes will not be reported.");
+				copied = false;
 			}
+			else
+			{
+				copied &= CopyRuntime("Windows", arch, new[] { "BugSplatWer.dll" }, pluginDir, $"Windows {arch}");
+			}
+
+			if (copied)
+			{
+				Debug.Log($"BugSplat. Copied the Windows native runtime ({arch}): BugSplatMonitor.exe, BugSplatReporter.exe and theme/ next to the executable, BugSplatWer.dll next to BugSplat.dll in {pluginDir}. Ship all of them with your game.");
+			}
+		}
+
+		/// <summary>
+		/// The folder Unity placed BugSplat.dll in: &lt;Game&gt;_Data/Plugins/x86_64 (or x86 / ARM64), searched rather
+		/// than assumed because the architecture folder name is Unity's to choose.
+		/// </summary>
+		internal static string FindWindowsPluginDirectory(string pathToBuiltProject)
+		{
+			var buildDir = Path.GetDirectoryName(pathToBuiltProject);
+			var dataDir = Path.Combine(buildDir ?? string.Empty, Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data");
+			var pluginsDir = Path.Combine(dataDir, "Plugins");
+			if (!Directory.Exists(pluginsDir))
+				return null;
+
+			foreach (var candidate in Directory.GetFiles(pluginsDir, "BugSplat.dll", SearchOption.AllDirectories))
+			{
+				return Path.GetDirectoryName(candidate);
+			}
+
+			return null;
 		}
 
 		private static void PostProcessLinux(string pathToBuiltProject, BugSplatOptions options)

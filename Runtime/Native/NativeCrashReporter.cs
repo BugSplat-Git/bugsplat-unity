@@ -48,6 +48,10 @@ namespace BugSplatUnity.Runtime.Native
 
 		public static bool IsInitialized { get; private set; }
 
+		// SystemInfo is main-thread only and structured reports post from a worker thread, so the
+		// OS string is read once here, on the thread that calls Initialize.
+		private static string operatingSystem = string.Empty;
+
 		/// <summary>The bugsplat-native version string, once initialized.</summary>
 		public static string Version { get; private set; } = string.Empty;
 
@@ -133,6 +137,7 @@ namespace BugSplatUnity.Runtime.Native
 
 				IsInitialized = true;
 				Version = BugSplatNative.Utf8(BugSplatNative.bugsplat_version_string()) ?? string.Empty;
+				try { operatingSystem = SystemInfo.operatingSystem ?? string.Empty; } catch (Exception) { operatingSystem = string.Empty; }
 				LastError = string.Empty;
 				return true;
 			}
@@ -270,7 +275,7 @@ namespace BugSplatUnity.Runtime.Native
 				r = BugSplatNative.bugsplat_report_new((int)format);
 				if (r == IntPtr.Zero) return new NativeUploadResult { Result = BugSplatNative.Result.Internal };
 
-				BugSplatNative.bugsplat_report_set_platform(r, "Unity", SystemInfo.operatingSystem ?? string.Empty);
+				BugSplatNative.bugsplat_report_set_platform(r, "Unity", operatingSystem);
 				BugSplatNative.bugsplat_report_set_exception(r, exceptionType ?? "Exception", message ?? string.Empty);
 				var thread = BugSplatNative.bugsplat_report_add_thread(r, "main", 1);
 				if (frames == null || frames.Count == 0)

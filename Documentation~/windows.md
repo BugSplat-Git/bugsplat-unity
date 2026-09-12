@@ -9,7 +9,7 @@ Native Windows crash reporting comes from [bugsplat-native](native.md): an out-o
 - Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
 - `Player.log` is attached to native crash reports when `CapturePlayerLog` is enabled. Setting the `CapturePlayerLog` property at runtime adds or removes the attachment.
 - The BugSplat crash dialog is shown by default (`UploadPolicy.Dialog`). Choose `Quiet` to send reports silently, or call `bugsplat.SetCrashDialogEnabled(false)` at runtime.
-- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `BugSplatWer.dll` and the `theme/` folder next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
+- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatReporter.exe` and the `theme/` folder next to your game's executable, and `BugSplatWer.dll` next to `BugSplat.dll` under `<Game>_Data/Plugins/x86_64/`. These files are required for crash reporting and must be shipped with your game.
 - Fail-fast crashes — stack buffer overruns and `__fastfail` — bypass every in-process crash handler and need one extra install-time step. See [Windows Error Reporting](#windows-error-reporting). Heap corruption (`0xC0000374`) is caught in process by bugsplat-native's vectored handler and needs nothing extra.
 - Managed exceptions post through the same SDK as structured reports; see [Native crash reporting](native.md).
 
@@ -32,7 +32,7 @@ The post-build step uploads `.pdb`, `.dll` and `.exe` files from your build fold
 Stack buffer overruns (`0xC0000409`) and `__fastfail` terminate the process through Windows Error Reporting without ever unwinding to an exception filter, so no in-process handler can see them. Windows hands them to `BugSplatWer.dll` instead — but only when the DLL's full path is named by a `REG_DWORD` value under `HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules`, which lives in HKLM and needs administrator rights to write. Your installer should add that value at install time and remove it on uninstall:
 
 ```
-reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules" /v "C:\Path\To\Game\BugSplatWer.dll" /t REG_DWORD /d 0
+reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules" /v "C:\Path\To\Game\Game_Data\Plugins\x86_64\BugSplatWer.dll" /t REG_DWORD /d 0
 ```
 
 For local builds use **BugSplat > Windows > Register WER Handler** in the editor, which writes the value elevated for a built player; **Check WER Handler Registration** reports the state. `bugsplat.WindowsWerEnabled` tells you at runtime whether the handler is armed, and init logs what is lost and how to fix it when it is not (a warning in development builds, informational otherwise).

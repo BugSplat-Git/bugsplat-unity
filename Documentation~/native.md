@@ -20,7 +20,7 @@ Version 5.0 of `com.bugsplat.unity` is a C# binding over [bugsplat-native](https
 
 | Platform | Library (Unity places it) | Helpers (post-build copies them) |
 |---|---|---|
-| Windows | `<Game>_Data/Plugins/x86_64/BugSplat.dll` | `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `BugSplatWer.dll`, `theme/` next to `<Game>.exe` |
+| Windows | `<Game>_Data/Plugins/x86_64/BugSplat.dll` | `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `theme/` next to `<Game>.exe`; `BugSplatWer.dll` next to `BugSplat.dll` |
 | macOS | `<Game>.app/Contents/PlugIns/libbugsplat.dylib` | `Contents/Helpers/BugSplatMonitor`, `BugSplatReporter.app`, `theme/` |
 | Linux | `<Game>_Data/Plugins/x86_64/libbugsplat.so` | `BugSplatMonitor`, `BugSplatReporter`, `theme/` next to `<Game>.x86_64` |
 | Android | `lib/<abi>/libbugsplat.so`, `libBugSplatMonitor.so` in the APK | none |

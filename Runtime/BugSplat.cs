@@ -800,9 +800,8 @@ namespace BugSplatUnity
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
             if (windowsWerEnabled) return;
 
-            var werDll = Path.Combine(
-                Path.GetDirectoryName(Application.dataPath) ?? string.Empty,
-                "BugSplatWer.dll");
+            // The SDK registers the DLL next to BugSplat.dll, which Unity places under <Game>_Data/Plugins.
+            var werDll = Path.Combine(Application.dataPath, "Plugins", IntPtr.Size == 8 ? "x86_64" : "x86", "BugSplatWer.dll");
 
             var message =
                 "BugSplat: Windows Error Reporting is not armed, so fail-fast crashes — stack buffer " +
