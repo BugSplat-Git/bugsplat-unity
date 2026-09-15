@@ -81,6 +81,71 @@ namespace Crasher
 			bugsplat = BugSplat.IsInitialized ? BugSplat.Instance : null;
 			RefreshStatus();
 			ApplyAvailability();
+
+			var requested = RequestedScenarioName();
+			if (requested != null)
+			{
+				StartCoroutine(RunRequestedScenario(requested));
+			}
+		}
+
+		/// <summary>The scenario named by -crashScenario on the command line, or null.
+		/// A test harness has to reach these without a person clicking, and so does a
+		/// customer reproducing a report on a build machine.</summary>
+		static string RequestedScenarioName()
+		{
+			var args = Environment.GetCommandLineArgs();
+			for (int i = 0; i < args.Length - 1; i++)
+			{
+				if (string.Equals(args[i], "-crashScenario", StringComparison.OrdinalIgnoreCase))
+				{
+					return args[i + 1];
+				}
+			}
+			return null;
+		}
+
+		/// <summary>Matches loosely so a shell can name a scenario without quoting: case,
+		/// spaces, dashes and the em-dash in the display names are all ignored.</summary>
+		static string Slug(string name)
+		{
+			if (name == null)
+			{
+				return string.Empty;
+			}
+			var slug = new System.Text.StringBuilder(name.Length);
+			foreach (var c in name)
+			{
+				if (char.IsLetterOrDigit(c))
+				{
+					slug.Append(char.ToLowerInvariant(c));
+				}
+			}
+			return slug.ToString();
+		}
+
+		IEnumerator RunRequestedScenario(string requested)
+		{
+			// One frame, so the scene, the UI and BugSplat's own initialization have all
+			// run. Crashing before that tests the harness rather than the SDK.
+			yield return null;
+
+			var wanted = Slug(requested);
+			foreach (var group in CrashScenarios.Groups)
+			{
+				foreach (var scenario in group.Scenarios)
+				{
+					if (Slug(scenario.Name) == wanted)
+					{
+						Debug.Log($"BugSplat sample: -crashScenario matched '{scenario.Name}'");
+						RunScenario(scenario);
+						yield break;
+					}
+				}
+			}
+
+			Debug.LogError($"BugSplat sample: -crashScenario '{requested}' matched no scenario. " +
+				"Names match ignoring case, spaces and punctuation.");
 		}
 
 		public Coroutine Run(IEnumerator routine) => StartCoroutine(routine);
@@ -116,6 +181,14 @@ namespace Crasher
 			}
 
 			Debug.Log($"BugSplat sample: running '{scenario.Name}' — {scenario.Expected}");
+
+			// What the crash is supposed to look like, recorded before it happens, because
+			// nothing can reconstruct the managed half afterwards. This is the dispatch
+			// point: near enough for a scenario that crashes synchronously, and not for one
+			// that crashes on another thread or a frame later, which should call
+			// CrashExpectation.Record itself at the crash site.
+			CrashExpectation.Record(scenario.Name);
+
 			scenario.Run(this);
 		}
 
