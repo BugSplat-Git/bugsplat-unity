@@ -19,7 +19,7 @@ namespace BugSplatUnity.Runtime.Client
 	public class BugSplatOptions : ScriptableObject
 	{
 		[Header("BugSplat Account")]
-		[Tooltip("The name of your BugSplat database. Required.")]
+		[Tooltip("The name of a database in your BugSplat account (sign up at app.bugsplat.com). Required.")]
 		public string Database;
 
 		[Tooltip("The name of your BugSplat application. Defaults to Application.productName if no value is set.")]

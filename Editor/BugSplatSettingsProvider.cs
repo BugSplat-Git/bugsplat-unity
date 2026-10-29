@@ -14,6 +14,9 @@ namespace BugSplatUnity.Editor
 	internal static class BugSplatSettingsProvider
 	{
 		private const string SettingsPath = "Project/BugSplat";
+		private const string DemoDatabase = "fred";
+		private const string SignUpUrl = "https://app.bugsplat.com/v2/sign-up";
+		private const string LogInUrl = "https://app.bugsplat.com/cognito/login";
 
 		private static UnityEditor.Editor optionsEditor;
 
@@ -122,8 +125,18 @@ namespace BugSplatUnity.Editor
 			if (string.IsNullOrEmpty(options.Database))
 			{
 				EditorGUILayout.HelpBox(
-					"Database is empty, so nothing can be reported. A release build fails; a development build only warns. Enter the name of your BugSplat database below, or uncheck Enabled to leave BugSplat out of this project for now.",
+					"Database is empty, so nothing can be reported. A release build fails; a development build only warns. Sign up for BugSplat, then enter the name of a database from your account below, or uncheck Enabled to leave BugSplat out of this project for now.",
 					MessageType.Error);
+				DrawAccountButtons();
+				return;
+			}
+
+			if (string.Equals(options.Database, DemoDatabase, System.StringComparison.OrdinalIgnoreCase))
+			{
+				EditorGUILayout.HelpBox(
+					$"\"{options.Database}\" is BugSplat's shared demo database: anyone with the demo login can see these reports, and they will not appear in your account. Sign up for BugSplat and enter the name of a database from your own account below.",
+					MessageType.Warning);
+				DrawAccountButtons();
 				return;
 			}
 
@@ -138,6 +151,23 @@ namespace BugSplatUnity.Editor
 			EditorGUILayout.HelpBox(
 				$"BugSplat initializes from this asset before the first scene loads and reports to \"{options.Database}\". Nothing needs to be placed in a scene.",
 				MessageType.Info);
+		}
+
+		private static void DrawAccountButtons()
+		{
+			using (new EditorGUILayout.HorizontalScope())
+			{
+				GUILayout.FlexibleSpace();
+				if (GUILayout.Button("Sign Up", GUILayout.Width(90)))
+				{
+					Application.OpenURL(SignUpUrl);
+				}
+
+				if (GUILayout.Button("Log In", GUILayout.Width(90)))
+				{
+					Application.OpenURL(LogInUrl);
+				}
+			}
 		}
 
 		private static void DrawManagerAdvisory()

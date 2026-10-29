@@ -6,7 +6,7 @@ The menu UI is built entirely in code (`CrashScenarioMenu.cs`); the scenario tab
 
 ## Setup
 
-1. Open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and set **Database** to your BugSplat database name. Application and Version are optional and default to your project's product name and version. The sample deliberately ships no options asset of its own, so it reports to your database and never adds a second asset to your project.
+1. [Sign up](https://app.bugsplat.com/v2/sign-up) for BugSplat if you haven't already. Open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and set **Database** to the name of a database from your BugSplat account. Application and Version are optional and default to your project's product name and version. The sample deliberately ships no options asset of its own, so it reports to your database and never adds a second asset to your project.
 2. On that asset, check **Post Exceptions In Editor** so the managed scenarios report from play mode, and every platform under **Upload Debug Symbols For** so player builds produce symbolicated stacks. Both are explained below.
 3. **Import TMP Essentials.** The sample's UI labels use TextMeshPro. If the text is blank, open **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled inside a sample.
 

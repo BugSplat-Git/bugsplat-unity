@@ -22,6 +22,7 @@ BugSplat's `com.bugsplat.unity` package provides crash and exception reporting f
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
 * [Log In](https://app.bugsplat.com/cognito/login) to your account
+* Note the name of the database in your account that this project will report to — you'll enter it in Project Settings
 
 ## 🏗 Installation
 
@@ -55,7 +56,7 @@ To import the sample, click the caret next to **Samples** to reveal the **my-uni
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter your BugSplat database. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
+Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter the name of a database from your BugSplat account. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
@@ -82,7 +83,7 @@ To optimize your game for crash reporting, open `Player Settings` (`Edit > Playe
 
 ## ⚙️ Configuration
 
-Open **Edit > Project Settings > BugSplat** and click **Create**, or select an existing `BugSplatOptions` asset, then enter your BugSplat database. That is the whole setup: BugSplat initializes itself from that asset before the first scene loads, in the editor and in every player, and nothing needs to be placed in a scene.
+Open **Edit > Project Settings > BugSplat** and click **Create**, or select an existing `BugSplatOptions` asset, then enter the name of a database from your BugSplat account ([sign up](https://app.bugsplat.com/v2/sign-up) if you don't have one). That is the whole setup: BugSplat initializes itself from that asset before the first scene loads, in the editor and in every player, and nothing needs to be placed in a scene.
 
 If **Application** or **Version** are left empty, BugSplat defaults them to `Application.productName` and `Application.version`.
 
