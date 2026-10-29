@@ -55,7 +55,7 @@ To import the sample, click the caret next to **Samples** to reveal the **my-uni
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, open **Edit > Project Settings > BugSplat**. The sample's `BugSplatOptions` asset (under `Samples > BugSplat > Version > my-unity-crasher`) is selected automatically when it is the only one in the project — otherwise pick it — and replace the database value with your BugSplat database.
+Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter your BugSplat database. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
