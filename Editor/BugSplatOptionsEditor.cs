@@ -9,7 +9,7 @@ namespace BugSplatUnity.Editor
     {
         private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
         private const string integrationsURLFormat = "https://app.bugsplat.com/v2/settings/database/integrations{0}";
-        private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
+        private const string integrationsText = "A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
         private const string hangDialogConflictFormat = "Auto-submit is off for {0} fatal hang reports but still on for {0} crash reports, so hangs will keep uploading without asking. Turn off auto-submit for {0} crash reports as well to be prompted.";
@@ -31,11 +31,12 @@ namespace BugSplatUnity.Editor
                 : string.Empty;
             var integrationsURL = string.Format(integrationsURLFormat, queryString);
 
-            var style = new GUIStyle()
+            var labelMargin = EditorStyles.label.margin;
+            var style = new GUIStyle(EditorStyles.label)
             {
                 richText = true,
                 wordWrap = true,
-                margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom)
+                margin = new RectOffset(labelMargin.left, labelMargin.right, integrationsPaddingTop, integrationsPaddingBottom)
             };
 
             if (GUILayout.Button(integrationsText, style))
@@ -69,6 +70,11 @@ namespace BugSplatUnity.Editor
             while (iterator.NextVisible(traverseChildren))
             {
                 traverseChildren = false;
+
+                if (iterator.propertyPath == "m_Script")
+                {
+                    continue;
+                }
 
                 // The credentials notice belongs next to the symbol upload toggles it is about,
                 // not stranded at the bottom of the asset. Windows is the first platform section,

@@ -81,7 +81,33 @@ namespace BugSplatUnity.Editor
 
 			EditorGUILayout.Space();
 			UnityEditor.Editor.CreateCachedEditor(options, null, ref optionsEditor);
-			optionsEditor.OnInspectorGUI();
+
+			// Project Settings pages get a fixed 150px label column, not the Inspector's
+			// proportional one, which truncates most of the option names.
+			var labelWidth = EditorGUIUtility.labelWidth;
+			EditorGUIUtility.labelWidth = LabelWidthFor(optionsEditor.serializedObject);
+			try
+			{
+				optionsEditor.OnInspectorGUI();
+			}
+			finally
+			{
+				EditorGUIUtility.labelWidth = labelWidth;
+			}
+		}
+
+		private static float LabelWidthFor(SerializedObject serializedObject)
+		{
+			var widest = 0f;
+			var iterator = serializedObject.GetIterator();
+			var enterChildren = true;
+			while (iterator.NextVisible(enterChildren))
+			{
+				enterChildren = false;
+				widest = Mathf.Max(widest, EditorStyles.label.CalcSize(new GUIContent(iterator.displayName)).x);
+			}
+
+			return Mathf.Clamp(widest + 20f, 150f, EditorGUIUtility.currentViewWidth * 0.5f);
 		}
 
 		private static void DrawStatus(BugSplatOptions options)
