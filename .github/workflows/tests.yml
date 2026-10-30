@@ -82,7 +82,8 @@ jobs:
             Library-${{ matrix.buildTarget }}-
 
       - id: tests
-        uses: game-ci/unity-test-runner@v4
+        # v4.4.0+ runs game-ci/cli, which needs the workspace root to be a git checkout; ours is in package/.
+        uses: game-ci/unity-test-runner@fa6ced25861c16ef56187828c43f76d00df43a23 # v4.3.2
         env:
           # Personal licenses use UNITY_LICENSE; Pro/Plus use the email/password/serial trio.
           # Set whichever pair applies — GameCI activates based on which are present.

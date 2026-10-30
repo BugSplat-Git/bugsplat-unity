@@ -22,6 +22,7 @@ BugSplat's `com.bugsplat.unity` package provides crash and exception reporting f
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
 * [Log In](https://app.bugsplat.com/cognito/login) to your account
+* Note the name of the database in your account that this project will report to — you'll enter it in Project Settings
 
 ## 🏗 Installation
 
@@ -55,7 +56,7 @@ To import the sample, click the caret next to **Samples** to reveal the **my-uni
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, select `Samples > BugSplat > Version > my-unity-crasher` to reveal the **BugSplatOptions** object. Click BugSplatOptions and replace the database value with your BugSplat database.
+Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter the name of a database from your BugSplat account. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
@@ -82,23 +83,28 @@ To optimize your game for crash reporting, open `Player Settings` (`Edit > Playe
 
 ## ⚙️ Configuration
 
-BugSplat's Unity integration is flexible and can be used in various ways. The easiest way to get started is to attach the `BugSplatManager` MonoBehaviour to a GameObject.
+Open **Edit > Project Settings > BugSplat** and click **Create**, or select an existing `BugSplatOptions` asset, then enter the name of a database from your BugSplat account ([sign up](https://app.bugsplat.com/v2/sign-up) if you don't have one). That is the whole setup: BugSplat initializes itself from that asset before the first scene loads, in the editor and in every player, and nothing needs to be placed in a scene.
 
-![BugSplat Manager](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ef5240a6-9676-43c6-a482-51216cb34401)
+If **Application** or **Version** are left empty, BugSplat defaults them to `Application.productName` and `Application.version`.
 
-`BugSplatManager` needs to be initialized with a `BugSplatOptions` serialized object. A new instance of `BugSplatOptions` can be created through the Asset Create menu.
+Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **Post Exceptions In Editor** on the options asset (or set `BugSplat.Instance.PostExceptionsInEditor = true` in code) while you verify your integration.
 
-![BugSplat Create Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec402d1-4b8a-49cf-96e9-00d951717771)
+A **release** build fails if no options asset is selected or its database is empty, so a misconfigured project cannot ship a player that silently reports nothing. A **development** build only warns, so iterating never requires BugSplat to be filled in first.
 
-Configure fields as appropriate. Note that if Application or Version are left empty, `BugSplat` will default these values to `Application.productName` and `Application.version`, respectively.
+Not using BugSplat yet, or only in QA and release? Uncheck **Enabled** on the asset, or define `BUGSPLAT_DISABLED` for the build targets you want it off for. Both mean no initialization and no build validation — see [Turning BugSplat on and off](Documentation~/api.md#turning-bugsplat-on-and-off).
 
-Exceptions thrown in the editor are not uploaded by default, so play mode errors never reach the database you ship with. Check **PostExceptionsInEditor** on the options asset (or set `bugsplat.PostExceptionsInEditor = true` in code) while you verify your integration.
+Your code reaches the client through `BugSplat.Instance`, which is ready inside any `Awake`:
 
-![BugSplat Options](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/be7ee217-9170-48b4-b780-fcb47e221f77)
+```cs
+BugSplat.Instance.Attributes["level"] = currentLevel;
+```
 
-Finally, provide a valid `BugSplatOptions` to `BugSplatManager`. 
+To start BugSplat yourself — after a consent screen, for example — turn off **Initialize Automatically** on the asset and call `BugSplat.Initialize(options)` when you are ready.
 
-![BugSplat Manager Configured](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/67bed7b5-e2a9-4f52-b5bb-bdc8eebd35a0)
+Scripts, CI, and AI agents can do all of this without the Editor UI: one options asset on disk is enough, and there is a batch-mode command. See [Automation](Documentation~/automation.md).
+
+> [!NOTE]
+> Upgrading from 4.x? A `BugSplatManager` left in a scene keeps working but is no longer needed. See [Migrating from 4.x](Documentation~/migrating-from-4x.md).
 
 ## 🧭 Platform Support
 
@@ -114,7 +120,7 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 | Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
-- **Native crashes** require the matching option on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, or `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
+- **Native crashes** are captured by default on Windows, macOS (IL2CPP only), iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
 - **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on macOS, iOS, and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS reports a hang only when the frozen app is force-quit, since nothing on macOS terminates an unresponsive app on its own.
 - **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
 - **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.
@@ -133,9 +139,10 @@ Everything above gets you reporting. These pages cover the rest.
 | [iOS](Documentation~/ios.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
 | [Windows](Documentation~/windows.md) | Native crash reporting, plugin and IL2CPP symbols, hang detection, Windows Error Reporting |
-| [API](Documentation~/api.md) | `BugSplatManager` settings, every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
+| [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
+| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — for scripts, CI, and AI agents |
 
 ## 🧑‍💻 Contributing
 

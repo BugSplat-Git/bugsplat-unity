@@ -15,12 +15,13 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
+[assembly: InternalsVisibleTo("BugSplat.Unity.Editor")]
 namespace BugSplatUnity
 {
     /// <summary>
     /// A BugSplat implementation for Unity crash and exception reporting
     /// </summary>
-    public class BugSplat
+    public partial class BugSplat
     {
         /// <summary>
         /// A list of files to be uploaded every time Post is called
@@ -273,6 +274,14 @@ namespace BugSplatUnity
         public bool WindowsWerEnabled => windowsWerEnabled;
 
         /// <summary>
+        /// True when this player's native crash reporter started. False when the platform's
+        /// UseNativeCrashReporting option is off, when the platform has no native reporter, when it
+        /// failed to start (a macOS Mono player, a missing Android AAR), and always in the editor.
+        /// While false, a native crash terminates the player without a report.
+        /// </summary>
+        public bool NativeCrashReportingEnabled => nativeCrashReportingEnabled;
+
+        /// <summary>
         /// Post Exceptions and minidump files to BugSplat
         /// </summary>
         /// <param name="database">The BugSplat database for your organization</param>
@@ -448,6 +457,15 @@ namespace BugSplatUnity
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if !ENABLE_IL2CPP
+            // The bridge is an Objective-C source plugin, which Unity compiles into macOS players only
+            // under IL2CPP. Calling it from Mono throws, which would take managed reporting down too.
+            if (useNativeLibMac)
+            {
+                Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+                useNativeLibMac = false;
+            }
+#endif
             if (useNativeLibMac)
             {
                 // The delegate is queried while start processes crash reports left by the previous

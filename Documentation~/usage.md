@@ -2,14 +2,14 @@
 
 # ⌨️ Usage
 
-If you're using `BugSplatOptions` and `BugSplatManager`, BugSplat automatically configures an `Application.logMessageReceived` handler that will post reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](windows.md) from native crashes.
+BugSplat initializes itself from the options asset selected in **Edit > Project Settings > BugSplat** and configures an `Application.logMessageReceived` handler that posts reports when it encounters a log message of type `Exception`. You can also extend your BugSplat integration and [customize report metadata](#adding-metadata), [report exceptions in try/catch blocks](#trycatch-reporting), [prevent repeated reports](#preventing-repeated-reports), and [upload windows minidumps](windows.md) from native crashes.
 
 ## Adding Metadata
 
-First, find your instance of `BugSplat`. The following is an example of how to find an instance of `BugSplat` via `BugSplatManager`:
+Your instance of `BugSplat` is `BugSplat.Instance`. It is set before the first scene loads, so it is safe to read in any `Awake`:
 
 ```cs
-var bugsplat = FindAnyObjectByType<BugSplatManager>().BugSplat;
+var bugsplat = BugSplat.Instance;
 ```
 
 You can extend `BugSplat` by setting the following properties:
@@ -31,7 +31,7 @@ You can use the `Notes` field to capture arbitrary data such as system informati
 ```cs
 void Start()
 {
-    bugsplat = FindAnyObjectByType<BugSplatManager>().BugSplat;
+    bugsplat = BugSplat.Instance;
     bugsplat.Notes = GetSystemInfo();
 }
 
@@ -116,7 +116,7 @@ bugsplat.ShouldPostException = (ex) =>
 
 Unity raises `Application.logMessageReceived` only for logs written on the main thread. An unhandled exception on a background thread is written to the player log but never reaches that callback, so BugSplat captures these through `Application.logMessageReceivedThreaded` instead, buffers them, and posts them from the main thread on the next frame.
 
-This is on by default. Uncheck **Capture Exceptions On Background Threads** on your `BugSplatManager` to restore the previous behavior of reporting only main-thread exceptions.
+This is on by default. Uncheck **Capture Exceptions On Background Threads** on your `BugSplatOptions` asset to restore the previous behavior of reporting only main-thread exceptions.
 
 Because the threaded callback also fires for main-thread logs that `logMessageReceived` already delivered, BugSplat ignores anything raised on the main thread there — main-thread exceptions are reported exactly once either way.
 
@@ -126,7 +126,7 @@ At most 64 background exceptions are buffered at a time. A thread failing in a t
 
 A `Task` that faults with nobody awaiting it never writes to the Unity log at all, so neither log callback sees it. BugSplat subscribes to `TaskScheduler.UnobservedTaskException` and posts these through the same main-thread queue as background thread exceptions. Each exception inside the `AggregateException` is reported separately, so unrelated failures land in separate buckets rather than one.
 
-This is on by default. Uncheck **Capture Unobserved Task Exceptions** on your `BugSplatManager` to disable it.
+This is on by default. Uncheck **Capture Unobserved Task Exceptions** on your `BugSplatOptions` asset to disable it.
 
 Two things are worth knowing about the timing. The runtime raises this event only when a garbage collection notices the faulted `Task`, so reports arrive well after the failure and a `Task` that is never collected is never reported. And BugSplat deliberately does **not** call `SetObserved()` on these — marking the exception observed would suppress whatever your project does with it next, and reporting a failure must not change whether that failure happens.
 
