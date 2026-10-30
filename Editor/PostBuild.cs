@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -34,16 +35,14 @@ namespace BugSplatUnity.Editor
 		// without the extension - so the base name is what has to survive into the player.
 		const string LogoFileName = "bugsplat-logo.png";
 
-		const string SymUploaderWindows = "symbol-upload-windows.exe";
-		const string SymUploaderMacOS = "symbol-upload-macos";
-		const string SymUploaderLinux = "symbol-upload-linux";
-
 		internal static string GetSymUploaderName() =>
 			Application.platform switch
 			{
-				RuntimePlatform.WindowsEditor => SymUploaderWindows,
-				RuntimePlatform.OSXEditor => SymUploaderMacOS,
-				RuntimePlatform.LinuxEditor => SymUploaderLinux,
+				RuntimePlatform.WindowsEditor => SymbolUploadRelease.Windows,
+				RuntimePlatform.OSXEditor => RuntimeInformation.OSArchitecture == Architecture.X64
+					? SymbolUploadRelease.MacOSIntel
+					: SymbolUploadRelease.MacOS,
+				RuntimePlatform.LinuxEditor => SymbolUploadRelease.Linux,
 				_ => throw new InvalidOperationException($"BugSplat. Failed to obtain symbol uploader for {Application.platform}")
 			};
 
@@ -55,11 +54,14 @@ namespace BugSplatUnity.Editor
 			var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
 
 			// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
-			// re-extract, so anything we have to download has to land outside the package.
-			return File.Exists(packagePath)
-				? packagePath
-				: Path.GetFullPath(Path.Combine("Temp", uploaderName));
+			// re-extract, so anything we have to download has to land outside the package. A copy in the
+			// package is only used if it is the pinned release: 4.x downloaded uploaders there, so
+			// local and embedded installs can still hold an older, unverified one.
+			return SymbolUploadRelease.IsVerified(packagePath, uploaderName) ? packagePath : GetSymUploaderDownloadPath();
 		}
+
+		static string GetSymUploaderDownloadPath() =>
+			Path.GetFullPath(Path.Combine("Temp", $"symbol-upload-{SymbolUploadRelease.Version}", GetSymUploaderName()));
 
 		/// <summary>
 		/// Upload Asset/Plugin symbol files to BugSplat. 
@@ -537,15 +539,32 @@ namespace BugSplatUnity.Editor
 				$"fi\n" +
 				$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
 				$"if [ \"$(uname -m)\" = \"x86_64\" ]; then\n" +
-				$"    VARIANT=\"symbol-upload-macos-intel\"\n" +
+				$"    VARIANT=\"{SymbolUploadRelease.MacOSIntel}\"\n" +
+				$"    EXPECTED_SHA256=\"{SymbolUploadRelease.GetSha256(SymbolUploadRelease.MacOSIntel)}\"\n" +
 				$"else\n" +
-				$"    VARIANT=\"symbol-upload-macos\"\n" +
+				$"    VARIANT=\"{SymbolUploadRelease.MacOS}\"\n" +
+				$"    EXPECTED_SHA256=\"{SymbolUploadRelease.GetSha256(SymbolUploadRelease.MacOS)}\"\n" +
 				$"fi\n" +
-				$"SYMBOL_UPLOAD=\"${{TMPDIR}}/$VARIANT\"\n" +
-				$"if [ ! -f \"$SYMBOL_UPLOAD\" ]; then\n" +
-				$"    echo \"Downloading $VARIANT...\"\n" +
-				$"    curl -sL -o \"$SYMBOL_UPLOAD\" \"https://app.bugsplat.com/download/$VARIANT\"\n" +
-				$"    chmod +x \"$SYMBOL_UPLOAD\"\n" +
+				$"SYMBOL_UPLOAD=\"${{TMPDIR}}/{SymbolUploadRelease.Version}-$VARIANT\"\n" +
+				$"sha256_of() {{ shasum -a 256 \"$1\" | cut -d ' ' -f 1; }}\n" +
+				$"if [ ! -f \"$SYMBOL_UPLOAD\" ] || [ \"$(sha256_of \"$SYMBOL_UPLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
+				$"    echo \"Downloading $VARIANT {SymbolUploadRelease.Version}...\"\n" +
+				$"    DOWNLOAD=\"$(mktemp \"$SYMBOL_UPLOAD.XXXXXX\")\" || {{ echo \"warning: Could not create a temporary file for $VARIANT. Skipping dSYM upload.\"; exit 0; }}\n" +
+				$"    if ! curl -sfL -o \"$DOWNLOAD\" \"{SymbolUploadRelease.GetDownloadUrl("$VARIANT")}\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"warning: Could not download $VARIANT. Skipping dSYM upload.\"\n" +
+				$"        exit 0\n" +
+				$"    fi\n" +
+				$"    if [ \"$(sha256_of \"$DOWNLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"error: $VARIANT failed its integrity check and was deleted without running. Expected SHA-256 $EXPECTED_SHA256.\"\n" +
+				$"        exit 1\n" +
+				$"    fi\n" +
+				$"    if ! chmod +x \"$DOWNLOAD\" || ! mv -f \"$DOWNLOAD\" \"$SYMBOL_UPLOAD\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"warning: Could not install $VARIANT at $SYMBOL_UPLOAD. Skipping dSYM upload.\"\n" +
+				$"        exit 0\n" +
+				$"    fi\n" +
 				$"fi\n\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
 				$"    --database \"{options.Database}\" \\\n" +
@@ -698,7 +717,8 @@ namespace BugSplatUnity.Editor
 			}
 
 			var symbolUploadPath = GetSymUploaderPath();
-			if (!File.Exists(symbolUploadPath) && !DownloadSymbolUpload(symbolUploadPath))
+			if (!SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
+				&& !DownloadSymbolUpload(symbolUploadPath))
 			{
 				onCompleted(-1);
 				return;
@@ -752,7 +772,8 @@ namespace BugSplatUnity.Editor
 		private static bool DownloadSymbolUpload(string destinationPath)
 		{
 			var variant = Path.GetFileName(destinationPath);
-			var fileUrl = $"https://app.bugsplat.com/download/{variant}";
+			var fileUrl = SymbolUploadRelease.GetDownloadUrl(variant);
+			var partialPath = destinationPath + ".download";
 
 			try
 			{
@@ -760,20 +781,27 @@ namespace BugSplatUnity.Editor
 
 				using (var client = new WebClient())
 				{
-					Debug.Log($"BugSplat. Downloading {variant} to {destinationPath}");
+					Debug.Log($"BugSplat. Downloading {variant} {SymbolUploadRelease.Version} to {destinationPath}");
 
-					client.DownloadFile(fileUrl, destinationPath);
-
-					if (File.Exists(destinationPath))
-					{
-						Debug.Log($"BugSplat. {variant} downloaded successfully to {destinationPath}");
-					}
-					else
-					{
-						Debug.LogError($"BugSplat. Could not download {variant}");
-						return false;
-					}
+					client.DownloadFile(fileUrl, partialPath);
 				}
+
+				var actualSha256 = SymbolUploadRelease.ComputeSha256(partialPath);
+				var expectedSha256 = SymbolUploadRelease.GetSha256(variant);
+				if (!string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
+				{
+					File.Delete(partialPath);
+					Debug.LogError(
+						$"BugSplat. {variant} from {fileUrl} failed its integrity check and was deleted without running. " +
+						$"Expected SHA-256 {expectedSha256}, got {actualSha256}. Skipping symbol upload.");
+					return false;
+				}
+
+				if (File.Exists(destinationPath))
+					File.Delete(destinationPath);
+				File.Move(partialPath, destinationPath);
+
+				Debug.Log($"BugSplat. {variant} downloaded and verified at {destinationPath}");
 			}
 			catch (WebException ex)
 			{

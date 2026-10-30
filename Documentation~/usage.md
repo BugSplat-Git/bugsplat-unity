@@ -64,7 +64,7 @@ catch (Exception ex)
 }
 ```
 
-The default values specified on the instance of `BugSplat` can be overridden in the call to `Post`. Additionally, you can provide a `callback` to `Post` that will be invoked with the result once the upload is complete.
+The default values specified on the instance of `BugSplat` can be overridden in the call to `Post`. Additionally, you can provide a `callback` to `Post` that will be invoked with the result once the upload is complete. `ExceptionReporterPostResult` is in the `BugSplatUnity.Runtime.Reporter` namespace.
 
 ```cs
 var options = new ReportPostOptions()
@@ -78,10 +78,10 @@ var options = new ReportPostOptions()
 
 options.AdditionalAttachments.Add(new FileInfo("/path/to/additional.txt"));
 
-static void callback()
+static void callback(ExceptionReporterPostResult result)
 {
-    Debug.Log($"Exception post callback!");
-};
+    Debug.Log($"Exception post callback! Uploaded: {result.Uploaded}");
+}
 
 StartCoroutine(bugsplat.Post(ex, options, callback));
 ```

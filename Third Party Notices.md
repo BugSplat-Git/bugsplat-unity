@@ -247,8 +247,9 @@ libraries, so the DLL carries no additional third-party code.
 
 ## Tools downloaded at build time (not redistributed)
 
-`Editor/PostBuild.cs` downloads the `symbol-upload` CLI from `https://app.bugsplat.com/download/...`
-when symbol upload is enabled. It is not vendored in this package and is therefore not covered by
+`Editor/PostBuild.cs` downloads the `symbol-upload` CLI from its GitHub release
+(`https://github.com/BugSplat-Git/symbol-upload/releases/download/<version>/...`, pinned with SHA-256
+checksums in `Editor/SymbolUploadRelease.cs`) when symbol upload is enabled. It is not vendored in this package and is therefore not covered by
 this file; it is licensed MIT
 ([BugSplat-Git/symbol-upload](https://github.com/BugSplat-Git/symbol-upload/blob/main/LICENSE)).
 

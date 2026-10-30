@@ -51,21 +51,29 @@ Use the asset options for a project-wide choice and the defines for a per-build-
 | Key | A default key that can be overridden by call to Post.|
 | Notes | A default general purpose field that can be overridden by call to post |
 | User | A default user that can be overridden by call to Post |
+| Attributes | Name/value pairs attached to every report |
 | CaptureEditorLog| Should BugSplat upload Editor.log when Post is called|
 | CapturePlayerLog| Should BugSplat upload Player.log when Post is called. Enabled by default — see [Player.log and privacy](#playerlog-and-privacy) |
+| LogFileMaxSizeMB | Maximum size, in MB, of each log file uploaded with a report. `10` by default |
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to attach to managed reports, and to native crash reports on platforms where native crash reporting is enabled |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP. On by default |
-| UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files** and a Windows editor |
+| UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files**, which only a Windows editor can check; from other editors the upload runs regardless and a warning is logged |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
+| UseNativeCrashReportingForMac | Use native crash reporting (bugsplat-apple) for macOS builds. On by default. Requires IL2CPP; a Mono player logs a warning and uses the .NET handler only |
+| UploadDebugSymbolsForMac | Upload dSYMs to BugSplat for macOS builds. `false` by default |
 | MacAutoSubmitCrashReport | Submit macOS crash reports without asking the user. `false` by default — the convention on desktop, and bugsplat-apple's own macOS default |
 | MacAutoSubmitFatalHangReport | Submit macOS fatal hang reports without asking the user. `true` by default. Needs `MacAutoSubmitCrashReport` off too before a dialog can appear |
 | MacHangDetectionThresholdSeconds | Seconds the macOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
+| UseNativeCrashReportingForIos | Use native crash reporting (bugsplat-apple) for iOS builds. On by default |
+| UploadDebugSymbolsForIos | Add an Xcode build phase that uploads dSYMs to BugSplat. `false` by default |
 | IosAutoSubmitCrashReport | Submit iOS crash reports without asking the user. `true` by default — the convention on mobile, and bugsplat-apple's own iOS default |
 | IosAutoSubmitFatalHangReport | Submit iOS fatal hang reports without asking the user. `true` by default. Needs `IosAutoSubmitCrashReport` off too before a dialog can appear |
 | IosHangDetectionThresholdSeconds | Seconds the iOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
+| UseNativeCrashReportingForAndroid | Use native crash reporting (bugsplat-android) for Android builds. On by default |
+| UploadDebugSymbolsForAndroid | Upload the generated symbols archive to BugSplat for Android builds. `false` by default |
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).
