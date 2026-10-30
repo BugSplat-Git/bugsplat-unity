@@ -106,7 +106,7 @@ The per-platform native crash reporting switches can be turned off here but not 
 
 After initialization, `BugSplat.Instance` exposes `Attributes`, `Attachments`, the capture options and `ShouldPostException`, the `SetNative…` methods for user, email, notes, key, description and attributes on native reports, and the Windows crash dialog and hang detection setters.
 
-To turn BugSplat **off** rather than hand over initialization, define **`BUGSPLAT_DISABLED`** instead — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
+To turn BugSplat **off**, define **`BUGSPLAT_DISABLED`** — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
 
 ## What you will see when it is wrong
 
