@@ -33,7 +33,7 @@ Shipped in:
 - `Runtime/Plugins/macOS/BugSplat-macOS.dylib`
 
 Built from [BugSplat-Git/bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), release
-**[3.6.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.6.0)** — both payloads are the
+**[3.8.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.8.0)** — both payloads are the
 `BugSplat.xcframework.zip` and `BugSplat-macOS.dylib` assets from that release, vendored unmodified.
 The component list below comes from that release's `LICENSE.txt`, corroborated by the source paths and
 symbols embedded in the shipped binaries (`Vendor/PLCrashReporter/Source/*`,

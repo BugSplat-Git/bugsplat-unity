@@ -6,23 +6,31 @@
 	<dict>
 		<key>Headers/BugSplat.h</key>
 		<data>
-		1rnLd6d901JtrHy4ANStmeIZQ9Q=
+		ZPltY5lI1lUb/K3FwPGCaqcu/pU=
 		</data>
 		<key>Headers/BugSplatAttachment.h</key>
 		<data>
 		lK7Gx8VGbIz0yqEG7jQup7cQ4w0=
 		</data>
+		<key>Headers/BugSplatCrashInfo.h</key>
+		<data>
+		WmLzv9yJBGDXDoES/+F6BQeNrb0=
+		</data>
 		<key>Headers/BugSplatDelegate.h</key>
 		<data>
-		qdcOkYfUPPaUFtzKqpa+MAq4Kf8=
+		8cI6qPYXszIZMien0VhccRhfMDY=
 		</data>
 		<key>Headers/BugSplatFeedbackResult.h</key>
 		<data>
-		UUlw5bbnHul/KToqqpq/LmwHq5I=
+		3BS/TaLtfq93yHm8JiW5YJrSK60=
+		</data>
+		<key>Headers/BugSplatReportResult.h</key>
+		<data>
+		XsDwVlAJIYyTlj3CD+cMqCPFhWY=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		2MU0vuoT/92HMPgYTq2Sjkyv41I=
+		YJQfc0eopthc2fzoP7515xg81GA=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -39,7 +47,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			EgvaWijZiJ3h02qkExg8PrrJjdRwTJqoXpF6Q6TqpMU=
+			OmjJlbStWQgTVrZ9ywRfEElRMJTcRK81skcnS1W+K80=
 			</data>
 		</dict>
 		<key>Headers/BugSplatAttachment.h</key>
@@ -49,18 +57,32 @@
 			dmWQYi0M97SjoSftdqUw5/aiOw4DPMegMKoDkzA25/c=
 			</data>
 		</dict>
+		<key>Headers/BugSplatCrashInfo.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			EF3BYvQwTUfe+/tLrYg5QzO8rZsPwgKJ9SA6Ik8fH9c=
+			</data>
+		</dict>
 		<key>Headers/BugSplatDelegate.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			45e2ly+ShhG2fyjxMJ26R1zF3trPCQ21gE48a8NY87o=
+			ot+6KYS9XcHT9ZGjWlWSsVrslmbfSwXoa+rL8tmF7aU=
 			</data>
 		</dict>
 		<key>Headers/BugSplatFeedbackResult.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			NwEVbndGqNlurf6DK9tbccvjXWFtgNszN2fYheZBKEw=
+			h6HH04kCnlvLfHl4czB+lzFf2KoRfyfjAOxciJQNGCY=
+			</data>
+		</dict>
+		<key>Headers/BugSplatReportResult.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			XZK6J6xj/K3G+DAaZZGnS3Budq+41QJC3RaQIKwJhQY=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>

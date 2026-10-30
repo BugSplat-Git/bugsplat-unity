@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class BugSplat;
 @class BugSplatAttachment;
+@class BugSplatCrashInfo;
 
 @protocol BugSplatDelegate <NSObject>
 
@@ -34,6 +35,46 @@ NS_ASSUME_NONNULL_BEGIN
  *        session tracking. Use it to look up log data you recorded for that session.
  */
 - (nullable NSString *)applicationLogForBugSplat:(BugSplat *)bugSplat sessionID:(nullable NSUUID *)sessionID;
+
+/** Invoked before a crash or fatal hang report is uploaded, to decide whether it should be.
+
+ Return NO to discard the report instead of sending it. Nothing is uploaded, no crash dialog
+ or alert is shown, and the report is deleted from disk. Return YES, or do not implement this
+ method at all, and the report is sent exactly as it is today.
+
+ This is a pre-upload hook, not a crash-time one. Crashes are recorded inside a signal handler
+ where almost no work is safe, so the report is written to disk and this method is called on
+ the NEXT launch, when the report is about to be sent. The delegate must therefore be set
+ before `-start`, which is when pending reports are processed.
+
+ It is invoked once per delivery attempt rather than once per report. A report whose upload
+ fails is kept on disk and retried on a later launch, and this method is consulted again each
+ time - so an app that changes its mind between launches has the new answer honoured. Anything
+ you record from here must therefore tolerate being called more than once for the same report;
+ deduplicate on `BugSplatCrashInfo.sessionID` if you are counting crashes.
+
+ It is also consulted for reports already marked to skip the crash dialog; check
+ `BugSplatCrashInfo.userSubmitted` and return YES if that prior decision should win. Note that
+ flag is the persisted bypass-dialog state rather than proof of consent - an auto-submitted
+ fatal hang carries it without any dialog having been shown.
+
+ Only crash and fatal hang reports pass through here. `-postException:`, `-postError:` and
+ `-postFeedback:` upload directly, because they are explicit calls the app chose to make.
+
+ One use for this is recording that a crash happened without reporting it - incrementing a
+ counter in your own analytics, or writing to an internal log, while returning NO so nothing
+ leaves the device. Key the record on the sessionID so a retried report is not counted twice:
+
+     - (BOOL)bugSplat:(BugSplat *)bugSplat shouldSendCrashReport:(BugSplatCrashInfo *)crashInfo {
+         [self.analytics recordCrashOnceForSession:crashInfo.sessionID];
+         return !self.crashReportingDisabled;
+     }
+
+ @param bugSplat The `BugSplat` instance invoking this delegate
+ @param crashInfo Describes the report that is about to be sent
+ @return YES to send the report, NO to discard it
+ */
+- (BOOL)bugSplat:(BugSplat *)bugSplat shouldSendCrashReport:(BugSplatCrashInfo *)crashInfo;
 
 /** Invoked right before sending crash reports will start
 
