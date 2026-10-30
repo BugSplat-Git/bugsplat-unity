@@ -99,7 +99,7 @@ Your code reaches the client through `BugSplat.Instance`, which is ready inside 
 BugSplat.Instance.Attributes["level"] = currentLevel;
 ```
 
-To start BugSplat yourself — after a consent screen, for example — turn off **Initialize Automatically** on the asset and call `BugSplat.Initialize(options)` when you are ready.
+To start BugSplat yourself — after a consent screen, for example — turn off **Initialize Automatically** on the asset and call `BugSplat.Initialize()` when you are ready. To change values at runtime, such as a database chosen per environment, pass them in: `BugSplat.Initialize(o => o.Database = database)` initializes from a copy of the asset with your changes applied.
 
 Scripts, CI, and AI agents can do all of this without the Editor UI: one options asset on disk is enough, and there is a batch-mode command. See [Automation](Documentation~/automation.md).
 

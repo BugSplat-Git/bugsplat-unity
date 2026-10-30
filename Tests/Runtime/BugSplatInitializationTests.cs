@@ -100,7 +100,7 @@ namespace BugSplatUnity.RuntimeTests
 		[Test]
 		public void Initialize_WithNullOptions_Throws()
 		{
-			Assert.Throws<ArgumentNullException>(() => BugSplat.Initialize(null));
+			Assert.Throws<ArgumentNullException>(() => BugSplat.Initialize((BugSplatOptions)null));
 			Assert.IsFalse(BugSplat.IsInitialized);
 		}
 
@@ -319,6 +319,52 @@ namespace BugSplatUnity.RuntimeTests
 			{
 				ClearSelection();
 			}
+		}
+
+		[Test]
+		public void Initialize_WithNoArguments_InitializesFromTheSelectedAsset()
+		{
+			options.CaptureScreenshots = true;
+			SelectAsSavedAsset(options);
+			try
+			{
+				var bugSplat = BugSplat.Initialize();
+
+				Assert.AreSame(bugSplat, BugSplat.Instance);
+				Assert.IsTrue(bugSplat.CaptureScreenshots);
+			}
+			finally
+			{
+				ClearSelection();
+			}
+		}
+
+		[Test]
+		public void Initialize_WithConfigure_ChangesACopyAndLeavesTheAssetAlone()
+		{
+			SelectAsSavedAsset(options);
+			try
+			{
+				BugSplat.Initialize(o => o.CaptureScreenshots = true);
+
+				Assert.IsTrue(BugSplat.Instance.CaptureScreenshots);
+				Assert.IsFalse(options.CaptureScreenshots);
+			}
+			finally
+			{
+				ClearSelection();
+			}
+		}
+
+		[Test]
+		public void Initialize_WithNoArguments_WhenNothingIsSelected_WarnsAndReturnsNull()
+		{
+			UnityEditor.EditorBuildSettings.RemoveConfigObject(BugSplatOptions.ConfigObjectKey);
+
+			LogAssert.Expect(LogType.Warning, new Regex("not configured"));
+
+			Assert.IsNull(BugSplat.Initialize());
+			Assert.IsFalse(BugSplat.IsInitialized);
 		}
 
 		[Test]

@@ -72,41 +72,13 @@ namespace BugSplatUnity.Editor
 		public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
 		{
 			var options = GetBugSplatOptions();
-			if (options != null)
+
+			if (options == null)
 			{
-				PostProcess(target, pathToBuiltProject, options);
+				Debug.LogWarning("BugSplat: no BugSplatOptions asset is selected, skipping build post-process tasks. " + BugSplatOptions.ConfigureHint);
 				return;
 			}
 
-			if (BugSplatOptionsPreloader.IsDisabledFor(target))
-				return;
-
-			// A project can create its options in code and call BugSplat.Initialize, so the player may
-			// still report native crashes - and without the support files copied here, a Windows player
-			// would crash with nothing to catch it. Only symbol upload needs a selected asset.
-			var message = "BugSplat: no BugSplatOptions asset is selected, so symbols are not uploaded. Native crash reporting files are still added to the build. ";
-			if (BugSplatOptionsPreloader.IsManualInitializeFor(target))
-				Debug.Log(message + "Select an asset in Edit > Project Settings > BugSplat to upload symbols.");
-			else
-				Debug.LogWarning(message + BugSplatOptions.ConfigureHint);
-
-			var defaults = ScriptableObject.CreateInstance<BugSplatOptions>();
-			try
-			{
-				defaults.UploadDebugSymbolsForWindows = false;
-				defaults.UploadDebugSymbolsForMac = false;
-				defaults.UploadDebugSymbolsForIos = false;
-				defaults.UploadDebugSymbolsForAndroid = false;
-				PostProcess(target, pathToBuiltProject, defaults);
-			}
-			finally
-			{
-				UnityEngine.Object.DestroyImmediate(defaults);
-			}
-		}
-
-		private static void PostProcess(BuildTarget target, string pathToBuiltProject, BugSplatOptions options)
-		{
 #if UNITY_IOS
 			if (target == BuildTarget.iOS)
 				PostProcessIos(pathToBuiltProject, options);

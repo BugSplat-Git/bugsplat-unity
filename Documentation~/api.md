@@ -12,8 +12,10 @@ BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit 
 | --------------- | --------------- |
 | `BugSplat.Instance` | The live client, or `null` before initialization. Set before the first scene loads when **Initialize Automatically** is on, so it is ready inside any `Awake`. |
 | `BugSplat.IsInitialized` | Whether `Instance` is set. |
-| `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Calling it again logs a warning and returns the existing instance. |
-| `BUGSPLAT_MANUAL_INITIALIZE` | Scripting define. The project owns initialization: BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset. See [Automation](automation.md#3-initialize-from-code-only). |
+| `BugSplat.Initialize()` | Initializes from the asset selected in **Edit > Project Settings > BugSplat** and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Calling it again logs a warning and returns the existing instance; with no asset selected it warns and returns `null`. |
+| `BugSplat.Initialize(Action<BugSplatOptions>)` | The same, from a copy of the asset with your changes applied: `BugSplat.Initialize(o => o.Database = database)`. The asset is left alone. The build reads the asset, so a per-platform native crash reporting switch can be turned off here but not on. |
+| `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options. |
+| `BUGSPLAT_MANUAL_INITIALIZE` | Scripting define. The per-build-target form of turning **Initialize Automatically** off: BugSplat does not initialize itself or warn at startup, and your code calls `BugSplat.Initialize()`. Builds still require an options asset. See [Automation](automation.md#3-initialize-from-code). |
 | `BUGSPLAT_DISABLED` | Scripting define. BugSplat is off for that build target: no initialization, no build validation. The per-build-configuration form of the `Enabled` option. |
 
 ### Turning BugSplat on and off

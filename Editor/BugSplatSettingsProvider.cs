@@ -122,7 +122,7 @@ namespace BugSplatUnity.Editor
 			}
 #elif BUGSPLAT_MANUAL_INITIALIZE
 			EditorGUILayout.HelpBox(
-				$"{BugSplatOptions.ManualInitializeDefine} is defined for this build target, so BugSplat does not initialize itself and builds are not checked for an options asset. Your code is responsible for calling BugSplat.Initialize.",
+				$"{BugSplatOptions.ManualInitializeDefine} is defined for this build target, so BugSplat does not initialize itself. Your code calls BugSplat.Initialize, which uses this asset.",
 				MessageType.Info);
 			if (options == null)
 			{

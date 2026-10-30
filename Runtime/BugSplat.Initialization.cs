@@ -20,9 +20,7 @@ namespace BugSplatUnity
         public static bool IsInitialized => Instance != null;
 
         private const string NotConfiguredMessage =
-            "BugSplat is not configured, so nothing will be reported. " + BugSplatOptions.ConfigureHint +
-            " If your code calls BugSplat.Initialize itself, define " + BugSplatOptions.ManualInitializeDefine +
-            " and this warning goes away.";
+            "BugSplat is not configured, so nothing will be reported. " + BugSplatOptions.ConfigureHint;
 
         private const string AlreadyInitializedMessage =
             "BugSplat.Initialize was called but BugSplat is already initialized; the existing instance is " +
@@ -30,6 +28,42 @@ namespace BugSplatUnity
             "to call - BugSplat.Instance is ready before the first scene loads.";
 
         private static BugSplatRuntime runtime;
+
+        /// <summary>
+        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat. For
+        /// projects that turn <see cref="BugSplatOptions.InitializeAutomatically"/> off or define
+        /// BUGSPLAT_MANUAL_INITIALIZE - to wait for a consent screen, say. Returns null, with a
+        /// warning, when no asset is selected.
+        /// </summary>
+        public static BugSplat Initialize() => Initialize((Action<BugSplatOptions>)null);
+
+        /// <summary>
+        /// Initializes from a copy of the selected options asset, after <paramref name="configure"/>
+        /// has changed it - a database or version chosen at runtime, say. The asset itself is left
+        /// alone. The build reads the asset, not the copy, so the per-platform native crash reporting
+        /// switches can be turned off here but not on: a player built with one off has no native files
+        /// to start. Returns null, with a warning, when no asset is selected.
+        /// </summary>
+        public static BugSplat Initialize(Action<BugSplatOptions> configure)
+        {
+            var configured = BugSplatOptions.ResolveConfigured();
+            if (configured == null)
+            {
+                Debug.LogWarning(NotConfiguredMessage);
+                return null;
+            }
+
+            // Already initialized: Initialize(options) warns and returns the instance, so there is
+            // no reason to copy the asset first.
+            if (configure == null || Instance != null)
+            {
+                return Initialize(configured);
+            }
+
+            var options = UnityEngine.Object.Instantiate(configured);
+            configure(options);
+            return Initialize(options);
+        }
 
         /// <summary>
         /// Builds the client from <paramref name="options"/>, starts the native reporter where one is

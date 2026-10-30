@@ -17,8 +17,8 @@ namespace BugSplatUnity.Editor
 	/// runs, which is where BugSplat reads it. It is removed again afterwards so the build does not
 	/// leave a change behind in ProjectSettings.asset.
 	///
-	/// Nothing is checked when BugSplat is off for the build - the BUGSPLAT_DISABLED define, an asset
-	/// with Enabled unchecked, or BUGSPLAT_MANUAL_INITIALIZE, where the project owns initialization.
+	/// Nothing is checked when BugSplat is off for the build - the BUGSPLAT_DISABLED define, or an
+	/// asset with Enabled unchecked.
 	/// A misconfiguration is a warning on a development build and fatal on a release build: an
 	/// unconfigured development build is someone iterating, while a release player that silently
 	/// reports nothing is the mistake worth stopping.
@@ -43,23 +43,19 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			var manual = IsDefined(report, BugSplatOptions.ManualInitializeDefine, ManualInitializeHere);
+			// BUGSPLAT_MANUAL_INITIALIZE is not an exemption: it changes who calls Initialize, and the
+			// build still reads the asset for the native files and symbol upload.
 			var options = BugSplatProjectOptions.Get();
 
 			if (options == null)
 			{
-				if (manual)
-				{
-					return;
-				}
-
 				var count = BugSplatProjectOptions.FindAll().Length;
 				RequireConfiguration(
 					report,
 					count > 1
 						? $"BugSplat: {count} BugSplatOptions assets exist and none is selected, so the player would report nothing. Choose one in Edit > Project Settings > BugSplat, or with BugSplatUnity.Editor.BugSplatProjectOptions.Set."
 						: "BugSplat: no BugSplatOptions asset is selected, so the player would report nothing. " + BugSplatOptions.ConfigureHint,
-					$" To ship without BugSplat, define {BugSplatOptions.DisabledDefine}; if your code calls BugSplat.Initialize itself, define {BugSplatOptions.ManualInitializeDefine}.");
+					$" To ship without BugSplat, define {BugSplatOptions.DisabledDefine}.");
 				return;
 			}
 
@@ -73,7 +69,7 @@ namespace BugSplatUnity.Editor
 
 			// Checked even when Initialize Automatically is off: the project still intends to report
 			// through this asset, and an empty database would defeat that whenever it does initialize.
-			if (!manual && string.IsNullOrEmpty(options.Database))
+			if (string.IsNullOrEmpty(options.Database))
 			{
 				RequireConfiguration(
 					report,
@@ -153,13 +149,6 @@ namespace BugSplatUnity.Editor
 			return options.HasFlag(BuildOptions.Development);
 		}
 
-		private const bool ManualInitializeHere =
-#if BUGSPLAT_MANUAL_INITIALIZE
-			true;
-#else
-			false;
-#endif
-
 		private const bool DisabledHere =
 #if BUGSPLAT_DISABLED
 			true;
@@ -169,27 +158,22 @@ namespace BugSplatUnity.Editor
 
 		// Read for the target being built, which is what the player's own #if sees. Without a report
 		// there is no target to ask, so fall back to the editor assembly's own compile-time value.
-		private static bool IsDefined(BuildReport report, string define, bool fallback) =>
-			report != null ? IsDefined(report.summary.platformGroup, define, fallback) : fallback;
-
-		internal static bool IsDisabledFor(BuildTarget target) =>
-			IsDefined(BuildPipeline.GetBuildTargetGroup(target), BugSplatOptions.DisabledDefine, DisabledHere);
-
-		internal static bool IsManualInitializeFor(BuildTarget target) =>
-			IsDefined(BuildPipeline.GetBuildTargetGroup(target), BugSplatOptions.ManualInitializeDefine, ManualInitializeHere);
-
-		private static bool IsDefined(BuildTargetGroup group, string define, bool fallback)
+		private static bool IsDefined(BuildReport report, string define, bool fallback)
 		{
-			try
+			if (report != null)
 			{
-				var target = NamedBuildTarget.FromBuildTargetGroup(group);
-				return HasDefine(PlayerSettings.GetScriptingDefineSymbols(target), define);
+				try
+				{
+					var target = NamedBuildTarget.FromBuildTargetGroup(report.summary.platformGroup);
+					return HasDefine(PlayerSettings.GetScriptingDefineSymbols(target), define);
+				}
+				catch (ArgumentException)
+				{
+					// An unknown platform group; nothing to read, so fall through.
+				}
 			}
-			catch (ArgumentException)
-			{
-				// An unknown platform group; nothing to read, so fall back.
-				return fallback;
-			}
+
+			return fallback;
 		}
 
 		internal static bool HasDefine(string defines, string define)
