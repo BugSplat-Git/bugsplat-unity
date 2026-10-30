@@ -516,18 +516,22 @@ namespace BugSplatUnity.Editor
 				$"sha256_of() {{ shasum -a 256 \"$1\" | cut -d ' ' -f 1; }}\n" +
 				$"if [ ! -f \"$SYMBOL_UPLOAD\" ] || [ \"$(sha256_of \"$SYMBOL_UPLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
 				$"    echo \"Downloading $VARIANT {SymbolUploadRelease.Version}...\"\n" +
-				$"    if ! curl -sfL -o \"$SYMBOL_UPLOAD.download\" \"{SymbolUploadRelease.GetDownloadUrl("$VARIANT")}\"; then\n" +
-				$"        rm -f \"$SYMBOL_UPLOAD.download\"\n" +
+				$"    DOWNLOAD=\"$(mktemp \"$SYMBOL_UPLOAD.XXXXXX\")\" || {{ echo \"error: Could not create a temporary file for $VARIANT.\"; exit 1; }}\n" +
+				$"    if ! curl -sfL -o \"$DOWNLOAD\" \"{SymbolUploadRelease.GetDownloadUrl("$VARIANT")}\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
 				$"        echo \"warning: Could not download $VARIANT. Skipping dSYM upload.\"\n" +
 				$"        exit 0\n" +
 				$"    fi\n" +
-				$"    if [ \"$(sha256_of \"$SYMBOL_UPLOAD.download\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
-				$"        rm -f \"$SYMBOL_UPLOAD.download\"\n" +
+				$"    if [ \"$(sha256_of \"$DOWNLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
 				$"        echo \"error: $VARIANT failed its integrity check and was deleted without running. Expected SHA-256 $EXPECTED_SHA256.\"\n" +
 				$"        exit 1\n" +
 				$"    fi\n" +
-				$"    mv -f \"$SYMBOL_UPLOAD.download\" \"$SYMBOL_UPLOAD\"\n" +
-				$"    chmod +x \"$SYMBOL_UPLOAD\"\n" +
+				$"    if ! chmod +x \"$DOWNLOAD\" || ! mv -f \"$DOWNLOAD\" \"$SYMBOL_UPLOAD\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"error: Could not install $VARIANT at $SYMBOL_UPLOAD. Skipping dSYM upload.\"\n" +
+				$"        exit 1\n" +
+				$"    fi\n" +
 				$"fi\n\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
 				$"    --database \"{options.Database}\" \\\n" +
