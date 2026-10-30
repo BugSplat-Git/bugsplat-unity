@@ -43,8 +43,6 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// BUGSPLAT_MANUAL_INITIALIZE is not an exemption: it changes who calls Initialize, and the
-			// build still reads the asset for the native files and symbol upload.
 			var options = BugSplatProjectOptions.Get();
 
 			if (options == null)

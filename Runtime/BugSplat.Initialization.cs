@@ -30,19 +30,15 @@ namespace BugSplatUnity
         private static BugSplatRuntime runtime;
 
         /// <summary>
-        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat. For
-        /// projects that turn <see cref="BugSplatOptions.InitializeAutomatically"/> off or define
-        /// BUGSPLAT_MANUAL_INITIALIZE - to wait for a consent screen, say. Returns null, with a
-        /// warning, when no asset is selected.
+        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat.
+        /// Returns null, with a warning, when none is selected.
         /// </summary>
         public static BugSplat Initialize() => Initialize((Action<BugSplatOptions>)null);
 
         /// <summary>
-        /// Initializes from a copy of the selected options asset, after <paramref name="configure"/>
-        /// has changed it - a database or version chosen at runtime, say. The asset itself is left
-        /// alone. The build reads the asset, not the copy, so the per-platform native crash reporting
-        /// switches can be turned off here but not on: a player built with one off has no native files
-        /// to start. Returns null, with a warning, when no asset is selected.
+        /// Initializes from a copy of the selected options asset with <paramref name="configure"/>
+        /// applied. Native crash reporting can be turned off here but not on, because the build
+        /// reads it from the asset. Returns null, with a warning, when no asset is selected.
         /// </summary>
         public static BugSplat Initialize(Action<BugSplatOptions> configure)
         {
@@ -53,8 +49,6 @@ namespace BugSplatUnity
                 return null;
             }
 
-            // Already initialized: Initialize(options) warns and returns the instance, so there is
-            // no reason to copy the asset first.
             if (configure == null || Instance != null)
             {
                 return Initialize(configured);

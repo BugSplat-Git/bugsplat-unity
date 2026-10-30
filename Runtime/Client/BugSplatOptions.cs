@@ -179,8 +179,6 @@ namespace BugSplatUnity.Runtime.Client
 		// for any asset the editor happens to load - merely inspecting one would set this.
 		private void OnEnable()
 		{
-			// Anything enabled later was loaded by a scene or created in code - options built for
-			// BugSplat.Initialize, say. Neither is preloaded, so neither is counted.
 			if (preloadingDone)
 			{
 				return;
@@ -202,9 +200,7 @@ namespace BugSplatUnity.Runtime.Client
 			}
 		}
 
-		// BeforeSplashScreen, not BeforeSceneLoad: preloaded assets are in memory by
-		// SubsystemRegistration, and Unity does not order callbacks within a phase, so options a
-		// project creates in its own BeforeSceneLoad callback could otherwise beat the cutoff.
+		// Before BeforeSceneLoad, because Unity doesn't order callbacks within a phase.
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
 		private static void EndPreloading() => preloadingDone = true;
 #endif
