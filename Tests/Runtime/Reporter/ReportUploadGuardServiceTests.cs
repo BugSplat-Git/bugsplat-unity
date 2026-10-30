@@ -3,6 +3,7 @@ using BugSplatUnity.Runtime.Settings;
 using NUnit.Framework;
 using System;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace BugSplatUnity.RuntimeTests.Reporter
 {
@@ -18,6 +19,34 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             var exception = new Exception();
 
             Assert.IsFalse(rugs.ShouldPostException(exception));
+        }
+
+        [Test]
+        public void ShouldPostException_WhenPostExceptionsInEditorFalse_WhenInEditor_WarnsOnce()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = false;
+            var rugs = new ReportUploadGuardService(clientSettings);
+
+            LogAssert.Expect(LogType.Warning, ReportUploadGuardService.SkippedInEditorMessage);
+            rugs.ShouldPostException(new Exception());
+            rugs.ShouldPostException(new Exception());
+            rugs.ShouldPostLogMessage(LogType.Exception);
+
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void ShouldPostException_WhenPostExceptionsInEditorTrue_WhenInEditor_DoesNotWarn()
+        {
+            var clientSettings = new WebGLClientSettingsRepository();
+            clientSettings.PostExceptionsInEditor = true;
+            clientSettings.ShouldPostException = (Exception ex) => true;
+            var rugs = new ReportUploadGuardService(clientSettings);
+
+            rugs.ShouldPostException(new Exception());
+
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]
