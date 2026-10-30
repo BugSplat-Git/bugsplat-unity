@@ -54,8 +54,10 @@ namespace BugSplatUnity.Editor
 			var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
 
 			// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
-			// re-extract, so anything we have to download has to land outside the package.
-			return File.Exists(packagePath) ? packagePath : GetSymUploaderDownloadPath();
+			// re-extract, so anything we have to download has to land outside the package. A copy in the
+			// package is only used if it is the pinned release: 4.x downloaded uploaders there, so
+			// local and embedded installs can still hold an older, unverified one.
+			return SymbolUploadRelease.IsVerified(packagePath, uploaderName) ? packagePath : GetSymUploaderDownloadPath();
 		}
 
 		static string GetSymUploaderDownloadPath() =>
@@ -516,7 +518,7 @@ namespace BugSplatUnity.Editor
 				$"sha256_of() {{ shasum -a 256 \"$1\" | cut -d ' ' -f 1; }}\n" +
 				$"if [ ! -f \"$SYMBOL_UPLOAD\" ] || [ \"$(sha256_of \"$SYMBOL_UPLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
 				$"    echo \"Downloading $VARIANT {SymbolUploadRelease.Version}...\"\n" +
-				$"    DOWNLOAD=\"$(mktemp \"$SYMBOL_UPLOAD.XXXXXX\")\" || {{ echo \"error: Could not create a temporary file for $VARIANT.\"; exit 1; }}\n" +
+				$"    DOWNLOAD=\"$(mktemp \"$SYMBOL_UPLOAD.XXXXXX\")\" || {{ echo \"warning: Could not create a temporary file for $VARIANT. Skipping dSYM upload.\"; exit 0; }}\n" +
 				$"    if ! curl -sfL -o \"$DOWNLOAD\" \"{SymbolUploadRelease.GetDownloadUrl("$VARIANT")}\"; then\n" +
 				$"        rm -f \"$DOWNLOAD\"\n" +
 				$"        echo \"warning: Could not download $VARIANT. Skipping dSYM upload.\"\n" +
@@ -529,8 +531,8 @@ namespace BugSplatUnity.Editor
 				$"    fi\n" +
 				$"    if ! chmod +x \"$DOWNLOAD\" || ! mv -f \"$DOWNLOAD\" \"$SYMBOL_UPLOAD\"; then\n" +
 				$"        rm -f \"$DOWNLOAD\"\n" +
-				$"        echo \"error: Could not install $VARIANT at $SYMBOL_UPLOAD. Skipping dSYM upload.\"\n" +
-				$"        exit 1\n" +
+				$"        echo \"warning: Could not install $VARIANT at $SYMBOL_UPLOAD. Skipping dSYM upload.\"\n" +
+				$"        exit 0\n" +
 				$"    fi\n" +
 				$"fi\n\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
@@ -684,9 +686,7 @@ namespace BugSplatUnity.Editor
 			}
 
 			var symbolUploadPath = GetSymUploaderPath();
-			var isDownloaded = symbolUploadPath == GetSymUploaderDownloadPath();
-			if (isDownloaded
-				&& !SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
+			if (!SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
 				&& !DownloadSymbolUpload(symbolUploadPath))
 			{
 				onCompleted(-1);

@@ -1,6 +1,9 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+
+[assembly: InternalsVisibleTo("BugSplat.Unity.EditorTests")]
 
 namespace BugSplatUnity.Editor
 {
@@ -39,7 +42,18 @@ namespace BugSplatUnity.Editor
 			}
 		}
 
-		internal static bool IsVerified(string path, string variant) =>
-			File.Exists(path) && string.Equals(ComputeSha256(path), GetSha256(variant), StringComparison.OrdinalIgnoreCase);
+		internal static bool IsVerified(string path, string variant)
+		{
+			if (!File.Exists(path)) return false;
+
+			try
+			{
+				return string.Equals(ComputeSha256(path), GetSha256(variant), StringComparison.OrdinalIgnoreCase);
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+			{
+				return false;
+			}
+		}
 	}
 }
