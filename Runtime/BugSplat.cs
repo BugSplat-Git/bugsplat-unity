@@ -274,6 +274,14 @@ namespace BugSplatUnity
         public bool WindowsWerEnabled => windowsWerEnabled;
 
         /// <summary>
+        /// True when this player's native crash reporter started. False when the platform's
+        /// UseNativeCrashReporting option is off, when the platform has no native reporter, when it
+        /// failed to start (a macOS Mono player, a missing Android AAR), and always in the editor.
+        /// While false, a native crash terminates the player without a report.
+        /// </summary>
+        public bool NativeCrashReportingEnabled => nativeCrashReportingEnabled;
+
+        /// <summary>
         /// Post Exceptions and minidump files to BugSplat
         /// </summary>
         /// <param name="database">The BugSplat database for your organization</param>

@@ -141,6 +141,25 @@ namespace Crasher
 			}
 		}
 
+		static string NativeReportingHint
+		{
+			get
+			{
+#if UNITY_STANDALONE_WIN
+				const string option = "Use Native Crash Reporting For Windows";
+#elif UNITY_STANDALONE_OSX
+				const string option = "Use Native Crash Reporting For Mac (and build with IL2CPP)";
+#elif UNITY_IOS
+				const string option = "Use Native Crash Reporting For Ios";
+#elif UNITY_ANDROID
+				const string option = "Use Native Crash Reporting For Android";
+#else
+				const string option = "Use Native Crash Reporting for this platform";
+#endif
+				return $"Turn on {option} in Edit > Project Settings > BugSplat and rebuild.";
+			}
+		}
+
 		void RefreshStatus()
 		{
 			if (statusText == null) return;
@@ -157,7 +176,16 @@ namespace Crasher
 				$"Editor ({PlatformName} build target) — managed and feedback scenarios run here. " +
 				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
 			statusText.color = Amber;
-#elif UNITY_STANDALONE_WIN
+#elif UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+			if (!bugsplat.NativeCrashReportingEnabled)
+			{
+				statusText.text =
+					$"{PlatformName} player — native crash reporting is OFF, so native and hang scenarios " +
+					$"are disabled. {NativeReportingHint}";
+				statusText.color = BugSplatRed;
+				return;
+			}
+#if UNITY_STANDALONE_WIN
 			if (bugsplat.WindowsWerEnabled)
 			{
 				statusText.text = "Windows player — WER is ARMED. Fail-fast scenarios will report.";
@@ -170,9 +198,10 @@ namespace Crasher
 					"Use BugSplat > Windows > Register WER Handler in the editor.";
 				statusText.color = BugSplatRed;
 			}
-#elif UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+#else
 			statusText.text = $"{PlatformName} player — native crash reporting is active.";
 			statusText.color = BugSplatGreen;
+#endif
 #else
 			statusText.text =
 				$"{PlatformName} — native crash reporting is not yet supported on this platform; " +
@@ -348,6 +377,11 @@ namespace Crasher
 			if (!scenario.RunsInEditor && Application.isEditor)
 			{
 				return "Built player only — there is no native reporter in the editor.";
+			}
+
+			if (!scenario.RunsInEditor && bugsplat != null && !bugsplat.NativeCrashReportingEnabled)
+			{
+				return "Needs native crash reporting, or this terminates the player and reports nothing. " + NativeReportingHint;
 			}
 
 			if (scenario.RequiresWer && bugsplat != null && !bugsplat.WindowsWerEnabled)

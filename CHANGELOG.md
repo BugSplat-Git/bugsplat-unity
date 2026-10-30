@@ -50,6 +50,7 @@ Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md
 
 ### Changed
 
+- `BugSplat.NativeCrashReportingEnabled` reports whether the player's native crash reporter actually started. The sample uses it to grey out its native, fail-fast, and hang scenarios when it did not.
 - **Native crash reporting is on by default** for new `BugSplatOptions` assets on Windows, macOS, iOS, and Android, so a fresh setup captures native crashes without hunting for four checkboxes. An existing asset keeps its saved values, except that a 4.x asset has no `UseNativeCrashReportingForWindows` key and so turns it on. macOS still needs IL2CPP: a Mono build now warns at build time and at startup and falls back to managed reporting, where calling the unlinked bridge used to throw and stop BugSplat initializing at all.
 - With **Post Exceptions In Editor** off (the default), the first exception skipped in a play session now logs a warning saying so and naming the setting, instead of vanishing without a word.
 - The `my-unity-crasher` sample no longer ships a `BugSplatOptions` asset. In a project without one, importing the sample quietly selected an asset that reported to the shared `fred` demo database; in a project with one, it added a second asset, and with neither selected a release build fails. Create your own in **Edit > Project Settings > BugSplat**; the sample's README lists the options it is built to exercise, including symbol upload for all four platforms.
