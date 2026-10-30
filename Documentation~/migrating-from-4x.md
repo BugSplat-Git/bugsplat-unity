@@ -9,6 +9,7 @@ Version 5.0.0 changes how BugSplat starts. Nothing needs to be in a scene anymor
 - **Builds fail when no options asset is selected, or the selected one has an empty database.** A misconfigured project used to build a player that silently reported nothing. If your code calls `BugSplat.Initialize` itself, select an asset with **Initialize Automatically** off.
 - `BugSplatRef` has been removed. It was an implementation detail of `BugSplatManager`.
 - **Your existing options asset needs no edits.** `Enabled`, `Initialize Automatically`, and the three capture options are new fields, and an asset written before they existed loads with all of them **on** — so reporting keeps working exactly as it did. `Post Exceptions In Editor` stays off, as before.
+- **Native crash reporting is now on by default for new assets** on Windows, macOS, iOS, and Android. An existing asset keeps the values saved in it, with one exception: `UseNativeCrashReportingForWindows` is new in 5.0, so an asset from 4.x turns it **on**. Uncheck it if you do not want `BugSplatMonitor` and the crash dialog in your Windows player.
 - Not ready to configure BugSplat, or want it only in QA and release builds? Uncheck **Enabled** on the asset, or define `BUGSPLAT_DISABLED` for the targets you want it off for. A release build fails on a missing database; a development build only warns.
 
 Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:

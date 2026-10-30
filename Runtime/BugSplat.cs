@@ -449,6 +449,15 @@ namespace BugSplatUnity
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if !ENABLE_IL2CPP
+            // The bridge is an Objective-C source plugin, which Unity compiles into macOS players only
+            // under IL2CPP. Calling it from Mono throws, which would take managed reporting down too.
+            if (useNativeLibMac)
+            {
+                Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+                useNativeLibMac = false;
+            }
+#endif
             if (useNativeLibMac)
             {
                 // The delegate is queried while start processes crash reports left by the previous

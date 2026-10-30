@@ -83,8 +83,8 @@ namespace BugSplatUnity.Runtime.Client
 		public List<string> PersistentDataFileAttachmentPaths;
 
 		[Header("Windows")]
-		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForWindows;
+		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. On by default. If set to false, will only use .NET handler.")]
+		public bool UseNativeCrashReportingForWindows = true;
 
 		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default, unlike the other platforms - Windows has always uploaded automatically, so defaulting this off would silently stop existing projects symbolicating. Also requires Copy PDB Files in Build Settings, and a Windows editor.")]
 		public bool UploadDebugSymbolsForWindows = true;
@@ -96,8 +96,8 @@ namespace BugSplatUnity.Runtime.Client
 		public int WindowsHangDetectionTimeoutMs = 0;
 
 		[Header("macOS")]
-		[Tooltip("Use native crash reporting framework for macOS builds (requires IL2CPP). If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForMac;
+		[Tooltip("Use native crash reporting framework for macOS builds. On by default. Requires the IL2CPP scripting backend; a Mono player logs a warning and uses the .NET handler only.")]
+		public bool UseNativeCrashReportingForMac = true;
 
 		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
 		public bool UploadDebugSymbolsForMac;
@@ -112,8 +112,8 @@ namespace BugSplatUnity.Runtime.Client
 		public float MacHangDetectionThresholdSeconds = 5f;
 
 		[Header("iOS")]
-		[Tooltip("Use crash reporting framework for iOS builds. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForIos;
+		[Tooltip("Use crash reporting framework for iOS builds. On by default. If set to false, will only use .NET handler.")]
+		public bool UseNativeCrashReportingForIos = true;
 
 		[Tooltip("Add a build script phase to the Xcode project to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForIos;
@@ -128,8 +128,8 @@ namespace BugSplatUnity.Runtime.Client
 		public float IosHangDetectionThresholdSeconds = 5f;
 
 		[Header("Android")]
-		[Tooltip("Use crash reporting library for Android builds. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForAndroid;
+		[Tooltip("Use crash reporting library for Android builds. On by default. If set to false, will only use .NET handler.")]
+		public bool UseNativeCrashReportingForAndroid = true;
 
 		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForAndroid;
@@ -160,6 +160,11 @@ namespace BugSplatUnity.Runtime.Client
 			"Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a " +
 			"single asset is selected automatically. Scripted setup: " +
 			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
+
+		internal const string MacNativeRequiresIl2CppMessage =
+			"BugSplat: native macOS crash reporting requires the IL2CPP scripting backend, so this Mono player " +
+			"reports managed exceptions only. Set Player Settings > Other Settings > Scripting Backend to IL2CPP, " +
+			"or uncheck Use Native Crash Reporting For Mac in Edit > Project Settings > BugSplat.";
 
 #if !UNITY_EDITOR
 		private static BugSplatOptions preloaded;

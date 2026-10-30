@@ -2,9 +2,9 @@
 
 # 🖥 macOS
 
-The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes via Mach exception handling. Native macOS crash reporting requires the **IL2CPP** scripting backend.
+The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes via Mach exception handling. Native macOS crash reporting requires the **IL2CPP** scripting backend. It is on by default; a Mono player logs a warning at build time and at startup, and reports managed exceptions only.
 
-To configure crash reporting for macOS, set the `UseNativeCrashReportingForMac` and `UploadDebugSymbolsForMac` properties to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
+`UseNativeCrashReportingForMac` is on by default. To upload symbols as well, set `UploadDebugSymbolsForMac` to `true` on your `BugSplatOptions` asset. For IL2CPP builds, BugSplat will upload dSYMs and `LineNumberMappings.json` for full symbolication.
 
 `Player.log` is attached to native macOS crash reports when both `UseNativeCrashReportingForMac` and `CapturePlayerLog` are enabled on your `BugSplatOptions` asset. Managed .NET exception reports attach it through the reporter instead, so they are unaffected by the native setting.
 

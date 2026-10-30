@@ -92,6 +92,12 @@ namespace BugSplatUnity.Editor
 
 			if (target == BuildTarget.StandaloneOSX)
 			{
+				if (options.UseNativeCrashReportingForMac &&
+					PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) != ScriptingImplementation.IL2CPP)
+				{
+					Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+				}
+
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
