@@ -30,17 +30,12 @@ namespace BugSplatUnity
         private static BugSplatRuntime runtime;
 
         /// <summary>
-        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat.
-        /// Returns null, with a warning, when none is selected.
+        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat, or from a
+        /// copy of it with <paramref name="configure"/> applied. Native crash reporting can be turned
+        /// off there but not on, because the build reads it from the asset. Returns null, with a
+        /// warning, when no asset is selected.
         /// </summary>
-        public static BugSplat Initialize() => Initialize((Action<BugSplatOptions>)null);
-
-        /// <summary>
-        /// Initializes from a copy of the selected options asset with <paramref name="configure"/>
-        /// applied. Native crash reporting can be turned off here but not on, because the build
-        /// reads it from the asset. Returns null, with a warning, when no asset is selected.
-        /// </summary>
-        public static BugSplat Initialize(Action<BugSplatOptions> configure)
+        public static BugSplat Initialize(Action<BugSplatOptions> configure = null)
         {
             var configured = BugSplatOptions.ResolveConfigured();
             if (configured == null)
@@ -134,10 +129,7 @@ namespace BugSplatUnity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void AutoInitialize()
         {
-#if BUGSPLAT_MANUAL_INITIALIZE || BUGSPLAT_DISABLED
-            // BUGSPLAT_MANUAL_INITIALIZE: the project calls Initialize itself.
-            // BUGSPLAT_DISABLED: BugSplat is off for this build target.
-            // Either way nothing here runs, and nothing reads the options asset.
+#if BUGSPLAT_DISABLED
             return;
 #else
             if (Instance != null)

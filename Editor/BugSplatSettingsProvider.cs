@@ -120,14 +120,6 @@ namespace BugSplatUnity.Editor
 			{
 				return;
 			}
-#elif BUGSPLAT_MANUAL_INITIALIZE
-			EditorGUILayout.HelpBox(
-				$"{BugSplatOptions.ManualInitializeDefine} is defined for this build target, so BugSplat does not initialize itself. Your code calls BugSplat.Initialize, which uses this asset.",
-				MessageType.Info);
-			if (options == null)
-			{
-				return;
-			}
 #endif
 			if (options == null)
 			{

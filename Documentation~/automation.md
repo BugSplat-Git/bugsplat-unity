@@ -86,7 +86,7 @@ var options = BugSplatSetup.Configure("my-database", application: "My Game");
 
 An options asset is always required: the build reads it to add the native crash reporting files, turn off Unity's own iOS crash reporter, and upload symbols. Your code decides when BugSplat starts, and can change values at runtime.
 
-To time initialization yourself — a consent screen first, say — turn **Initialize Automatically** off on the asset, or define the scripting symbol **`BUGSPLAT_MANUAL_INITIALIZE`** for the same thing per build target, and call:
+To time initialization yourself — a consent screen first, say — turn **Initialize Automatically** off on the asset and call:
 
 ```cs
 BugSplat.Initialize();
