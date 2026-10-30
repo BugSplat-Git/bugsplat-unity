@@ -16,6 +16,17 @@ A native crash report is uploaded at the **next launch**, not at crash time, and
 
 Register native attachments during initialization instead. `BugSplatOptions.PersistentDataFileAttachmentPaths` is applied on every launch and is unaffected by this. Each attachment is truncated to its last 10 MB. See [Attaching Files to Native Crash Reports](api.md#attaching-files-to-native-crash-reports).
 
+## Testing on Device
+
+A debugger claims the Mach exception ports before PLCrashReporter does, so **a crash that happens under the Xcode debugger never reaches BugSplat**. Hang detection is suppressed outright while a debugger is attached. Xcode's **Build And Run** leaves the debugger on, so a crash triggered that way produces no report and no explanation.
+
+Two ways to test:
+
+- Uncheck **Product > Scheme > Edit Scheme > Run > Info > Debug executable**, then Run. Only the Run action changes; Test and Profile are unaffected.
+- Or launch the app from the home screen instead of from Xcode.
+
+Either way the report uploads on the **next** launch, not at crash time, so relaunch the app after the crash.
+
 ## Hang Detection
 
 When `UseNativeCrashReportingForIos` is enabled, BugSplat also detects fatal main-thread hangs. No additional configuration is required. If the main thread stalls past the detection threshold and the app is subsequently terminated without recovering — by the OS watchdog at launch/resume, or by the user force-quitting — BugSplat uploads an `App Hang (Fatal)` report on the next launch. Hangs the app recovers from are not reported. Detection is suppressed while a debugger is attached, so test hang reporting on a build run without the Xcode debugger.
