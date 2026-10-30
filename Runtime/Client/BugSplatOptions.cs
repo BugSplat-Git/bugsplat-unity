@@ -202,7 +202,10 @@ namespace BugSplatUnity.Runtime.Client
 			}
 		}
 
-		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+		// BeforeSplashScreen, not BeforeSceneLoad: preloaded assets are in memory by
+		// SubsystemRegistration, and Unity does not order callbacks within a phase, so options a
+		// project creates in its own BeforeSceneLoad callback could otherwise beat the cutoff.
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
 		private static void EndPreloading() => preloadingDone = true;
 #endif
 
