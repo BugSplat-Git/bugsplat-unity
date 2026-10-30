@@ -228,6 +228,12 @@ namespace BugSplatUnity.RuntimeTests
 		}
 
 		[Test]
+		public void Options_UseNativeCrashReportingForXbox_DefaultsToTrue()
+		{
+			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().UseNativeCrashReportingForXbox);
+		}
+
+		[Test]
 		public void Options_Enabled_DefaultsToTrue()
 		{
 			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().Enabled);

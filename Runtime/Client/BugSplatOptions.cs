@@ -95,6 +95,10 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection. When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a timeout longer than your longest expected frame (e.g. loading screens).")]
 		public int WindowsHangDetectionTimeoutMs = 0;
 
+		[Header("Xbox")]
+		[Tooltip("Use native crash reporting for Xbox (GDK) builds. On by default. Requires the BugSplat Xbox add-on, available to verified Xbox developers from the Gaming Consoles tab of your database's Integrations page in BugSplat; without it the player logs a warning and reports managed exceptions only.")]
+		public bool UseNativeCrashReportingForXbox = true;
+
 		[Header("macOS")]
 		[Tooltip("Use native crash reporting framework for macOS builds. On by default. Requires the IL2CPP scripting backend; a Mono player logs a warning and uses the .NET handler only.")]
 		public bool UseNativeCrashReportingForMac = true;
