@@ -1,0 +1,29 @@
+{
+  "locale": "en-US",
+  "direction": "ltr",
+  "fontFamily": "",
+
+  "strings": {
+    "title": "Crash Report",
+    "headline": "Well, that wasn't supposed to happen.",
+    "body": "The program hit a problem and had to close. Sending this report helps the developers find and fix the exact line that broke. Everything is confidential and only used to fix bugs.",
+    "descriptionLabel": "What were you doing just before this appeared?",
+    "descriptionPlaceholder": "Anything you remember helps — even \"I clicked Save.\"",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "optionalHint": "optional",
+    "contactNote": "If you share an email, it's only used to follow up about this crash. It's never sold and never used for marketing.",
+    "consent": "Allow BugSplat to store this information for a period of up to one year.",
+    "send": "&Send report",
+    "dontSend": "&Don't send",
+    "details": "&View report details",
+
+    "filesTitle": "Report Details",
+    "filesBody": "A crash report has been generated for you, containing the files listed below. The report contains detailed information about the state of the application at the time that it crashed, as well as the information you provided us.",
+    "filesColumnFile": "File",
+    "filesColumnPath": "Path",
+    "ok": "OK",
+    "cancel": "Cancel"
+  }
+}

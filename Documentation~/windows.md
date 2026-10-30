@@ -8,10 +8,10 @@ Native crash reporting for Windows (`UseNativeCrashReportingForWindows`) is on b
 
 When native crash reporting is enabled:
 
-- Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
+- Native crashes are captured at crash time and uploaded by `BugSplatMonitor.exe` in the background — straight away, or once the user clicks **Send** in the crash dialog. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
 - `Player.log` is attached to native crash reports when `CapturePlayerLog` is enabled on your `BugSplatOptions` asset. Setting the `CapturePlayerLog` property at runtime adds or removes the attachment.
-- The BugSplat crash dialog is shown by default. Set `WindowsShowCrashDialog` to `false` to send reports silently instead.
-- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatRc.dll`, and `BugSplatWer.dll` next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
+- The BugSplat crash dialog is shown by default. It runs as its own process, `BugSplatReporter.exe`: **Send** uploads the report with the name, email and description the user entered, and **Don't send** discards it. Set `WindowsShowCrashDialog` to `false` to send reports silently instead.
+- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `BugSplatWer.dll`, and the `BugSplatTheme` folder next to your game's executable. These are required for crash reporting and must be shipped alongside your game's executable in your installer. Without `BugSplatReporter.exe` reports still upload, but silently, with no dialog; without `BugSplatTheme` the dialog falls back to its built-in look.
 - Fail-fast crashes — stack buffer overruns and heap corruption — bypass BugSplat's crash handler entirely and need one extra install-time step. See [Windows Error Reporting](#windows-error-reporting).
 
 The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
