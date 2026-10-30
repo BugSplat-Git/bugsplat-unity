@@ -8,15 +8,21 @@ Native crash reporting for Windows (`UseNativeCrashReportingForWindows`) is on b
 
 When native crash reporting is enabled:
 
-- Native crashes are captured at crash time and uploaded immediately. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
+- Native crashes are captured at crash time and uploaded by `BugSplatMonitor.exe` in the background — straight away, or once the user clicks **Send** in the crash dialog. Reports that can't be uploaded (for example, when the user is offline) are uploaded automatically on the next launch.
 - `Player.log` is attached to native crash reports when `CapturePlayerLog` is enabled on your `BugSplatOptions` asset. Setting the `CapturePlayerLog` property at runtime adds or removes the attachment.
-- The BugSplat crash dialog is shown by default. Set `WindowsShowCrashDialog` to `false` to send reports silently instead.
-- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatRc.dll`, and `BugSplatWer.dll` next to your game's executable. These files are required for crash reporting and must be shipped alongside your game's executable in your installer.
+- The BugSplat crash dialog is shown by default. It runs as its own process, `BugSplatReporter.exe`: **Send** uploads the report with the name, email and description the user entered, and **Don't send** discards it. Set `WindowsShowCrashDialog` to `false` to send reports silently instead. See [Crash Dialog](#crash-dialog) to change how it looks.
+- At build time, BugSplat copies `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `BugSplatWer.dll`, and the `BugSplatTheme` folder next to your game's executable. These are required for crash reporting and must be shipped alongside your game's executable in your installer. Without `BugSplatReporter.exe` reports still upload, but silently, with no dialog; without `BugSplatTheme` the dialog falls back to its built-in look.
 - Fail-fast crashes — stack buffer overruns and heap corruption — bypass BugSplat's crash handler entirely and need one extra install-time step. See [Windows Error Reporting](#windows-error-reporting).
 
 The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
 
 For IL2CPP builds, BugSplat copies `LineNumberMappings.json` into the build directory and uploads it with your symbols so IL2CPP-generated C++ frames symbolicate back to C# method names, file names, and line numbers. See [Windows Symbols](#windows-symbols) for symbol upload configuration.
+
+## Crash Dialog
+
+The dialog reads its colors, fonts, layout, logo and wording at run time from the `BugSplatTheme` folder next to `BugSplatReporter.exe` — `theme.json`, an optional logo, and one `strings.<language>.json` file per language. Nothing is compiled, so rebranding it means editing files, not rebuilding the SDK. [Crash Dialog Branding](https://docs.bugsplat.com/education/how-tos/customize-the-crash-dialog) documents the theme format, how to preview a theme with `BugSplatReporter.exe --preview` without crashing anything, and how to check one with `--check-theme`. Both commands work against the copy of the reporter in your build folder.
+
+The Unity package doesn't have a setting for a custom theme yet: every Windows build copies the default theme from the package, replacing whatever is in the build folder's `BugSplatTheme`. To ship your own, put your theme in that folder in your installer, after the build.
 
 ## Windows Symbols
 

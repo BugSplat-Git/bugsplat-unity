@@ -231,7 +231,7 @@ namespace BugSplatUnity.Editor
 			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
 			var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
 
-			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatRc.dll", "BugSplatWer.dll" })
+			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll" })
 			{
 				var source = Path.Combine(supportDir, fileName);
 				if (!File.Exists(source))
@@ -243,7 +243,38 @@ namespace BugSplatUnity.Editor
 				File.Copy(source, Path.Combine(buildDir, fileName), true);
 			}
 
+			// The reporter reads its theme only from BugSplatTheme next to itself, and falls back to
+			// built-in defaults silently when it is missing.
+			var themeSource = Path.Combine(supportDir, ThemeDirectoryName);
+			var themeDestination = Path.Combine(buildDir, ThemeDirectoryName);
+			if (Directory.Exists(themeSource))
+			{
+				if (Directory.Exists(themeDestination))
+					Directory.Delete(themeDestination, true);
+				CopyDirectory(themeSource, themeDestination);
+			}
+			else
+			{
+				Debug.LogError($"BugSplat. Missing crash dialog theme {themeSource}. The dialog will use its built-in defaults.");
+			}
+
+			// 8.x shipped the dialog as BugSplatRc.dll; 9.x replaced it with BugSplatReporter.exe.
+			var staleRc = Path.Combine(buildDir, "BugSplatRc.dll");
+			if (File.Exists(staleRc))
+				File.Delete(staleRc);
+
 			Debug.Log($"BugSplat. Copied Windows native runtime support files ({arch}) next to the built executable.");
+		}
+
+		private const string ThemeDirectoryName = "BugSplatTheme";
+
+		private static void CopyDirectory(string source, string destination)
+		{
+			Directory.CreateDirectory(destination);
+			foreach (var file in Directory.GetFiles(source))
+				File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), true);
+			foreach (var directory in Directory.GetDirectories(source))
+				CopyDirectory(directory, Path.Combine(destination, Path.GetFileName(directory)));
 		}
 
 		private static void CopyWindowsLineNumberMappings(string buildDir)
