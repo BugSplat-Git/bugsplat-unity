@@ -168,6 +168,7 @@ namespace BugSplatUnity.Runtime.Client
 
 #if !UNITY_EDITOR
 		private static BugSplatOptions preloaded;
+		private static bool preloadingDone;
 
 		// In a player the configured asset arrives as a preloaded asset, loaded before
 		// RuntimeInitializeOnLoadMethod(BeforeSceneLoad) runs, and OnEnable is where a preloaded
@@ -178,6 +179,13 @@ namespace BugSplatUnity.Runtime.Client
 		// for any asset the editor happens to load - merely inspecting one would set this.
 		private void OnEnable()
 		{
+			// Anything enabled later was loaded by a scene or created in code - options built for
+			// BugSplat.Initialize, say. Neither is preloaded, so neither is counted.
+			if (preloadingDone)
+			{
+				return;
+			}
+
 			if (preloaded == null)
 			{
 				preloaded = this;
@@ -193,6 +201,9 @@ namespace BugSplatUnity.Runtime.Client
 					$"won on load order; \"{name}\" is ignored. Preload exactly one.");
 			}
 		}
+
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+		private static void EndPreloading() => preloadingDone = true;
 #endif
 
 		/// <summary>

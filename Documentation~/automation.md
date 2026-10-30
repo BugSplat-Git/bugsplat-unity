@@ -94,6 +94,8 @@ BugSplat.Initialize(options);
 
 With the define, BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset; the project owns all of it.
 
+The build still adds the native crash reporting files, such as `BugSplatMonitor.exe` next to a Windows player, so native crashes are reported once your code initializes. Symbol upload is the one thing that needs an asset: it reads the database and the `UploadDebugSymbolsFor…` options from the asset selected in **Edit > Project Settings > BugSplat**, and without one, symbols are not uploaded.
+
 To turn BugSplat **off** rather than hand over initialization, define **`BUGSPLAT_DISABLED`** instead — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
 
 If you would rather keep an asset for the field values but control the timing, leave the define out, turn **Initialize Automatically** off on the asset, and call `BugSplat.Initialize(options)` with it when ready.

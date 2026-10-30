@@ -169,22 +169,27 @@ namespace BugSplatUnity.Editor
 
 		// Read for the target being built, which is what the player's own #if sees. Without a report
 		// there is no target to ask, so fall back to the editor assembly's own compile-time value.
-		private static bool IsDefined(BuildReport report, string define, bool fallback)
-		{
-			if (report != null)
-			{
-				try
-				{
-					var target = NamedBuildTarget.FromBuildTargetGroup(report.summary.platformGroup);
-					return HasDefine(PlayerSettings.GetScriptingDefineSymbols(target), define);
-				}
-				catch (ArgumentException)
-				{
-					// An unknown platform group; nothing to read, so fall through.
-				}
-			}
+		private static bool IsDefined(BuildReport report, string define, bool fallback) =>
+			report != null ? IsDefined(report.summary.platformGroup, define, fallback) : fallback;
 
-			return fallback;
+		internal static bool IsDisabledFor(BuildTarget target) =>
+			IsDefined(BuildPipeline.GetBuildTargetGroup(target), BugSplatOptions.DisabledDefine, DisabledHere);
+
+		internal static bool IsManualInitializeFor(BuildTarget target) =>
+			IsDefined(BuildPipeline.GetBuildTargetGroup(target), BugSplatOptions.ManualInitializeDefine, ManualInitializeHere);
+
+		private static bool IsDefined(BuildTargetGroup group, string define, bool fallback)
+		{
+			try
+			{
+				var target = NamedBuildTarget.FromBuildTargetGroup(group);
+				return HasDefine(PlayerSettings.GetScriptingDefineSymbols(target), define);
+			}
+			catch (ArgumentException)
+			{
+				// An unknown platform group; nothing to read, so fall back.
+				return fallback;
+			}
 		}
 
 		internal static bool HasDefine(string defines, string define)
