@@ -83,11 +83,8 @@ namespace BugSplatUnity.Editor
 
 			// A project can create its options in code and call BugSplat.Initialize, so the player may
 			// still report native crashes - and without the support files copied here, a Windows player
-			// would crash with nothing to catch it. Symbol upload, and turning off Unity's own iOS crash
-			// reporter, are choices only an asset makes.
+			// would crash with nothing to catch it. Only symbol upload needs a selected asset.
 			var message = "BugSplat: no BugSplatOptions asset is selected, so symbols are not uploaded. Native crash reporting files are still added to the build. ";
-			if (target == BuildTarget.iOS)
-				message += "Unity's own crash reporter is left on, and it conflicts with BugSplat's native iOS reporter. ";
 			if (BugSplatOptionsPreloader.IsManualInitializeFor(target))
 				Debug.Log(message + "Select an asset in Edit > Project Settings > BugSplat to upload symbols.");
 			else
@@ -100,7 +97,6 @@ namespace BugSplatUnity.Editor
 				defaults.UploadDebugSymbolsForMac = false;
 				defaults.UploadDebugSymbolsForIos = false;
 				defaults.UploadDebugSymbolsForAndroid = false;
-				defaults.UseNativeCrashReportingForIos = false;
 				PostProcess(target, pathToBuiltProject, defaults);
 			}
 			finally
