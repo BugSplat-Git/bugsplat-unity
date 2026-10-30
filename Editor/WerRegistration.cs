@@ -60,6 +60,17 @@ namespace BugSplatUnity.Editor
 			var werDll = PromptForWerDll();
 			if (werDll == null) return;
 
+			if (!IsSafeForElevatedShell(werDll))
+			{
+				var message =
+					$"The build path contains % or \", which the elevated command prompt would interpret:\n{werDll}\n\n" +
+					"Move the build to a folder without those characters and try again.";
+
+				Debug.LogError($"BugSplat. {message}");
+				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");
+				return;
+			}
+
 			// Write both registry views: a 32-bit player is handled by the SysWOW64 WerFault,
 			// whose HKLM\SOFTWARE reads are redirected to Wow6432Node. Writing both is cheaper
 			// than deciding which one this build needs.
@@ -69,7 +80,9 @@ namespace BugSplatUnity.Editor
 				? $"add \"HKLM\\{WerKeyPath}\" /v \"{werDll}\" /t REG_DWORD /d 0 /f"
 				: $"delete \"HKLM\\{WerKeyPath}\" /v \"{werDll}\" /f";
 
-			var startInfo = new ProcessStartInfo("cmd.exe", $"/c reg {command} /reg:64 & reg {command} /reg:32")
+			// /d skips AutoRun commands and /v:off turns off !var! expansion, leaving % and " as the
+			// only characters in werDll that could change what the elevated shell runs.
+			var startInfo = new ProcessStartInfo("cmd.exe", $"/d /v:off /c reg {command} /reg:64 & reg {command} /reg:32")
 			{
 				UseShellExecute = true, // required for Verb = runas
 				Verb = "runas",
@@ -155,6 +168,13 @@ namespace BugSplatUnity.Editor
 
 			return werDll;
 		}
+
+		/// <summary>
+		/// werDll reaches an elevated cmd.exe inside double quotes, where % still expands variables
+		/// and " ends the quoting. Neither can be escaped there, so refuse them.
+		/// </summary>
+		internal static bool IsSafeForElevatedShell(string path) =>
+			path.IndexOfAny(new[] { '%', '"', '\r', '\n' }) < 0;
 
 		/// <summary>
 		/// Returns the full, backslash-separated path to BugSplatWer.dll beside the given executable.
