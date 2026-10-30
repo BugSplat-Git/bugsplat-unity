@@ -17,6 +17,8 @@ FOUNDATION_EXPORT const unsigned char BugSplatVersionString[];
 
 #import <BugSplat/BugSplatDelegate.h>
 #import <BugSplat/BugSplatAttachment.h>
+#import <BugSplat/BugSplatCrashInfo.h>
+#import <BugSplat/BugSplatReportResult.h>
 #import <BugSplat/BugSplatFeedbackResult.h>
 #if TARGET_OS_OSX
 #import <BugSplat/BugSplatMac.h>
@@ -350,6 +352,121 @@ NS_ASSUME_NONNULL_BEGIN
          attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
           completion:(nullable void (^)(BugSplatFeedbackResult * _Nullable result, NSError * _Nullable error))completion
     NS_SWIFT_NAME(postFeedback(title:description:userName:userEmail:appKey:attributes:attachments:completion:));
+
+#pragma mark - Non-Fatal Error Reporting
+
+/**
+ * Reports a caught `NSException` to BugSplat with a full stack trace, without crashing.
+ *
+ * Convenience for `-postException:attributes:attachments:completion:` with no extra
+ * attributes and no attachments.
+ *
+ * @param exception The exception that was caught (required).
+ * @param completion Optional handler invoked on the main queue when the upload finishes.
+ *                   On success `result` is non-nil and `error` is nil; on failure the
+ *                   reverse.
+ */
+- (void)postException:(NSException *)exception
+           completion:(nullable void (^)(BugSplatReportResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postException(_:completion:));
+
+/**
+ * Reports a caught `NSException` to BugSplat with a full stack trace, without crashing.
+ *
+ * Call this from the `@catch` block that handled the exception. BugSplat snapshots every
+ * thread in the process at the point of the call - marking the *calling* thread as the
+ * faulting one - and uploads the report while the app keeps running. This is the Apple
+ * counterpart to `BugSplat::CreateXmlReport` in the Windows SDK: it sends a stack trace for
+ * an event that did not terminate the process.
+ *
+ * The report is uploaded as a normal Apple crash report (crash type `macOS`/`iOS`), so it
+ * symbolicates against the same dSYMs your crash reports use and appears in the dashboard
+ * alongside them. To tell non-fatals apart from real crashes, every report sent this way
+ * carries the attributes `bugsplat-nonfatal` (`true`), `bugsplat-nonfatal-name`, and
+ * `bugsplat-nonfatal-captured-at`, which are searchable in the BugSplat dashboard.
+ *
+ * @param exception The exception that was caught (required). Its `name` becomes the report's
+ *                  exception name and its `reason` becomes the report description.
+ * @param attributes Optional attributes to send with this report only. These are merged over
+ *                   any session attributes set with `-setValue:forAttribute:`; on a key
+ *                   collision the value passed here wins.
+ * @param attachments Optional files to include with this report. Unlike a crash report, the
+ *                    `BugSplatDelegate` is not consulted - pass whatever you want attached.
+ * @param completion Optional handler invoked on the main queue when the upload finishes.
+ *                   On success `result` carries the report id and info URL and `error` is nil.
+ *                   On failure `result` is nil and `error` describes what went wrong.
+ *
+ * @note `-start` must have been called first; otherwise the completion handler receives an error.
+ * @note Capturing the stack is synchronous and takes on the order of a few milliseconds;
+ *       only the upload is asynchronous. Avoid calling this in a tight loop on a hot path.
+ * @note Unlike crash reports, a failed upload is *not* persisted for retry on the next launch.
+ *       The failure is reported through `completion` so the caller can decide what to do.
+ */
+- (void)postException:(NSException *)exception
+           attributes:(nullable NSDictionary<NSString *, NSString *> *)attributes
+          attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
+           completion:(nullable void (^)(BugSplatReportResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postException(_:attributes:attachments:completion:));
+
+/**
+ * Reports a caught error to BugSplat with a full stack trace, without crashing.
+ *
+ * Convenience for `-postError:attributes:attachments:completion:` with no extra attributes
+ * and no attachments. In Swift this is the natural thing to call from a `catch` block, since
+ * a thrown Swift `Error` bridges to `NSError`.
+ *
+ * @param error The error that was caught (required).
+ * @param completion Optional handler invoked on the main queue when the upload finishes.
+ */
+- (void)postError:(NSError *)error
+       completion:(nullable void (^)(BugSplatReportResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postError(_:completion:));
+
+/**
+ * Reports a caught error to BugSplat with a full stack trace, without crashing.
+ *
+ * Behaves exactly like `-postException:attributes:attachments:completion:`, taking an
+ * `NSError` instead of an `NSException`. The error's `domain` becomes the report's exception
+ * name and its `localizedDescription` becomes the report description; `domain` and `code` are
+ * additionally sent as the searchable attributes `bugsplat-nonfatal-error-domain` and
+ * `bugsplat-nonfatal-error-code`.
+ *
+ * @param error The error that was caught (required).
+ * @param attributes Optional attributes to send with this report only, merged over any
+ *                   session attributes set with `-setValue:forAttribute:`.
+ * @param attachments Optional files to include with this report.
+ * @param completion Optional handler invoked on the main queue when the upload finishes.
+ */
+- (void)postError:(NSError *)error
+       attributes:(nullable NSDictionary<NSString *, NSString *> *)attributes
+      attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
+       completion:(nullable void (^)(BugSplatReportResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postError(_:attributes:attachments:completion:));
+
+/**
+ * Reports a non-fatal event to BugSplat with a full stack trace, without crashing.
+ *
+ * The primitive behind `-postException:...` and `-postError:...`, for callers who have
+ * neither an `NSException` nor an `NSError` - a failed precondition, a bad server response,
+ * a state machine that reached an impossible state.
+ *
+ * `name` is what identifies this class of event, so keep it stable and low-cardinality
+ * (e.g. `@"ImageDecodeFailure"`, not a name with an id or a timestamp interpolated into it).
+ * Put the varying detail in `reason` or in `attributes`.
+ *
+ * @param name The event name (required). Becomes the report's exception name.
+ * @param reason Optional detail about this particular occurrence. Becomes the report description.
+ * @param attributes Optional attributes to send with this report only, merged over any
+ *                   session attributes set with `-setValue:forAttribute:`.
+ * @param attachments Optional files to include with this report.
+ * @param completion Optional handler invoked on the main queue when the upload finishes.
+ */
+- (void)postExceptionWithName:(NSString *)name
+                       reason:(nullable NSString *)reason
+                   attributes:(nullable NSDictionary<NSString *, NSString *> *)attributes
+                  attachments:(nullable NSArray<BugSplatAttachment *> *)attachments
+                   completion:(nullable void (^)(BugSplatReportResult * _Nullable result, NSError * _Nullable error))completion
+    NS_SWIFT_NAME(postException(name:reason:attributes:attachments:completion:));
 
 // macOS specific API
 #if TARGET_OS_OSX
