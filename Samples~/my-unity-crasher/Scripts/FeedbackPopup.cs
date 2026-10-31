@@ -1,18 +1,30 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using BugSplatUnity;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Crasher
 {
     public class FeedbackPopup : MonoBehaviour
     {
+        // B on a gamepad, Escape on a keyboard: the input module sends Cancel to the selected control.
+        private sealed class CancelForwarder : MonoBehaviour, ICancelHandler
+        {
+            public Action Cancel;
+            public void OnCancel(BaseEventData eventData) => Cancel?.Invoke();
+        }
+
+        public event Action Closed;
+
         private GameObject popupPanel;
         private TMP_InputField titleInput;
         private TMP_InputField descriptionInput;
         private Toggle includeLogsToggle;
+        private Button cancelButton;
 
         void Awake()
         {
@@ -26,6 +38,17 @@ namespace Crasher
             descriptionInput.text = "";
             includeLogsToggle.isOn = true;
             popupPanel.SetActive(true);
+
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(cancelButton.gameObject);
+            }
+        }
+
+        private void Hide()
+        {
+            popupPanel.SetActive(false);
+            Closed?.Invoke();
         }
 
         private void OnSubmit()
@@ -48,18 +71,18 @@ namespace Crasher
                     var options = new ReportPostOptions();
                     options.AdditionalAttachments.Add(new FileInfo(logPath));
                     StartCoroutine(bugsplat.PostFeedback(title, description, options, FeedbackCallback));
-                    popupPanel.SetActive(false);
+                    Hide();
                     return;
                 }
             }
 
             StartCoroutine(bugsplat.PostFeedback(title, description, callback: FeedbackCallback));
-            popupPanel.SetActive(false);
+            Hide();
         }
 
         private void OnCancel()
         {
-            popupPanel.SetActive(false);
+            Hide();
         }
 
         private void FeedbackCallback(HttpResponseMessage response)
@@ -203,8 +226,13 @@ namespace Crasher
             hlg.childForceExpandWidth = true;
             hlg.childForceExpandHeight = true;
 
-            CreateButton("CancelBtn", buttonsRow.transform, "Cancel", new Color(0.7f, 0.7f, 0.7f), OnCancel);
-            CreateButton("SubmitBtn", buttonsRow.transform, "Submit", new Color(0.16f, 0.64f, 0.93f), OnSubmit);
+            cancelButton = CreateButton("CancelBtn", buttonsRow.transform, "Cancel", new Color(0.7f, 0.7f, 0.7f), OnCancel);
+            var submitButton = CreateButton("SubmitBtn", buttonsRow.transform, "Submit", new Color(0.16f, 0.64f, 0.93f), OnSubmit);
+
+            foreach (var selectable in new Selectable[] { cancelButton, submitButton, includeLogsToggle })
+            {
+                selectable.gameObject.AddComponent<CancelForwarder>().Cancel = OnCancel;
+            }
         }
 
         private GameObject CreateElement(string name, Transform parent)
@@ -284,7 +312,7 @@ namespace Crasher
             return inputField;
         }
 
-        private void CreateButton(string name, Transform parent, string label, Color color, UnityEngine.Events.UnityAction onClick)
+        private Button CreateButton(string name, Transform parent, string label, Color color, UnityEngine.Events.UnityAction onClick)
         {
             var go = CreateElement(name, parent);
             var image = go.AddComponent<Image>();
@@ -294,6 +322,13 @@ namespace Crasher
             button.targetGraphic = image;
             button.onClick.AddListener(onClick);
 
+            // Dimmed until focused, so a gamepad user can see which button A will press.
+            var colors = button.colors;
+            colors.normalColor = new Color(0.7f, 0.7f, 0.7f);
+            colors.highlightedColor = Color.white;
+            colors.selectedColor = Color.white;
+            button.colors = colors;
+
             var textGo = CreateTextElement("Text", go.transform, label, 16, FontStyles.Bold);
             var textRect = textGo.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -302,6 +337,8 @@ namespace Crasher
             var tmp = textGo.GetComponent<TextMeshProUGUI>();
             tmp.color = Color.white;
             tmp.alignment = TextAlignmentOptions.Center;
+
+            return button;
         }
     }
 }
