@@ -628,13 +628,6 @@ namespace Crasher
 				},
 				new CrashScenario
 				{
-					Name = "Unity ForceCrash — access violation",
-					Expected = "Native report from Unity's own Utils.ForceCrash, faulting inside the engine.",
-					Run = host => Crash(host, "ForceCrashAccessViolation",
-						() => UnityEngine.Diagnostics.Utils.ForceCrash(UnityEngine.Diagnostics.ForcedCrashCategory.AccessViolation))
-				},
-				new CrashScenario
-				{
 					Name = "Stack overflow",
 					Expected = "Native report: EXCEPTION_STACK_OVERFLOW (0xC00000FD).",
 					Run = host => Crash(host, "StackOverflow", () => Sink = Overflow(0))
