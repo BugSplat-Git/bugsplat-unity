@@ -99,6 +99,9 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Use native crash reporting for Xbox (GDK) builds. On by default. Requires the BugSplat Xbox add-on, available to verified Xbox developers from the Gaming Consoles tab of your database's Integrations page in BugSplat; without it the player logs a warning and reports managed exceptions only.")]
 		public bool UseNativeCrashReportingForXbox = true;
 
+		[Tooltip("Upload .pdb, .exe and .dll symbols to BugSplat for Xbox builds. On by default, as on Windows: Xbox crashes don't symbolicate without them, and Unity's public symbol server doesn't have the Xbox player's symbols. Done by the BugSplat Xbox add-on's build step, with the same symbol upload credentials as the other platforms.")]
+		public bool UploadDebugSymbolsForXbox = true;
+
 		[Header("macOS")]
 		[Tooltip("Use native crash reporting framework for macOS builds. On by default. Requires the IL2CPP scripting backend; a Mono player logs a warning and uses the .NET handler only.")]
 		public bool UseNativeCrashReportingForMac = true;

@@ -234,6 +234,12 @@ namespace BugSplatUnity.RuntimeTests
 		}
 
 		[Test]
+		public void Options_UploadDebugSymbolsForXbox_DefaultsToTrue()
+		{
+			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().UploadDebugSymbolsForXbox);
+		}
+
+		[Test]
 		public void Options_Enabled_DefaultsToTrue()
 		{
 			Assert.IsTrue(ScriptableObject.CreateInstance<BugSplatOptions>().Enabled);
