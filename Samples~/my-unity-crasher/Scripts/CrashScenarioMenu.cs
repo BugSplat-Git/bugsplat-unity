@@ -221,6 +221,8 @@ namespace Crasher
 			{
 #if UNITY_STANDALONE_WIN
 				return "Windows";
+#elif UNITY_GAMECORE
+				return "Xbox";
 #elif UNITY_STANDALONE_OSX
 				return "macOS";
 #elif UNITY_STANDALONE_LINUX
@@ -243,6 +245,8 @@ namespace Crasher
 			{
 #if UNITY_STANDALONE_WIN
 				const string option = "Use Native Crash Reporting For Windows";
+#elif UNITY_GAMECORE
+				const string option = "Use Native Crash Reporting For Xbox (and install the BugSplat for Xbox package)";
 #elif UNITY_STANDALONE_OSX
 				const string option = "Use Native Crash Reporting For Mac (and build with IL2CPP)";
 #elif UNITY_IOS
@@ -272,7 +276,7 @@ namespace Crasher
 				$"Editor ({PlatformName} build target) — managed and feedback scenarios run here. " +
 				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
 			statusText.color = Amber;
-#elif UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+#elif UNITY_STANDALONE_WIN || UNITY_GAMECORE || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
 			if (!bugsplat.NativeCrashReportingEnabled)
 			{
 				statusText.text =
