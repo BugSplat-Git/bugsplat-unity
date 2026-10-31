@@ -451,6 +451,7 @@ namespace Crasher
 		{
 			Describe(host, scenarioKey);
 			crash();
+			Sink++;
 		}
 
 		// The fault has to happen in code the runtime does not own, or it never becomes a crash.
@@ -469,19 +470,36 @@ namespace Crasher
 		// works: RaiseException also faults outside managed code.
 		//
 		// NoInlining keeps the frames distinct through IL2CPP and MSVC optimization so the report
-		// shows a game-code call stack above the ntdll frames.
+		// shows a game-code call stack above the ntdll frames. Each frame also does work after its
+		// call: a call in tail position compiles to a jump, which leaves no frame on the stack.
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void AccessViolationWrite() => NativeCrashFrame0();
+		static void AccessViolationWrite()
+		{
+			NativeCrashFrame0();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame0() => NativeCrashFrame1();
+		static void NativeCrashFrame0()
+		{
+			NativeCrashFrame1();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame1() => NativeCrashFrame2();
+		static void NativeCrashFrame1()
+		{
+			NativeCrashFrame2();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame2() => RtlMoveMemory(IntPtr.Zero, ScratchBuffer, (UIntPtr)4);
+		static void NativeCrashFrame2()
+		{
+			RtlMoveMemory(IntPtr.Zero, ScratchBuffer, (UIntPtr)4);
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		static void AccessViolationRead() => RtlMoveMemory(ScratchBuffer, IntPtr.Zero, (UIntPtr)4);
@@ -637,19 +655,36 @@ namespace Crasher
 
 		// Consoles are IL2CPP only, where a write through a null pointer from C# is a real native
 		// fault rather than the managed exception Mono turns it into on desktop. The frames give
-		// the report a game-code call stack.
+		// the report a game-code call stack; each does work after its call so the compiler can't
+		// turn it into a tail-call jump, which would leave no frame on the stack.
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void AccessViolationWrite() => NativeCrashFrame0();
+		static void AccessViolationWrite()
+		{
+			NativeCrashFrame0();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame0() => NativeCrashFrame1();
+		static void NativeCrashFrame0()
+		{
+			NativeCrashFrame1();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame1() => NativeCrashFrame2();
+		static void NativeCrashFrame1()
+		{
+			NativeCrashFrame2();
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void NativeCrashFrame2() => Marshal.WriteInt32(IntPtr.Zero, 0x0BAD);
+		static void NativeCrashFrame2()
+		{
+			Marshal.WriteInt32(IntPtr.Zero, 0x0BAD);
+			Sink++;
+		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		static int Overflow(int depth) => Overflow(depth + 1) + depth;
@@ -666,6 +701,7 @@ namespace Crasher
 		{
 			Describe(host, scenarioKey);
 			crash();
+			Sink++;
 		}
 
 #elif UNITY_STANDALONE_OSX
