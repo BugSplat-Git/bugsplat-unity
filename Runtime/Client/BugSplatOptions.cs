@@ -141,12 +141,6 @@ namespace BugSplatUnity.Runtime.Client
 		internal const string ConfigObjectKey = "com.bugsplat.unity.options";
 
 		/// <summary>
-		/// Scripting define that hands initialization to the project: BugSplat neither initializes itself
-		/// nor fails a build for a missing asset. For code that calls BugSplat.Initialize itself.
-		/// </summary>
-		internal const string ManualInitializeDefine = "BUGSPLAT_MANUAL_INITIALIZE";
-
-		/// <summary>
 		/// Scripting define that turns BugSplat off for a build target: it does not initialize itself
 		/// and builds are not validated. The per-build-configuration form of <see cref="Enabled"/>.
 		/// </summary>
@@ -181,16 +175,6 @@ namespace BugSplatUnity.Runtime.Client
 			if (preloaded == null)
 			{
 				preloaded = this;
-				return;
-			}
-
-			if (preloaded != this)
-			{
-				// The build refuses this, so reaching it means the asset was preloaded some other
-				// way. Say so rather than let load order decide silently.
-				Debug.LogWarning(
-					$"BugSplat: more than one BugSplatOptions was loaded before the first scene, and \"{preloaded.name}\" " +
-					$"won on load order; \"{name}\" is ignored. Preload exactly one.");
 			}
 		}
 #endif

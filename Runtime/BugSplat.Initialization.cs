@@ -20,9 +20,7 @@ namespace BugSplatUnity
         public static bool IsInitialized => Instance != null;
 
         private const string NotConfiguredMessage =
-            "BugSplat is not configured, so nothing will be reported. " + BugSplatOptions.ConfigureHint +
-            " If your code calls BugSplat.Initialize itself, define " + BugSplatOptions.ManualInitializeDefine +
-            " and this warning goes away.";
+            "BugSplat is not configured, so nothing will be reported. " + BugSplatOptions.ConfigureHint;
 
         private const string AlreadyInitializedMessage =
             "BugSplat.Initialize was called but BugSplat is already initialized; the existing instance is " +
@@ -30,6 +28,31 @@ namespace BugSplatUnity
             "to call - BugSplat.Instance is ready before the first scene loads.";
 
         private static BugSplatRuntime runtime;
+
+        /// <summary>
+        /// Initializes from the options asset selected in Edit > Project Settings > BugSplat, or from a
+        /// copy of it with <paramref name="configure"/> applied. Native crash reporting can be turned
+        /// off there but not on, because the build reads it from the asset. Returns null, with a
+        /// warning, when no asset is selected.
+        /// </summary>
+        public static BugSplat Initialize(Action<BugSplatOptions> configure = null)
+        {
+            var configured = BugSplatOptions.ResolveConfigured();
+            if (configured == null)
+            {
+                Debug.LogWarning(NotConfiguredMessage);
+                return null;
+            }
+
+            if (configure == null || Instance != null)
+            {
+                return Initialize(configured);
+            }
+
+            var options = UnityEngine.Object.Instantiate(configured);
+            configure(options);
+            return Initialize(options);
+        }
 
         /// <summary>
         /// Builds the client from <paramref name="options"/>, starts the native reporter where one is
@@ -106,10 +129,7 @@ namespace BugSplatUnity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         internal static void AutoInitialize()
         {
-#if BUGSPLAT_MANUAL_INITIALIZE || BUGSPLAT_DISABLED
-            // BUGSPLAT_MANUAL_INITIALIZE: the project calls Initialize itself.
-            // BUGSPLAT_DISABLED: BugSplat is off for this build target.
-            // Either way nothing here runs, and nothing reads the options asset.
+#if BUGSPLAT_DISABLED
             return;
 #else
             if (Instance != null)

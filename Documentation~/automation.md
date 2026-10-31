@@ -82,21 +82,31 @@ var options = BugSplatSetup.Configure("my-database", application: "My Game");
 
 `BugSplatSetup.CreateAsset(path)` and `BugSplatProjectOptions.Get()` / `Set(asset)` / `FindAll()` are public for anything more particular.
 
-## 3. Initialize from code only
+## 3. Initialize from code
 
-For a project that wants no asset at all — the options built in code, initialization timed by the project, a consent screen first — define the scripting symbol **`BUGSPLAT_MANUAL_INITIALIZE`** and call `BugSplat.Initialize` yourself:
+An options asset is always required: the build reads it to add the native crash reporting files, turn off Unity's own iOS crash reporter, and upload symbols. Your code decides when BugSplat starts, and can change values at runtime.
+
+To time initialization yourself — a consent screen first, say — turn **Initialize Automatically** off on the asset and call:
 
 ```cs
-var options = ScriptableObject.CreateInstance<BugSplatOptions>();
-options.Database = "my-database";
-BugSplat.Initialize(options);
+BugSplat.Initialize();
 ```
 
-With the define, BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset; the project owns all of it.
+To change values at runtime, pass them in. BugSplat initializes from a copy of the asset with your changes applied, and the asset is left alone:
 
-To turn BugSplat **off** rather than hand over initialization, define **`BUGSPLAT_DISABLED`** instead — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
+```cs
+BugSplat.Initialize(o =>
+{
+    o.Database = isProduction ? "my-game" : "my-game-qa";
+    o.Version = buildNumber;
+});
+```
 
-If you would rather keep an asset for the field values but control the timing, leave the define out, turn **Initialize Automatically** off on the asset, and call `BugSplat.Initialize(options)` with it when ready.
+The per-platform native crash reporting switches can be turned off here but not on: the build reads them from the asset, so a player built with one off has no native files to start. Symbols are uploaded to the asset's database.
+
+After initialization, `BugSplat.Instance` exposes `Attributes`, `Attachments`, the capture options and `ShouldPostException`, the `SetNative…` methods for user, email, notes, key, description and attributes on native reports, and the Windows crash dialog and hang detection setters.
+
+To turn BugSplat **off**, define **`BUGSPLAT_DISABLED`** — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
 
 ## What you will see when it is wrong
 

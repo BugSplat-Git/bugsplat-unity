@@ -12,20 +12,20 @@ BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit 
 | --------------- | --------------- |
 | `BugSplat.Instance` | The live client, or `null` before initialization. Set before the first scene loads when **Initialize Automatically** is on, so it is ready inside any `Awake`. |
 | `BugSplat.IsInitialized` | Whether `Instance` is set. |
-| `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Calling it again logs a warning and returns the existing instance. |
-| `BUGSPLAT_MANUAL_INITIALIZE` | Scripting define. The project owns initialization: BugSplat does not initialize itself, does not warn at startup, and does not fail a build for a missing asset. See [Automation](automation.md#3-initialize-from-code-only). |
+| `BugSplat.Initialize(configure = null)` | Initializes from the asset selected in **Edit > Project Settings > BugSplat** and returns the client. For projects that turn **Initialize Automatically** off — to wait for a consent screen, say. Pass `configure` to start from a copy of the asset with your changes applied: `BugSplat.Initialize(o => o.Database = database)`. The build reads the asset, so a per-platform native crash reporting switch can be turned off there but not on. Calling it again logs a warning and returns the existing instance; with no asset selected it warns and returns `null`. |
+| `BugSplat.Initialize(BugSplatOptions)` | Initializes from the given options. |
 | `BUGSPLAT_DISABLED` | Scripting define. BugSplat is off for that build target: no initialization, no build validation. The per-build-configuration form of the `Enabled` option. |
 
 ### Turning BugSplat on and off
 
-Two independent questions, each answerable on the asset or with a define:
+Two independent questions:
 
 | | On the asset | As a define | Effect |
 | --- | --- | --- | --- |
 | **Does BugSplat run at all?** | `Enabled` (default on) | `BUGSPLAT_DISABLED` | Off: no initialization, and builds are not validated. An explicit `BugSplat.Initialize` call is still honored. |
-| **Who starts it?** | `InitializeAutomatically` (default on) | `BUGSPLAT_MANUAL_INITIALIZE` | Off: BugSplat does not start itself; your code calls `BugSplat.Initialize`. The database is still validated, because you still intend to report. |
+| **Who starts it?** | `InitializeAutomatically` (default on) | — | Off: BugSplat does not start itself; your code calls `BugSplat.Initialize`. The database is still validated, because you still intend to report. |
 
-Use the asset options for a project-wide choice and the defines for a per-build-target one — a build script that leaves `BUGSPLAT_DISABLED` on for development and off for QA and release, for example. The defines are set under **Edit > Project Settings > Player > Scripting Define Symbols**, or with `PlayerSettings.SetScriptingDefineSymbols`.
+Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-target one — a build script that leaves it on for development and off for QA and release, for example. The define is set under **Edit > Project Settings > Player > Scripting Define Symbols**, or with `PlayerSettings.SetScriptingDefineSymbols`.
 
 > [!NOTE]
 > A misconfiguration — no asset selected, or an empty database — **fails a release build** and only **warns on a development build**. Iterating on something unrelated never needs BugSplat filled in first; shipping a release player that silently reports nothing does not slip through.
