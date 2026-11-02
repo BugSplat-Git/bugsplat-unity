@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -161,22 +160,6 @@ namespace BugSplatUnity.Editor
 			}
 		}
 
-		// Zips a single file with the entry at the archive root and writes it to destZip.
-		// symbol-upload skips no-dbgId files (e.g. LineNumberMappings.json) but uploads
-		// .zip files as-is via the versions path, so we zip the mapping before upload.
-		private static void ZipForUpload(string sourceFile, string destZip)
-		{
-			if (File.Exists(destZip))
-			{
-				File.Delete(destZip);
-			}
-
-			using (var archive = ZipFile.Open(destZip, ZipArchiveMode.Create))
-			{
-				archive.CreateEntryFromFile(sourceFile, Path.GetFileName(sourceFile));
-			}
-		}
-
 		private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 		{
 			if (!options.UploadDebugSymbolsForWindows)
@@ -192,7 +175,7 @@ namespace BugSplatUnity.Editor
 			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
 #endif
 
-			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json}", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -295,9 +278,8 @@ namespace BugSplatUnity.Editor
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
 				{
-					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
-					ZipForUpload(fullPath, destZip);
-					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
+					File.Copy(fullPath, Path.Combine(buildDir, "LineNumberMappings.json"), true);
+					Debug.Log($"BugSplat: Copied LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB)");
 					return;
 				}
 			}
@@ -365,9 +347,8 @@ namespace BugSplatUnity.Editor
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
 				{
-					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
-					ZipForUpload(fullPath, destZip);
-					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
+					File.Copy(fullPath, Path.Combine(buildDir, "LineNumberMappings.json"), true);
+					Debug.Log($"BugSplat: Copied LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB)");
 					mappingFound = true;
 					break;
 				}
@@ -378,7 +359,7 @@ namespace BugSplatUnity.Editor
 				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
 			}
 
-			UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -573,15 +554,13 @@ namespace BugSplatUnity.Editor
 				$"    --files \"**/*.dSYM\" \\\n" +
 				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
 				$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
-				$"# symbol-upload skips the raw .json (no dbgId), so zip it; the .zip uploads via the versions path.\n" +
 				$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
 				$"if [ -f \"$MAPPINGS\" ]; then\n" +
-				$"    (cd \"${{PROJECT_DIR}}\" && zip -j -q LineNumberMappings.json.zip LineNumberMappings.json)\n" +
 				$"    \"$SYMBOL_UPLOAD\" \\\n" +
 				$"        --database \"{options.Database}\" \\\n" +
 				$"        --application \"{application}\" \\\n" +
 				$"        --version \"{version}\" \\\n" +
-				$"        --files \"LineNumberMappings.json.zip\" \\\n" +
+				$"        --files \"LineNumberMappings.json\" \\\n" +
 				$"        --directory \"${{PROJECT_DIR}}\"\n" +
 				$"fi";
 
