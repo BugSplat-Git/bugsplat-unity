@@ -13,7 +13,7 @@ namespace BugSplatUnity.Editor
 	/// </summary>
 	internal static class SymbolUploadRelease
 	{
-		internal const string Version = "v11.0.1";
+		internal const string Version = "v11.1.0";
 
 		internal const string Windows = "symbol-upload-windows.exe";
 		internal const string MacOS = "symbol-upload-macos";
@@ -26,10 +26,10 @@ namespace BugSplatUnity.Editor
 		internal static string GetSha256(string variant) =>
 			variant switch
 			{
-				Windows => "11b152a0ea616fb0e8f955aefd67dbcf3fa3a5de04e3e70e5470184dfbd630b3",
-				MacOS => "963cf0a2cdeefbe79957232123ac57e64f60856523fef825f98b81e338909f63",
-				MacOSIntel => "60f53c663ba5d3d8db63b16cd3e08d0d6fab08f496f84f23d497a3b725655d38",
-				Linux => "27e85206ddac208fbc3dc3a5cd46b098801c9c03381a160740913971ec08cd1b",
+				Windows => "febf5b79d174435624e8043b477b691dad281cc0d2a003256930ec75414a61a1",
+				MacOS => "56fdae555f9161be4a0647b2573a0bc15a8a2dc3f1fea68e1d228bbda7f4feca",
+				MacOSIntel => "1763cd77f7f7fe5ccea081fde954cabac6e8b7424cee2939583a8e35cea95ac6",
+				Linux => "eebd832e27e6f934d086ce2e13d38c8e2f5be140869ca23c3630c5c2f83f4e81",
 				_ => throw new ArgumentException($"BugSplat. Unknown symbol-upload variant {variant}", nameof(variant))
 			};
 
