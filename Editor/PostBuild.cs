@@ -262,8 +262,24 @@ namespace BugSplatUnity.Editor
 				CopyDirectory(directory, Path.Combine(destination, Path.GetFileName(directory)));
 		}
 
+		// Unity copies the mappings into the IL2CPP backup folder next to the player, which the
+		// symbol upload glob already covers. A second copy would upload twice and ship with the game.
+		private static bool HasBackedUpLineNumberMappings(string buildDir)
+		{
+			foreach (var backupDir in Directory.GetDirectories(buildDir, "*_BackUpThisFolder_ButDontShipItWithYourGame"))
+			{
+				if (File.Exists(Path.Combine(backupDir, "il2cppOutput", "Symbols", "LineNumberMappings.json")))
+					return true;
+			}
+
+			return false;
+		}
+
 		private static void CopyWindowsLineNumberMappings(string buildDir)
 		{
+			if (HasBackedUpLineNumberMappings(buildDir))
+				return;
+
 			// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
 			var mappingSearchPaths = new[]
 			{
@@ -341,9 +357,12 @@ namespace BugSplatUnity.Editor
 				Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 			};
 
-			var mappingFound = false;
+			var mappingFound = HasBackedUpLineNumberMappings(buildDir);
 			foreach (var searchPath in mappingSearchPaths)
 			{
+				if (mappingFound)
+					break;
+
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
 				{
