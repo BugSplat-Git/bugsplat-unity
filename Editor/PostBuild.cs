@@ -175,7 +175,7 @@ namespace BugSplatUnity.Editor
 			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
 #endif
 
-			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json}", options, uploadExitCode =>
+			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe}", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -185,6 +185,15 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. Symbols uploading completed.");
 			});
+
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, WindowsBeeLineNumberMappings);
+			if (mappingsPath == null)
+			{
+				Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+				return;
+			}
+
+			UploadLineNumberMappings(mappingsPath, options);
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -195,8 +204,6 @@ namespace BugSplatUnity.Editor
 				Debug.LogError("BugSplat. Could not find build directory. Skipping Windows post-build tasks.");
 				return;
 			}
-
-			CopyWindowsLineNumberMappings(buildDir);
 
 			if (!options.UseNativeCrashReportingForWindows)
 				return;
@@ -262,45 +269,50 @@ namespace BugSplatUnity.Editor
 				CopyDirectory(directory, Path.Combine(destination, Path.GetFileName(directory)));
 		}
 
-		// Unity copies the mappings into the IL2CPP backup folder next to the player, which the
-		// symbol upload glob already covers. A second copy would upload twice and ship with the game.
-		private static bool HasBackedUpLineNumberMappings(string buildDir)
+		private static readonly string[] WindowsBeeLineNumberMappings =
 		{
-			foreach (var backupDir in Directory.GetDirectories(buildDir, "*_BackUpThisFolder_ButDontShipItWithYourGame"))
-			{
-				if (File.Exists(Path.Combine(backupDir, "il2cppOutput", "Symbols", "LineNumberMappings.json")))
-					return true;
-			}
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
 
-			return false;
-		}
-
-		private static void CopyWindowsLineNumberMappings(string buildDir)
+		private static readonly string[] MacBeeLineNumberMappings =
 		{
-			if (HasBackedUpLineNumberMappings(buildDir))
-				return;
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
 
-			// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
-			var mappingSearchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			};
+		// The current player's IL2CPP backup folder first, so another player's backup in the same
+		// output folder is never picked; Library/Bee for Unity versions that don't back it up.
+		private static string FindLineNumberMappings(string pathToBuiltProject, string[] beeSearchPaths)
+		{
+			var backedUp = Path.Combine(
+				Path.GetDirectoryName(pathToBuiltProject),
+				Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_BackUpThisFolder_ButDontShipItWithYourGame",
+				"il2cppOutput", "Symbols", "LineNumberMappings.json");
+			if (File.Exists(backedUp))
+				return backedUp;
 
-			foreach (var searchPath in mappingSearchPaths)
+			foreach (var searchPath in beeSearchPaths)
 			{
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
-				{
-					File.Copy(fullPath, Path.Combine(buildDir, "LineNumberMappings.json"), true);
-					Debug.Log($"BugSplat: Copied LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB)");
-					return;
-				}
+					return fullPath;
 			}
 
-			Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+			return null;
+		}
+
+		private static void UploadLineNumberMappings(string mappingsPath, BugSplatOptions options)
+		{
+			UploadSymbols(Path.GetDirectoryName(mappingsPath), "LineNumberMappings.json", options, uploadExitCode =>
+			{
+				if (uploadExitCode != 0)
+					Debug.LogError("BugSplat. Could not upload LineNumberMappings.json.");
+			});
 		}
 
 		private static string GetPEMachineArchitecture(string exePath)
@@ -348,37 +360,7 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// Copy LineNumberMappings.json for IL2CPP symbolication
-			var mappingSearchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			};
-
-			var mappingFound = HasBackedUpLineNumberMappings(buildDir);
-			foreach (var searchPath in mappingSearchPaths)
-			{
-				if (mappingFound)
-					break;
-
-				var fullPath = Path.GetFullPath(searchPath);
-				if (File.Exists(fullPath))
-				{
-					File.Copy(fullPath, Path.Combine(buildDir, "LineNumberMappings.json"), true);
-					Debug.Log($"BugSplat: Copied LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB)");
-					mappingFound = true;
-					break;
-				}
-			}
-
-			if (!mappingFound)
-			{
-				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
-			}
-
-			UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json}", options, uploadExitCode =>
+			UploadSymbols(buildDir, "**/*.dSYM", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -388,6 +370,15 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
 			});
+
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
+			if (mappingsPath == null)
+			{
+				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
+				return;
+			}
+
+			UploadLineNumberMappings(mappingsPath, options);
 		}
 
 		internal static BugSplatOptions GetBugSplatOptions() => BugSplatProjectOptions.Get();
