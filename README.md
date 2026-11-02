@@ -17,7 +17,7 @@
 
 ## 👋 Introduction
 
-BugSplat's `com.bugsplat.unity` package provides crash and exception reporting for Unity projects. BugSplat provides you with invaluable insight into the issues tripping up your users. Our Unity integration collects screenshots, log files, exceptions, and Windows minidumps so that you can fix bugs and deliver a better user experience.
+BugSplat's `com.bugsplat.unity` package reports native crashes, C# exceptions, log files, and screenshots from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. See **Platform Support** below for what each platform captures.
 
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
@@ -125,6 +125,8 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 - **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
 - **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.
 - **Automatic symbol upload** runs as a post-build step and needs [symbol upload credentials](Documentation~/symbol-upload.md#symbol-upload-credentials). Windows uploads `.pdb`, `.dll`, and `.exe` files. **Copy PDB files** (Build Settings → Windows) can only be read from a Windows editor, so that is the only host where the upload is skipped when it's off; from any other host the upload runs regardless and a warning is logged, because a build made without it contains no `.pdb` files and its crash reports will not symbolicate. macOS uploads dSYMs when `UploadDebugSymbolsForMac` is set, unless the build is an Xcode project export. iOS adds an Xcode build phase that uploads dSYMs during the Xcode build when `UploadDebugSymbolsForIos` is set. Android uploads the generated symbols archive when `UploadDebugSymbolsForAndroid` is set, and skips it when **Export Project** is enabled or **Debug Symbols** is **None**. Linux and WebGL have no symbol upload step.
+
+**Consoles.** On Xbox (GDK), native crash reporting uses the same reporter as Windows and needs the BugSplat Xbox add-on, which is available to verified Xbox developers from the **Gaming Consoles** tab of your database's **Integrations** page in BugSplat. Without the add-on, an Xbox player reports managed exceptions only. PlayStation 5 and Nintendo Switch 2 crashes are collected by each platform's own crash reporting and processed by BugSplat; the console guides on the same tab cover Unity setup.
 
 Two things that don't fit the table: `Post(FileInfo minidump)` works on every platform except WebGL, where it logs that it isn't implemented and returns without uploading; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, and iOS only — the Android symbol upload sends native `.so` symbols alone.
 
