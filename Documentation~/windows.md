@@ -16,7 +16,7 @@ When native crash reporting is enabled:
 
 The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
 
-For IL2CPP builds, BugSplat copies `LineNumberMappings.json` into the build directory and uploads it with your symbols so IL2CPP-generated C++ frames symbolicate back to C# method names, file names, and line numbers. See [Windows Symbols](#windows-symbols) for symbol upload configuration.
+For IL2CPP builds, BugSplat uploads Unity's `LineNumberMappings.json` with your symbols so IL2CPP-generated C++ frames symbolicate back to C# method names, file names, and line numbers. Unity only writes that file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** to **Method Name, File Name, and Line Number**; the default, **Method Name**, leaves crash reports with generated C++. See [Windows Symbols](#windows-symbols) for symbol upload configuration.
 
 ## Crash Dialog
 
@@ -28,7 +28,7 @@ The Unity package doesn't have a setting for a custom theme yet: every Windows b
 
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and provide them as described in [Symbol Upload Credentials](symbol-upload.md#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
-For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents.
+For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
 
 ## Windows Hang Detection
 
