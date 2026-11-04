@@ -121,6 +121,8 @@ namespace Crasher
 					RunsInEditor = true,
 					Run = host => host.Run(ThrowNextFrame())
 				},
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+				// A WebGL player is single-threaded: the thread never starts and Task.Run never runs.
 				new CrashScenario
 				{
 					Name = "Exception on a background thread",
@@ -141,6 +143,7 @@ namespace Crasher
 					RunsInEditor = true,
 					Run = host => host.Run(FaultUnobservedTask())
 				},
+#endif
 				new CrashScenario
 				{
 					Name = "Caught exception, posted manually",
