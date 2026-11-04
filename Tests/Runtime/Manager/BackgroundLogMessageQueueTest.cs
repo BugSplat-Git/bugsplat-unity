@@ -202,6 +202,8 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			Assert.True(queue.TryDequeue(out var first));
 			Assert.AreEqual($"{typeof(InvalidOperationException)}: first", first.LogMessage);
 			Assert.AreEqual(LogType.Exception, first.Type);
+			Assert.AreSame(aggregate.InnerExceptions[0], first.Exception,
+				"the exception itself is queued, so it is posted as an exception and not as a log message");
 
 			Assert.True(queue.TryDequeue(out var second));
 			Assert.AreEqual($"{typeof(ArgumentException)}: second", second.LogMessage);
