@@ -92,7 +92,10 @@ namespace Crasher
 			result.Add(BuildAndroidHang());
 #endif
 
+#if !UNITY_WEBGL
+			// BugSplat has no feedback client on WebGL, so PostFeedback only logs an error there.
 			result.Add(BuildFeedback());
+#endif
 			return result;
 		}
 
@@ -150,7 +153,7 @@ namespace Crasher
 			}
 		};
 
-		// ---- Feedback. Available everywhere. ----
+		// ---- Feedback. Everywhere except WebGL. ----
 
 		static ScenarioGroup BuildFeedback() => new ScenarioGroup
 		{
