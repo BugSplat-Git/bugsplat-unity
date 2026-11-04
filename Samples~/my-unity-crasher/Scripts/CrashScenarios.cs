@@ -262,16 +262,41 @@ namespace Crasher
 			}
 
 			// The flag is set as the exception unwinds, a moment before the Task transitions to
-			// Faulted and its last reference goes out of scope. Give that a frame to settle,
-			// otherwise the collection can run while the Task is still reachable.
-			yield return null;
+			// Faulted and its last reference goes out of scope. In a built player that moment can
+			// outlast a frame, and one collection then finds the Task still reachable and raises
+			// nothing, so keep collecting until the event fires.
+			unobservedRaised = false;
+			TaskScheduler.UnobservedTaskException += OnUnobserved;
+			try
+			{
+				deadline = Time.realtimeSinceStartup + FaultedTaskTimeoutSeconds;
+				while (!unobservedRaised && Time.realtimeSinceStartup < deadline)
+				{
+					yield return new WaitForSecondsRealtime(0.25f);
+					GC.Collect();
+					GC.WaitForPendingFinalizers();
+				}
+			}
+			finally
+			{
+				TaskScheduler.UnobservedTaskException -= OnUnobserved;
+			}
 
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
-			GC.Collect();
+			if (!unobservedRaised)
+			{
+				Debug.LogWarning(
+					$"BugSplat sample: the faulted Task was not collected within {FaultedTaskTimeoutSeconds}s, " +
+					"so nothing was reported. Try the scenario again.");
+			}
 		}
 
+		// Only notes that the event fired. It doesn't observe the exception, so BugSplat's own
+		// handler still reports it.
+		static void OnUnobserved(object sender, UnobservedTaskExceptionEventArgs e) => unobservedRaised = true;
+
 		const float FaultedTaskTimeoutSeconds = 5f;
+
+		static volatile bool unobservedRaised;
 
 		static volatile bool faultedTaskThrew;
 
