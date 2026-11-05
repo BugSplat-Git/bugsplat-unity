@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using BugSplat = BugSplatUnity.BugSplat;
@@ -241,36 +242,50 @@ namespace Crasher
 		/// </summary>
 		static IEnumerator FaultUnobservedTask()
 		{
-			faultedTaskThrew = false;
-			StartFaultedTask();
-
-			// Waiting a fixed number of frames would make this flaky: under load Task.Run may not
-			// have reached the throw yet, and collecting while the Task is still live raises
-			// nothing at all — the row would silently do nothing rather than fail.
-			var deadline = Time.realtimeSinceStartup + FaultedTaskTimeoutSeconds;
-			while (!faultedTaskThrew && Time.realtimeSinceStartup < deadline)
+			// Each run tags its own exception, so an unrelated Task or an overlapping run of this
+			// row being finalized doesn't end this run's collection early.
+			var run = new UnobservedTaskRun(Interlocked.Increment(ref lastUnobservedTaskRunId));
+			EventHandler<UnobservedTaskExceptionEventArgs> onUnobserved = (_, e) =>
 			{
-				yield return null;
-			}
+				foreach (var inner in e.Exception.InnerExceptions)
+				{
+					if (inner.Data[UnobservedTaskRunKey] is int id && id == run.Id)
+					{
+						run.Raised = true;
+					}
+				}
+			};
 
-			if (!faultedTaskThrew)
-			{
-				Debug.LogWarning(
-					$"BugSplat sample: the faulted Task did not run within {FaultedTaskTimeoutSeconds}s, " +
-					"so there is nothing unobserved to collect. Try the scenario again.");
-				yield break;
-			}
-
-			// The flag is set as the exception unwinds, a moment before the Task transitions to
-			// Faulted and its last reference goes out of scope. In a built player that moment can
-			// outlast a frame, and one collection then finds the Task still reachable and raises
-			// nothing, so keep collecting until the event fires.
-			unobservedRaised = false;
-			TaskScheduler.UnobservedTaskException += OnUnobserved;
+			// Subscribed before the Task starts, so an automatic GC that finalizes it early isn't
+			// missed. It doesn't observe the exception, so BugSplat's own handler still reports it.
+			TaskScheduler.UnobservedTaskException += onUnobserved;
 			try
 			{
+				StartFaultedTask(run);
+
+				// Waiting a fixed number of frames would make this flaky: under load Task.Run may
+				// not have reached the throw yet, and collecting while the Task is still live raises
+				// nothing at all — the row would silently do nothing rather than fail.
+				var deadline = Time.realtimeSinceStartup + FaultedTaskTimeoutSeconds;
+				while (!run.Threw && Time.realtimeSinceStartup < deadline)
+				{
+					yield return null;
+				}
+
+				if (!run.Threw)
+				{
+					Debug.LogWarning(
+						$"BugSplat sample: the faulted Task did not run within {FaultedTaskTimeoutSeconds}s, " +
+						"so there is nothing unobserved to collect. Try the scenario again.");
+					yield break;
+				}
+
+				// The flag is set as the exception unwinds, a moment before the Task transitions to
+				// Faulted and its last reference goes out of scope. In a built player that moment can
+				// outlast a frame, and one collection then finds the Task still reachable and raises
+				// nothing, so keep collecting until the event fires.
 				deadline = Time.realtimeSinceStartup + FaultedTaskTimeoutSeconds;
-				while (!unobservedRaised && Time.realtimeSinceStartup < deadline)
+				while (!run.Raised && Time.realtimeSinceStartup < deadline)
 				{
 					yield return new WaitForSecondsRealtime(0.25f);
 					GC.Collect();
@@ -279,10 +294,10 @@ namespace Crasher
 			}
 			finally
 			{
-				TaskScheduler.UnobservedTaskException -= OnUnobserved;
+				TaskScheduler.UnobservedTaskException -= onUnobserved;
 			}
 
-			if (!unobservedRaised)
+			if (!run.Raised)
 			{
 				Debug.LogWarning(
 					$"BugSplat sample: the faulted Task was not collected within {FaultedTaskTimeoutSeconds}s, " +
@@ -290,20 +305,27 @@ namespace Crasher
 			}
 		}
 
-		// Only notes that the event fired. It doesn't observe the exception, so BugSplat's own
-		// handler still reports it.
-		static void OnUnobserved(object sender, UnobservedTaskExceptionEventArgs e) => unobservedRaised = true;
+		sealed class UnobservedTaskRun
+		{
+			public UnobservedTaskRun(int id) => Id = id;
+
+			public readonly int Id;
+
+			public volatile bool Threw;
+
+			public volatile bool Raised;
+		}
+
+		const string UnobservedTaskRunKey = "BugSplatSampleUnobservedTaskRun";
 
 		const float FaultedTaskTimeoutSeconds = 5f;
 
-		static volatile bool unobservedRaised;
-
-		static volatile bool faultedTaskThrew;
+		static int lastUnobservedTaskRunId;
 
 		// Kept out of the coroutine so the Task is unreachable by the time the GC runs — a Task
 		// still rooted on the stack never becomes garbage, so its finalizer never runs.
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		static void StartFaultedTask()
+		static void StartFaultedTask(UnobservedTaskRun run)
 		{
 			Task.Run(() =>
 			{
@@ -311,10 +333,15 @@ namespace Crasher
 				{
 					ThrowFromSampleFrames(ManagedScenario.UnobservedTask);
 				}
+				catch (Exception ex)
+				{
+					ex.Data[UnobservedTaskRunKey] = run.Id;
+					throw;
+				}
 				finally
 				{
 					// Signalled from a finally rather than after the throw, which is unreachable.
-					faultedTaskThrew = true;
+					run.Threw = true;
 				}
 			});
 		}
