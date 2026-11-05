@@ -8,7 +8,7 @@ namespace BugSplatUnity.Editor
     public class BugSplatOptionsEditor : UnityEditor.Editor
     {
         private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
-        private const string integrationsURLFormat = "https://app.bugsplat.com/v2/settings/database/integrations{0}";
+        private const string integrationsURLFormat = "https://app.bugsplat.com/v2/database/integrations{0}";
         private const string integrationsText = "A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
