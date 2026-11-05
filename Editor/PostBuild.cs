@@ -189,7 +189,7 @@ namespace BugSplatUnity.Editor
 			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, WindowsBeeLineNumberMappings);
 			if (mappingsPath == null)
 			{
-				Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "Windows");
 				return;
 			}
 
@@ -285,6 +285,28 @@ namespace BugSplatUnity.Editor
 			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 		};
 
+		// IL2CPP writes LineNumberMappings.json only when its stack traces include file and line
+		// numbers, which is not Unity's default.
+		internal static void LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget target, string platform)
+		{
+			if (PlayerSettings.GetScriptingBackend(target) != ScriptingImplementation.IL2CPP)
+			{
+				Debug.Log($"BugSplat: no LineNumberMappings.json, as expected for a Mono build. C# line numbers in native {platform} crash reports need IL2CPP.");
+				return;
+			}
+
+			if (PlayerSettings.GetIl2CppStacktraceInformation(target) == Il2CppStacktraceInformation.MethodOnly)
+			{
+				Debug.LogWarning(
+					$"BugSplat: IL2CPP did not write LineNumberMappings.json, so native {platform} crash reports will show generated C++ " +
+					"instead of your C# files and line numbers. Set Edit > Project Settings > Player > Other Settings > " +
+					"IL2CPP Stacktrace Information to \"Method Name, File Name, and Line Number\".");
+				return;
+			}
+
+			Debug.LogWarning($"BugSplat: LineNumberMappings.json not found, so native {platform} crash reports will not map back to C# files and line numbers.");
+		}
+
 		// The current player's IL2CPP backup folder first, so another player's backup in the same
 		// output folder is never picked; Library/Bee for Unity versions that don't back it up.
 		private static string FindLineNumberMappings(string pathToBuiltProject, string[] beeSearchPaths)
@@ -374,7 +396,7 @@ namespace BugSplatUnity.Editor
 			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
 			if (mappingsPath == null)
 			{
-				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "macOS");
 				return;
 			}
 
@@ -435,7 +457,7 @@ namespace BugSplatUnity.Editor
 				}
 			}
 
-			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available. Ensure Scripting Backend is set to IL2CPP.");
+			LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.iOS, "iOS");
 		}
 
 		private static void DisableUnityCrashReporter(string pathToBuiltProject)
