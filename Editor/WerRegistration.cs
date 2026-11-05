@@ -156,8 +156,8 @@ namespace BugSplatUnity.Editor
 			{
 				var message =
 					$"Select {WerDllName}, not {Path.GetFileName(picked)}.\n\n" +
-					"It's next to your player's .exe. The build copies it there when " +
-					"UseNativeCrashReportingForWindows is on in your BugSplatOptions asset.";
+					"It's next to BugSplat.dll in your player's <Game>_Data/Plugins folder. The build copies it there when " +
+					"Use Native Crash Reporting is on in your BugSplatOptions asset.";
 
 				Debug.LogError($"BugSplat. {message}");
 				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");

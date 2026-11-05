@@ -17,7 +17,7 @@
 
 ## 👋 Introduction
 
-BugSplat's `com.bugsplat.unity` package reports native crashes, C# exceptions, log files, and screenshots from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. See **Platform Support** below for what each platform captures.
+BugSplat's `com.bugsplat.unity` package reports native crashes, C# exceptions, hangs, log files, screenshots, and user feedback from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. On Windows, macOS, Linux, Android and iOS, native crashes and hangs go through one native reporter, [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native). See **Platform Support** below for what each platform captures.
 
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
@@ -108,27 +108,30 @@ Scripts, CI, and AI agents can do all of this without the Editor UI: one options
 
 ## 🧭 Platform Support
 
-What BugSplat captures on each platform. Setup for each one is covered in [Android](Documentation~/android.md), [iOS](Documentation~/ios.md), [macOS](Documentation~/macos.md), and [Windows](Documentation~/windows.md).
+Every player platform runs the same native reporter, [bugsplat-native](Documentation~/native.md); the per-platform pages cover setup: [Windows](Documentation~/windows.md), [macOS](Documentation~/macos.md), [Linux](Documentation~/linux.md), [Android](Documentation~/android.md), [iOS](Documentation~/ios.md).
 
-| Capability | Windows | macOS | iOS | Android | Linux | WebGL |
+| Capability | Windows | macOS | Linux | Android | iOS | WebGL |
 | --- | --- | --- | --- | --- | --- | --- |
 | Managed C# exceptions | Yes | Yes | Yes | Yes | Yes | Yes |
-| Native crashes | Yes (Mono or IL2CPP) | Yes (IL2CPP only) | Yes | Yes | No | No |
-| Hang / ANR reporting | Yes (opt-in) | Yes | Yes | Yes (Android 11+) | No | No |
-| Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
+| Native crashes (out of process) | Yes (Mono or IL2CPP) | Yes | Yes | Yes | Yes (in process) | No |
+| Crash dialog at crash time | Yes | Yes | Yes | No (next launch) | No (next launch) | No |
+| Hang detection | Yes | Yes | Yes | Yes | Yes | No |
+| Non-fatal capture (`CaptureReport`) | Yes | Yes | Yes | Yes | Yes | No |
+| Heap / full memory dumps | Yes | Yes | Yes | Yes | No | No |
+| Offline retry of reports | Yes | Yes | Yes | Yes | Yes | No |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
-| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
+| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | Yes | No |
 
-- **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
-- **Native crashes** are captured by default on Windows, macOS (IL2CPP only), iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
-- **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on macOS, iOS, and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS reports a hang only when the frozen app is force-quit, since nothing on macOS terminates an unresponsive app on its own.
-- **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
+- **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions). In a player they are posted through the native SDK as structured reports, with a crash id and support-response URL like any other report; in the editor and on WebGL they post directly over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
+- **Native crashes** are on by default (`UseNativeCrashReporting`). An out-of-process `BugSplatMonitor` writes the dump while the player is frozen on Windows, macOS, Linux and Android; iOS uses an in-process handler. The runtime is compiled out of the editor, so play mode exercises the managed rows only.
+- **Hang detection** is opt-in through `HangDetectionTimeoutMs` (`0`, disabled, by default) and works the same way everywhere: BugSplat sends a heartbeat every frame and the SDK's watchdog reports when it stops.
+- **Offline retry**: every report is written to disk first and uploaded on a later launch if it cannot go out now.
 - **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.
-- **Automatic symbol upload** runs as a post-build step and needs [symbol upload credentials](Documentation~/symbol-upload.md#symbol-upload-credentials). Windows uploads `.pdb`, `.dll`, and `.exe` files. **Copy PDB files** (Build Settings → Windows) can only be read from a Windows editor, so that is the only host where the upload is skipped when it's off; from any other host the upload runs regardless and a warning is logged, because a build made without it contains no `.pdb` files and its crash reports will not symbolicate. macOS uploads dSYMs when `UploadDebugSymbolsForMac` is set, unless the build is an Xcode project export. iOS adds an Xcode build phase that uploads dSYMs during the Xcode build when `UploadDebugSymbolsForIos` is set. Android uploads the generated symbols archive when `UploadDebugSymbolsForAndroid` is set, and skips it when **Export Project** is enabled or **Debug Symbols** is **None**. Linux and WebGL have no symbol upload step.
+- **Automatic symbol upload** runs as a post-build step and needs [symbol upload credentials](Documentation~/symbol-upload.md#symbol-upload-credentials). Windows uploads `.pdb`, `.dll`, and `.exe` files. **Copy PDB files** (Build Settings → Windows) can only be read from a Windows editor, so that is the only host where the upload is skipped when it's off; from any other host the upload runs regardless and a warning is logged, because a build made without it contains no `.pdb` files and its crash reports will not symbolicate. macOS, Linux, iOS and Android upload Breakpad `.sym` files produced from dSYMs, ELF debug files and `.so` files (`--dumpSyms`).
 
-**Consoles.** On Xbox (GDK), native crash reporting uses the same reporter as Windows and needs the BugSplat Xbox add-on, which is available to verified Xbox developers from the **Gaming Consoles** tab of your database's **Integrations** page in BugSplat. Without the add-on, an Xbox player reports managed exceptions only. PlayStation 5 and Nintendo Switch 2 crashes are collected by each platform's own crash reporting and processed by BugSplat; the console guides on the same tab cover Unity setup.
+**Consoles.** On Xbox (GDK) a player reports managed exceptions. Native Xbox crash reporting through the BugSplat Xbox add-on, which is available to verified Xbox developers from the **Gaming Consoles** tab of your database's **Integrations** page in BugSplat, is not yet wired to bugsplat-native. PlayStation 5 and Nintendo Switch 2 crashes are collected by each platform's own crash reporting and processed by BugSplat; the console guides on the same tab cover Unity setup.
 
-Two things that don't fit the table: `Post(FileInfo minidump)` works on every platform except WebGL, where it logs that it isn't implemented and returns without uploading; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, and iOS only — the Android symbol upload sends native `.so` symbols alone. Unity writes that file only when **Player Settings > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; the default, **Method Name**, leaves IL2CPP crash reports with generated C++ files and lines.
+Two things that don't fit the table: `Post(FileInfo minidump)` posts a minidump you produced yourself over HTTPS on every platform except WebGL; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, and iOS only — the Android symbol upload sends native `.so` symbols alone. Unity writes that file only when **Player Settings > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; the default, **Method Name**, leaves IL2CPP crash reports with generated C++ files and lines.
 
 ## 📚 Documentation
 
@@ -137,13 +140,15 @@ Everything above gets you reporting. These pages cover the rest.
 | Page | What's in it |
 | --- | --- |
 | [Usage](Documentation~/usage.md) | Adding metadata, try/catch reporting, throttling, background thread and unobserved task exceptions, support responses |
-| [Android](Documentation~/android.md) | Native crash reporting via Crashpad, player settings, `symbols.zip`, ANR reporting |
-| [iOS](Documentation~/ios.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
-| [macOS](Documentation~/macos.md) | Native crash reporting via PLCrashReporter, dSYM upload, hang detection |
-| [Windows](Documentation~/windows.md) | Native crash reporting, plugin and IL2CPP symbols, hang detection, Windows Error Reporting |
+| [Native crash reporting](Documentation~/native.md) | How bugsplat-native works in a player, the files to ship, every native option |
+| [Windows](Documentation~/windows.md) | Heap dumps, hang detection, symbols, Windows Error Reporting |
+| [macOS](Documentation~/macos.md) | Helpers in `Contents/Helpers`, signing and notarization, hang detection, dSYM upload |
+| [Linux](Documentation~/linux.md) | Helpers next to the player, hang detection, symbol upload |
+| [Android](Documentation~/android.md) | Player settings, `symbols.zip`, hang and ANR reporting |
+| [iOS](Documentation~/ios.md) | In-process capture, dSYM upload, hang detection |
 | [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
-| [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
+| [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed (options, constructor, shipped files), and what to change |
 | [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — for scripts, CI, and AI agents |
 
 ## 🧑‍💻 Contributing
