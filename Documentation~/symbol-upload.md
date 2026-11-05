@@ -6,7 +6,7 @@ How BugSplat authenticates the post-build symbol upload, and where those credent
 
 ## Symbol Upload Credentials
 
-Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page and are **specific to one database**. They are never stored in your project — an asset carrying them ends up in version control and inside shipped builds. They resolve in this order:
+Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/v2/database/integrations) page and are **specific to one database**. They are never stored in your project — an asset carrying them ends up in version control and inside shipped builds. They resolve in this order:
 
 1. **`SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` environment variables** — use these in CI. They are the names the `symbol-upload` CLI reads, so the same pair works whether Unity runs the upload or your CI runs `xcodebuild` itself.
 2. **`~/.bugsplat/credentials/<database>.sh`** — for local development. Set it from **BugSplat > Symbol Upload > Set Credentials**, which writes one file per database, so a machine can hold credentials for as many databases as you work with.
@@ -21,5 +21,5 @@ Because the file lives in your home directory rather than the project, there is 
 
 | Variable | Description |
 |----------| --------------- |
-| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
-| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/settings/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SYMBOL_UPLOAD_CLIENT_ID | An OAuth2 Client ID value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
+| SYMBOL_UPLOAD_CLIENT_SECRET | An OAuth2 Client Secret value used for uploading [symbol files](https://docs.bugsplat.com/introduction/development/working-with-symbol-files) generated via BugSplat's [Integrations](https://app.bugsplat.com/v2/database/integrations) page.<br>Takes precedence over `~/.bugsplat/credentials/<database>.sh` — see [Symbol Upload Credentials](#symbol-upload-credentials) |
