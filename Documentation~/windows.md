@@ -54,7 +54,7 @@ reg delete "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExcep
 
 The value name must match the installed path exactly, using backslashes. Moving or reinstalling the game to a different folder silently disarms it.
 
-For local builds, use **BugSplat > Windows > Register WER Handler** in the editor. It asks for your built player, writes the value elevated, and reads it back to confirm. **Check WER Handler Registration** reports the current state.
+For local builds, use **BugSplat > Windows > Register WER Handler** in the editor. It asks for the `BugSplatWer.dll` in your build folder, writes the value elevated, and reads it back to confirm. **Check WER Handler Registration** reports the current state.
 
 At runtime, `bugsplat.WindowsWerEnabled` tells you whether the handler registered. When it hasn't, BugSplat logs what will be missed and how to fix it — as a warning in development builds and an informational message otherwise, since end users can't act on it. All other crashes are reported normally either way.
 
