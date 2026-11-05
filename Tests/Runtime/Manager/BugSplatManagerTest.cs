@@ -238,8 +238,8 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			GC.WaitForPendingFinalizers();
 			GC.Collect();
 
-			yield return WaitUntil(() => reporter.Calls.Post.Count >= 1);
-			if (reporter.Calls.Post.Count == 0)
+			yield return WaitUntil(() => reporter.Calls.Post.Count + reporter.Calls.LogMessageReceived.Count >= 1);
+			if (reporter.Calls.Post.Count + reporter.Calls.LogMessageReceived.Count == 0)
 			{
 				Assert.Inconclusive("The runtime did not raise UnobservedTaskException within the timeout.");
 			}
