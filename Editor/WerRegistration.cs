@@ -141,32 +141,30 @@ namespace BugSplatUnity.Editor
 		}
 
 		/// <summary>
-		/// Asks for the built player executable and returns the full path to the BugSplatWer.dll
-		/// beside it, or null if the user cancelled or the DLL is missing.
+		/// Asks for the build's BugSplatWer.dll, the file that gets registered, and returns its full
+		/// path, or null if the user cancelled or picked another file.
 		/// </summary>
 		static string PromptForWerDll()
 		{
 			var lastBuild = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
 			var startDirectory = string.IsNullOrEmpty(lastBuild) ? "" : Path.GetDirectoryName(lastBuild);
 
-			var exePath = EditorUtility.OpenFilePanel("Select your built Windows player", startDirectory, "exe");
-			if (string.IsNullOrEmpty(exePath)) return null;
+			var picked = EditorUtility.OpenFilePanel($"Select {WerDllName} in your build folder", startDirectory, "dll");
+			if (string.IsNullOrEmpty(picked)) return null;
 
-			var werDll = NormalizeWerDllPath(exePath);
-
-			if (!File.Exists(werDll))
+			if (!string.Equals(Path.GetFileName(picked), WerDllName, StringComparison.OrdinalIgnoreCase))
 			{
 				var message =
-					$"{WerDllName} was not found next to {Path.GetFileName(exePath)}.\n\n" +
-					"Enable UseNativeCrashReportingForWindows on your BugSplatOptions asset and rebuild — " +
-					"the post-build step copies it next to the executable.";
+					$"Select {WerDllName}, not {Path.GetFileName(picked)}.\n\n" +
+					"It's next to your player's .exe. The build copies it there when " +
+					"UseNativeCrashReportingForWindows is on in your BugSplatOptions asset.";
 
 				Debug.LogError($"BugSplat. {message}");
 				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");
 				return null;
 			}
 
-			return werDll;
+			return NormalizeWerDllPath(picked);
 		}
 
 		/// <summary>
@@ -177,15 +175,14 @@ namespace BugSplatUnity.Editor
 			path.IndexOfAny(new[] { '%', '"', '\r', '\n' }) < 0;
 
 		/// <summary>
-		/// Returns the full, backslash-separated path to BugSplatWer.dll beside the given executable.
-		/// The separator matters: the SDK builds the path it looks up with GetModuleFileNameW, which
-		/// yields backslashes, so a value named with forward slashes (as EditorUtility.OpenFilePanel
+		/// Returns the full, backslash-separated form of a BugSplatWer.dll path. The separator
+		/// matters: the SDK builds the path it looks up with GetModuleFileNameW, which yields
+		/// backslashes, so a value named with forward slashes (as EditorUtility.OpenFilePanel
 		/// returns) never matches and WER stays silently disarmed.
 		/// </summary>
-		internal static string NormalizeWerDllPath(string exePath)
+		internal static string NormalizeWerDllPath(string werDllPath)
 		{
-			var buildDir = Path.GetDirectoryName(Path.GetFullPath(exePath));
-			return Path.GetFullPath(Path.Combine(buildDir, WerDllName)).Replace('/', '\\');
+			return Path.GetFullPath(werDllPath).Replace('/', '\\');
 		}
 
 		/// <summary>
