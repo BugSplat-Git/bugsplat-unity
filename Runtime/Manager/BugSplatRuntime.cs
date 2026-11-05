@@ -117,7 +117,9 @@ namespace BugSplatUnity.Runtime.Manager
 				drained < backgroundLogMessages.Capacity && backgroundLogMessages.TryDequeue(out var message);
 				drained++)
 			{
-				StartCoroutine(bugSplat.LogMessageReceived(message.LogMessage, message.StackTrace, message.Type));
+				StartCoroutine(message.Exception != null
+					? bugSplat.Post(message.Exception)
+					: bugSplat.LogMessageReceived(message.LogMessage, message.StackTrace, message.Type));
 			}
 
 			// Checked even when nothing was drained: a burst can overflow and then fully drain, and
@@ -184,15 +186,17 @@ namespace BugSplatUnity.Runtime.Manager
 			}
 		}
 
-		// Matches the shape Unity's log callback delivers for an exception, so both capture paths
-		// produce identically formatted reports.
+		// Carries the exception itself, so Update posts it with Post(exception). Its stack trace is
+		// in .NET's format, which BugSplat reads for a posted exception but not for a Unity log
+		// message, so posting it as a log message failed processing.
 		private static void Enqueue(BackgroundLogMessageQueue queue, Exception exception, int callingThreadId)
 		{
 			queue.Enqueue(
 				$"{exception.GetType()}: {exception.Message}",
 				exception.StackTrace ?? string.Empty,
 				LogType.Exception,
-				callingThreadId);
+				callingThreadId,
+				exception);
 		}
 	}
 }
