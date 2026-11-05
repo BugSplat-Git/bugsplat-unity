@@ -60,6 +60,17 @@ namespace BugSplatUnity.Editor
 			var werDll = PromptForWerDll();
 			if (werDll == null) return;
 
+			if (!IsSafeForElevatedShell(werDll))
+			{
+				var message =
+					$"The build path contains % or \", which the elevated command prompt would interpret:\n{werDll}\n\n" +
+					"Move the build to a folder without those characters and try again.";
+
+				Debug.LogError($"BugSplat. {message}");
+				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");
+				return;
+			}
+
 			// Write both registry views: a 32-bit player is handled by the SysWOW64 WerFault,
 			// whose HKLM\SOFTWARE reads are redirected to Wow6432Node. Writing both is cheaper
 			// than deciding which one this build needs.
@@ -69,7 +80,9 @@ namespace BugSplatUnity.Editor
 				? $"add \"HKLM\\{WerKeyPath}\" /v \"{werDll}\" /t REG_DWORD /d 0 /f"
 				: $"delete \"HKLM\\{WerKeyPath}\" /v \"{werDll}\" /f";
 
-			var startInfo = new ProcessStartInfo("cmd.exe", $"/c reg {command} /reg:64 & reg {command} /reg:32")
+			// /d skips AutoRun commands and /v:off turns off !var! expansion, leaving % and " as the
+			// only characters in werDll that could change what the elevated shell runs.
+			var startInfo = new ProcessStartInfo("cmd.exe", $"/d /v:off /c reg {command} /reg:64 & reg {command} /reg:32")
 			{
 				UseShellExecute = true, // required for Verb = runas
 				Verb = "runas",
@@ -128,46 +141,48 @@ namespace BugSplatUnity.Editor
 		}
 
 		/// <summary>
-		/// Asks for the built player executable and returns the full path to the BugSplatWer.dll
-		/// beside it, or null if the user cancelled or the DLL is missing.
+		/// Asks for the build's BugSplatWer.dll, the file that gets registered, and returns its full
+		/// path, or null if the user cancelled or picked another file.
 		/// </summary>
 		static string PromptForWerDll()
 		{
 			var lastBuild = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
 			var startDirectory = string.IsNullOrEmpty(lastBuild) ? "" : Path.GetDirectoryName(lastBuild);
 
-			var exePath = EditorUtility.OpenFilePanel("Select your built Windows player", startDirectory, "exe");
-			if (string.IsNullOrEmpty(exePath)) return null;
+			var picked = EditorUtility.OpenFilePanel($"Select {WerDllName} in your build folder", startDirectory, "dll");
+			if (string.IsNullOrEmpty(picked)) return null;
 
-			var werDll = NormalizeWerDllPath(exePath);
-
-			if (werDll == null || !File.Exists(werDll))
+			if (!string.Equals(Path.GetFileName(picked), WerDllName, StringComparison.OrdinalIgnoreCase))
 			{
 				var message =
-					$"{WerDllName} was not found under {Path.GetFileNameWithoutExtension(exePath)}_Data/Plugins next to {Path.GetFileName(exePath)}.\n\n" +
-					"Enable Use Native Crash Reporting on your BugSplatOptions asset and rebuild — " +
-					"the post-build step copies it next to BugSplat.dll.";
+					$"Select {WerDllName}, not {Path.GetFileName(picked)}.\n\n" +
+					"It's next to BugSplat.dll in your player's <Game>_Data/Plugins folder. The build copies it there when " +
+					"Use Native Crash Reporting is on in your BugSplatOptions asset.";
 
 				Debug.LogError($"BugSplat. {message}");
 				EditorUtility.DisplayDialog("BugSplat — WER Registration", message, "OK");
 				return null;
 			}
 
-			return werDll;
+			return NormalizeWerDllPath(picked);
 		}
 
 		/// <summary>
-		/// Returns the full, backslash-separated path to the BugSplatWer.dll the SDK registers for the
-		/// given player: next to BugSplat.dll under &lt;Game&gt;_Data/Plugins. The separator matters: the SDK
-		/// builds the path it looks up with GetModuleFileNameW, which yields backslashes, so a value
-		/// named with forward slashes (as EditorUtility.OpenFilePanel returns) never matches and WER
-		/// stays silently disarmed. Null when the player has no BugSplat.dll.
+		/// werDll reaches an elevated cmd.exe inside double quotes, where % still expands variables
+		/// and " ends the quoting. Neither can be escaped there, so refuse them.
 		/// </summary>
-		internal static string NormalizeWerDllPath(string exePath)
+		internal static bool IsSafeForElevatedShell(string path) =>
+			path.IndexOfAny(new[] { '%', '"', '\r', '\n' }) < 0;
+
+		/// <summary>
+		/// Returns the full, backslash-separated form of a BugSplatWer.dll path. The separator
+		/// matters: the SDK builds the path it looks up with GetModuleFileNameW, which yields
+		/// backslashes, so a value named with forward slashes (as EditorUtility.OpenFilePanel
+		/// returns) never matches and WER stays silently disarmed.
+		/// </summary>
+		internal static string NormalizeWerDllPath(string werDllPath)
 		{
-			var pluginDir = BuildPostprocessors.FindWindowsPluginDirectory(Path.GetFullPath(exePath));
-			if (pluginDir == null) return null;
-			return Path.GetFullPath(Path.Combine(pluginDir, WerDllName)).Replace('/', '\\');
+			return Path.GetFullPath(werDllPath).Replace('/', '\\');
 		}
 
 		/// <summary>

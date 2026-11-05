@@ -15,17 +15,23 @@ Native Windows crash reporting comes from [bugsplat-native](native.md): an out-o
 
 The native library is a standard `/MD` binary and depends on the Microsoft Visual C++ Redistributable (`vcruntime140.dll`, `msvcp140.dll`), which Unity Windows players already require. If the redistributable is missing on an end user's machine, native crash reporting fails to initialize with an error in the log, and .NET exception reporting continues to work.
 
+## Crash Dialog
+
+The dialog reads its colors, fonts, layout, logo and wording at run time from the `theme` folder next to `BugSplatReporter.exe` — `theme.json`, an optional logo, and one `strings.<language>.json` file per language. Nothing is compiled, so rebranding it means editing files, not rebuilding the SDK. [Crash Dialog Branding](https://docs.bugsplat.com/education/how-tos/customize-the-crash-dialog) documents the theme format.
+
+The Unity package doesn't have a setting for a custom theme yet: every Windows build copies the default theme from the package over the build folder's `theme`. To ship your own, put your theme in that folder in your installer, after the build.
+
 ## Heap dumps
 
 Set `DumpType` to `Heap` to include the managed heaps in the dump, so Mono and IL2CPP objects resolve in the debugger, or `Full` for every readable region. The dump is written by DbgHelp while the player is suspended, exactly as Visual Studio and WinDbg expect. Larger dumps take longer to upload and are subject to your database's size limit; the SDK does not gate them client-side.
 
 ## Hang detection
 
-Set `HangDetectionTimeoutMs` on the options asset (it is `0`, disabled, by default). `BugSplatManager` sends a heartbeat every frame; when it stops for longer than the timeout, `BugSplatMonitor` dumps the live process and uploads a hang report. With `HangPolicy.Report` the game continues once the main thread responds again; with `ReportAndTerminate` the dialog offers Wait / Close and terminates the game on Close. Choose a timeout longer than your longest expected frame — long frames such as loading screens are otherwise reported as hangs. If you drive BugSplat without `BugSplatManager`, call `bugsplat.Heartbeat()` from your own `Update`.
+Set `HangDetectionTimeoutMs` on the options asset (it is `0`, disabled, by default). BugSplat sends a heartbeat every frame; when it stops for longer than the timeout, `BugSplatMonitor` dumps the live process and uploads a hang report. With `HangPolicy.Report` the game continues once the main thread responds again; with `ReportAndTerminate` the dialog offers Wait / Close and terminates the game on Close. Choose a timeout longer than your longest expected frame — long frames such as loading screens are otherwise reported as hangs.
 
 ## Symbols
 
-The post-build step uploads `.pdb`, `.dll` and `.exe` files from your build folder when `UploadDebugSymbolsForWindows` is set, together with a zipped `LineNumberMappings.json` for IL2CPP builds. **Copy PDB files** must be enabled in Build Settings → Windows. See [Symbol Upload](symbol-upload.md) for credentials.
+The post-build step uploads `.pdb`, `.dll` and `.exe` files from your build folder when `UploadDebugSymbolsForWindows` is set, together with `LineNumberMappings.json` for IL2CPP builds. **Copy PDB files** must be enabled in Build Settings → Windows. Unity only generates `LineNumberMappings.json` when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting. See [Symbol Upload](symbol-upload.md) for credentials.
 
 ## Windows Error Reporting
 
@@ -35,4 +41,10 @@ Stack buffer overruns (`0xC0000409`) and `__fastfail` terminate the process thro
 reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExceptionHelperModules" /v "C:\Path\To\Game\Game_Data\Plugins\x86_64\BugSplatWer.dll" /t REG_DWORD /d 0
 ```
 
-For local builds use **BugSplat > Windows > Register WER Handler** in the editor, which writes the value elevated for a built player; **Check WER Handler Registration** reports the state. `bugsplat.WindowsWerEnabled` tells you at runtime whether the handler is armed, and init logs what is lost and how to fix it when it is not (a warning in development builds, informational otherwise).
+The value name must match the installed path exactly, using backslashes. Moving or reinstalling the game to a different folder silently disarms it.
+
+For local builds, use **BugSplat > Windows > Register WER Handler** in the editor. It asks for the `BugSplatWer.dll` under your build's `<Game>_Data/Plugins` folder, writes the value elevated, and reads it back to confirm. **Check WER Handler Registration** reports the current state.
+
+At runtime, `bugsplat.WindowsWerEnabled` tells you whether the handler registered. When it hasn't, BugSplat logs what will be missed and how to fix it — as a warning in development builds and an informational message otherwise, since end users can't act on it. All other crashes are reported normally either way.
+
+If registration appears to succeed but `WindowsWerEnabled` stays `false`, check your endpoint-protection software: `RuntimeExceptionHelperModules` is a known persistence location and some products monitor or block writes to it.

@@ -8,8 +8,8 @@ namespace BugSplatUnity.Editor
     public class BugSplatOptionsEditor : UnityEditor.Editor
     {
         private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
-        private const string integrationsURLFormat = "https://app.bugsplat.com/v2/settings/database/integrations{0}";
-        private const string integrationsText = "<color=#040404>A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.</color>";
+        private const string integrationsURLFormat = "https://app.bugsplat.com/v2/database/integrations{0}";
+        private const string integrationsText = "A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
         private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
@@ -30,11 +30,12 @@ namespace BugSplatUnity.Editor
                 : string.Empty;
             var integrationsURL = string.Format(integrationsURLFormat, queryString);
 
-            var style = new GUIStyle()
+            var labelMargin = EditorStyles.label.margin;
+            var style = new GUIStyle(EditorStyles.label)
             {
                 richText = true,
                 wordWrap = true,
-                margin = new RectOffset(0, 0, integrationsPaddingTop, integrationsPaddingBottom)
+                margin = new RectOffset(labelMargin.left, labelMargin.right, integrationsPaddingTop, integrationsPaddingBottom)
             };
 
             if (GUILayout.Button(integrationsText, style))
@@ -68,6 +69,11 @@ namespace BugSplatUnity.Editor
             while (iterator.NextVisible(traverseChildren))
             {
                 traverseChildren = false;
+
+                if (iterator.propertyPath == "m_Script")
+                {
+                    continue;
+                }
 
                 // The credentials notice belongs next to the symbol upload toggles it is about,
                 // not stranded at the bottom of the asset, so emit it just before that section opens.

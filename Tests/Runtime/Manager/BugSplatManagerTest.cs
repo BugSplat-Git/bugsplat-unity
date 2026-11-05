@@ -13,10 +13,13 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+#pragma warning disable 618 // BugSplatManager is obsolete; these tests pin its compatibility behavior.
+
 namespace BugSplatUnity.RuntimeTests.Manager
 {
 	/// <summary>
-	/// Play-mode tests for the manager's log-event wiring. The queue's policy is covered by
+	/// Play-mode tests for the log-event wiring, driven through the obsolete BugSplatManager so a
+	/// 4.x scene's configuration is what is exercised. The queue's policy is covered by
 	/// BackgroundLogMessageQueueTest; what these pin is the part unit tests can't — Unity's own
 	/// event contract (logMessageReceivedThreaded fires on the logging thread, both events fire
 	/// for main-thread logs) and the exactly-once delivery built on top of it.
@@ -235,16 +238,17 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			GC.WaitForPendingFinalizers();
 			GC.Collect();
 
-			yield return WaitUntil(() => reporter.Calls.LogMessageReceived.Count >= 1);
-			if (reporter.Calls.LogMessageReceived.Count == 0)
+			yield return WaitUntil(() => reporter.Calls.Post.Count + reporter.Calls.LogMessageReceived.Count >= 1);
+			if (reporter.Calls.Post.Count + reporter.Calls.LogMessageReceived.Count == 0)
 			{
 				Assert.Inconclusive("The runtime did not raise UnobservedTaskException within the timeout.");
 			}
 
-			Assert.AreEqual(1, reporter.Calls.LogMessageReceived.Count);
-			var call = reporter.Calls.LogMessageReceived[0];
-			StringAssert.Contains("BugSplat manager test: unobserved task", call.LogMessage);
-			Assert.AreEqual(LogType.Exception, call.Type);
+			// Posted as an exception, whose .NET-format stack trace BugSplat can read, not as a
+			// Unity log message, whose parser it fails.
+			Assert.AreEqual(1, reporter.Calls.Post.Count);
+			Assert.IsEmpty(reporter.Calls.LogMessageReceived);
+			StringAssert.Contains("BugSplat manager test: unobserved task", reporter.Calls.Post[0].Exception.Message);
 		}
 
 		[UnityTest]
@@ -267,6 +271,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			yield return null;
 
 			Assert.IsEmpty(reporter.Calls.LogMessageReceived);
+			Assert.IsEmpty(reporter.Calls.Post);
 		}
 
 		static volatile bool faultedTaskThrew;

@@ -19,7 +19,16 @@ The helpers are executables inside your bundle, so they must be signed with your
 
 ## Hang detection
 
-Set `HangDetectionTimeoutMs` on the options asset. The SDK pings the main dispatch queue itself and `BugSplatManager` sends a heartbeat every frame; when both stop for longer than the timeout, the monitor dumps the live process and uploads a hang report. With `HangPolicy.Report` the game continues; with `ReportAndTerminate` the dialog offers Wait / Close.
+Set `HangDetectionTimeoutMs` on the options asset. The SDK pings the main dispatch queue itself and BugSplat sends a heartbeat every frame; when both stop for longer than the timeout, the monitor dumps the live process and uploads a hang report. With `HangPolicy.Report` the game continues; with `ReportAndTerminate` the dialog offers Wait / Close.
+
+## Testing Without the Debugger
+
+A debugger claims the Mach exception ports before bugsplat-native's handler does, so **a crash that happens under the Xcode debugger never reaches BugSplat**. Xcode's **Build And Run** leaves the debugger on, so a crash triggered that way produces no report and no explanation.
+
+Two ways to test:
+
+- Uncheck **Product > Scheme > Edit Scheme > Run > Info > Debug executable**, then Run. Only the Run action changes; Test and Profile are unaffected.
+- Or launch the app from the Finder instead of from Xcode.
 
 ## Symbols
 

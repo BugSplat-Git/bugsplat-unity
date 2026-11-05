@@ -15,7 +15,7 @@ Unity's Mono and IL2CPP runtimes install their own signal handlers to turn fault
 
 ## Hang detection
 
-Linux has no portable main loop for the SDK to probe, so the heartbeat `BugSplatManager` sends every frame is what the watchdog watches. Set `HangDetectionTimeoutMs` on the options asset; the monitor dumps the live process and uploads a hang report when the heartbeat stops for longer than that.
+Linux has no portable main loop for the SDK to probe, so the heartbeat BugSplat sends every frame is what the watchdog watches. Set `HangDetectionTimeoutMs` on the options asset; the monitor dumps the live process and uploads a hang report when the heartbeat stops for longer than that.
 
 ## Symbols
 

@@ -306,6 +306,12 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.True(fromOptions.CapturePlayerLog, "client created from options");
 		}
 
+		[Test]
+		public void NativeCrashReporting_ShouldDefaultToEnabled()
+		{
+			Assert.True(options.UseNativeCrashReporting);
+		}
+
 		// The native reporter is compiled out in the editor, so AttachNativeLogFile itself is a no-op
 		// here. NativePersistentDataAttachmentPaths records what CreateFromOptions resolved and handed
 		// to it, which is the part of the wiring a PlayMode test can actually observe.

@@ -19,7 +19,7 @@ namespace BugSplatUnity.Runtime.Client
 	public class BugSplatOptions : ScriptableObject
 	{
 		[Header("BugSplat Account")]
-		[Tooltip("The name of your BugSplat database. Required.")]
+		[Tooltip("The name of a database in your BugSplat account (sign up at app.bugsplat.com). Required.")]
 		public string Database;
 
 		[Tooltip("The name of your BugSplat application. Defaults to Application.productName if no value is set.")]
@@ -27,6 +27,22 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("The version of your BugSplat application. Defaults to Application.version if no value is set.")]
 		public string Version;
+
+		[Header("Initialization")]
+		[Tooltip("Whether this project uses BugSplat at all. Off means BugSplat does not start itself and builds are not checked for a database, so you can keep it out of development builds without filling anything in. An explicit BugSplat.Initialize call is still honored. For per-build-target control from a build script, define BUGSPLAT_DISABLED instead.")]
+		public bool Enabled = true;
+
+		[Tooltip("Initialize BugSplat from this asset before the first scene loads. On by default, so nothing has to be placed in a scene. Turn it off to call BugSplat.Initialize yourself - after a consent screen, for example.")]
+		public bool InitializeAutomatically = true;
+
+		[Tooltip("Register a callback and report LogType.Exception log messages as they happen.")]
+		public bool RegisterLogMessageReceived = true;
+
+		[Tooltip("Also capture unhandled exceptions thrown on background threads. Unity only raises logMessageReceived for main-thread logs, so without this those exceptions are written to the log but never reported. Requires Register Log Message Received.")]
+		public bool CaptureExceptionsOnBackgroundThreads = true;
+
+		[Tooltip("Also capture exceptions from Tasks that faulted and were never awaited. These never reach Unity's log at all, so they are otherwise invisible. They surface only after a garbage collection notices the Task, so they are reported late and are not guaranteed to be reported before the process exits. Requires Register Log Message Received.")]
+		public bool CaptureUnobservedTaskExceptions = true;
 
 		[Header("Report Metadata")]
 		[Tooltip("A default description that can be overridden by a call to Post.")]
@@ -76,7 +92,7 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("How much process memory a crash dump carries. Heap includes the managed heaps so objects resolve in a debugger; Full is every readable region. Larger dumps take longer to upload and are subject to your database's size limit.")]
 		public DumpType DumpType = DumpType.Normal;
 
-		[Tooltip("Hang detection timeout in milliseconds; 0 (default) disables it. Choose a timeout longer than your longest expected frame (loading screens, shader warmup), or those get reported as hangs. BugSplatManager sends the heartbeat every frame.")]
+		[Tooltip("Hang detection timeout in milliseconds; 0 (default) disables it. Choose a timeout longer than your longest expected frame (loading screens, shader warmup), or those get reported as hangs. BugSplat sends the heartbeat every frame.")]
 		public int HangDetectionTimeoutMs = 0;
 
 		[Tooltip("Report: dump the live process, upload a hang report and let the game continue. Report And Terminate: also offer the user Wait / Close and end the game on Close.")]
@@ -89,7 +105,7 @@ namespace BugSplatUnity.Runtime.Client
 		public ManagedReportFormat ManagedReportFormat = ManagedReportFormat.Xml;
 
 		[Header("Symbols")]
-		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default. Also requires Copy PDB Files in Build Settings, and a Windows editor.")]
+		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default. Also requires Copy PDB Files in Build Settings - only a Windows editor can check that setting, so from other editors the upload runs regardless and a warning is logged.")]
 		public bool UploadDebugSymbolsForWindows = true;
 
 		[Tooltip("Upload debug symbols (dSYMs, as Breakpad .sym files) to BugSplat for macOS builds.")]
@@ -103,5 +119,71 @@ namespace BugSplatUnity.Runtime.Client
 
 		[Tooltip("Upload the symbols.zip Unity generates for Android builds to BugSplat.")]
 		public bool UploadDebugSymbolsForAndroid;
+
+		[Header("Xbox")]
+		// TODO(#255): bugsplat-native has no Xbox build, and the Xbox add-on's GDKX BugSplat.dll exports the
+		// bugsplat-windows BugSplat_* API, which nothing calls any more. Until one of them changes, Xbox players
+		// report managed exceptions only and this option has no effect.
+		[Tooltip("Use native crash reporting for Xbox (GDK) builds. On by default. Requires the BugSplat Xbox add-on, available to verified Xbox developers from the Gaming Consoles tab of your database's Integrations page in BugSplat; without it the player logs a warning and reports managed exceptions only.")]
+		public bool UseNativeCrashReportingForXbox = true;
+
+		[Tooltip("Upload .pdb, .exe and .dll symbols to BugSplat for Xbox builds. On by default, as on Windows: Xbox crashes don't symbolicate without them, and Unity's public symbol server doesn't have the Xbox player's symbols. Done by the BugSplat Xbox add-on's build step, with the same symbol upload credentials as the other platforms.")]
+		public bool UploadDebugSymbolsForXbox = true;
+
+		/// <summary>
+		/// The key under which the editor stores the project's options asset in EditorBuildSettings.
+		/// The build step carries that asset into the player as a preloaded asset.
+		/// </summary>
+		internal const string ConfigObjectKey = "com.bugsplat.unity.options";
+
+		/// <summary>
+		/// Scripting define that turns BugSplat off for a build target: it does not initialize itself
+		/// and builds are not validated. The per-build-configuration form of <see cref="Enabled"/>.
+		/// </summary>
+		internal const string DisabledDefine = "BUGSPLAT_DISABLED";
+
+		/// <summary>
+		/// The fix every "not configured" message ends with. It names the menu and the file, because the
+		/// reader may be a person at the editor or a script reading a log - and both fixes work.
+		/// </summary>
+		internal const string ConfigureHint =
+			"Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a " +
+			"single asset is selected automatically. Scripted setup: " +
+			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
+
+#if !UNITY_EDITOR
+		private static BugSplatOptions preloaded;
+
+		// In a player the configured asset arrives as a preloaded asset, loaded before
+		// RuntimeInitializeOnLoadMethod(BeforeSceneLoad) runs, and OnEnable is where a preloaded
+		// ScriptableObject can announce itself. First wins: preloaded assets load ahead of any scene,
+		// so an asset referenced by an obsolete BugSplatManager in a scene never displaces it.
+		//
+		// Player-only. In the editor the selection comes from EditorBuildSettings, and OnEnable runs
+		// for any asset the editor happens to load - merely inspecting one would set this.
+		private void OnEnable()
+		{
+			if (preloaded == null)
+			{
+				preloaded = this;
+			}
+		}
+#endif
+
+		/// <summary>
+		/// The options asset the project initializes from, or null when none is selected. In the editor
+		/// this is the Project Settings selection; in a player it is the preloaded asset the build step
+		/// added from that selection.
+		/// </summary>
+		internal static BugSplatOptions ResolveConfigured()
+		{
+#if UNITY_EDITOR
+			return UnityEditor.EditorBuildSettings.TryGetConfigObject(ConfigObjectKey, out BugSplatOptions options)
+				? options
+				: null;
+#else
+			return preloaded;
+#endif
+		}
 	}
 }

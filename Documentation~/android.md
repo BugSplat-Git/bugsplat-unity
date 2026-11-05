@@ -20,7 +20,7 @@ Unity does not write a `Player.log` on Android — log output goes to logcat and
 
 ## Hang detection and ANRs
 
-Set `HangDetectionTimeoutMs` to have the SDK's watchdog report a stalled Unity main thread (the heartbeat `BugSplatManager` sends every frame stops). Application Not Responding events raised by the OS are imported on the next launch on Android 11 (API level 30) and higher.
+Set `HangDetectionTimeoutMs` to have the SDK's watchdog report a stalled Unity main thread (the heartbeat BugSplat sends every frame stops). Application Not Responding events raised by the OS are imported on the next launch on Android 11 (API level 30) and higher.
 
 ## Symbols
 

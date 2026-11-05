@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
+[assembly: InternalsVisibleTo("BugSplat.Unity.Editor")]
 namespace BugSplatUnity
 {
     /// <summary>
@@ -24,7 +25,7 @@ namespace BugSplatUnity
     /// are captured by the .NET handler and, in a player, posted through the same native SDK as
     /// structured reports; in the editor and on WebGL they post directly over HTTP.
     /// </summary>
-    public class BugSplat
+    public partial class BugSplat
     {
         /// <summary>
         /// A list of files to be uploaded every time Post is called
@@ -224,7 +225,7 @@ namespace BugSplatUnity
         }
 
         private static readonly StringComparer nativeAttachmentPathComparer =
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_GAMECORE
             StringComparer.OrdinalIgnoreCase;
 #else
             StringComparer.Ordinal;
@@ -232,7 +233,7 @@ namespace BugSplatUnity
 
         // The same case rule as nativeAttachmentPathComparer, for the APIs that take a comparison.
         private const StringComparison nativeAttachmentPathComparison =
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_GAMECORE
             StringComparison.OrdinalIgnoreCase;
 #else
             StringComparison.Ordinal;

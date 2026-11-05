@@ -2,7 +2,7 @@
 
 # 🚚 Migrating from 4.x (and from the 5.0 pre-releases)
 
-Version 5.0.0 replaces the per-platform native plugins — bugsplat-windows on Windows, bugsplat-apple on macOS and iOS, bugsplat-android on Android — with one C# binding over [bugsplat-native](native.md). The public surface you call from game code (`BugSplatManager`, `BugSplat`, `Post`, `PostFeedback`, `Attributes`, `Attachments`, `AttachNativeLogFile`) is unchanged; the options and a few platform-specific calls are not.
+Version 5.0.0 replaces the per-platform native plugins — bugsplat-windows on Windows, bugsplat-apple on macOS and iOS, bugsplat-android on Android — with one C# binding over [bugsplat-native](native.md). The public surface you call from game code (`BugSplat`, `Post`, `PostFeedback`, `Attributes`, `Attachments`, `AttachNativeLogFile`) is unchanged; the options and a few platform-specific calls are not. BugSplat also starts differently: see [Initialization](#initialization).
 
 ## Options asset
 
@@ -20,7 +20,7 @@ Open every `BugSplatOptions` asset once after upgrading. Unity keeps the fields 
 
 - `new BugSplat(database, application, version, useNativeLibIos, useNativeLibAndroid, useNativeLibMac, useNativeLibWin, capturePlayerLog, autoSubmitCrashReport, autoSubmitFatalHangReport, hangDetectionThresholdSeconds, nativeAttachments)` is now `new BugSplat(database, application, version, useNativeCrashReporting = true, capturePlayerLog = true, NativeSettings nativeSettings = null, IEnumerable<string> nativeAttachments = null)`.
 - `SetWindowsCrashDialogEnabled(bool)` is `SetCrashDialogEnabled(bool)` and works on every desktop platform.
-- `SetWindowsHangDetectionTimeout(int)` is gone: the timeout is read once at startup from `HangDetectionTimeoutMs` / `NativeSettings`. Call `bugsplat.Heartbeat()` yourself only if you do not use `BugSplatManager`.
+- `SetWindowsHangDetectionTimeout(int)` is gone: the timeout is read once at startup from `HangDetectionTimeoutMs` / `NativeSettings`. BugSplat sends a heartbeat every frame; call `bugsplat.Heartbeat()` yourself only to feed it from somewhere else.
 - New: `NativeCrashReportingEnabled`, `NativeVersion`, `NativeSettings`, `Environment`, `CaptureReport()`, `Heartbeat()`, `WatchThread(name)` / `UnwatchThread()`, `PostPendingReportsAsync()`.
 - Managed exceptions in a player are now posted through the native SDK as structured reports (crash type 21, XML) instead of the Unity exception type over HTTP. They carry the same frames, `Player.log`, screenshot and attachments, and get a crash id and support-response URL like every other report. In the editor and on WebGL nothing changed.
 - The `ExceptionReporterPostResult.Response` your callbacks read is populated from the native upload the same way; `HttpResponseMessage` callbacks (`PostFeedback`, `Post(FileInfo)`) still receive a status code and a JSON body with `status`, `crashId` and `infoUrl`.
@@ -34,7 +34,20 @@ Open every `BugSplatOptions` asset once after upgrading. Unity keeps the fields 
 - **iOS** links `libbugsplat.a` instead of `BugSplat.xcframework`.
 - Symbols for macOS, Linux, iOS and Android are uploaded as Breakpad `.sym` files (`symbol-upload --dumpSyms`); Windows keeps PDBs.
 
+## Initialization
+
+Version 5.0.0 changes how BugSplat starts. Nothing needs to be in a scene anymore:
+
+- **`BugSplatManager` is obsolete.** BugSplat initializes itself from the `BugSplatOptions` asset selected in **Edit > Project Settings > BugSplat**, before the first scene loads. Open that page — a project with exactly one options asset has it selected already — and remove the `BugSplatManager` from your scene. Until you do, it keeps working: it adopts the instance created at startup and logs a warning that it is no longer needed. **Capture Exceptions On Background Threads** and **Capture Unobserved Task Exceptions** moved from the manager to the options asset.
+- **Replace `FindAnyObjectByType<BugSplatManager>().BugSplat` with `BugSplat.Instance`.** It is set before the first scene loads, so it is safe to read in any `Awake` — nothing depends on `Start` running after a manager's `Awake` anymore.
+- **Builds fail when no options asset is selected, or the selected one has an empty database.** A misconfigured project used to build a player that silently reported nothing. If your code calls `BugSplat.Initialize` itself, select an asset with **Initialize Automatically** off.
+- `BugSplatRef` has been removed. It was an implementation detail of `BugSplatManager`.
+- **Your existing options asset needs no edits.** `Enabled`, `Initialize Automatically`, and the three capture options are new fields, and an asset written before they existed loads with all of them **on** — so reporting keeps working exactly as it did. `Post Exceptions In Editor` stays off, as before.
+- Not ready to configure BugSplat, or want it only in QA and release builds? Uncheck **Enabled** on the asset, or define `BUGSPLAT_DISABLED` for the targets you want it off for. A release build fails on a missing database; a development build only warns.
+
 ## From 4.x specifically
+
+Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
 
 - `PostAllCrashes`, `PostCrash`, and `PostMostRecentCrash` have been removed. Unsent native crash reports are uploaded automatically at startup — you no longer need to call anything at launch. Delete any calls to these methods.
 - Unity's `CrashReporting.crashReportFolder` minidumps are no longer read or uploaded.

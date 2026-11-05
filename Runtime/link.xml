@@ -30,6 +30,8 @@
       Editor calls.
 
       BugSplatOptions, BugSplatAttribute and BugSplatManager, which Unity serialization populates.
+      BugSplatOptions reaches the player as a preloaded asset (Editor/BugSplatOptionsPreloader.cs),
+      which is serialized like any scene reference, so the same rooting applies.
       The build already roots types found in scenes and serialized assets, emitting its own
       TypesInScenes.xml and SerializedTypes.xml, so repeating them here would add nothing.
     -->
