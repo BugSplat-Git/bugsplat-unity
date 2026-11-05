@@ -230,8 +230,17 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             // The reporter logs the failure as an error, which would otherwise fail the test.
             LogAssert.ignoreFailingMessages = true;
 
+            // Matched by instance: the event is process-wide, and a GC here can also finalize a faulted
+            // Task left behind by an earlier test.
+            var failure = new HttpRequestException("An error occurred while sending the request");
             var unobserved = false;
-            EventHandler<UnobservedTaskExceptionEventArgs> onUnobserved = (_, e) => unobserved = true;
+            EventHandler<UnobservedTaskExceptionEventArgs> onUnobserved = (_, e) =>
+            {
+                if (e.Exception.Flatten().InnerExceptions.Contains(failure))
+                {
+                    unobserved = true;
+                }
+            };
             TaskScheduler.UnobservedTaskException += onUnobserved;
             try
             {
@@ -239,8 +248,7 @@ namespace BugSplatUnity.RuntimeTests.Reporter
                 {
                     ShouldPostException = (ex) => true
                 };
-                var failingClient = new FakeFailingDotNetExceptionClient(
-                    new HttpRequestException("An error occurred while sending the request"));
+                var failingClient = new FakeFailingDotNetExceptionClient(failure);
                 var sut = new DotNetStandardExceptionReporter(clientSettings, failingClient)
                 {
                     reportUploadGuardService = new FakeTrueReportUploadGuardService()
