@@ -11,11 +11,19 @@ namespace BugSplatUnity.Runtime.Manager
 		public readonly string StackTrace;
 		public readonly LogType Type;
 
-		public BackgroundLogMessage(string logMessage, string stackTrace, LogType type)
+		/// <summary>
+		/// Set when the message came from an exception object rather than Unity's log callback.
+		/// Its stack trace is in .NET's format, not the log callback's, so it is posted as an
+		/// exception.
+		/// </summary>
+		public readonly Exception Exception;
+
+		public BackgroundLogMessage(string logMessage, string stackTrace, LogType type, Exception exception = null)
 		{
 			LogMessage = logMessage;
 			StackTrace = stackTrace;
 			Type = type;
+			Exception = exception;
 		}
 	}
 
@@ -88,7 +96,7 @@ namespace BugSplatUnity.Runtime.Manager
 		/// runs on arbitrary threads from inside Unity's log handler while an exception is unwinding;
 		/// blocking there is the worse risk.
 		/// </remarks>
-		public bool Enqueue(string logMessage, string stackTrace, LogType type, int callingThreadId)
+		public bool Enqueue(string logMessage, string stackTrace, LogType type, int callingThreadId, Exception exception = null)
 		{
 			if (callingThreadId == mainThreadId)
 			{
@@ -107,7 +115,7 @@ namespace BugSplatUnity.Runtime.Manager
 				return false;
 			}
 
-			pending.Enqueue(new BackgroundLogMessage(logMessage, stackTrace, type));
+			pending.Enqueue(new BackgroundLogMessage(logMessage, stackTrace, type, exception));
 			return true;
 		}
 
