@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using BugSplatUnity.Runtime.Manager;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using BugSplat = BugSplatUnity.BugSplat;
 
@@ -51,9 +51,9 @@ namespace Crasher
 		[SerializeField] Sprite buttonPressedSprite;
 
 		/// <summary>
-		/// Rows are built in Awake but whether each one can run depends on the BugSplat client,
-		/// which is only resolvable in Start (Awake order between components is undefined). Keep
-		/// what each row needs to restyle itself so availability can be applied afterwards.
+		/// Rows are built in Awake; whether each one can run depends on the BugSplat client and is
+		/// applied in Start alongside the status line. Keep what each row needs to restyle itself
+		/// so availability can be applied afterwards.
 		/// </summary>
 		sealed class Row
 		{
@@ -65,10 +65,32 @@ namespace Crasher
 			public TextMeshProUGUI Expected;
 		}
 
+		/// <summary>
+		/// Shows which row has focus and keeps it scrolled into view, so a gamepad or keyboard can
+		/// walk the list. uGUI only navigates from a selected control, so the menu also makes sure
+		/// one always is.
+		/// </summary>
+		sealed class RowFocus : MonoBehaviour, ISelectHandler, IDeselectHandler
+		{
+			public Outline Highlight;
+			public Action<RectTransform> Selected;
+
+			public void OnSelect(BaseEventData eventData)
+			{
+				Highlight.enabled = true;
+				Selected?.Invoke((RectTransform)transform);
+			}
+
+			public void OnDeselect(BaseEventData eventData) => Highlight.enabled = false;
+		}
+
 		readonly List<Row> rows = new List<Row>();
 
 		TextMeshProUGUI statusText;
 		BugSplat bugsplat;
+		CanvasGroup canvasGroup;
+		ScrollRect scrollRect;
+		GameObject lastSelected;
 
 		public BugSplat BugSplat => bugsplat;
 
@@ -79,10 +101,77 @@ namespace Crasher
 
 		void Start()
 		{
-			var manager = FindAnyObjectByType<BugSplatManager>();
-			bugsplat = manager != null ? manager.BugSplat : null;
+			bugsplat = BugSplat.IsInitialized ? BugSplat.Instance : null;
 			RefreshStatus();
 			ApplyAvailability();
+		}
+
+		void Update()
+		{
+			var eventSystem = EventSystem.current;
+			if (eventSystem == null || !canvasGroup.interactable)
+			{
+				return;
+			}
+
+			var selected = eventSystem.currentSelectedGameObject;
+			if (selected != null && selected.activeInHierarchy)
+			{
+				return;
+			}
+
+			var target = lastSelected != null ? lastSelected : FirstAvailableRow();
+			if (target != null)
+			{
+				eventSystem.SetSelectedGameObject(target);
+			}
+		}
+
+		GameObject FirstAvailableRow()
+		{
+			foreach (var row in rows)
+			{
+				if (row.Button.interactable)
+				{
+					return row.Button.gameObject;
+				}
+			}
+
+			return null;
+		}
+
+		void OnRowSelected(RectTransform row)
+		{
+			lastSelected = row.gameObject;
+			ScrollIntoView(row);
+		}
+
+		void ScrollIntoView(RectTransform item)
+		{
+			const float margin = 8f;
+			var viewport = scrollRect.viewport;
+			var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(viewport, item);
+			var view = viewport.rect;
+
+			var offset = 0f;
+			if (bounds.max.y + margin > view.yMax)
+			{
+				offset = bounds.max.y + margin - view.yMax;
+			}
+			else if (bounds.min.y - margin < view.yMin)
+			{
+				offset = bounds.min.y - margin - view.yMin;
+			}
+
+			if (offset != 0f)
+			{
+				scrollRect.content.anchoredPosition -= new Vector2(0, offset);
+			}
+		}
+
+		void OnFeedbackClosed()
+		{
+			canvasGroup.interactable = true;
 		}
 
 		public Coroutine Run(IEnumerator routine) => StartCoroutine(routine);
@@ -92,6 +181,11 @@ namespace Crasher
 			var popup = FindAnyObjectByType<FeedbackPopup>(FindObjectsInactive.Include);
 			if (popup != null)
 			{
+				// The dialog is a separate canvas over this one, and navigation is spatial, so the
+				// stick could otherwise move focus onto the rows behind it.
+				canvasGroup.interactable = false;
+				popup.Closed -= OnFeedbackClosed;
+				popup.Closed += OnFeedbackClosed;
 				popup.Show();
 			}
 			else
@@ -113,7 +207,7 @@ namespace Crasher
 
 			if (bugsplat == null)
 			{
-				Debug.LogError("[BugSplat] BugSplatManager not found in scene. Cannot run crash scenarios.");
+				Debug.LogError("[BugSplat] BugSplat is not initialized, so nothing can be reported. Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a single asset is selected automatically.");
 				return;
 			}
 
@@ -127,6 +221,8 @@ namespace Crasher
 			{
 #if UNITY_STANDALONE_WIN
 				return "Windows";
+#elif UNITY_GAMECORE
+				return "Xbox";
 #elif UNITY_STANDALONE_OSX
 				return "macOS";
 #elif UNITY_STANDALONE_LINUX
@@ -143,13 +239,34 @@ namespace Crasher
 			}
 		}
 
+		static string NativeReportingHint
+		{
+			get
+			{
+#if UNITY_STANDALONE_WIN
+				const string option = "Use Native Crash Reporting For Windows";
+#elif UNITY_GAMECORE
+				const string option = "Use Native Crash Reporting For Xbox (and install the BugSplat for Xbox package)";
+#elif UNITY_STANDALONE_OSX
+				const string option = "Use Native Crash Reporting For Mac (and build with IL2CPP)";
+#elif UNITY_IOS
+				const string option = "Use Native Crash Reporting For Ios";
+#elif UNITY_ANDROID
+				const string option = "Use Native Crash Reporting For Android";
+#else
+				const string option = "Use Native Crash Reporting for this platform";
+#endif
+				return $"Turn on {option} in Edit > Project Settings > BugSplat and rebuild.";
+			}
+		}
+
 		void RefreshStatus()
 		{
 			if (statusText == null) return;
 
 			if (bugsplat == null)
 			{
-				statusText.text = "BugSplat is not initialized in this scene.";
+				statusText.text = "BugSplat is not initialized — nothing will be reported. Add a BugSplatOptions asset under Assets/, or select one in Edit > Project Settings > BugSplat.";
 				statusText.color = BugSplatRed;
 				return;
 			}
@@ -159,7 +276,16 @@ namespace Crasher
 				$"Editor ({PlatformName} build target) — managed and feedback scenarios run here. " +
 				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
 			statusText.color = Amber;
-#elif UNITY_STANDALONE_WIN
+#elif UNITY_STANDALONE_WIN || UNITY_GAMECORE || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+			if (!bugsplat.NativeCrashReportingEnabled)
+			{
+				statusText.text =
+					$"{PlatformName} player — native crash reporting is OFF, so native and hang scenarios " +
+					$"are disabled. {NativeReportingHint}";
+				statusText.color = BugSplatRed;
+				return;
+			}
+#if UNITY_STANDALONE_WIN
 			if (bugsplat.WindowsWerEnabled)
 			{
 				statusText.text = "Windows player — WER is ARMED. Fail-fast scenarios will report.";
@@ -172,9 +298,10 @@ namespace Crasher
 					"Use BugSplat > Windows > Register WER Handler in the editor.";
 				statusText.color = BugSplatRed;
 			}
-#elif UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+#else
 			statusText.text = $"{PlatformName} player — native crash reporting is active.";
 			statusText.color = BugSplatGreen;
+#endif
 #else
 			statusText.text =
 				$"{PlatformName} — native crash reporting is not yet supported on this platform; " +
@@ -211,6 +338,7 @@ namespace Crasher
 			scaler.matchWidthOrHeight = 1f;
 
 			canvasGo.AddComponent<GraphicRaycaster>();
+			canvasGroup = canvasGo.AddComponent<CanvasGroup>();
 
 			var panel = CreateElement("Panel", canvasGo.transform);
 			var panelRect = panel.GetComponent<RectTransform>();
@@ -264,7 +392,7 @@ namespace Crasher
 			var fitter = content.AddComponent<ContentSizeFitter>();
 			fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-			var scrollRect = viewport.AddComponent<ScrollRect>();
+			scrollRect = viewport.AddComponent<ScrollRect>();
 			scrollRect.content = contentRect;
 			scrollRect.viewport = viewport.GetComponent<RectTransform>();
 			scrollRect.horizontal = false;
@@ -319,6 +447,14 @@ namespace Crasher
 			buttonElement.preferredWidth = RowButtonWidth;
 			buttonElement.flexibleWidth = 0;
 
+			var highlight = button.AddComponent<Outline>();
+			highlight.effectColor = Color.white;
+			highlight.effectDistance = new Vector2(4, -4);
+			highlight.enabled = false;
+			var focus = button.AddComponent<RowFocus>();
+			focus.Highlight = highlight;
+			focus.Selected = OnRowSelected;
+
 			var expected = CreateTextElement(
 				"Expected", row.transform, scenario.Expected, 16, FontStyles.Normal, BodyText);
 			expected.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
@@ -350,6 +486,11 @@ namespace Crasher
 			if (!scenario.RunsInEditor && Application.isEditor)
 			{
 				return "Built player only — there is no native reporter in the editor.";
+			}
+
+			if (!scenario.RunsInEditor && bugsplat != null && !bugsplat.NativeCrashReportingEnabled)
+			{
+				return "Needs native crash reporting, or this terminates the player and reports nothing. " + NativeReportingHint;
 			}
 
 			if (scenario.RequiresWer && bugsplat != null && !bugsplat.WindowsWerEnabled)

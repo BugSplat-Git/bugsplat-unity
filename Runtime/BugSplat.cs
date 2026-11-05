@@ -8,19 +8,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-#if (UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN) && !UNITY_EDITOR
+#if (UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
 using System.Threading.Tasks;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
+[assembly: InternalsVisibleTo("BugSplat.Unity.Editor")]
 namespace BugSplatUnity
 {
     /// <summary>
     /// A BugSplat implementation for Unity crash and exception reporting
     /// </summary>
-    public class BugSplat
+    public partial class BugSplat
     {
         /// <summary>
         /// A list of files to be uploaded every time Post is called
@@ -220,7 +221,7 @@ namespace BugSplatUnity
         }
 
         private static readonly StringComparer nativeAttachmentPathComparer =
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_GAMECORE
             StringComparer.OrdinalIgnoreCase;
 #else
             StringComparer.Ordinal;
@@ -228,7 +229,7 @@ namespace BugSplatUnity
 
         // The same case rule as nativeAttachmentPathComparer, for the APIs that take a comparison.
         private const StringComparison nativeAttachmentPathComparison =
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_GAMECORE
             StringComparison.OrdinalIgnoreCase;
 #else
             StringComparison.Ordinal;
@@ -271,6 +272,14 @@ namespace BugSplatUnity
         /// non-Windows platforms.
         /// </summary>
         public bool WindowsWerEnabled => windowsWerEnabled;
+
+        /// <summary>
+        /// True when this player's native crash reporter started. False when the platform's
+        /// UseNativeCrashReporting option is off, when the platform has no native reporter, when it
+        /// failed to start (a macOS Mono player, a missing Android AAR), and always in the editor.
+        /// While false, a native crash terminates the player without a report.
+        /// </summary>
+        public bool NativeCrashReportingEnabled => nativeCrashReportingEnabled;
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -374,10 +383,10 @@ namespace BugSplatUnity
             }
 #endif
 
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#if (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             if (useNativeLibWin)
             {
-                if (BugSplat_Init(database, application, version) == 1)
+                if (TryInitWindowsSdk(database, application, version))
                 {
                     nativeCrashReportingEnabled = true;
 
@@ -386,9 +395,14 @@ namespace BugSplatUnity
                     {
                         AddNativeAttachment(path);
                     }
+#if UNITY_GAMECORE
+                    // A console has no desktop to show the crash dialog on.
+                    BugSplat_SetQuietMode(1);
+#else
                     // Show the native crash dialog by default; CreateFromOptions
                     // overrides this from WindowsShowCrashDialog.
                     BugSplat_SetQuietMode(0);
+#endif
                     BugSplat_SetHangDetectionTimeout(0);
                     // Hard-terminate after a crash report uploads; a standalone Windows
                     // player's CRT shutdown can hang on the SDK's default exit() path.
@@ -401,11 +415,9 @@ namespace BugSplatUnity
                     SetNativePlayerLogAttachment(capturePlayerLog);
 
                     BugSplat_PostAllCrashesAsync();
+#if !UNITY_GAMECORE
                     ReportWindowsWerStatus();
-                }
-                else
-                {
-                    Debug.LogError("BugSplat error: failed to initialize native Windows crash reporting");
+#endif
                 }
             }
 
@@ -448,6 +460,15 @@ namespace BugSplatUnity
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if !ENABLE_IL2CPP
+            // The bridge is an Objective-C source plugin, which Unity compiles into macOS players only
+            // under IL2CPP. Calling it from Mono throws, which would take managed reporting down too.
+            if (useNativeLibMac)
+            {
+                Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+                useNativeLibMac = false;
+            }
+#endif
             if (useNativeLibMac)
             {
                 // The delegate is queried while start processes crash reports left by the previous
@@ -601,7 +622,11 @@ namespace BugSplatUnity
                 options.UseNativeCrashReportingForIos,
                 options.UseNativeCrashReportingForAndroid,
                 options.UseNativeCrashReportingForMac,
+#if UNITY_GAMECORE
+                options.UseNativeCrashReportingForXbox,
+#else
                 options.UseNativeCrashReportingForWindows,
+#endif
                 options.CapturePlayerLog,
 #if UNITY_IOS
                 options.IosAutoSubmitCrashReport,
@@ -846,7 +871,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeAttribute(key, value);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setAttribute", key, value);
@@ -861,7 +886,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeUser(user);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetUser(user);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setUser", user);
@@ -876,7 +901,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeEmail(email);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetEmail(email);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setEmail", email);
@@ -891,7 +916,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeNotes(notes);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetNotes(notes);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setNotes", notes);
@@ -906,7 +931,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeKey(key);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetKey(key);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setKey", key);
@@ -921,7 +946,7 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _setNativeAttribute("BugSplatDescription", description);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_SetUserDescription(description);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setAttribute", "BugSplatDescription", description);
@@ -939,6 +964,36 @@ namespace BugSplatUnity
             BugSplat_SetQuietMode(show ? 0 : 1);
 #endif
         }
+
+#if (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
+        private static bool TryInitWindowsSdk(string database, string application, string version)
+        {
+            try
+            {
+                if (BugSplat_Init(database, application, version) == 1)
+                {
+                    return true;
+                }
+
+                Debug.LogError("BugSplat error: failed to initialize native crash reporting");
+            }
+            catch (DllNotFoundException)
+            {
+#if UNITY_GAMECORE
+                // The GDKX BugSplat.dll ships in the BugSplat Xbox add-on, not in this package.
+                Debug.LogWarning(
+                    "BugSplat: native Xbox crash reporting needs the BugSplat Xbox add-on, available to verified " +
+                    "Xbox developers from the Gaming Consoles tab of your database's Integrations page in BugSplat. " +
+                    "Managed exceptions are still reported. To silence this, uncheck Use Native Crash Reporting " +
+                    "For Xbox in Edit > Project Settings > BugSplat.");
+#else
+                Debug.LogError("BugSplat error: BugSplat.dll was not found next to the player, so native crashes will not be reported.");
+#endif
+            }
+
+            return false;
+        }
+#endif
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
         private void ReportWindowsWerStatus()
@@ -1107,7 +1162,7 @@ namespace BugSplatUnity
         {
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _attachNativeLogFile(path);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_AddAttachment(path);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             // CreateFromOptions attaches at startup, so an AAR without this method would otherwise
@@ -1120,7 +1175,7 @@ namespace BugSplatUnity
         {
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
             _detachNativeLogFile(path);
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
             BugSplat_RemoveAttachment(path);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("removeAttachment", path);
@@ -1159,7 +1214,7 @@ namespace BugSplatUnity
         [DllImport("__Internal")]
         static extern void _detachNativeLogFile(string path);
 
-#elif UNITY_STANDALONE_WIN && !UNITY_EDITOR
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
         const string BugSplatDll = "BugSplat";
 
         [DllImport(BugSplatDll, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]

@@ -197,7 +197,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
 				new InvalidOperationException("first"),
 				new ArgumentException("second"));
 
-			BugSplatManager.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
+			BugSplatRuntime.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
 
 			Assert.True(queue.TryDequeue(out var first));
 			Assert.AreEqual($"{typeof(InvalidOperationException)}: first", first.LogMessage);
@@ -217,7 +217,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
 			var aggregate = new AggregateException(
 				new AggregateException(new InvalidOperationException("leaf")));
 
-			BugSplatManager.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
+			BugSplatRuntime.EnqueueUnobservedTaskException(queue, aggregate, BackgroundThreadId);
 
 			Assert.True(queue.TryDequeue(out var message));
 			Assert.AreEqual($"{typeof(InvalidOperationException)}: leaf", message.LogMessage);
@@ -231,7 +231,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
 		{
 			var queue = CreateQueue();
 
-			BugSplatManager.EnqueueUnobservedTaskException(
+			BugSplatRuntime.EnqueueUnobservedTaskException(
 				queue, new AggregateException(new Exception("never thrown")), BackgroundThreadId);
 
 			Assert.True(queue.TryDequeue(out var message));
@@ -243,7 +243,7 @@ namespace BugSplatUnity.RuntimeTests.Manager
 		{
 			var queue = CreateQueue();
 
-			BugSplatManager.EnqueueUnobservedTaskException(queue, new AggregateException(), BackgroundThreadId);
+			BugSplatRuntime.EnqueueUnobservedTaskException(queue, new AggregateException(), BackgroundThreadId);
 
 			Assert.True(queue.TryDequeue(out var message));
 			StringAssert.Contains(typeof(AggregateException).ToString(), message.LogMessage);
@@ -253,9 +253,9 @@ namespace BugSplatUnity.RuntimeTests.Manager
 		public void EnqueueUnobservedTaskException_WhenQueueOrExceptionIsNull_ShouldNotThrow()
 		{
 			Assert.DoesNotThrow(() =>
-				BugSplatManager.EnqueueUnobservedTaskException(null, new AggregateException(), BackgroundThreadId));
+				BugSplatRuntime.EnqueueUnobservedTaskException(null, new AggregateException(), BackgroundThreadId));
 			Assert.DoesNotThrow(() =>
-				BugSplatManager.EnqueueUnobservedTaskException(CreateQueue(), null, BackgroundThreadId));
+				BugSplatRuntime.EnqueueUnobservedTaskException(CreateQueue(), null, BackgroundThreadId));
 		}
 
 		[Test]

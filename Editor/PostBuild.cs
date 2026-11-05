@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -34,16 +34,14 @@ namespace BugSplatUnity.Editor
 		// without the extension - so the base name is what has to survive into the player.
 		const string LogoFileName = "bugsplat-logo.png";
 
-		const string SymUploaderWindows = "symbol-upload-windows.exe";
-		const string SymUploaderMacOS = "symbol-upload-macos";
-		const string SymUploaderLinux = "symbol-upload-linux";
-
 		internal static string GetSymUploaderName() =>
 			Application.platform switch
 			{
-				RuntimePlatform.WindowsEditor => SymUploaderWindows,
-				RuntimePlatform.OSXEditor => SymUploaderMacOS,
-				RuntimePlatform.LinuxEditor => SymUploaderLinux,
+				RuntimePlatform.WindowsEditor => SymbolUploadRelease.Windows,
+				RuntimePlatform.OSXEditor => RuntimeInformation.OSArchitecture == Architecture.X64
+					? SymbolUploadRelease.MacOSIntel
+					: SymbolUploadRelease.MacOS,
+				RuntimePlatform.LinuxEditor => SymbolUploadRelease.Linux,
 				_ => throw new InvalidOperationException($"BugSplat. Failed to obtain symbol uploader for {Application.platform}")
 			};
 
@@ -55,11 +53,14 @@ namespace BugSplatUnity.Editor
 			var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
 
 			// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
-			// re-extract, so anything we have to download has to land outside the package.
-			return File.Exists(packagePath)
-				? packagePath
-				: Path.GetFullPath(Path.Combine("Temp", uploaderName));
+			// re-extract, so anything we have to download has to land outside the package. A copy in the
+			// package is only used if it is the pinned release: 4.x downloaded uploaders there, so
+			// local and embedded installs can still hold an older, unverified one.
+			return SymbolUploadRelease.IsVerified(packagePath, uploaderName) ? packagePath : GetSymUploaderDownloadPath();
 		}
+
+		static string GetSymUploaderDownloadPath() =>
+			Path.GetFullPath(Path.Combine("Temp", $"symbol-upload-{SymbolUploadRelease.Version}", GetSymUploaderName()));
 
 		/// <summary>
 		/// Upload Asset/Plugin symbol files to BugSplat. 
@@ -73,7 +74,7 @@ namespace BugSplatUnity.Editor
 
 			if (options == null)
 			{
-				Debug.LogWarning("No BugSplatOptions ScriptableObject found! Skipping build post-process tasks...");
+				Debug.LogWarning("BugSplat: no BugSplatOptions asset is selected, skipping build post-process tasks. " + BugSplatOptions.ConfigureHint);
 				return;
 			}
 
@@ -92,6 +93,12 @@ namespace BugSplatUnity.Editor
 
 			if (target == BuildTarget.StandaloneOSX)
 			{
+				if (options.UseNativeCrashReportingForMac &&
+					PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) != ScriptingImplementation.IL2CPP)
+				{
+					Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+				}
+
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
@@ -153,22 +160,6 @@ namespace BugSplatUnity.Editor
 			}
 		}
 
-		// Zips a single file with the entry at the archive root and writes it to destZip.
-		// symbol-upload skips no-dbgId files (e.g. LineNumberMappings.json) but uploads
-		// .zip files as-is via the versions path, so we zip the mapping before upload.
-		private static void ZipForUpload(string sourceFile, string destZip)
-		{
-			if (File.Exists(destZip))
-			{
-				File.Delete(destZip);
-			}
-
-			using (var archive = ZipFile.Open(destZip, ZipArchiveMode.Create))
-			{
-				archive.CreateEntryFromFile(sourceFile, Path.GetFileName(sourceFile));
-			}
-		}
-
 		private static void UploadSymbolFilesWin(string pathToBuiltProject, BugSplatOptions options)
 		{
 			if (!options.UploadDebugSymbolsForWindows)
@@ -184,7 +175,7 @@ namespace BugSplatUnity.Editor
 			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
 #endif
 
-			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe}", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -194,6 +185,15 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. Symbols uploading completed.");
 			});
+
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, WindowsBeeLineNumberMappings);
+			if (mappingsPath == null)
+			{
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "Windows");
+				return;
+			}
+
+			UploadLineNumberMappings(mappingsPath, options);
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -204,8 +204,6 @@ namespace BugSplatUnity.Editor
 				Debug.LogError("BugSplat. Could not find build directory. Skipping Windows post-build tasks.");
 				return;
 			}
-
-			CopyWindowsLineNumberMappings(buildDir);
 
 			if (!options.UseNativeCrashReportingForWindows)
 				return;
@@ -225,7 +223,7 @@ namespace BugSplatUnity.Editor
 			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
 			var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
 
-			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatRc.dll", "BugSplatWer.dll" })
+			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll" })
 			{
 				var source = Path.Combine(supportDir, fileName);
 				if (!File.Exists(source))
@@ -237,33 +235,106 @@ namespace BugSplatUnity.Editor
 				File.Copy(source, Path.Combine(buildDir, fileName), true);
 			}
 
+			// The reporter reads its theme only from BugSplatTheme next to itself, and falls back to
+			// built-in defaults silently when it is missing.
+			var themeSource = Path.Combine(supportDir, ThemeDirectoryName);
+			var themeDestination = Path.Combine(buildDir, ThemeDirectoryName);
+			if (Directory.Exists(themeSource))
+			{
+				if (Directory.Exists(themeDestination))
+					Directory.Delete(themeDestination, true);
+				CopyDirectory(themeSource, themeDestination);
+			}
+			else
+			{
+				Debug.LogError($"BugSplat. Missing crash dialog theme {themeSource}. The dialog will use its built-in defaults.");
+			}
+
+			// 8.x shipped the dialog as BugSplatRc.dll; 9.x replaced it with BugSplatReporter.exe.
+			var staleRc = Path.Combine(buildDir, "BugSplatRc.dll");
+			if (File.Exists(staleRc))
+				File.Delete(staleRc);
+
 			Debug.Log($"BugSplat. Copied Windows native runtime support files ({arch}) next to the built executable.");
 		}
 
-		private static void CopyWindowsLineNumberMappings(string buildDir)
-		{
-			// Copy LineNumberMappings.json for IL2CPP symbolication. Mono builds don't produce one.
-			var mappingSearchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			};
+		private const string ThemeDirectoryName = "BugSplatTheme";
 
-			foreach (var searchPath in mappingSearchPaths)
+		private static void CopyDirectory(string source, string destination)
+		{
+			Directory.CreateDirectory(destination);
+			foreach (var file in Directory.GetFiles(source))
+				File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), true);
+			foreach (var directory in Directory.GetDirectories(source))
+				CopyDirectory(directory, Path.Combine(destination, Path.GetFileName(directory)));
+		}
+
+		private static readonly string[] WindowsBeeLineNumberMappings =
+		{
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
+		private static readonly string[] MacBeeLineNumberMappings =
+		{
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
+		// IL2CPP writes LineNumberMappings.json only when its stack traces include file and line
+		// numbers, which is not Unity's default.
+		internal static void LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget target, string platform)
+		{
+			if (PlayerSettings.GetScriptingBackend(target) != ScriptingImplementation.IL2CPP)
+			{
+				Debug.Log($"BugSplat: no LineNumberMappings.json, as expected for a Mono build. C# line numbers in native {platform} crash reports need IL2CPP.");
+				return;
+			}
+
+			if (PlayerSettings.GetIl2CppStacktraceInformation(target) == Il2CppStacktraceInformation.MethodOnly)
+			{
+				Debug.LogWarning(
+					$"BugSplat: IL2CPP did not write LineNumberMappings.json, so native {platform} crash reports will show generated C++ " +
+					"instead of your C# files and line numbers. Set Edit > Project Settings > Player > Other Settings > " +
+					"IL2CPP Stacktrace Information to \"Method Name, File Name, and Line Number\".");
+				return;
+			}
+
+			Debug.LogWarning($"BugSplat: LineNumberMappings.json not found, so native {platform} crash reports will not map back to C# files and line numbers.");
+		}
+
+		// The current player's IL2CPP backup folder first, so another player's backup in the same
+		// output folder is never picked; Library/Bee for Unity versions that don't back it up.
+		private static string FindLineNumberMappings(string pathToBuiltProject, string[] beeSearchPaths)
+		{
+			var backedUp = Path.Combine(
+				Path.GetDirectoryName(pathToBuiltProject),
+				Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_BackUpThisFolder_ButDontShipItWithYourGame",
+				"il2cppOutput", "Symbols", "LineNumberMappings.json");
+			if (File.Exists(backedUp))
+				return backedUp;
+
+			foreach (var searchPath in beeSearchPaths)
 			{
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
-				{
-					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
-					ZipForUpload(fullPath, destZip);
-					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
-					return;
-				}
+					return fullPath;
 			}
 
-			Debug.Log("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for Windows. This is expected for Mono builds.");
+			return null;
+		}
+
+		private static void UploadLineNumberMappings(string mappingsPath, BugSplatOptions options)
+		{
+			UploadSymbols(Path.GetDirectoryName(mappingsPath), "LineNumberMappings.json", options, uploadExitCode =>
+			{
+				if (uploadExitCode != 0)
+					Debug.LogError("BugSplat. Could not upload LineNumberMappings.json.");
+			});
 		}
 
 		private static string GetPEMachineArchitecture(string exePath)
@@ -311,35 +382,7 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// Copy LineNumberMappings.json for IL2CPP symbolication
-			var mappingSearchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			};
-
-			var mappingFound = false;
-			foreach (var searchPath in mappingSearchPaths)
-			{
-				var fullPath = Path.GetFullPath(searchPath);
-				if (File.Exists(fullPath))
-				{
-					var destZip = Path.Combine(buildDir, "LineNumberMappings.json.zip");
-					ZipForUpload(fullPath, destZip);
-					Debug.Log($"BugSplat: Zipped LineNumberMappings.json for upload ({new FileInfo(fullPath).Length / 1024}KB -> {new FileInfo(destZip).Length / 1024}KB); symbol-upload skips the raw .json (no dbgId), the .zip uploads via the versions path.");
-					mappingFound = true;
-					break;
-				}
-			}
-
-			if (!mappingFound)
-			{
-				Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available for macOS. Ensure Scripting Backend is set to IL2CPP.");
-			}
-
-			UploadSymbols(buildDir, "**/{*.dSYM,LineNumberMappings.json.zip}", options, uploadExitCode =>
+			UploadSymbols(buildDir, "**/*.dSYM", options, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
 				{
@@ -349,20 +392,18 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
 			});
-		}
 
-		internal static BugSplatOptions GetBugSplatOptions()
-		{
-			var guids = AssetDatabase.FindAssets("t:BugSplatOptions");
-
-			if (guids.Length == 0)
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
+			if (mappingsPath == null)
 			{
-				return null;
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "macOS");
+				return;
 			}
 
-			var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-			return AssetDatabase.LoadAssetAtPath<BugSplatOptions>(path);
+			UploadLineNumberMappings(mappingsPath, options);
 		}
+
+		internal static BugSplatOptions GetBugSplatOptions() => BugSplatProjectOptions.Get();
 
 #if UNITY_IOS
 		private static void PostProcessIos(string pathToBuiltProject, BugSplatOptions options)
@@ -416,7 +457,7 @@ namespace BugSplatUnity.Editor
 				}
 			}
 
-			Debug.LogWarning("BugSplat: LineNumberMappings.json not found. IL2CPP C# symbolication will not be available. Ensure Scripting Backend is set to IL2CPP.");
+			LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.iOS, "iOS");
 		}
 
 		private static void DisableUnityCrashReporter(string pathToBuiltProject)
@@ -511,15 +552,32 @@ namespace BugSplatUnity.Editor
 				$"fi\n" +
 				$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
 				$"if [ \"$(uname -m)\" = \"x86_64\" ]; then\n" +
-				$"    VARIANT=\"symbol-upload-macos-intel\"\n" +
+				$"    VARIANT=\"{SymbolUploadRelease.MacOSIntel}\"\n" +
+				$"    EXPECTED_SHA256=\"{SymbolUploadRelease.GetSha256(SymbolUploadRelease.MacOSIntel)}\"\n" +
 				$"else\n" +
-				$"    VARIANT=\"symbol-upload-macos\"\n" +
+				$"    VARIANT=\"{SymbolUploadRelease.MacOS}\"\n" +
+				$"    EXPECTED_SHA256=\"{SymbolUploadRelease.GetSha256(SymbolUploadRelease.MacOS)}\"\n" +
 				$"fi\n" +
-				$"SYMBOL_UPLOAD=\"${{TMPDIR}}/$VARIANT\"\n" +
-				$"if [ ! -f \"$SYMBOL_UPLOAD\" ]; then\n" +
-				$"    echo \"Downloading $VARIANT...\"\n" +
-				$"    curl -sL -o \"$SYMBOL_UPLOAD\" \"https://app.bugsplat.com/download/$VARIANT\"\n" +
-				$"    chmod +x \"$SYMBOL_UPLOAD\"\n" +
+				$"SYMBOL_UPLOAD=\"${{TMPDIR}}/{SymbolUploadRelease.Version}-$VARIANT\"\n" +
+				$"sha256_of() {{ shasum -a 256 \"$1\" | cut -d ' ' -f 1; }}\n" +
+				$"if [ ! -f \"$SYMBOL_UPLOAD\" ] || [ \"$(sha256_of \"$SYMBOL_UPLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
+				$"    echo \"Downloading $VARIANT {SymbolUploadRelease.Version}...\"\n" +
+				$"    DOWNLOAD=\"$(mktemp \"$SYMBOL_UPLOAD.XXXXXX\")\" || {{ echo \"warning: Could not create a temporary file for $VARIANT. Skipping dSYM upload.\"; exit 0; }}\n" +
+				$"    if ! curl -sfL -o \"$DOWNLOAD\" \"{SymbolUploadRelease.GetDownloadUrl("$VARIANT")}\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"warning: Could not download $VARIANT. Skipping dSYM upload.\"\n" +
+				$"        exit 0\n" +
+				$"    fi\n" +
+				$"    if [ \"$(sha256_of \"$DOWNLOAD\")\" != \"$EXPECTED_SHA256\" ]; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"error: $VARIANT failed its integrity check and was deleted without running. Expected SHA-256 $EXPECTED_SHA256.\"\n" +
+				$"        exit 1\n" +
+				$"    fi\n" +
+				$"    if ! chmod +x \"$DOWNLOAD\" || ! mv -f \"$DOWNLOAD\" \"$SYMBOL_UPLOAD\"; then\n" +
+				$"        rm -f \"$DOWNLOAD\"\n" +
+				$"        echo \"warning: Could not install $VARIANT at $SYMBOL_UPLOAD. Skipping dSYM upload.\"\n" +
+				$"        exit 0\n" +
+				$"    fi\n" +
 				$"fi\n\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
 				$"    --database \"{options.Database}\" \\\n" +
@@ -528,15 +586,13 @@ namespace BugSplatUnity.Editor
 				$"    --files \"**/*.dSYM\" \\\n" +
 				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
 				$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
-				$"# symbol-upload skips the raw .json (no dbgId), so zip it; the .zip uploads via the versions path.\n" +
 				$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
 				$"if [ -f \"$MAPPINGS\" ]; then\n" +
-				$"    (cd \"${{PROJECT_DIR}}\" && zip -j -q LineNumberMappings.json.zip LineNumberMappings.json)\n" +
 				$"    \"$SYMBOL_UPLOAD\" \\\n" +
 				$"        --database \"{options.Database}\" \\\n" +
 				$"        --application \"{application}\" \\\n" +
 				$"        --version \"{version}\" \\\n" +
-				$"        --files \"LineNumberMappings.json.zip\" \\\n" +
+				$"        --files \"LineNumberMappings.json\" \\\n" +
 				$"        --directory \"${{PROJECT_DIR}}\"\n" +
 				$"fi";
 
@@ -658,7 +714,7 @@ namespace BugSplatUnity.Editor
 		}
 #endif
 
-		private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
+		internal static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
 		{
 			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
 			{
@@ -672,7 +728,8 @@ namespace BugSplatUnity.Editor
 			}
 
 			var symbolUploadPath = GetSymUploaderPath();
-			if (!File.Exists(symbolUploadPath) && !DownloadSymbolUpload(symbolUploadPath))
+			if (!SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
+				&& !DownloadSymbolUpload(symbolUploadPath))
 			{
 				onCompleted(-1);
 				return;
@@ -726,7 +783,8 @@ namespace BugSplatUnity.Editor
 		private static bool DownloadSymbolUpload(string destinationPath)
 		{
 			var variant = Path.GetFileName(destinationPath);
-			var fileUrl = $"https://app.bugsplat.com/download/{variant}";
+			var fileUrl = SymbolUploadRelease.GetDownloadUrl(variant);
+			var partialPath = destinationPath + ".download";
 
 			try
 			{
@@ -734,20 +792,27 @@ namespace BugSplatUnity.Editor
 
 				using (var client = new WebClient())
 				{
-					Debug.Log($"BugSplat. Downloading {variant} to {destinationPath}");
+					Debug.Log($"BugSplat. Downloading {variant} {SymbolUploadRelease.Version} to {destinationPath}");
 
-					client.DownloadFile(fileUrl, destinationPath);
-
-					if (File.Exists(destinationPath))
-					{
-						Debug.Log($"BugSplat. {variant} downloaded successfully to {destinationPath}");
-					}
-					else
-					{
-						Debug.LogError($"BugSplat. Could not download {variant}");
-						return false;
-					}
+					client.DownloadFile(fileUrl, partialPath);
 				}
+
+				var actualSha256 = SymbolUploadRelease.ComputeSha256(partialPath);
+				var expectedSha256 = SymbolUploadRelease.GetSha256(variant);
+				if (!string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
+				{
+					File.Delete(partialPath);
+					Debug.LogError(
+						$"BugSplat. {variant} from {fileUrl} failed its integrity check and was deleted without running. " +
+						$"Expected SHA-256 {expectedSha256}, got {actualSha256}. Skipping symbol upload.");
+					return false;
+				}
+
+				if (File.Exists(destinationPath))
+					File.Delete(destinationPath);
+				File.Move(partialPath, destinationPath);
+
+				Debug.Log($"BugSplat. {variant} downloaded and verified at {destinationPath}");
 			}
 			catch (WebException ex)
 			{

@@ -33,7 +33,7 @@ Shipped in:
 - `Runtime/Plugins/macOS/BugSplat-macOS.dylib`
 
 Built from [BugSplat-Git/bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), release
-**[3.6.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.6.0)** — both payloads are the
+**[3.8.0](https://github.com/BugSplat-Git/bugsplat-apple/releases/tag/3.8.0)** — both payloads are the
 `BugSplat.xcframework.zip` and `BugSplat-macOS.dylib` assets from that release, vendored unmodified.
 The component list below comes from that release's `LICENSE.txt`, corroborated by the source paths and
 symbols embedded in the shipped binaries (`Vendor/PLCrashReporter/Source/*`,
@@ -168,11 +168,12 @@ Shipped in:
 
 - `Runtime/Plugins/Windows/{x86,x86_64,ARM64}/BugSplat.dll`
 - `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatMonitor.exe`
-- `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatRc.dll`
+- `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatReporter.exe`
+- `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatTheme/{theme.json,strings.en-US.json}`
 - `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatWer.dll`
 
 Built from [BugSplat-Git/bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). The
-version resources report `8.1.0.0`, "BugSplat, LLC", "Copyright BugSplat. All rights reserved."
+version resources report `9.0.1.0` (`BugSplatWer.dll` carries none), "BugSplat, LLC", "Copyright BugSplat. All rights reserved."
 
 ---------
 
@@ -246,8 +247,9 @@ libraries, so the DLL carries no additional third-party code.
 
 ## Tools downloaded at build time (not redistributed)
 
-`Editor/PostBuild.cs` downloads the `symbol-upload` CLI from `https://app.bugsplat.com/download/...`
-when symbol upload is enabled. It is not vendored in this package and is therefore not covered by
+`Editor/PostBuild.cs` downloads the `symbol-upload` CLI from its GitHub release
+(`https://github.com/BugSplat-Git/symbol-upload/releases/download/<version>/...`, pinned with SHA-256
+checksums in `Editor/SymbolUploadRelease.cs`) when symbol upload is enabled. It is not vendored in this package and is therefore not covered by
 this file; it is licensed MIT
 ([BugSplat-Git/symbol-upload](https://github.com/BugSplat-Git/symbol-upload/blob/main/LICENSE)).
 
@@ -306,7 +308,7 @@ They need a decision from the maintainers before this file can be considered com
    **Android** payload is the weak spot: the exact revisions of Crashpad, curl and BoringSSL compiled
    into the `.aar` are not knowable from here, and neither is the `.aar`'s own version. Only
    `libcurl/8.13.1-DEV` (from the binary's own version string) is pinned by in-tree evidence. The
-   Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `8.1.0.0` in their
+   Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `9.0.1.0` in their
    version resources, and `BugSplatDotNetStandard` reports `4.3.0.0` in `deps.json` — but those come
    from the binaries and the vendoring commit, not from a manifest. Recording source revisions at
    build time would make future audits mechanical instead of forensic.
