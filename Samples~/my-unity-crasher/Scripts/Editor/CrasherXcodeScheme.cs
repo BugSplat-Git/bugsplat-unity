@@ -56,8 +56,12 @@ namespace Crasher.CrasherEditor
 		{
 			try
 			{
-				var document = new XmlDocument();
-				document.Load(schemePath);
+				var document = new XmlDocument { XmlResolver = null };
+				var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };
+				using (var reader = XmlReader.Create(schemePath, settings))
+				{
+					document.Load(reader);
+				}
 
 				var changed = false;
 
