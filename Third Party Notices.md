@@ -173,7 +173,7 @@ Shipped in:
 - `Runtime/Plugins/Windows/Support~/{x86,x64,ARM64}/BugSplatWer.dll`
 
 Built from [BugSplat-Git/bugsplat-windows](https://github.com/BugSplat-Git/bugsplat-windows). The
-version resources report `9.0.1.0` (`BugSplatWer.dll` carries none), "BugSplat, LLC", "Copyright BugSplat. All rights reserved."
+version resources report `9.1.0.0` (`BugSplatReporter.exe` reports `9.0.1.0`, and `BugSplatWer.dll` carries none), "BugSplat, LLC", "Copyright BugSplat. All rights reserved."
 
 ---------
 
@@ -308,7 +308,7 @@ They need a decision from the maintainers before this file can be considered com
    **Android** payload is the weak spot: the exact revisions of Crashpad, curl and BoringSSL compiled
    into the `.aar` are not knowable from here, and neither is the `.aar`'s own version. Only
    `libcurl/8.13.1-DEV` (from the binary's own version string) is pinned by in-tree evidence. The
-   Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `9.0.1.0` in their
+   Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `9.1.0.0` in their
    version resources, and `BugSplatDotNetStandard` reports `5.0.0.0` in `deps.json` — but those come
    from the binaries and the vendoring commit, not from a manifest. Recording source revisions at
    build time would make future audits mechanical instead of forensic.
