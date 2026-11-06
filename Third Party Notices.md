@@ -233,7 +233,7 @@ Component Name: BugSplatDotNetStandard
 
 License Type: "MIT"
 
-Version: 4.3.0.0 (per `Runtime/Plugins/BugSplatDotNetStandard.deps.json`)
+Version: 5.0.0.0 (per `Runtime/Plugins/BugSplatDotNetStandard.deps.json`)
 
 Shipped in: `Runtime/Plugins/BugSplatDotNetStandard.dll`
 
@@ -309,7 +309,7 @@ They need a decision from the maintainers before this file can be considered com
    into the `.aar` are not knowable from here, and neither is the `.aar`'s own version. Only
    `libcurl/8.13.1-DEV` (from the binary's own version string) is pinned by in-tree evidence. The
    Apple payload is pinned to bugsplat-apple 3.6.0, the Windows binaries report `9.0.1.0` in their
-   version resources, and `BugSplatDotNetStandard` reports `4.3.0.0` in `deps.json` — but those come
+   version resources, and `BugSplatDotNetStandard` reports `5.0.0.0` in `deps.json` — but those come
    from the binaries and the vendoring commit, not from a manifest. Recording source revisions at
    build time would make future audits mechanical instead of forensic.
 4. **BoringSSL** — its upstream `LICENSE` is Apache-2.0 with additional notices for portions of the
