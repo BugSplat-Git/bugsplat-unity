@@ -544,7 +544,11 @@ namespace BugSplatUnity.Editor
 			var shellScript =
 				$"BUGSPLAT_CREDENTIALS=\"$HOME/{credentialsRelativePath}\"\n" +
 				$"if [ -f \"$BUGSPLAT_CREDENTIALS\" ]; then\n" +
+				$"    ENV_CLIENT_ID=\"$SYMBOL_UPLOAD_CLIENT_ID\"\n" +
+				$"    ENV_CLIENT_SECRET=\"$SYMBOL_UPLOAD_CLIENT_SECRET\"\n" +
 				$"    . \"$BUGSPLAT_CREDENTIALS\"\n" +
+				$"    if [ -n \"$ENV_CLIENT_ID\" ]; then SYMBOL_UPLOAD_CLIENT_ID=\"$ENV_CLIENT_ID\"; fi\n" +
+				$"    if [ -n \"$ENV_CLIENT_SECRET\" ]; then SYMBOL_UPLOAD_CLIENT_SECRET=\"$ENV_CLIENT_SECRET\"; fi\n" +
 				$"fi\n" +
 				$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] || [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ]; then\n" +
 				$"    echo \"warning: BugSplat symbol upload credentials not found. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET, or run BugSplat > Symbol Upload > Set Credentials in Unity. Skipping dSYM upload.\"\n" +
