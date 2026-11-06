@@ -117,7 +117,7 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 | Hang / ANR reporting | Yes (opt-in) | Yes | Yes | Yes (Android 11+) | No | No |
 | Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
-| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
+| Automatic symbol upload | Yes | Yes | Yes | Yes | No | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
 - **Native crashes** are captured by default on Windows, macOS (IL2CPP only), iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
