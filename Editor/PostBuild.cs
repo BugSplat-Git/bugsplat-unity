@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -193,7 +196,7 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			UploadLineNumberMappings(mappingsPath, options);
+			UploadLineNumberMappings(mappingsPath, WindowsLineNumberMappingsName, options);
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -328,12 +331,72 @@ namespace BugSplatUnity.Editor
 			return null;
 		}
 
-		private static void UploadLineNumberMappings(string mappingsPath, BugSplatOptions options)
+		// The backend keeps one mappings file per name for a database, application and version, so each
+		// platform uploads under its own name and a macOS and an iOS build sharing a version don't
+		// overwrite each other's. Windows keeps the original name, which the Xbox add-on uploads too.
+		internal const string WindowsLineNumberMappingsName = "LineNumberMappings.json";
+		internal const string MacLineNumberMappingsName = "LineNumberMappings-macos.json";
+		internal const string IosLineNumberMappingsName = "LineNumberMappings-ios.json";
+		internal const string AndroidLineNumberMappingsName = "LineNumberMappings-android.json";
+
+		private static void UploadLineNumberMappings(string mappingsPath, string uploadName, BugSplatOptions options)
 		{
-			UploadSymbols(Path.GetDirectoryName(mappingsPath), "LineNumberMappings.json", options, uploadExitCode =>
+			if (Path.GetFileName(mappingsPath) == uploadName)
+			{
+				UploadLineNumberMappingsFrom(Path.GetDirectoryName(mappingsPath), uploadName, options);
+				return;
+			}
+
+			// Upload a renamed, zipped copy; the file Unity wrote stays where it is, under its own name.
+			var stagingDir = Path.GetFullPath(Path.Combine("Temp", "BugSplat", Guid.NewGuid().ToString("N")));
+			try
+			{
+				Directory.CreateDirectory(stagingDir);
+				var zipName = uploadName + ".zip";
+				ZipLineNumberMappings(mappingsPath, uploadName, Path.Combine(stagingDir, zipName));
+				Debug.Log($"BugSplat: uploading {mappingsPath} as {zipName}");
+				UploadLineNumberMappingsFrom(stagingDir, zipName, options);
+			}
+			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+			{
+				Debug.LogError($"BugSplat. Could not stage {mappingsPath} for upload as {uploadName}: {e.Message}");
+			}
+			finally
+			{
+				try
+				{
+					if (Directory.Exists(stagingDir))
+						Directory.Delete(stagingDir, true);
+				}
+				catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+				{
+					Debug.LogWarning($"BugSplat. Could not clean up {stagingDir}: {e.Message}");
+				}
+			}
+		}
+
+		// symbol-upload uploads a raw JSON file only when it is named exactly LineNumberMappings.json, and
+		// skips any other one without failing. So a platform-named copy is zipped first, as <name>.zip with
+		// the file at the archive root - what symbol-upload itself makes of LineNumberMappings.json - and
+		// symbol-upload uploads a .zip as it is.
+		internal static void ZipLineNumberMappings(string mappingsPath, string entryName, string zipPath)
+		{
+			if (File.Exists(zipPath))
+				File.Delete(zipPath);
+
+			using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+			{
+				archive.CreateEntryFromFile(mappingsPath, entryName);
+			}
+		}
+
+		private static void UploadLineNumberMappingsFrom(string directory, string fileName, BugSplatOptions options)
+		{
+			// Never --dumpSyms: that's for Android .so files, and symbol-upload drops a file it can't dump.
+			UploadSymbols(directory, fileName, options, false, uploadExitCode =>
 			{
 				if (uploadExitCode != 0)
-					Debug.LogError("BugSplat. Could not upload LineNumberMappings.json.");
+					Debug.LogError($"BugSplat. Could not upload {fileName}.");
 			});
 		}
 
@@ -400,7 +463,7 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			UploadLineNumberMappings(mappingsPath, options);
+			UploadLineNumberMappings(mappingsPath, MacLineNumberMappingsName, options);
 		}
 
 		internal static BugSplatOptions GetBugSplatOptions() => BugSplatProjectOptions.Get();
@@ -427,7 +490,7 @@ namespace BugSplatUnity.Editor
 			project.AddBuildProperty(mainTargetGuid, "ENABLE_BITCODE", "NO");
 			project.SetBuildProperty(mainTargetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
 
-			HandleUploadSymbols(mainTargetGuid, project, options);
+			project = HandleUploadSymbols(mainTargetGuid, project, options);
 
 			File.WriteAllText(projectPath, project.WriteToString());
 
@@ -437,6 +500,9 @@ namespace BugSplatUnity.Editor
 				DisableUnityCrashReporter(pathToBuiltProject);
 		}
 
+		// Zipped by the Unity build, since symbol-upload skips a raw JSON file under this name; see ZipLineNumberMappings.
+		private const string IosLineNumberMappingsZipName = IosLineNumberMappingsName + ".zip";
+
 		private static void CopyLineNumberMappings(string pathToBuiltProject)
 		{
 			var searchPaths = new[]
@@ -445,14 +511,22 @@ namespace BugSplatUnity.Editor
 				Path.Combine("Library", "Bee", "artifacts", "iOSPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
 			};
 
+			// An export into an existing Xcode project keeps files from the last one: drop the copy older
+			// versions wrote under the shared name, and last build's mappings in case this build has none.
+			foreach (var stale in new[] { WindowsLineNumberMappingsName, IosLineNumberMappingsZipName })
+			{
+				var stalePath = Path.Combine(pathToBuiltProject, stale);
+				if (File.Exists(stalePath))
+					File.Delete(stalePath);
+			}
+
 			foreach (var searchPath in searchPaths)
 			{
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
 				{
-					var dest = Path.Combine(pathToBuiltProject, "LineNumberMappings.json");
-					File.Copy(fullPath, dest, true);
-					Debug.Log($"BugSplat: Copied LineNumberMappings.json to Xcode project ({new FileInfo(fullPath).Length / 1024}KB)");
+					ZipLineNumberMappings(fullPath, IosLineNumberMappingsName, Path.Combine(pathToBuiltProject, IosLineNumberMappingsZipName));
+					Debug.Log($"BugSplat: Copied LineNumberMappings.json to the Xcode project as {IosLineNumberMappingsZipName} ({new FileInfo(fullPath).Length / 1024}KB)");
 					return;
 				}
 			}
@@ -517,10 +591,10 @@ namespace BugSplatUnity.Editor
 			project.SetCompileFlagsForFile(targetGuid, bridgeGuid, flags);
 		}
 
-		private static void HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
+		private static PBXProject HandleUploadSymbols(string targetGuid, PBXProject project, BugSplatOptions options)
 		{
 			if (!options.UploadDebugSymbolsForIos)
-				return;
+				return project;
 
 			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out _, out _))
 			{
@@ -589,50 +663,123 @@ namespace BugSplatUnity.Editor
 				$"    --version \"{version}\" \\\n" +
 				$"    --files \"**/*.dSYM\" \\\n" +
 				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
-				$"# Upload LineNumberMappings.json for IL2CPP C# symbolication.\n" +
-				$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
+				$"# Upload IL2CPP's LineNumberMappings.json, zipped here as {IosLineNumberMappingsZipName}, for C# symbolication.\n" +
+				$"MAPPINGS=\"${{PROJECT_DIR}}/{IosLineNumberMappingsZipName}\"\n" +
 				$"if [ -f \"$MAPPINGS\" ]; then\n" +
 				$"    \"$SYMBOL_UPLOAD\" \\\n" +
 				$"        --database \"{options.Database}\" \\\n" +
 				$"        --application \"{application}\" \\\n" +
 				$"        --version \"{version}\" \\\n" +
-				$"        --files \"LineNumberMappings.json\" \\\n" +
+				$"        --files \"{IosLineNumberMappingsZipName}\" \\\n" +
 				$"        --directory \"${{PROJECT_DIR}}\"\n" +
 				$"fi";
 
-			if (!string.IsNullOrEmpty(project.GetShellScriptBuildPhaseForTarget(targetGuid, name, shellPath, shellScript)))
-				return;
+			// GetShellScriptBuildPhaseForTarget doesn't find a phase this method wrote in an earlier export -
+			// once the project has been saved and read back, its script no longer compares equal - and
+			// PBXProject has no way to remove a phase. Inserting regardless would leave two phases, the older
+			// one still uploading under its old names and, before 5.0.0, carrying credentials inlined into
+			// project.pbxproj. So the comparison and the removal happen in the serialized project instead:
+			// an identical phase is kept as it is, and any other phase of this name is replaced.
+			var pbxproj = RemoveShellScriptBuildPhasesNamed(project.WriteToString(), name, out var removedPhases);
+			var updated = new PBXProject();
+			updated.ReadFromString(pbxproj);
+			updated.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 
-			// GetShellScriptBuildPhaseForTarget matches on name, shellPath *and* script body, so a phase
-			// written by an older version does not match this one. Inserting regardless would leave two
-			// phases, with the older one still uploading - and, before this change, still carrying
-			// credentials inlined into project.pbxproj.
-			if (HasBuildPhaseNamed(project, targetGuid, name))
+			if (removedPhases.Length == 0)
+				return updated;
+
+			RemoveShellScriptBuildPhasesNamed(updated.WriteToString(), name, out var insertedPhase);
+			if (WithoutObjectIds(insertedPhase) == WithoutObjectIds(removedPhases))
+				return project;
+
+			if (removedPhases.Contains("--clientSecret"))
 			{
 				Debug.LogWarning(
-					$"BugSplat: the Xcode project already has a '{name}' build phase from an earlier version, so a new one was not added. " +
-					"Delete that phase and build again, or export with Replace instead of Append. " +
-					"If it was generated before 5.0.0 it contains your symbol upload Client ID and Secret in plain text - rotate them.");
-				return;
+					$"BugSplat: replaced the Xcode project's '{name}' build phase. The old one was generated before 5.0.0 and " +
+					"contained your symbol upload Client ID and Secret in plain text - rotate them if this project was ever shared or committed.");
 			}
-
-			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
-		}
-
-		private static bool HasBuildPhaseNamed(PBXProject project, string targetGuid, string name)
-		{
-			foreach (var phaseGuid in project.GetAllBuildPhasesForTarget(targetGuid))
+			else
 			{
-				if (string.Equals(project.GetBuildPhaseName(phaseGuid), name))
-					return true;
+				Debug.Log($"BugSplat: replaced the Xcode project's '{name}' build phase from an earlier export.");
 			}
 
-			return false;
+			return updated;
 		}
+
+		private static string WithoutObjectIds(string pbxprojObjects) => Regex.Replace(pbxprojObjects, "[0-9A-Fa-f]{24}", "");
 
 #endif
 
+		// Removes every PBXShellScriptBuildPhase called `name` from project.pbxproj text, and its entries
+		// in targets' buildPhases lists. removedPhases returns the removed objects' text. Works on the
+		// multi-line layout PBXProject.WriteToString and Xcode both write for build phases.
+		internal static string RemoveShellScriptBuildPhasesNamed(string pbxproj, string name, out string removedPhases)
+		{
+			var lines = pbxproj.Split('\n');
+			var objectStart = new Regex(@"^\s*([0-9A-Fa-f]{24})\b[^=]*=\s*\{\s*$");
+			var objectEnd = new Regex(@"^\s*\};\s*$");
+			var nameLine = new Regex(
+				@"^\s*name\s*=\s*(""" + Regex.Escape(name) + @"""|" +
+				Regex.Escape(name) + @");\s*$");
+
+			var removedGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var removed = new StringBuilder();
+			var kept = new List<string>(lines.Length);
+
+			for (var i = 0; i < lines.Length; i++)
+			{
+				var start = objectStart.Match(lines[i]);
+				if (start.Success)
+				{
+					var end = i + 1;
+					while (end < lines.Length && !objectEnd.IsMatch(lines[end]) && !objectStart.IsMatch(lines[end]))
+						end++;
+
+					if (end < lines.Length && objectEnd.IsMatch(lines[end]))
+					{
+						var isShellScriptPhase = false;
+						var hasName = false;
+						for (var j = i + 1; j < end; j++)
+						{
+							isShellScriptPhase |= lines[j].Contains("isa = PBXShellScriptBuildPhase;");
+							hasName |= nameLine.IsMatch(lines[j]);
+						}
+
+						if (isShellScriptPhase && hasName)
+						{
+							removedGuids.Add(start.Groups[1].Value);
+							for (var j = i; j <= end; j++)
+								removed.Append(lines[j]).Append('\n');
+							i = end;
+							continue;
+						}
+					}
+				}
+
+				kept.Add(lines[i]);
+			}
+
+			removedPhases = removed.ToString();
+			if (removedGuids.Count == 0)
+				return pbxproj;
+
+			var reference = new Regex(@"^\s*([0-9A-Fa-f]{24})\b[^,=]*,\s*$");
+			kept.RemoveAll(line =>
+			{
+				var match = reference.Match(line);
+				return match.Success && removedGuids.Contains(match.Groups[1].Value);
+			});
+
+			return string.Join("\n", kept);
+		}
+
 #if UNITY_ANDROID
+		private static readonly string[] AndroidBeeLineNumberMappings =
+		{
+			Path.Combine("Library", "Bee", "artifacts", "Android", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "Android", "Prj", "IL2CPP", "Il2CppBackup", "il2cppOutput", "Symbols", "LineNumberMappings.json"),
+		};
+
 		private static void UploadSymbolsAndroid(string pathToBuiltProject, BugSplatOptions options)
 		{
 			if (!options.UploadDebugSymbolsForAndroid)
@@ -642,14 +789,29 @@ namespace BugSplatUnity.Editor
 
 			if (EditorUserBuildSettings.exportAsGoogleAndroidProject)
 			{
-				Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Export Project\" is enabled in BuildSettings->Android.");
+				var exportedMappings = Path.Combine(pathToBuiltProject, "unityLibrary", "src", "main", "Il2CppOutputProject",
+					"Source", "il2cppOutput", "Symbols", "LineNumberMappings.json");
+				Debug.LogWarning("BugSplat. Skipping symbols and LineNumberMappings.json uploading since \"Export Project\" is enabled in BuildSettings->Android." +
+					(File.Exists(exportedMappings)
+						? $" For C# line numbers, upload {exportedMappings} yourself as a zip named {AndroidLineNumberMappingsName}.zip containing {AndroidLineNumberMappingsName}."
+						: ""));
 				return;
 			}
 
-			if (UnityEditor.Android.UserBuildSettings.DebugSymbols.level == Unity.Android.Types.DebugSymbolLevel.None)
+			var debugSymbolLevel = UnityEditor.Android.UserBuildSettings.DebugSymbols.level;
+			if (debugSymbolLevel == Unity.Android.Types.DebugSymbolLevel.None)
 			{
 				Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Debug Symbols\" is set to None in BuildSettings->Android.");
 				return;
+			}
+
+			var isIl2Cpp = PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android) == ScriptingImplementation.IL2CPP;
+			if (isIl2Cpp && debugSymbolLevel == Unity.Android.Types.DebugSymbolLevel.SymbolTable)
+			{
+				Debug.LogWarning(
+					"BugSplat: Android \"Debug Symbols\" is set to Public, so libil2cpp.so's symbols carry no file and line information " +
+					"and native Android crash reports can't map IL2CPP frames back to C# files and line numbers. " +
+					"Set Debug Symbols to Full in the Android build settings.");
 			}
 
 			Debug.Log("BugSplat. Starting symbol upload.");
@@ -674,6 +836,15 @@ namespace BugSplatUnity.Editor
 			{
 				Debug.LogError("BugSplat. Could not find generated symbols archive.");
 			}
+
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, AndroidBeeLineNumberMappings);
+			if (mappingsPath == null)
+			{
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Android, "Android");
+				return;
+			}
+
+			UploadLineNumberMappings(mappingsPath, AndroidLineNumberMappingsName, options);
 		}
 
 		private static void ProcessSymbolsArchive(string filePath, BugSplatOptions options)
@@ -718,7 +889,10 @@ namespace BugSplatUnity.Editor
 		}
 #endif
 
-		internal static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted)
+		internal static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted) =>
+			UploadSymbols(artifactsDirPath, globPattern, options, EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android, onCompleted);
+
+		private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, bool dumpSyms, Action<int> onCompleted)
 		{
 			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
 			{
@@ -754,7 +928,7 @@ namespace BugSplatUnity.Editor
 			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
 			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
 
-			if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
+			if (dumpSyms)
 			{
 				symUploadProcessInfo.Arguments += " --dumpSyms";
 			}
