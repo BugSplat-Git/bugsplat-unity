@@ -60,14 +60,14 @@ Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick you
 
 ![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
 
-![Configuring BugSplat](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/a6250cea-a4da-44a8-b6cb-ff2467b0d978)
+![Configuring BugSplat](Documentation~/images/options.png)
 
 > [!NOTE]
 > The sample's UI labels use TextMeshPro. If the button text appears blank, import TMP Essentials via **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled in the sample.
 
 Click **Play** and run a scenario from the **Crash Scenarios** menu to send an error report to BugSplat. Scenarios are grouped by the mechanism that captures them, and the menu is platform-aware — each platform lists only what it can capture. Native scenarios are disabled in the editor and need a built player; see the [sample README](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/README.md) for the full scenario matrix. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
 
-![Running the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/4418b736-dc88-496a-ada6-a27ad19032f1)
+![Running the Sample](Documentation~/images/sample-crash-scenarios.png)
 
 Navigate to the [Crashes](https://app.bugsplat.com/v2/crashes) page, and click the value in the ID column to see the details of your report, including the call stack, log file, and screenshot of your app when the error occurred.
 
@@ -117,7 +117,7 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 | Hang / ANR reporting | Yes (opt-in) | Yes | Yes | Yes (Android 11+) | No | No |
 | Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
-| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | No | No |
+| Automatic symbol upload | Yes | Yes | Yes | Yes | No | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
 - **Native crashes** are captured by default on Windows, macOS (IL2CPP only), iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.

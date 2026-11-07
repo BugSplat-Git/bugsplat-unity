@@ -22,6 +22,8 @@ For IL2CPP builds, BugSplat uploads Unity's `LineNumberMappings.json` with your 
 
 The dialog reads its colors, fonts, layout, logo and wording at run time from the `BugSplatTheme` folder next to `BugSplatReporter.exe` — `theme.json`, an optional logo, and one `strings.<language>.json` file per language. Nothing is compiled, so rebranding it means editing files, not rebuilding the SDK. [Crash Dialog Branding](https://docs.bugsplat.com/education/how-tos/customize-the-crash-dialog) documents the theme format, how to preview a theme with `BugSplatReporter.exe --preview` without crashing anything, and how to check one with `--check-theme`. Both commands work against the copy of the reporter in your build folder.
 
+![The BugSplat crash dialog on Windows](images/windows-crash-dialog.png)
+
 The Unity package doesn't have a setting for a custom theme yet: every Windows build copies the default theme from the package, replacing whatever is in the build folder's `BugSplatTheme`. To ship your own, put your theme in that folder in your installer, after the build.
 
 ## Windows Symbols
@@ -55,6 +57,8 @@ reg delete "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\RuntimeExcep
 The value name must match the installed path exactly, using backslashes. Moving or reinstalling the game to a different folder silently disarms it.
 
 For local builds, use **BugSplat > Windows > Register WER Handler** in the editor. It asks for the `BugSplatWer.dll` in your build folder, writes the value elevated, and reads it back to confirm. **Check WER Handler Registration** reports the current state.
+
+![The sample's status line when the WER handler isn't registered for the build](images/sample-wer-not-armed.png)
 
 At runtime, `bugsplat.WindowsWerEnabled` tells you whether the handler registered. When it hasn't, BugSplat logs what will be missed and how to fix it — as a warning in development builds and an informational message otherwise, since end users can't act on it. All other crashes are reported normally either way.
 

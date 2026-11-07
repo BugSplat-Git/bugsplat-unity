@@ -20,13 +20,13 @@ The menu is platform-aware: sections compile for the active build target, so eac
 
 | Section | Captured by | Platforms |
 | --- | --- | --- |
-| `MANAGED` | The .NET handler: unhandled exception, coroutine exception, background-thread exception, unobserved `Task` exception, caught & posted manually | All |
+| `MANAGED` | The .NET handler: unhandled exception, coroutine exception, background-thread exception, unobserved `Task` exception, caught & posted manually. WebGL players are single-threaded, so they leave out the background-thread and `Task` rows | All |
 | `NATIVE` | The platform's native crash reporter. Windows: access violations (write, read, background thread), custom SEH exception, and stack overflow, dumped out of process by `BugSplatMonitor`. macOS, iOS, and Android: a native crash raised in the platform bridge | Windows, macOS, iOS, Android |
 | `FAIL-FAST` | `BugSplatWer.dll` via Windows Error Reporting: fail-fast `0xC0000602`, stack buffer overrun `0xC0000409`, heap corruption `0xC0000374`. These bypass every in-process handler | Windows |
 | `HANG` | Windows: `BugSplatMonitor`'s watchdog. macOS: BugSplat's main-thread watchdog, fatal only once you force-quit the beachballing app (reported next launch). iOS: the OS watchdog (reported next launch). Android: an ANR raised by the OS | Windows, macOS, iOS, Android |
-| `FEEDBACK` | An explicit `bugsplat.PostFeedback`, via the feedback dialog | All |
+| `FEEDBACK` | An explicit `bugsplat.PostFeedback`, via the feedback dialog | All except WebGL |
 
-Linux and WebGL players get the `MANAGED` and `FEEDBACK` sections only; native crash reporting is not yet supported there, and the menu's status line says so.
+Linux players get the `MANAGED` and `FEEDBACK` sections, and WebGL players get `MANAGED` only: native crash reporting is not yet supported on either, BugSplat has no feedback client on WebGL, and the menu's status line says so.
 
 ## Things worth knowing before you run these
 
