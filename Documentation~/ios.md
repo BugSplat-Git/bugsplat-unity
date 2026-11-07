@@ -8,7 +8,7 @@ When native crash reporting is enabled, BugSplat automatically disables Unity's 
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json` alongside dSYMs. This enables BugSplat to map IL2CPP-generated C++ symbols back to original C# method names, file names, and line numbers. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
 
-`Player.log` is attached to native iOS crash reports when both `UseNativeCrashReportingForIos` and `CapturePlayerLog` are enabled on your `BugSplatOptions` asset. Managed .NET exception reports attach it through the reporter instead, so they are unaffected by the native setting.
+Unity does not write a `Player.log` on iOS — log output goes to the device console, which Xcode and Console.app show — so `CapturePlayerLog` has no effect on iOS reports. To attach your own log file to native iOS crash reports, see [Attachments](#attachments).
 
 ## Attachments
 
