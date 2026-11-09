@@ -1,6 +1,6 @@
 # Native runtime layout
 
-`com.bugsplat.unity` 5.0 is a C# binding over [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native)'s C ABI (`bugsplat.h`). The same library and the same out-of-process helpers serve every player platform; Unity only needs them laid out where its plugin importer and the package's post-build step expect them.
+`com.bugsplat.unity` 6.0 is a C# binding over [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native)'s C ABI (`bugsplat.h`). The same library and the same out-of-process helpers serve every player platform; Unity only needs them laid out where its plugin importer and the package's post-build step expect them.
 
 | Platform | Library Unity loads (`Runtime/Plugins/...`) | Helpers copied next to the player at build time (`Runtime/Plugins/<platform>/Support~/...`) |
 |---|---|---|

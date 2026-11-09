@@ -2,13 +2,13 @@
 
 # 🚚 Migrating from 4.x (and from the 5.0 pre-releases)
 
-Version 5.0.0 replaces the per-platform native plugins — bugsplat-windows on Windows, bugsplat-apple on macOS and iOS, bugsplat-android on Android — with one C# binding over [bugsplat-native](native.md). The public surface you call from game code (`BugSplat`, `Post`, `PostFeedback`, `Attributes`, `Attachments`, `AttachNativeLogFile`) is unchanged; the options and a few platform-specific calls are not. BugSplat also starts differently: see [Initialization](#initialization).
+Version 6.0.0 replaces the per-platform native plugins — bugsplat-windows on Windows, bugsplat-apple on macOS and iOS, bugsplat-android on Android — with one C# binding over [bugsplat-native](native.md). The public surface you call from game code (`BugSplat`, `Post`, `PostFeedback`, `Attributes`, `Attachments`, `AttachNativeLogFile`) is unchanged; the options and a few platform-specific calls are not. BugSplat also starts differently: see [Initialization](#initialization).
 
 ## Options asset
 
 Open every `BugSplatOptions` asset once after upgrading. Unity keeps the fields it still knows and drops the rest silently, so check the **Native Crash Reporting** section:
 
-| 4.x / 5.0 pre-release field | 5.0.0 |
+| 4.x / 5.0 pre-release field | 6.0.0 |
 | --- | --- |
 | `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, `UseNativeCrashReportingForAndroid` | One `UseNativeCrashReporting` (default **on**). Native crash reporting no longer needs opting in per platform; turn it off only for platforms you cannot ship the runtime on. |
 | `WindowsShowCrashDialog` | `UploadPolicy` (`Dialog` / `Quiet` / `Manual`), on every desktop platform. |

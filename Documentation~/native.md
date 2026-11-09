@@ -2,7 +2,7 @@
 
 # 🧱 Native crash reporting
 
-Version 5.0 of `com.bugsplat.unity` is a C# binding over [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native), BugSplat's cross-platform crash reporter. One library (`bugsplat.h`, loaded as `BugSplat.dll` / `libbugsplat.dylib` / `libbugsplat.so`, or linked statically on iOS) does the same job on Windows, macOS, Linux, Android and iOS, so the options, the behavior and the report contents are the same everywhere.
+Version 6.0 of `com.bugsplat.unity` is a C# binding over [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native), BugSplat's cross-platform crash reporter. One library (`bugsplat.h`, loaded as `BugSplat.dll` / `libbugsplat.dylib` / `libbugsplat.so`, or linked statically on iOS) does the same job on Windows, macOS, Linux, Android and iOS, so the options, the behavior and the report contents are the same everywhere.
 
 ## What happens in a player
 
