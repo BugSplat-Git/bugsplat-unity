@@ -683,6 +683,18 @@ namespace BugSplatUnity.Editor
 			try
 			{
 				System.IO.Compression.ZipFile.ExtractToDirectory(filePath, symbolsUnzipPath, true);
+
+				// Without "legacy extensions", Unity 6 zips libfoo.so.dbg (Full) or libfoo.so.sym (Public). Most have no
+				// SONAME, so dump_syms names the module after the file; rename them to libfoo.so to match crashes.
+				foreach (var suffix in new[] { ".dbg", ".sym" })
+				{
+					foreach (var file in Directory.GetFiles(symbolsUnzipPath, "*.so" + suffix, SearchOption.AllDirectories))
+					{
+						var renamed = file.Substring(0, file.Length - suffix.Length);
+						if (!File.Exists(renamed))
+							File.Move(file, renamed);
+					}
+				}
 			}
 			catch (Exception e)
 			{
@@ -696,47 +708,16 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// Unity 6 zips libfoo.so.dbg, or libfoo.so with legacy extensions; stage one file per library as
-			// libfoo.so, so dump_syms names its module the way a crash does.
-			var symbolsStagingPath = symbolsUnzipPath + "-bugsplat";
-			void CleanUp()
+			UploadSymbols(symbolsUnzipPath, "**/*.so", options, uploadExitCode =>
 			{
-				foreach (var path in new[] { symbolsUnzipPath, symbolsStagingPath })
+				try
 				{
-					try
-					{
-						if (Directory.Exists(path))
-							Directory.Delete(path, true);
-					}
-					catch (Exception e)
-					{
-						Debug.LogWarning($"BugSplat. Could not clean up unzipped symbols at {path}: {e.Message}");
-					}
+					Directory.Delete(symbolsUnzipPath, true);
 				}
-			}
-
-			int stagedCount;
-			try
-			{
-				stagedCount = AndroidSymbolFiles.Stage(symbolsUnzipPath, symbolsStagingPath);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError(e);
-				CleanUp();
-				return;
-			}
-
-			if (stagedCount == 0)
-			{
-				Debug.LogError("BugSplat. Found no native library symbols (.so.dbg, .so.sym or .so) in the generated symbols archive.");
-				CleanUp();
-				return;
-			}
-
-			UploadSymbols(symbolsStagingPath, "**/*.so", options, uploadExitCode =>
-			{
-				CleanUp();
+				catch (Exception e)
+				{
+					Debug.LogWarning($"BugSplat. Could not clean up unzipped symbols at {symbolsUnzipPath}: {e.Message}");
+				}
 
 				if (uploadExitCode != 0)
 				{
