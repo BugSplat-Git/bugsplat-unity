@@ -10,7 +10,7 @@ You'll also need to configure the scripting backend to use IL2CPP, target **ARM6
 
 When you build your app for Android, be sure to set `Create symbols.zip` to `Debugging`
 
-![Android Build Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/0181f2a8-8fb2-4745-b336-3e7f210aa55e)
+![Android Build Settings](images/android-build-profile-debug-symbols.png)
 
 ## Attachments
 
