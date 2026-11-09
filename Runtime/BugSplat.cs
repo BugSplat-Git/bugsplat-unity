@@ -64,8 +64,8 @@ namespace BugSplatUnity
         /// <summary>
         /// Upload Player.log when Post is called. On platforms whose native crash reporter takes
         /// attachments (Windows, macOS, iOS, and Android), this also attaches or detaches it natively,
-        /// leaving any file attached with AttachNativeLogFile in place. Android is a special case: Unity
-        /// writes no Player.log there, so consoleLogPath is empty and there is nothing to attach.
+        /// leaving any file attached with AttachNativeLogFile in place. Android and iOS are special cases:
+        /// Unity writes no Player.log on either, so there is nothing to attach.
         /// </summary>
         public bool CapturePlayerLog
         {
