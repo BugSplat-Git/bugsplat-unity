@@ -836,6 +836,18 @@ namespace BugSplatUnity.Editor
 			try
 			{
 				System.IO.Compression.ZipFile.ExtractToDirectory(filePath, symbolsUnzipPath, true);
+
+				// Without "legacy extensions", Unity 6 zips libfoo.so.dbg (Full) or libfoo.so.sym (Public). Most have no
+				// SONAME, so dump_syms names the module after the file; rename them to libfoo.so to match crashes.
+				foreach (var suffix in new[] { ".dbg", ".sym" })
+				{
+					foreach (var file in Directory.GetFiles(symbolsUnzipPath, "*.so" + suffix, SearchOption.AllDirectories))
+					{
+						var renamed = file.Substring(0, file.Length - suffix.Length);
+						if (!File.Exists(renamed))
+							File.Move(file, renamed);
+					}
+				}
 			}
 			catch (Exception e)
 			{

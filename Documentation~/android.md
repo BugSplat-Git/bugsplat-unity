@@ -8,7 +8,7 @@ You'll also need to configure the scripting backend to use IL2CPP, target **ARM6
 
 ![Android Player Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec8f5b7-8dfd-43db-84e0-7e7d1229324a)
 
-When you build your app for Android, be sure to set `Create symbols.zip` to `Debugging`
+When you build your app for Android, set **Debug Symbols** to **Full** in the Android build settings, so Unity writes a `*.symbols.zip` next to the APK or AAB; that archive is what BugSplat uploads. **Full** carries file and line information, while **Public** carries function names only. **Symbol file extension** can be either setting: BugSplat renames Unity 6's `libil2cpp.so.dbg` and `libil2cpp.so.sym` files to `libil2cpp.so`, the module name crashes report, before uploading.
 
 ![Android Build Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/0181f2a8-8fb2-4745-b336-3e7f210aa55e)
 
