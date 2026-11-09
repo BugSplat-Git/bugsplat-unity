@@ -49,16 +49,16 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 
 After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](Documentation~/usage.md) instructions.
 
-To import the sample, click the caret next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
+To import the sample, select **BugSplat** in the Package Manager, open the **Samples** tab, and click **Import** next to **my-unity-crasher**.
 
-![Importing the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/b7a39388-eb76-413a-a92f-72fd39c9a7d6)
+![Importing the Sample](Documentation~/images/package-manager-import-sample.png)
 
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
-Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter the name of a database from your BugSplat account. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
+![Finding the Sample](Documentation~/images/sample-scene-in-project.png)
 
-![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
+Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter the name of a database from your BugSplat account. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
 
 ![Configuring BugSplat](Documentation~/images/options.png)
 
