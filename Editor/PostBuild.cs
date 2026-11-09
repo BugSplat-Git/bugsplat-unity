@@ -686,9 +686,11 @@ namespace BugSplatUnity.Editor
 			return updated;
 		}
 
-		private static string WithoutObjectIds(string pbxprojObjects) => Regex.Replace(pbxprojObjects, "[0-9A-Fa-f]{24}", "");
-
 #endif
+
+		// Drops the object ID that starts each object declaration, so two phases compare by content alone.
+		// Hex anywhere else, such as a version in the script, still counts.
+		internal static string WithoutObjectIds(string pbxprojObjects) => Regex.Replace(pbxprojObjects, @"(?m)^(\s*)[0-9A-Fa-f]{24}\b", "$1");
 
 		// Removes every PBXShellScriptBuildPhase called `name` from project.pbxproj text, and its entries
 		// in targets' buildPhases lists. removedPhases returns the removed objects' text. Works on the

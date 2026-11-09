@@ -97,5 +97,20 @@ namespace BugSplatUnity.EditorTests
 				BuildPostprocessors.RemoveShellScriptBuildPhasesNamed(Pbxproj, PhaseName, out _).Replace("\n", "\r\n"),
 				result);
 		}
+
+		[Test]
+		public void WithoutObjectIds_ShouldIgnoreTheObjectIdButNotHexInTheScript()
+		{
+			const string phase = "\t\t{0} /* Run Script */ = {{\n\t\t\tshellScript = \"--version {1}\";\n\t\t}};\n";
+			var oldVersion = "0123456789abcdef01234567";
+			var newVersion = "fedcba9876543210fedcba98";
+
+			Assert.AreEqual(
+				BuildPostprocessors.WithoutObjectIds(string.Format(phase, "AAAAAAAAAAAAAAAAAAAAAAAA", oldVersion)),
+				BuildPostprocessors.WithoutObjectIds(string.Format(phase, "BBBBBBBBBBBBBBBBBBBBBBBB", oldVersion)));
+			Assert.AreNotEqual(
+				BuildPostprocessors.WithoutObjectIds(string.Format(phase, "AAAAAAAAAAAAAAAAAAAAAAAA", oldVersion)),
+				BuildPostprocessors.WithoutObjectIds(string.Format(phase, "AAAAAAAAAAAAAAAAAAAAAAAA", newVersion)));
+		}
 	}
 }
