@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.IO.Compression;
 using BugSplatUnity.Editor;
 using NUnit.Framework;
 
@@ -56,36 +53,6 @@ namespace BugSplatUnity.EditorTests
 			Assert.AreEqual("LineNumberMappings-macos.json", BuildPostprocessors.MacLineNumberMappingsName);
 			Assert.AreEqual("LineNumberMappings-ios.json", BuildPostprocessors.IosLineNumberMappingsName);
 			Assert.AreEqual("LineNumberMappings-android.json", BuildPostprocessors.AndroidLineNumberMappingsName);
-		}
-
-		[Test]
-		public void ZipLineNumberMappings_ShouldZipTheFileAloneAtTheRootUnderThePlatformName()
-		{
-			var dir = Path.Combine(Path.GetTempPath(), "bugsplat-lnm-" + Guid.NewGuid().ToString("N"));
-			Directory.CreateDirectory(dir);
-			try
-			{
-				var source = Path.Combine(dir, "LineNumberMappings.json");
-				File.WriteAllText(source, "{\"a.cpp\":{}}");
-				var zip = Path.Combine(dir, "LineNumberMappings-macos.json.zip");
-				File.WriteAllText(zip, "stale");
-
-				BuildPostprocessors.ZipLineNumberMappings(source, "LineNumberMappings-macos.json", zip);
-
-				using (var archive = ZipFile.OpenRead(zip))
-				{
-					Assert.AreEqual(1, archive.Entries.Count);
-					Assert.AreEqual("LineNumberMappings-macos.json", archive.Entries[0].FullName);
-					using (var reader = new StreamReader(archive.Entries[0].Open()))
-						Assert.AreEqual("{\"a.cpp\":{}}", reader.ReadToEnd());
-				}
-
-				Assert.IsTrue(File.Exists(source), "the file Unity wrote should be left in place");
-			}
-			finally
-			{
-				Directory.Delete(dir, true);
-			}
 		}
 
 		[Test]

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -347,15 +346,14 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			// Upload a renamed, zipped copy; the file Unity wrote stays where it is, under its own name.
+			// Upload a renamed copy; the file Unity wrote stays where it is, under its own name.
 			var stagingDir = Path.GetFullPath(Path.Combine("Temp", "BugSplat", Guid.NewGuid().ToString("N")));
 			try
 			{
 				Directory.CreateDirectory(stagingDir);
-				var zipName = uploadName + ".zip";
-				ZipLineNumberMappings(mappingsPath, uploadName, Path.Combine(stagingDir, zipName));
-				Debug.Log($"BugSplat: uploading {mappingsPath} as {zipName}");
-				UploadLineNumberMappingsFrom(stagingDir, zipName, options);
+				File.Copy(mappingsPath, Path.Combine(stagingDir, uploadName));
+				Debug.Log($"BugSplat: uploading {mappingsPath} as {uploadName}");
+				UploadLineNumberMappingsFrom(stagingDir, uploadName, options);
 			}
 			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
 			{
@@ -372,21 +370,6 @@ namespace BugSplatUnity.Editor
 				{
 					Debug.LogWarning($"BugSplat. Could not clean up {stagingDir}: {e.Message}");
 				}
-			}
-		}
-
-		// symbol-upload uploads a raw JSON file only when it is named exactly LineNumberMappings.json, and
-		// skips any other one without failing. So a platform-named copy is zipped first, as <name>.zip with
-		// the file at the archive root - what symbol-upload itself makes of LineNumberMappings.json - and
-		// symbol-upload uploads a .zip as it is.
-		internal static void ZipLineNumberMappings(string mappingsPath, string entryName, string zipPath)
-		{
-			if (File.Exists(zipPath))
-				File.Delete(zipPath);
-
-			using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-			{
-				archive.CreateEntryFromFile(mappingsPath, entryName);
 			}
 		}
 
@@ -500,9 +483,6 @@ namespace BugSplatUnity.Editor
 				DisableUnityCrashReporter(pathToBuiltProject);
 		}
 
-		// Zipped by the Unity build, since symbol-upload skips a raw JSON file under this name; see ZipLineNumberMappings.
-		private const string IosLineNumberMappingsZipName = IosLineNumberMappingsName + ".zip";
-
 		private static void CopyLineNumberMappings(string pathToBuiltProject)
 		{
 			var searchPaths = new[]
@@ -513,7 +493,7 @@ namespace BugSplatUnity.Editor
 
 			// An export into an existing Xcode project keeps files from the last one: drop the copy older
 			// versions wrote under the shared name, and last build's mappings in case this build has none.
-			foreach (var stale in new[] { WindowsLineNumberMappingsName, IosLineNumberMappingsZipName })
+			foreach (var stale in new[] { WindowsLineNumberMappingsName, IosLineNumberMappingsName })
 			{
 				var stalePath = Path.Combine(pathToBuiltProject, stale);
 				if (File.Exists(stalePath))
@@ -525,8 +505,8 @@ namespace BugSplatUnity.Editor
 				var fullPath = Path.GetFullPath(searchPath);
 				if (File.Exists(fullPath))
 				{
-					ZipLineNumberMappings(fullPath, IosLineNumberMappingsName, Path.Combine(pathToBuiltProject, IosLineNumberMappingsZipName));
-					Debug.Log($"BugSplat: Copied LineNumberMappings.json to the Xcode project as {IosLineNumberMappingsZipName} ({new FileInfo(fullPath).Length / 1024}KB)");
+					File.Copy(fullPath, Path.Combine(pathToBuiltProject, IosLineNumberMappingsName), true);
+					Debug.Log($"BugSplat: Copied LineNumberMappings.json to the Xcode project as {IosLineNumberMappingsName} ({new FileInfo(fullPath).Length / 1024}KB)");
 					return;
 				}
 			}
@@ -663,14 +643,14 @@ namespace BugSplatUnity.Editor
 				$"    --version \"{version}\" \\\n" +
 				$"    --files \"**/*.dSYM\" \\\n" +
 				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\"\n\n" +
-				$"# Upload IL2CPP's LineNumberMappings.json, zipped here as {IosLineNumberMappingsZipName}, for C# symbolication.\n" +
-				$"MAPPINGS=\"${{PROJECT_DIR}}/{IosLineNumberMappingsZipName}\"\n" +
+				$"# Upload IL2CPP's LineNumberMappings.json, copied here as {IosLineNumberMappingsName}, for C# symbolication.\n" +
+				$"MAPPINGS=\"${{PROJECT_DIR}}/{IosLineNumberMappingsName}\"\n" +
 				$"if [ -f \"$MAPPINGS\" ]; then\n" +
 				$"    \"$SYMBOL_UPLOAD\" \\\n" +
 				$"        --database \"{options.Database}\" \\\n" +
 				$"        --application \"{application}\" \\\n" +
 				$"        --version \"{version}\" \\\n" +
-				$"        --files \"{IosLineNumberMappingsZipName}\" \\\n" +
+				$"        --files \"{IosLineNumberMappingsName}\" \\\n" +
 				$"        --directory \"${{PROJECT_DIR}}\"\n" +
 				$"fi";
 
@@ -793,7 +773,7 @@ namespace BugSplatUnity.Editor
 					"Source", "il2cppOutput", "Symbols", "LineNumberMappings.json");
 				Debug.LogWarning("BugSplat. Skipping symbols and LineNumberMappings.json uploading since \"Export Project\" is enabled in BuildSettings->Android." +
 					(File.Exists(exportedMappings)
-						? $" For C# line numbers, upload {exportedMappings} yourself as a zip named {AndroidLineNumberMappingsName}.zip containing {AndroidLineNumberMappingsName}."
+						? $" For C# line numbers, upload {exportedMappings} yourself, renamed to {AndroidLineNumberMappingsName}."
 						: ""));
 				return;
 			}
