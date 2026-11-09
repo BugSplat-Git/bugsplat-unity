@@ -696,16 +696,47 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
-			UploadSymbols(symbolsUnzipPath, "**/*.so", options, uploadExitCode =>
+			// Unity 6 zips libfoo.so.dbg, or libfoo.so with legacy extensions; stage one file per library as
+			// libfoo.so, so dump_syms names its module the way a crash does.
+			var symbolsStagingPath = symbolsUnzipPath + "-bugsplat";
+			void CleanUp()
 			{
-				try
+				foreach (var path in new[] { symbolsUnzipPath, symbolsStagingPath })
 				{
-					Directory.Delete(symbolsUnzipPath, true);
+					try
+					{
+						if (Directory.Exists(path))
+							Directory.Delete(path, true);
+					}
+					catch (Exception e)
+					{
+						Debug.LogWarning($"BugSplat. Could not clean up unzipped symbols at {path}: {e.Message}");
+					}
 				}
-				catch (Exception e)
-				{
-					Debug.LogWarning($"BugSplat. Could not clean up unzipped symbols at {symbolsUnzipPath}: {e.Message}");
-				}
+			}
+
+			int stagedCount;
+			try
+			{
+				stagedCount = AndroidSymbolFiles.Stage(symbolsUnzipPath, symbolsStagingPath);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				CleanUp();
+				return;
+			}
+
+			if (stagedCount == 0)
+			{
+				Debug.LogError("BugSplat. Found no native library symbols (.so.dbg, .so.sym or .so) in the generated symbols archive.");
+				CleanUp();
+				return;
+			}
+
+			UploadSymbols(symbolsStagingPath, "**/*.so", options, uploadExitCode =>
+			{
+				CleanUp();
 
 				if (uploadExitCode != 0)
 				{
