@@ -4,11 +4,11 @@ namespace Crasher
 {
     public class LockOrientation : MonoBehaviour
     {
+        // The menu is laid out for landscape. AutoRotation with portrait disabled left a phone held
+        // upright in portrait, so request landscape outright.
         void Start()
         {
-            Screen.autorotateToPortrait = false;
-            Screen.autorotateToPortraitUpsideDown = false;
-            Screen.orientation = ScreenOrientation.AutoRotation;
+            Screen.orientation = ScreenOrientation.LandscapeLeft;
         }
     }
 }
