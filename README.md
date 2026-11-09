@@ -144,7 +144,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed, and what to change |
-| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — for scripts, CI, and AI agents |
+| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — and building in CI with the Unity CLI, for scripts, CI, and AI agents |
 
 ## 🧑‍💻 Contributing
 
