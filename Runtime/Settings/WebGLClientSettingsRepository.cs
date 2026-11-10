@@ -7,8 +7,7 @@ namespace BugSplatUnity.Runtime.Settings
 {
     internal class WebGLClientSettingsRepository : IClientSettingsRepository
     {
-        // TODO BG what do we do about attachments here...
-        // https://github.com/BugSplat-Git/bugsplat-unity/issues/37
+        // Attachments aren't sent from WebGL, which reports C# exceptions only (README, Platform Support).
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
         public IDictionary<string, string> Attributes { get; } = new Dictionary<string, string>();
         public bool CaptureEditorLog { get; set; } = false;
