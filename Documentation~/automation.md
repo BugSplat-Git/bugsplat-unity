@@ -133,7 +133,7 @@ In GitHub Actions, map the secrets onto the step that builds:
 A platform's symbols are uploaded only when its `UploadDebugSymbolsFor…` option is on. Windows and Xbox default to on; macOS, iOS, and Android default to off. When they are uploaded depends on the platform:
 
 - **Windows**: during `unity build`. Build on a Windows runner. **Copy PDB files** can only be read by a Windows editor, and Windows IL2CPP builds need one anyway. See [Windows](windows.md).
-- **macOS**: during `unity build`. See [macOS](macos.md).
+- **macOS**: during `unity build`, for a player built straight to a `.app`. An Xcode project export (**Create Xcode Project**) uploads nothing, and unlike iOS it gets no upload build phase, because the dSYMs don't exist until Xcode builds it. Upload them with [`symbol-upload`](https://github.com/BugSplat-Git/symbol-upload) after your `xcodebuild` step. See [macOS](macos.md).
 - **Android**: during `unity build`, from the `*.symbols.zip` Unity writes when **Debug Symbols** is **Full**. Nothing is uploaded from an **Export Project** build. See [Android](android.md).
 - **iOS**: not during `unity build`, which only writes the Xcode project. The upload is an Xcode build phase that runs when you build that project, so set the two variables on the `xcodebuild` step too. See [iOS](ios.md).
 
