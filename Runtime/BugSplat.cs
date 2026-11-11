@@ -524,7 +524,8 @@ namespace BugSplatUnity
 
                 if (nativeCrashReportingEnabled)
                 {
-                    // Android captures attachments at crash time, so after init is early enough.
+                    // Android registers attachments for the session; they're read when the report uploads (at
+                    // crash time below Android 12, at the next launch from 12 on), so after init is early enough.
                     foreach (var path in seededNativeAttachments)
                     {
                         AddNativeAttachment(path);

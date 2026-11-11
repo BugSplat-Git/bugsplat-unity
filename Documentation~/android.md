@@ -2,7 +2,7 @@
 
 # 🤖 Android
 
-The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android via Crashpad. Native crash reporting (`UseNativeCrashReportingForAndroid`) is on by default; to upload symbols as well, set `UploadDebugSymbolsForAndroid` to `true` on your `BugSplatOptions` asset (**Edit > Project Settings > BugSplat**).
+The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android. Native crash reporting (`UseNativeCrashReportingForAndroid`) is on by default; to upload symbols as well, set `UploadDebugSymbolsForAndroid` to `true` on your `BugSplatOptions` asset (**Edit > Project Settings > BugSplat**).
 
 You'll also need to configure the scripting backend to use IL2CPP, target **ARM64**, and set the Minimum API Level to **Android 8.0 (API level 26)** or higher. ARM64 is the only configuration BugSplat tests; the bundled `bugsplat-android-release.aar` also ships `armeabi-v7a` and `x86_64` native libraries, but those ABIs are untested and unsupported.
 
@@ -16,11 +16,16 @@ For IL2CPP builds, BugSplat also uploads Unity's `LineNumberMappings.json`, as `
 
 With **Export Project** enabled nothing is uploaded, since the symbols archive doesn't exist until you build the exported project. The mappings are in the exported project at `unityLibrary/src/main/Il2CppOutputProject/Source/il2cppOutput/Symbols/LineNumberMappings.json`; to upload them yourself, rename that file to `LineNumberMappings-android.json` and upload it with `symbol-upload` 11.2.0 or later.
 
+## How native crashes are reported
+
+- **Android 12 (API level 31) and later:** Android writes a tombstone for the crashed process: its own unwind of every thread, with registers. BugSplat uploads it on the **next launch** of the app, as an `Android.Tombstone` report. The report carries the application, version, attributes, and attachment list of the session that crashed. Reports are sent from the app's main process.
+- **Android 8 to 11 (API levels 26 to 30):** Crashpad writes a minidump and uploads it at crash time.
+
 ## Attachments
 
 With `UseNativeCrashReportingForAndroid` enabled, paths listed in `BugSplatOptions.PersistentDataFileAttachmentPaths` are resolved against `Application.persistentDataPath` and registered with the native crash reporter at startup, so they ride along with native Android crash reports as well as managed ones. With it disabled they still reach managed reports, and nothing is registered natively.
 
-`AttachNativeLogFile` and `DetachNativeLogFile` work on Android as they do on Windows, macOS, and iOS. Files are read when a crash is uploaded, so a log can be attached before anything has written to it.
+`AttachNativeLogFile` and `DetachNativeLogFile` work on Android as they do on Windows, macOS, and iOS. Files are read when a crash is uploaded, so a log can be attached before anything has written to it. On Android 12 and later that is the next launch, so a file is sent as it is then, and attachments past 20 MB in total are skipped.
 
 Unity does not write a `Player.log` on Android — log output goes to logcat and `Application.consoleLogPath` is empty — so `CapturePlayerLog` has no effect on Android reports.
 
