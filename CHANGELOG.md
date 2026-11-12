@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The BugSplat editor menu moved under **Tools**, where the Unity Asset Store requires package menus: **Tools > BugSplat > Settings...**, **Tools > BugSplat > Symbol Upload**, and **Tools > BugSplat > Windows**. The commands are unchanged.
 - `package.json` declares `unityRelease`, which the Asset Store requires. The minimum stays Unity 6000.0.
 
+### Fixed
+
+- With **Enter Play Mode Options** set to skip the domain reload (the default for new projects in Unity 6.6), a C# exception reported in the last three seconds of one Play session no longer suppresses the first report of the next one. The report rate limiter now resets when Play mode starts, as `BugSplat.Instance` already did.
+
 ## [5.0.0] - 2026-11-11
 
 Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md).
