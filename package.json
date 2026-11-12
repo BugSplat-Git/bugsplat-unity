@@ -1,9 +1,10 @@
 {
     "name": "com.bugsplat.unity",
-    "version": "5.0.0",
+    "version": "5.0.1",
     "displayName": "BugSplat",
     "description": "Unity crash reporting powered by BugSplat",
     "unity": "6000.0",
+    "unityRelease": "0f1",
     "documentationUrl": "https://docs.bugsplat.com/integrations/game-development/unity",
     "changelogUrl": "https://github.com/BugSplat-Git/bugsplat-unity/blob/main/CHANGELOG.md",
     "licensesUrl": "https://github.com/BugSplat-Git/bugsplat-unity/blob/main/LICENSE.md",

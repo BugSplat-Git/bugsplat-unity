@@ -13,7 +13,7 @@ namespace BugSplatUnity.Editor
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
         private const string hangDialogConflictFormat = "Auto-submit is off for {0} fatal hang reports but still on for {0} crash reports, so hangs will keep uploading without asking. Turn off auto-submit for {0} crash reports as well to be prompted.";
-        private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
+        private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via Tools > BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
         private const int integrationsPaddingTop = 5;
         private const int integrationsPaddingBottom = 5;

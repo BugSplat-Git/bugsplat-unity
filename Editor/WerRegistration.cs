@@ -33,13 +33,13 @@ namespace BugSplatUnity.Editor
 		const string View64 = "/reg:64";
 		const string View32 = "/reg:32";
 
-		[MenuItem("BugSplat/Windows/Register WER Handler...", false, 100)]
+		[MenuItem("Tools/BugSplat/Windows/Register WER Handler...", false, 100)]
 		static void Register() => SetRegistration(true);
 
-		[MenuItem("BugSplat/Windows/Unregister WER Handler...", false, 101)]
+		[MenuItem("Tools/BugSplat/Windows/Unregister WER Handler...", false, 101)]
 		static void Unregister() => SetRegistration(false);
 
-		[MenuItem("BugSplat/Windows/Check WER Handler Registration...", false, 120)]
+		[MenuItem("Tools/BugSplat/Windows/Check WER Handler Registration...", false, 120)]
 		static void Check()
 		{
 			var werDll = PromptForWerDll();

@@ -1022,7 +1022,7 @@ namespace BugSplatUnity
                 "exist and be named by a REG_DWORD value under HKLM\\SOFTWARE\\Microsoft\\Windows\\" +
                 "Windows Error Reporting\\RuntimeExceptionHelperModules, which requires administrator " +
                 "rights. Your installer should add that value and remove it on uninstall; for local " +
-                "builds use BugSplat > Windows > Register WER Handler in the editor. All other crashes " +
+                "builds use Tools > BugSplat > Windows > Register WER Handler in the editor. All other crashes " +
                 "are reported normally.";
 
             // The registry value is absent on virtually every end-user machine unless the installer
