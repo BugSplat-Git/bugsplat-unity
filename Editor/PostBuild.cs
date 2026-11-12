@@ -582,7 +582,7 @@ namespace BugSplatUnity.Editor
 					$"BugSplat: no symbol upload credentials for database '{options.Database}'. Set " +
 					$"{BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and " +
 					$"{BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable} in the Xcode build environment, or use " +
-					"BugSplat > Symbol Upload > Set Credentials. The dSYM upload build phase will skip uploading without them.");
+					"Tools > BugSplat > Symbol Upload > Set Credentials. The dSYM upload build phase will skip uploading without them.");
 			}
 
 			var application = string.IsNullOrEmpty(options.Application) ? Application.productName : options.Application;
@@ -605,7 +605,7 @@ namespace BugSplatUnity.Editor
 				$"    if [ -n \"$ENV_CLIENT_SECRET\" ]; then SYMBOL_UPLOAD_CLIENT_SECRET=\"$ENV_CLIENT_SECRET\"; fi\n" +
 				$"fi\n" +
 				$"if [ -z \"$SYMBOL_UPLOAD_CLIENT_ID\" ] || [ -z \"$SYMBOL_UPLOAD_CLIENT_SECRET\" ]; then\n" +
-				$"    echo \"warning: BugSplat symbol upload credentials not found. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET, or run BugSplat > Symbol Upload > Set Credentials in Unity. Skipping dSYM upload.\"\n" +
+				$"    echo \"warning: BugSplat symbol upload credentials not found. Set SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET, or run Tools > BugSplat > Symbol Upload > Set Credentials in Unity. Skipping dSYM upload.\"\n" +
 				$"    exit 0\n" +
 				$"fi\n" +
 				$"export SYMBOL_UPLOAD_CLIENT_ID SYMBOL_UPLOAD_CLIENT_SECRET\n\n" +
@@ -894,7 +894,7 @@ namespace BugSplatUnity.Editor
 					$"BugSplat: no symbol upload credentials for database '{options.Database}'. Set " +
 					$"{BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and " +
 					$"{BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use " +
-					"BugSplat > Symbol Upload > Set Credentials. Skipping symbol uploads.");
+					"Tools > BugSplat > Symbol Upload > Set Credentials. Skipping symbol uploads.");
 				onCompleted(0);
 				return;
 			}

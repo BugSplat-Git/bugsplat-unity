@@ -295,7 +295,7 @@ namespace Crasher
 			{
 				statusText.text =
 					"Windows player — WER is NOT ARMED, so fail-fast scenarios will not report. " +
-					"Use BugSplat > Windows > Register WER Handler in the editor.";
+					"Use Tools > BugSplat > Windows > Register WER Handler in the editor.";
 				statusText.color = BugSplatRed;
 			}
 #else
@@ -497,7 +497,7 @@ namespace Crasher
 			{
 				return
 					"Needs the WER handler registered, or this terminates the player and reports " +
-					"nothing. Use BugSplat > Windows > Register WER Handler.";
+					"nothing. Use Tools > BugSplat > Windows > Register WER Handler.";
 			}
 
 			return null;

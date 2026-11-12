@@ -40,7 +40,7 @@ namespace BugSplatUnity.Editor
 			};
 		}
 
-		[MenuItem("BugSplat/Settings...", false, 0)]
+		[MenuItem("Tools/BugSplat/Settings...", false, 0)]
 		private static void OpenSettings()
 		{
 			SettingsService.OpenProjectSettings(SettingsPath);
