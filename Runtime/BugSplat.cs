@@ -350,9 +350,12 @@ namespace BugSplatUnity
                     windowsWerEnabled = NativeCrashReporter.HasCapability(BugSplatNative.Capability.Wer);
                     ReportWindowsWerStatus();
 
-                    // Reports an earlier session could not send (offline, MANUAL policy that was
-                    // never drained) go out now, on a background thread.
-                    NativeCrashReporter.PostPendingReportsAsync();
+                    // Reports an earlier session could not send go out now, on a background thread.
+                    // Manual leaves them for the app's own PostPendingReportsAsync call.
+                    if (NativeSettings.UploadPolicy != UploadPolicy.Manual)
+                    {
+                        NativeCrashReporter.PostPendingReportsAsync();
+                    }
                 }
                 else
                 {
@@ -724,7 +727,7 @@ namespace BugSplatUnity
 
         /// <summary>
         /// Upload reports left on disk by earlier sessions (offline, or the MANUAL upload policy),
-        /// on a background thread. Runs automatically at construction.
+        /// on a background thread. Runs automatically at construction unless the upload policy is Manual.
         /// </summary>
         public void PostPendingReportsAsync()
         {
