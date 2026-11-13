@@ -28,6 +28,10 @@ namespace BugSplatUnity.Editor
 		const string WerDllName = "BugSplatWer.dll";
 		const int ErrorCancelled = 1223;
 
+		// Includes the time someone takes to answer the administrator prompt.
+		static readonly TimeSpan ElevatedCommandTimeout = TimeSpan.FromMinutes(2);
+		static readonly TimeSpan QueryTimeout = TimeSpan.FromSeconds(30);
+
 		// A 64-bit player is handled by the 64-bit WerFault; a 32-bit player by the SysWOW64 one,
 		// whose HKLM\SOFTWARE reads are redirected to Wow6432Node.
 		const string View64 = "/reg:64";
@@ -94,7 +98,15 @@ namespace BugSplatUnity.Editor
 			{
 				using (var process = Process.Start(startInfo))
 				{
-					process.WaitForExit();
+					if (process != null && !process.WaitForExit((int)ElevatedCommandTimeout.TotalMilliseconds))
+					{
+						var pending =
+							$"The elevated registry update has not finished after {ProcessRunner.FormatDuration(ElevatedCommandTimeout)}, so BugSplat stopped waiting. " +
+							"If an administrator prompt is still open, it may yet apply. Use Tools > BugSplat > Windows > Check WER Handler Registration to see the result.";
+						Debug.LogWarning($"BugSplat. {pending}");
+						EditorUtility.DisplayDialog("BugSplat — WER Registration", pending, "OK");
+						return;
+					}
 				}
 			}
 			catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
@@ -192,23 +204,12 @@ namespace BugSplatUnity.Editor
 		/// </summary>
 		static bool IsRegistered(string werDll, string registryView)
 		{
-			var startInfo = new ProcessStartInfo("reg.exe", BuildQueryArguments(werDll, registryView))
-			{
-				UseShellExecute = false,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				CreateNoWindow = true
-			};
-
 			try
 			{
-				using (var process = Process.Start(startInfo))
-				{
-					process.StandardOutput.ReadToEnd();
-					process.StandardError.ReadToEnd();
-					process.WaitForExit();
-					return process.ExitCode == 0;
-				}
+				var query = ProcessRunner.Run(new ProcessStartInfo("reg.exe", BuildQueryArguments(werDll, registryView)), QueryTimeout);
+				if (query.TimedOut)
+					Debug.LogWarning($"BugSplat. Reading WER registration ({registryView}) timed out.");
+				return query.Succeeded;
 			}
 			catch (Exception ex)
 			{

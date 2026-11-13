@@ -2,7 +2,8 @@
     "name": "BugSplat.Unity.EditorTests",
     "rootNamespace": "",
     "references": [
-        "BugSplat.Unity.Editor"
+        "BugSplat.Unity.Editor",
+        "BugSplat.Unity.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -82,12 +82,22 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Paths to files, relative to Application.persistentDataPath, to attach to managed reports, and to native crash reports where native crash reporting is enabled. Entries that are not relative are skipped with a warning.")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
+		[Header("Symbol Upload")]
+		[Tooltip("Minutes the post-build symbol upload may run before it is stopped and reported as failed. Defaults to 30, room for gigabytes of .pdb files on a slow uplink while still ending a stalled upload - a network outage, or security software holding the uploader - well inside a typical CI job limit. 0 waits indefinitely. Applies to every platform the editor uploads symbols for.")]
+		public int SymbolUploadTimeoutMinutes = 30;
+
+		[Tooltip("Fail the build when a post-build symbol upload fails or times out. Off by default: the player is already built and works, so a failed upload is logged as an error and the build succeeds. Turn it on in CI to stop a build whose crash reports would not symbolicate. Missing symbol upload credentials are not a failure - the upload is skipped with a warning.")]
+		public bool FailBuildOnSymbolUploadError;
+
 		[Header("Windows")]
 		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. On by default. If set to false, will only use .NET handler.")]
 		public bool UseNativeCrashReportingForWindows = true;
 
 		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default, unlike the other platforms - Windows has always uploaded automatically, so defaulting this off would silently stop existing projects symbolicating. Also requires Copy PDB Files in Build Settings - only a Windows editor can check that setting, so from other editors the upload runs regardless and a warning is logged.")]
 		public bool UploadDebugSymbolsForWindows = true;
+
+		[Tooltip("Where to find IL2CPP's LineNumberMappings.json for Windows builds, if BugSplat does not find it on its own. A file, or a folder holding one; relative paths are relative to the project folder. Leave empty (default) to search the player's IL2CPP backup folder and Library/Bee.")]
+		public string WindowsLineNumberMappingsPath;
 
 		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently.")]
 		public bool WindowsShowCrashDialog = true;
