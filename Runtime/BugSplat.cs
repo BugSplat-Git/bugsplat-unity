@@ -111,7 +111,10 @@ namespace BugSplatUnity
         }
 
         /// <summary>
-        /// A guard that prevents Exceptions from being posted in rapid succession and must be able to handle null - defaults to 1 report every 3 seconds.
+        /// A guard that decides whether a C# exception is posted, and must be able to handle null (logged exceptions arrive without an Exception object).
+        /// The default posts each distinct exception (same type and call stack, ignoring the message) at most once every 10 seconds, and at most 20 reports
+        /// in any 60 seconds; the next report of an exception that was skipped carries the skipped count in the SuppressedDuplicateReports attribute.
+        /// Assigning your own guard replaces all of this.
         /// </summary>
         public Func<Exception, bool> ShouldPostException
         {

@@ -1,5 +1,6 @@
 using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using NUnit.Framework;
 using System;
 using UnityEngine;
@@ -170,6 +171,43 @@ namespace BugSplatUnity.RuntimeTests.Reporter
 
             rugs.ShouldPostLogMessage(logType);
             Assert.IsTrue(called);
+        }
+
+        [Test]
+        public void ShouldPostLogMessage_WithTheDefaultGuard_ShouldTellLoggedExceptionsApartAndCountRepeats()
+        {
+            ShouldPostExceptionImpl.Limiter.Reset();
+            try
+            {
+                var clientSettings = new WebGLClientSettingsRepository { PostExceptionsInEditor = true };
+                var rugs = new ReportUploadGuardService(clientSettings);
+
+                Assert.IsTrue(rugs.ShouldPostLogMessage(LogType.Exception, "NullReferenceException: enemy 1", "Game.Enemy.Update ()", out _));
+                Assert.IsTrue(rugs.ShouldPostLogMessage(LogType.Exception, "NullReferenceException: player", "Game.Player.Update ()", out _));
+                Assert.IsFalse(rugs.ShouldPostLogMessage(LogType.Exception, "NullReferenceException: enemy 2", "Game.Enemy.Update ()", out var suppressed));
+                Assert.AreEqual(1, suppressed);
+            }
+            finally
+            {
+                ShouldPostExceptionImpl.Limiter.Reset();
+            }
+        }
+
+        [Test]
+        public void ShouldPostLogMessage_WithACustomGuard_ShouldNotReportASuppressedCount()
+        {
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                PostExceptionsInEditor = true,
+                ShouldPostException = (Exception ex) => true
+            };
+            var rugs = new ReportUploadGuardService(clientSettings);
+
+            rugs.ShouldPostLogMessage(LogType.Exception, "NullReferenceException: x", "Game.Enemy.Update ()", out var first);
+            rugs.ShouldPostLogMessage(LogType.Exception, "NullReferenceException: x", "Game.Enemy.Update ()", out var second);
+
+            Assert.AreEqual(0, first);
+            Assert.AreEqual(0, second);
         }
     }
 }

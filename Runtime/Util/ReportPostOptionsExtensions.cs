@@ -1,5 +1,6 @@
 ﻿using BugSplatUnity.Runtime.Settings;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace BugSplatUnity.Runtime.Util
 {
@@ -40,6 +41,14 @@ namespace BugSplatUnity.Runtime.Util
             if (string.IsNullOrEmpty(options.User))
             {
                 options.User = clientSettings.User;
+            }
+        }
+
+        public static void SetSuppressedReportCount(this IReportPostOptions options, int suppressedCount)
+        {
+            if (suppressedCount > 0)
+            {
+                options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute] = suppressedCount.ToString(CultureInfo.InvariantCulture);
             }
         }
     }

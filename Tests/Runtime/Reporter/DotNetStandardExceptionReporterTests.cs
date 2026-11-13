@@ -1,5 +1,6 @@
 ﻿using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
 using System;
@@ -248,6 +249,52 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Uploaded);
             StringAssert.Contains("An error occurred while sending the request", result.Message);
+        }
+
+        [UnityTest]
+        public IEnumerator LogMessageReceived_WhenReportsWereSuppressed_ShouldAttachTheSuppressedCount()
+        {
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage { Content = new StringContent("{}") });
+            var sut = new DotNetStandardExceptionReporter(new WebGLClientSettingsRepository(), fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService { SuppressedCount = 3 }
+            };
+
+            yield return sut.LogMessageReceived("logMessage", "stackTrace", LogType.Exception);
+
+            Assert.AreEqual("3", fakeExceptionClient.Calls[0].Options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute]);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WhenReportsWereSuppressed_ShouldAttachTheSuppressedCount()
+        {
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage { Content = new StringContent("{}") });
+            var sut = new DotNetStandardExceptionReporter(new WebGLClientSettingsRepository(), fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService { SuppressedCount = 5 }
+            };
+
+            ExceptionReporterPostResult result = null;
+            yield return sut.Post(new Exception("BugSplat rocks!"), callback: r => result = r);
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("5", fakeExceptionClient.Calls[0].Options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute]);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WhenNothingWasSuppressed_ShouldNotAttachASuppressedCount()
+        {
+            var fakeExceptionClient = new FakeDotNetExceptionClient(new HttpResponseMessage { Content = new StringContent("{}") });
+            var sut = new DotNetStandardExceptionReporter(new WebGLClientSettingsRepository(), fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
+
+            ExceptionReporterPostResult result = null;
+            yield return sut.Post(new Exception("BugSplat rocks!"), callback: r => result = r);
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(fakeExceptionClient.Calls[0].Options.AdditionalAttributes.ContainsKey(ShouldPostExceptionImpl.SuppressedReportsAttribute));
         }
     }
 }
