@@ -634,9 +634,9 @@ namespace BugSplatUnity.Editor
 				$"fi\n\n" +
 				$"# Breakpad .sym files: the dSYM is dump_syms' input, so pass --dumpSyms.\n" +
 				$"\"$SYMBOL_UPLOAD\" \\\n" +
-				$"    --database \"{options.Database}\" \\\n" +
-				$"    --application \"{application}\" \\\n" +
-				$"    --version \"{version}\" \\\n" +
+				$"    --database {ShellQuote(options.Database)} \\\n" +
+				$"    --application {ShellQuote(application)} \\\n" +
+				$"    --version {ShellQuote(version)} \\\n" +
 				$"    --files \"**/*.dSYM\" \\\n" +
 				$"    --directory \"${{BUILT_PRODUCTS_DIR}}\" \\\n" +
 				$"    --dumpSyms\n\n" +
@@ -644,9 +644,9 @@ namespace BugSplatUnity.Editor
 				$"MAPPINGS=\"${{PROJECT_DIR}}/LineNumberMappings.json\"\n" +
 				$"if [ -f \"$MAPPINGS\" ]; then\n" +
 				$"    \"$SYMBOL_UPLOAD\" \\\n" +
-				$"        --database \"{options.Database}\" \\\n" +
-				$"        --application \"{application}\" \\\n" +
-				$"        --version \"{version}\" \\\n" +
+				$"        --database {ShellQuote(options.Database)} \\\n" +
+				$"        --application {ShellQuote(application)} \\\n" +
+				$"        --version {ShellQuote(version)} \\\n" +
 				$"        --files \"LineNumberMappings.json\" \\\n" +
 				$"        --directory \"${{PROJECT_DIR}}\"\n" +
 				$"fi";
@@ -668,6 +668,8 @@ namespace BugSplatUnity.Editor
 
 			project.InsertShellScriptBuildPhase(index, targetGuid, name, shellPath, shellScript);
 		}
+
+		private static string ShellQuote(string value) => "'" + (value ?? string.Empty).Replace("'", "'\\''") + "'";
 
 		private static bool HasBuildPhaseNamed(PBXProject project, string targetGuid, string name)
 		{
