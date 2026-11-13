@@ -10,14 +10,14 @@
         <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
     </a>
     <br/>
-    <a href="https://openupm.com/packages/com.bugsplat.unity/">
-        <img alt="BugSplatUnity on OpenUPM" src="https://img.shields.io/npm/v/com.bugsplat.unity?label=openupm&registry_uri=https://package.openupm.com">
+    <a href="https://openupm.com/packages/com.bugsplat.sdk/">
+        <img alt="BugSplatUnity on OpenUPM" src="https://img.shields.io/npm/v/com.bugsplat.sdk?label=openupm&registry_uri=https://package.openupm.com">
     </a>
 </div>
 
 ## 👋 Introduction
 
-BugSplat's `com.bugsplat.unity` package reports native crashes, C# exceptions, log files, and screenshots from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. See **Platform Support** below for what each platform captures.
+BugSplat's `com.bugsplat.sdk` package reports native crashes, C# exceptions, log files, and screenshots from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. See **Platform Support** below for what each platform captures.
 
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
@@ -26,13 +26,16 @@ Before you proceed, please make sure you have completed the following checklist:
 
 ## 🏗 Installation
 
-BugSplat's `com.bugsplat.unity` package can be added to your project via [OpenUPM](https://openupm.com/packages/com.bugsplat.unity/) or a URL to our git [repository](https://github.com/BugSplat-Git/bugsplat-unity.git).
+BugSplat's `com.bugsplat.sdk` package can be added to your project via [OpenUPM](https://openupm.com/packages/com.bugsplat.sdk/) or a URL to our git [repository](https://github.com/BugSplat-Git/bugsplat-unity.git).
+
+> [!NOTE]
+> BugSplat 5.0.1 and earlier were published as `com.bugsplat.unity`. To upgrade, remove `com.bugsplat.unity` from your project's `Packages/manifest.json`, then add `com.bugsplat.sdk` using one of the options below. Your Project Settings > BugSplat configuration is kept.
 
 ### OpenUPM
 Information on installing OpenUPM can be found [here](https://openupm.com). After installing OpenUPM, run the following command to add BugSplat to your project.
 
 ```sh
-openupm add com.bugsplat.unity
+openupm add com.bugsplat.sdk
 ```
 
 ### Git
@@ -47,7 +50,7 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 > [!TIP]
 > BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings) section.
 
-After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](Documentation~/usage.md) instructions.
+After installing `com.bugsplat.sdk`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](Documentation~/usage.md) instructions.
 
 To import the sample, select **BugSplat** in the Package Manager, open the **Samples** tab, and click **Import** next to **my-unity-crasher**.
 
