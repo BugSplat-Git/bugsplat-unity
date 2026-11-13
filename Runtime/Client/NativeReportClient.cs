@@ -149,7 +149,8 @@ namespace BugSplatUnity.Runtime.Client
 				{
 					var dir = Path.Combine(Path.GetTempPath(), "bugsplat-unity", Guid.NewGuid().ToString("N"));
 					Directory.CreateDirectory(dir);
-					var name = string.IsNullOrEmpty(param.FileName) ? (param.Name ?? "attachment") + ".bin" : param.FileName;
+					var name = Path.GetFileName(string.IsNullOrEmpty(param.FileName) ? (param.Name ?? "attachment") + ".bin" : param.FileName);
+					if (string.IsNullOrEmpty(name) || name == "." || name == "..") name = "attachment.bin";
 					var path = Path.Combine(dir, name);
 					File.WriteAllBytes(path, param.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult());
 					paths.Add(path);
