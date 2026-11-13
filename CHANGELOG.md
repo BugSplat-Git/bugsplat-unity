@@ -5,6 +5,12 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Windows CoreCLR players (Unity 7.0 alpha) report native crashes under C# code, such as an access violation in a P/Invoke or a stack overflow. Unity's CoreCLR runtime treats these as fatal errors and sends them to Unity's own crash handler, so they never reached BugSplat's crash handler and went unreported. BugSplat now registers itself as the runtime's fatal-error callback in place of Unity's, so Unity's crash handler doesn't run for these crashes. Mono and IL2CPP players are unchanged ([#259](https://github.com/BugSplat-Git/bugsplat-unity/issues/259)).
+
 ## [5.0.1] - 2026-11-12
 
 ### Changed
