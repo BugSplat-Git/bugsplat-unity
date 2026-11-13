@@ -5,6 +5,22 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `BugSplatOptions.SymbolUploadTimeoutMinutes` and `FailBuildOnSymbolUploadError`. A post-build symbol upload that runs longer than the timeout (30 minutes by default; `0` waits indefinitely) is stopped and logged as an error instead of hanging the editor or a CI job. A failed upload still lets the build succeed by default; turn on `FailBuildOnSymbolUploadError` to fail it instead, for CI that should stop on a build whose crash reports won't symbolicate ([#171](https://github.com/BugSplat-Git/bugsplat-unity/issues/171)).
+- Symbol uploads show a progress bar in the editor, with how long the upload has been running, the uploader's latest output, and a **Cancel** button. Batch-mode builds log a progress line every minute instead.
+- `BugSplatOptions.WindowsLineNumberMappingsPath`, for a Windows build whose `LineNumberMappings.json` BugSplat doesn't find on its own ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+- A Windows build warns as soon as it starts when `UploadDebugSymbolsForWindows` is on but **Copy PDB files** is off, since that combination uploads no symbols. Previously the only sign was a warning after the build finished. **Edit > Project Settings > BugSplat** shows the same warning, with a button that turns Copy PDB files on ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+
+### Fixed
+
+- Finding `LineNumberMappings.json` no longer depends on a fixed list of paths that went stale as Unity moved the file between versions. BugSplat now searches the player's IL2CPP backup folder and the platform's `Library/Bee` folders for it, and takes the newest match. This applies to Windows, macOS, Android, and iOS ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+- The symbol uploader's error output is now in the build log. Before, only its standard output was logged.
+- A failed upload's log now says whether it timed out, was cancelled, or exited with an error, and gives the uploader's exit code. A summary error at the end of the build lists every upload that failed.
+- The editor's other helper processes now have time limits too: `chmod` on downloaded tools and credential files, and the `reg.exe` calls behind **Tools > BugSplat > Windows**. The elevated WER registration waits up to two minutes for the administrator prompt, then points you to **Check WER Handler Registration**.
+
 ## [5.1.0] - 2026-11-13
 
 ### Changed

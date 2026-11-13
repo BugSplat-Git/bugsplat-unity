@@ -30,7 +30,13 @@ The Unity package doesn't have a setting for a custom theme yet: every Windows b
 
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/database/integrations) page and provide them as described in [Symbol Upload Credentials](symbol-upload.md#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
+Windows symbols are uploaded only when **Copy PDB files** is on in **File > Build Profiles > Windows**; without it the build contains no `.pdb` files, so BugSplat skips the upload. If `UploadDebugSymbolsForWindows` is on and Copy PDB files is off, the build log warns as soon as the build starts, and **Edit > Project Settings > BugSplat** shows the same warning with a button that turns the setting on. Only a Windows editor can read the setting.
+
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+
+Unity has moved `LineNumberMappings.json` between versions, so BugSplat searches for it: first in the player's `<Game>_BackUpThisFolder_ButDontShipItWithYourGame` folder, then in the Windows folders under `Library/Bee/artifacts`, taking the newest. If your build puts it somewhere else, set `WindowsLineNumberMappingsPath` to the file, or to the folder holding it. A relative path is relative to the project folder. If nothing is there, the build log warns and BugSplat searches as usual.
+
+Uploads that stall are stopped after `SymbolUploadTimeoutMinutes` (30 by default), and `FailBuildOnSymbolUploadError` makes a failed upload fail the build. See [Timeouts and Failures](symbol-upload.md#timeouts-and-failures).
 
 ## Windows Hang Detection
 

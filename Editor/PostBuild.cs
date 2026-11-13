@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,7 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Callbacks;
+using UnityEditorInternal;
 using UnityEngine;
 using BugSplatUnity.Runtime.Client;
 using Debug = UnityEngine.Debug;
@@ -80,6 +83,8 @@ namespace BugSplatUnity.Editor
 				return;
 			}
 
+			FailedSymbolUploads.Clear();
+
 #if UNITY_IOS
 			if (target == BuildTarget.iOS)
 				PostProcessIos(pathToBuiltProject, options);
@@ -87,7 +92,7 @@ namespace BugSplatUnity.Editor
 			if (target == BuildTarget.Android)
 				UploadSymbolsAndroid(pathToBuiltProject, options);
 #endif
-			if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+			if (IsWindowsTarget(target))
 			{
 				PostProcessWindows(pathToBuiltProject, options);
 				UploadSymbolFilesWin(pathToBuiltProject, options);
@@ -104,6 +109,30 @@ namespace BugSplatUnity.Editor
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
+
+			var failure = DescribeSymbolUploadFailures(FailedSymbolUploads, options.FailBuildOnSymbolUploadError);
+			if (failure == null)
+				return;
+
+			if (options.FailBuildOnSymbolUploadError)
+				throw new BuildFailedException(failure);
+
+			Debug.LogError(failure);
+		}
+
+		static readonly List<string> FailedSymbolUploads = new List<string>();
+
+		internal static string DescribeSymbolUploadFailures(IReadOnlyCollection<string> failures, bool failBuild)
+		{
+			if (failures == null || failures.Count == 0)
+				return null;
+
+			var summary = $"BugSplat: {failures.Count} symbol upload{(failures.Count == 1 ? "" : "s")} failed ({string.Join("; ", failures)}), " +
+				"so crash reports from this build may not symbolicate. The errors above say why.";
+
+			return failBuild
+				? summary + " Failing the build because Fail Build On Symbol Upload Error is on."
+				: summary + " The player was still built; turn on Fail Build On Symbol Upload Error in Edit > Project Settings > BugSplat to fail the build instead.";
 		}
 
 		/// <summary>
@@ -170,11 +199,11 @@ namespace BugSplatUnity.Editor
 #if UNITY_EDITOR_WIN
 			if (!UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
 			{
-				Debug.LogWarning("BugSplat. Skipping symbols uploading since \"Copy PDB files\" is disabled in BuildSettings->Windows.");
+				Debug.LogWarning(CopyPdbFilesOffMessage);
 				return;
 			}
 #else
-			Debug.LogWarning("BugSplat. \"Copy PDB files\" (BuildSettings->Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
+			Debug.LogWarning("BugSplat. \"Copy PDB files\" (Build Profiles > Windows) can only be read from a Windows editor, so it was not checked. If it is disabled the build contains no .pdb files and Windows crash reports will not symbolicate.");
 #endif
 
 			UploadSymbols(Path.GetDirectoryName(pathToBuiltProject), "**/{*.pdb,*.dll,*.exe}", options, uploadExitCode =>
@@ -188,7 +217,7 @@ namespace BugSplatUnity.Editor
 				Debug.Log("BugSplat. Symbols uploading completed.");
 			});
 
-			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, WindowsBeeLineNumberMappings);
+			var mappingsPath = FindWindowsLineNumberMappings(pathToBuiltProject, options.WindowsLineNumberMappingsPath);
 			if (mappingsPath == null)
 			{
 				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "Windows");
@@ -196,6 +225,32 @@ namespace BugSplatUnity.Editor
 			}
 
 			UploadLineNumberMappings(mappingsPath, WindowsLineNumberMappingsName, options);
+		}
+
+		internal const string CopyPdbFilesOffMessage =
+			"BugSplat: Upload Debug Symbols For Windows is on, but \"Copy PDB files\" is off in File > Build Profiles > Windows, " +
+			"so the build has no .pdb files and BugSplat skips the Windows symbol upload. Native crash reports from this build " +
+			"will not symbolicate. Turn on Copy PDB files, or turn off Upload Debug Symbols For Windows in Edit > Project Settings > BugSplat.";
+
+		internal static bool IsWindowsTarget(BuildTarget target) =>
+			target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows;
+
+		internal static bool ShouldWarnCopyPdbFilesOff(BuildTarget target, BugSplatOptions options, bool copyPdbFiles) =>
+			IsWindowsTarget(target) && options != null && options.UploadDebugSymbolsForWindows && !copyPdbFiles;
+
+		private static string FindWindowsLineNumberMappings(string pathToBuiltProject, string overridePath)
+		{
+			var projectRoot = Directory.GetCurrentDirectory();
+			if (!string.IsNullOrWhiteSpace(overridePath))
+			{
+				var resolved = LineNumberMappingsSearch.ResolveOverride(overridePath, projectRoot);
+				if (resolved != null)
+					return resolved;
+
+				Debug.LogWarning($"BugSplat: Windows Line Number Mappings Path is set to \"{overridePath}\", but no {LineNumberMappingsSearch.FileName} is there. Searching the build output and Library/Bee instead.");
+			}
+
+			return FindLineNumberMappings(pathToBuiltProject, WindowsBeeFolderPrefixes);
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -271,21 +326,10 @@ namespace BugSplatUnity.Editor
 				CopyDirectory(directory, Path.Combine(destination, Path.GetFileName(directory)));
 		}
 
-		private static readonly string[] WindowsBeeLineNumberMappings =
-		{
-			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-		};
-
-		private static readonly string[] MacBeeLineNumberMappings =
-		{
-			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "artifacts", "MacPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
-		};
+		// Library/Bee/artifacts folder name prefixes, which have changed less across Unity versions than
+		// the paths beneath them: Win matches WinPlayerBuildProgram and WindowsPlayerBuildProgram.
+		private static readonly string[] WindowsBeeFolderPrefixes = { "Win" };
+		private static readonly string[] MacBeeFolderPrefixes = { "Mac" };
 
 		// IL2CPP writes LineNumberMappings.json only when its stack traces include file and line
 		// numbers, which is not Unity's default.
@@ -309,25 +353,14 @@ namespace BugSplatUnity.Editor
 			Debug.LogWarning($"BugSplat: LineNumberMappings.json not found, so native {platform} crash reports will not map back to C# files and line numbers.");
 		}
 
-		// The current player's IL2CPP backup folder first, so another player's backup in the same
-		// output folder is never picked; Library/Bee for Unity versions that don't back it up.
-		private static string FindLineNumberMappings(string pathToBuiltProject, string[] beeSearchPaths)
+		private static string FindLineNumberMappings(string pathToBuiltProject, string[] beeFolderPrefixes, params string[] extraBeeFolders)
 		{
-			var backedUp = Path.Combine(
-				Path.GetDirectoryName(pathToBuiltProject),
-				Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_BackUpThisFolder_ButDontShipItWithYourGame",
-				"il2cppOutput", "Symbols", "LineNumberMappings.json");
-			if (File.Exists(backedUp))
-				return backedUp;
+			var projectRoot = Directory.GetCurrentDirectory();
+			var beeFolders = LineNumberMappingsSearch.GetBeeArtifactFolders(projectRoot, beeFolderPrefixes)
+				.Concat(extraBeeFolders.Select(folder => Path.Combine(projectRoot, folder)));
+			var backupFolder = pathToBuiltProject == null ? null : LineNumberMappingsSearch.GetBackupFolder(pathToBuiltProject);
 
-			foreach (var searchPath in beeSearchPaths)
-			{
-				var fullPath = Path.GetFullPath(searchPath);
-				if (File.Exists(fullPath))
-					return fullPath;
-			}
-
-			return null;
+			return LineNumberMappingsSearch.Find(backupFolder, beeFolders);
 		}
 
 		// The backend keeps one mappings file per name for a database, application and version, so each
@@ -439,7 +472,7 @@ namespace BugSplatUnity.Editor
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
 			});
 
-			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeFolderPrefixes);
 			if (mappingsPath == null)
 			{
 				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "macOS");
@@ -485,12 +518,6 @@ namespace BugSplatUnity.Editor
 
 		private static void CopyLineNumberMappings(string pathToBuiltProject)
 		{
-			var searchPaths = new[]
-			{
-				Path.Combine("Library", "Bee", "artifacts", "iOS", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-				Path.Combine("Library", "Bee", "artifacts", "iOSPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			};
-
 			// An export into an existing Xcode project keeps files from the last one: drop the copy older
 			// versions wrote under the shared name, and last build's mappings in case this build has none.
 			foreach (var stale in new[] { WindowsLineNumberMappingsName, IosLineNumberMappingsName })
@@ -500,18 +527,16 @@ namespace BugSplatUnity.Editor
 					File.Delete(stalePath);
 			}
 
-			foreach (var searchPath in searchPaths)
+			// An Xcode export has no IL2CPP backup folder beside it, so only Library/Bee is searched.
+			var mappingsPath = FindLineNumberMappings(null, new[] { "iOS" });
+			if (mappingsPath == null)
 			{
-				var fullPath = Path.GetFullPath(searchPath);
-				if (File.Exists(fullPath))
-				{
-					File.Copy(fullPath, Path.Combine(pathToBuiltProject, IosLineNumberMappingsName), true);
-					Debug.Log($"BugSplat: Copied LineNumberMappings.json to the Xcode project as {IosLineNumberMappingsName} ({new FileInfo(fullPath).Length / 1024}KB)");
-					return;
-				}
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.iOS, "iOS");
+				return;
 			}
 
-			LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.iOS, "iOS");
+			File.Copy(mappingsPath, Path.Combine(pathToBuiltProject, IosLineNumberMappingsName), true);
+			Debug.Log($"BugSplat: Copied {mappingsPath} to the Xcode project as {IosLineNumberMappingsName} ({new FileInfo(mappingsPath).Length / 1024}KB)");
 		}
 
 		private static void DisableUnityCrashReporter(string pathToBuiltProject)
@@ -756,11 +781,7 @@ namespace BugSplatUnity.Editor
 		}
 
 #if UNITY_ANDROID
-		private static readonly string[] AndroidBeeLineNumberMappings =
-		{
-			Path.Combine("Library", "Bee", "artifacts", "Android", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
-			Path.Combine("Library", "Bee", "Android", "Prj", "IL2CPP", "Il2CppBackup", "il2cppOutput", "Symbols", "LineNumberMappings.json"),
-		};
+		private static readonly string AndroidIl2CppBackupFolder = Path.Combine("Library", "Bee", "Android", "Prj", "IL2CPP", "Il2CppBackup");
 
 		private static void UploadSymbolsAndroid(string pathToBuiltProject, BugSplatOptions options)
 		{
@@ -819,7 +840,7 @@ namespace BugSplatUnity.Editor
 				Debug.LogError("BugSplat. Could not find generated symbols archive.");
 			}
 
-			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, AndroidBeeLineNumberMappings);
+			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, new[] { "Android" }, AndroidIl2CppBackupFolder);
 			if (mappingsPath == null)
 			{
 				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Android, "Android");
@@ -888,6 +909,20 @@ namespace BugSplatUnity.Editor
 
 		private static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, bool dumpSyms, Action<int> onCompleted)
 		{
+			var exitCode = RunSymbolUpload(artifactsDirPath, globPattern, options, dumpSyms);
+			if (exitCode != 0)
+				FailedSymbolUploads.Add($"{globPattern} from {artifactsDirPath}");
+
+			onCompleted(exitCode);
+		}
+
+		static readonly TimeSpan SymbolUploadHeartbeatInterval = TimeSpan.FromMinutes(1);
+
+		internal static TimeSpan GetSymbolUploadTimeout(int minutes) =>
+			minutes > 0 ? TimeSpan.FromMinutes(minutes) : Timeout.InfiniteTimeSpan;
+
+		private static int RunSymbolUpload(string artifactsDirPath, string globPattern, BugSplatOptions options, bool dumpSyms)
+		{
 			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
 			{
 				Debug.LogWarning(
@@ -895,16 +930,14 @@ namespace BugSplatUnity.Editor
 					$"{BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and " +
 					$"{BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use " +
 					"Tools > BugSplat > Symbol Upload > Set Credentials. Skipping symbol uploads.");
-				onCompleted(0);
-				return;
+				return 0;
 			}
 
 			var symbolUploadPath = GetSymUploaderPath();
 			if (!SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
 				&& !DownloadSymbolUpload(symbolUploadPath))
 			{
-				onCompleted(-1);
-				return;
+				return -1;
 			}
 
 			var version = string.IsNullOrEmpty(options.Version) ? Application.version : options.Version;
@@ -913,8 +946,6 @@ namespace BugSplatUnity.Editor
 			var symUploadProcessInfo = new ProcessStartInfo
 			{
 				FileName = symbolUploadPath,
-				UseShellExecute = false,
-				RedirectStandardOutput = true,
 				Arguments = $"--database {options.Database} --application \"{application}\" " +
 					$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 			};
@@ -927,29 +958,79 @@ namespace BugSplatUnity.Editor
 				symUploadProcessInfo.Arguments += " --dumpSyms";
 			}
 
-			Process uploadSymProcess;
+			var timeout = GetSymbolUploadTimeout(options.SymbolUploadTimeoutMinutes);
+			var bounded = timeout > TimeSpan.Zero;
+			var limit = bounded ? $" (stops after {ProcessRunner.FormatDuration(timeout)})" : string.Empty;
+			var showProgress = !Application.isBatchMode && InternalEditorUtility.CurrentThreadIsMainThread();
+			var nextHeartbeat = SymbolUploadHeartbeatInterval;
+
+			bool OnPoll(TimeSpan elapsed, string lastLine)
+			{
+				if (showProgress)
+				{
+					var progress = bounded
+						? (float)(elapsed.TotalSeconds / timeout.TotalSeconds)
+						: (float)(elapsed.TotalSeconds % 60 / 60);
+					return EditorUtility.DisplayCancelableProgressBar(
+						"BugSplat Symbol Upload",
+						$"Uploading {globPattern} to {options.Database}, {ProcessRunner.FormatDuration(elapsed)}{limit}. {lastLine}",
+						progress);
+				}
+
+				if (elapsed >= nextHeartbeat)
+				{
+					nextHeartbeat += SymbolUploadHeartbeatInterval;
+					Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+						"BugSplat: symbol upload of {0} still running after {1}{2}. Last output: {3}",
+						globPattern, ProcessRunner.FormatDuration(elapsed), limit, lastLine ?? "none");
+				}
+
+				return false;
+			}
+
+			Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+				"BugSplat: uploading {0} from {1} to {2}{3}.", globPattern, artifactsDirPath, options.Database, limit);
+
+			ProcessRunResult result;
 			try
 			{
-				uploadSymProcess = Process.Start(symUploadProcessInfo);
+				result = ProcessRunner.Run(symUploadProcessInfo, timeout, OnPoll);
 			}
 			catch (Exception ex)
 			{
 				Debug.LogError($"BugSplat. Failed to start {symbolUploadPath}. Error: {ex}");
-				onCompleted(-1);
-				return;
+				return -1;
 			}
-
-			if (uploadSymProcess == null)
+			finally
 			{
-				onCompleted(-1);
-				return;
+				if (showProgress)
+					EditorUtility.ClearProgressBar();
 			}
 
-			Debug.Log(uploadSymProcess.StandardOutput.ReadToEnd());
+			if (result.TimedOut)
+			{
+				Debug.LogError(
+					$"BugSplat: the upload of {globPattern} from {artifactsDirPath} did not finish within {ProcessRunner.FormatDuration(timeout)} and was stopped. " +
+					$"Check the network connection, and that security software is not blocking or quarantining {symbolUploadPath}. " +
+					"If the symbols are just large, raise Symbol Upload Timeout Minutes in Edit > Project Settings > BugSplat (0 waits indefinitely). " +
+					$"Output so far:\n{result.Output}");
+				return -1;
+			}
 
-			uploadSymProcess.WaitForExit();
+			if (result.Cancelled)
+			{
+				Debug.LogError($"BugSplat: the upload of {globPattern} from {artifactsDirPath} was cancelled, so those symbols were not uploaded. Output so far:\n{result.Output}");
+				return -1;
+			}
 
-			onCompleted(uploadSymProcess.ExitCode);
+			if (result.ExitCode != 0)
+			{
+				Debug.LogError($"BugSplat: symbol-upload exited with code {result.ExitCode} uploading {globPattern} from {artifactsDirPath}. Output:\n{result.Output}");
+				return result.ExitCode;
+			}
+
+			Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", result.Output);
+			return 0;
 		}
 
 		private static bool DownloadSymbolUpload(string destinationPath)
@@ -1006,26 +1087,14 @@ namespace BugSplatUnity.Editor
 			{
 				var absolutePath = Path.GetFullPath(destinationPath);
 
-				// Run chmod +x to make the file executable
-				var process = new Process();
-				process.StartInfo.FileName = "chmod";
-				process.StartInfo.Arguments = $"+x \"{absolutePath}\"";
-				process.StartInfo.UseShellExecute = false;
-				process.StartInfo.RedirectStandardOutput = true;
-				process.StartInfo.RedirectStandardError = true;
-				process.Start();
-
-				var output = process.StandardOutput.ReadToEnd();
-				var error = process.StandardError.ReadToEnd();
-				process.WaitForExit();
-
-				if (process.ExitCode != 0)
+				var chmod = ProcessRunner.Run(new ProcessStartInfo("chmod", $"+x \"{absolutePath}\""), TimeSpan.FromSeconds(30));
+				if (!chmod.Succeeded)
 				{
-					Debug.LogError($"BugSplat. Failed to make {destinationPath} executable. Error: {error}");
+					Debug.LogError($"BugSplat. Failed to make {destinationPath} executable{(chmod.TimedOut ? " (chmod timed out)" : "")}. Output: {chmod.Output}");
 					return false;
 				}
 
-				Debug.Log($"BugSplat. Successfully made {destinationPath} executable. Output: {output}");
+				Debug.Log($"BugSplat. Successfully made {destinationPath} executable.");
 			}
 			catch (Exception ex)
 			{
