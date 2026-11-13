@@ -5,6 +5,13 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Removing an attribute from `BugSplat.Instance.Attributes`, or clearing them, now removes it from native crash reports too. Before, a removed attribute stayed on every native crash report for the rest of the session. macOS, iOS and Android drop the attribute. The Windows SDK cannot remove one, so on Windows and Xbox the attribute stays on native crash reports with an empty value. The new `RemoveNativeAttribute` does the same for an attribute set with `SetNativeAttribute`.
+- `BugSplat.Instance.Attributes` can be read and changed from any thread. Before, changing it on one thread while another thread changed it, or while a report was copying it, could corrupt it or make that report fail.
+
 ## [5.1.0] - 2026-11-13
 
 ### Changed
