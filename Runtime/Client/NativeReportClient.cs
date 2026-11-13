@@ -24,6 +24,8 @@ namespace BugSplatUnity.Runtime.Client
 	/// </summary>
 	internal sealed class NativeReportClient : IDotNetStandardExceptionClient, IDotNetStandardFeedbackClient, INativeCrashReportClient
 	{
+		private static readonly object postLock = new object();
+
 		private readonly IClientSettingsRepository clientSettings;
 		private readonly INativeCrashReportClient minidumpClient;
 		private readonly ManagedReportFormat format;
@@ -67,13 +69,21 @@ namespace BugSplatUnity.Runtime.Client
 			{
 				try
 				{
-					overrides.Apply();
-					var result = NativeCrashReporter.PostFeedback(title, description, attachments);
-					return ToResponse(result);
+					lock (postLock)
+					{
+						try
+						{
+							overrides.Apply();
+							return ToResponse(NativeCrashReporter.PostFeedback(title, description, attachments));
+						}
+						finally
+						{
+							overrides.Restore(clientSettings);
+						}
+					}
 				}
 				finally
 				{
-					overrides.Restore(clientSettings);
 					DeleteTempFiles(tempFiles);
 				}
 			});
@@ -88,13 +98,21 @@ namespace BugSplatUnity.Runtime.Client
 			{
 				try
 				{
-					overrides.Apply();
-					var result = NativeCrashReporter.PostStructuredReport(reportFormat, parsed.ExceptionType, parsed.Message, parsed.Frames, attachments);
-					return ToResponse(result);
+					lock (postLock)
+					{
+						try
+						{
+							overrides.Apply();
+							return ToResponse(NativeCrashReporter.PostStructuredReport(reportFormat, parsed.ExceptionType, parsed.Message, parsed.Frames, attachments));
+						}
+						finally
+						{
+							overrides.Restore(clientSettings);
+						}
+					}
 				}
 				finally
 				{
-					overrides.Restore(clientSettings);
 					DeleteTempFiles(tempFiles);
 				}
 			});
