@@ -118,6 +118,6 @@ Attaching is **additive and idempotent**. Every attached file is included in a n
 
 Attachments are copied into the report by the monitor right after the dump, on every platform, so a file attached at any point in the session reaches a later crash — including on macOS and iOS, where the report itself uploads on the next launch. Up to 24 files can be attached.
 
-`Player.log` still ships with managed posts on every platform, including Android.
+`Player.log` still ships with managed posts on Windows, macOS and Linux. Android writes no `Player.log`, so there is nothing to attach there — see [Android](android.md#attachments).
 
 `CapturePlayerLog` uses the same mechanism with `Application.consoleLogPath`, so the two cooperate: setting it `false` detaches only `Player.log`, and attaching your own file leaves `Player.log` alone. Prefer `CapturePlayerLog` for that file rather than attaching `Application.consoleLogPath` yourself — see [Player.log and privacy](#playerlog-and-privacy).
