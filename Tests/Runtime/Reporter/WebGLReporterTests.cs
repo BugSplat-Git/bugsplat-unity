@@ -1,5 +1,6 @@
 ﻿using BugSplatUnity.Runtime.Reporter;
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using BugSplatUnity.RuntimeTests.Client.Fakes;
 using BugSplatUnity.RuntimeTests.Reporter.Fakes;
 using NUnit.Framework;
@@ -229,6 +230,34 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             yield return completed.AsCoroutine();
 
             Assert.IsTrue(invoked);
+        }
+
+        [UnityTest]
+        public IEnumerator LogMessageReceived_WhenReportsWereSuppressed_ShouldAttachTheSuppressedCount()
+        {
+            var fakeExceptionClient = new FakeWebGLExceptionClient();
+            var sut = new WebGLReporter(new WebGLClientSettingsRepository(), fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService { SuppressedCount = 3 }
+            };
+
+            yield return sut.LogMessageReceived("logMessage", "stackTrace", LogType.Exception);
+
+            Assert.AreEqual("3", fakeExceptionClient.Calls[0].Options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute]);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WhenReportsWereSuppressed_ShouldAttachTheSuppressedCount()
+        {
+            var fakeExceptionClient = new FakeWebGLExceptionClient();
+            var sut = new WebGLReporter(new WebGLClientSettingsRepository(), fakeExceptionClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService { SuppressedCount = 5 }
+            };
+
+            yield return sut.Post(new Exception("BugSplat rocks!"));
+
+            Assert.AreEqual("5", fakeExceptionClient.Calls[0].Options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute]);
         }
     }
 }

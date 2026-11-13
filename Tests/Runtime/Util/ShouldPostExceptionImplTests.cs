@@ -1,184 +1,466 @@
+using BugSplatUnity.Runtime.Settings;
 using BugSplatUnity.Runtime.Util;
 using NUnit.Framework;
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace BugSplatUnity.RuntimeTests.Util
 {
-    // The rate limiter's entire state is one private static DateTime shared by every caller in the
-    // process, so these tests would otherwise depend on each other and on wall-clock sleeps. Both
-    // problems are handled the same way: the field is reset to its initial value before and after
-    // every test, and tests that need an aged window write the field instead of sleeping. That
-    // keeps the fixture order-independent and leaves no residue for the rest of the suite.
-    //
-    // These tests pin current behaviour, including behaviour that is arguably wrong. Issue #170
-    // redesigns this limiter; the comments below mark what should be allowed to change.
+    // Most tests drive a private ReportRateLimiter on a fake clock, so they neither sleep nor share
+    // state. The few that go through the static default guard reset its shared limiter around
+    // every test.
     public class ShouldPostExceptionImplTests
     {
-        static readonly FieldInfo LastPostField = typeof(ShouldPostExceptionImpl)
-            .GetField("lastPost", BindingFlags.NonPublic | BindingFlags.Static);
+        static readonly TimeSpan Window = ReportRateLimiter.DefaultDuplicateWindow;
+        static readonly TimeSpan GlobalWindow = ReportRateLimiter.DefaultGlobalWindow;
+        const int GlobalCap = ReportRateLimiter.DefaultMaxReportsPerGlobalWindow;
 
-        // The field's declared initial value: no report has been posted yet.
-        static readonly DateTime NeverPosted = new DateTime(0);
+        TimeSpan now;
+        ReportRateLimiter limiter;
 
-        static readonly TimeSpan Window = TimeSpan.FromSeconds(3);
+        [SetUp]
+        public void SetUp()
+        {
+            now = TimeSpan.FromHours(1);
+            limiter = new ReportRateLimiter(() => now);
+            ShouldPostExceptionImpl.Limiter.Reset();
+        }
 
-        static void SetLastPost(DateTime value) => LastPostField.SetValue(null, value);
+        [TearDown]
+        public void TearDown() => ShouldPostExceptionImpl.Limiter.Reset();
 
-        static DateTime GetLastPost() => (DateTime)LastPostField.GetValue(null);
+        bool TryPost(string fingerprint) => limiter.TryPost(fingerprint, out _);
+
+        [Test]
+        public void TryPost_FirstReportOfAFingerprint_ShouldPostWithNoSuppressedCount()
+        {
+            Assert.True(limiter.TryPost("a", out var suppressed));
+            Assert.AreEqual(0, suppressed);
+        }
+
+        [Test]
+        public void TryPost_DistinctFingerprintsInsideTheWindow_ShouldBothPost()
+        {
+            Assert.True(TryPost("a"));
+            Assert.True(TryPost("b"));
+        }
+
+        [Test]
+        public void TryPost_SameFingerprintInsideTheWindow_ShouldBeSuppressed()
+        {
+            Assert.True(TryPost("a"));
+            now += Window - TimeSpan.FromMilliseconds(1);
+
+            Assert.False(TryPost("a"));
+        }
+
+        [Test]
+        public void TryPost_SameFingerprintOnceTheWindowHasElapsed_ShouldPost()
+        {
+            Assert.True(TryPost("a"));
+            now += Window;
+
+            Assert.True(TryPost("a"));
+        }
+
+        [Test]
+        public void TryPost_NextPostAfterSuppression_ShouldCarryTheSuppressedCountOnce()
+        {
+            TryPost("a");
+            Assert.False(limiter.TryPost("a", out var first));
+            Assert.False(limiter.TryPost("a", out var second));
+            Assert.False(limiter.TryPost("a", out var third));
+            Assert.AreEqual(new[] { 1, 2, 3 }, new[] { first, second, third });
+
+            now += Window;
+            Assert.True(limiter.TryPost("a", out var carried));
+            Assert.AreEqual(3, carried);
+
+            now += Window;
+            Assert.True(limiter.TryPost("a", out var afterwards));
+            Assert.AreEqual(0, afterwards);
+        }
+
+        [Test]
+        public void TryPost_SuppressedCount_ShouldBeKeptPerFingerprint()
+        {
+            TryPost("a");
+            TryPost("b");
+            TryPost("a");
+            TryPost("a");
+            TryPost("b");
+
+            now += Window;
+            limiter.TryPost("a", out var a);
+            limiter.TryPost("b", out var b);
+
+            Assert.AreEqual(2, a);
+            Assert.AreEqual(1, b);
+        }
+
+        // Measured from the last post, not the last attempt, so an exception thrown every frame
+        // still gets one report per window rather than none.
+        [Test]
+        public void TryPost_WhenSuppressed_ShouldNotExtendTheWindow()
+        {
+            TryPost("a");
+            for (var i = 0; i < 9; i++)
+            {
+                now += TimeSpan.FromSeconds(1);
+                Assert.False(TryPost("a"));
+            }
+
+            now += TimeSpan.FromSeconds(1);
+            Assert.True(TryPost("a"));
+        }
+
+        [Test]
+        public void TryPost_MoreDistinctFingerprintsThanTheGlobalCap_ShouldSuppressTheExcess()
+        {
+            for (var i = 0; i < GlobalCap; i++)
+            {
+                Assert.True(TryPost($"distinct {i}"), $"report {i}");
+            }
+
+            Assert.False(TryPost("one too many"));
+        }
+
+        [Test]
+        public void TryPost_OnceTheGlobalWindowHasElapsed_ShouldPostAgainWithTheCountItMissed()
+        {
+            for (var i = 0; i < GlobalCap; i++)
+            {
+                TryPost($"distinct {i}");
+            }
+            TryPost("late");
+            TryPost("late");
+
+            now += GlobalWindow;
+
+            Assert.True(limiter.TryPost("late", out var suppressed));
+            Assert.AreEqual(2, suppressed);
+        }
+
+        [Test]
+        public void TryPost_GlobalCap_ShouldBeASlidingWindow()
+        {
+            TryPost("early");
+            now += TimeSpan.FromSeconds(30);
+            for (var i = 1; i < GlobalCap; i++)
+            {
+                TryPost($"distinct {i}");
+            }
+            Assert.False(TryPost("blocked"));
+
+            now += TimeSpan.FromSeconds(30);
+
+            Assert.True(TryPost("one slot freed"));
+            Assert.False(TryPost("still full"));
+        }
+
+        [Test]
+        public void TryPost_MoreFingerprintsThanTheTable_ShouldStayBoundedAndEvictTheLeastRecentlySeen()
+        {
+            const int max = 8;
+            var small = new ReportRateLimiter(() => now, maxReportsPerGlobalWindow: int.MaxValue, maxFingerprints: max);
+
+            for (var i = 0; i < max; i++)
+            {
+                small.TryPost($"fingerprint {i}", out _);
+                now += TimeSpan.FromMilliseconds(1);
+            }
+            small.TryPost("fingerprint 0", out _);
+
+            for (var i = max; i < max * 4; i++)
+            {
+                small.TryPost($"fingerprint {i}", out _);
+                Assert.LessOrEqual(small.FingerprintCount, max);
+            }
+
+            Assert.AreEqual(max, small.FingerprintCount);
+        }
+
+        [Test]
+        public void TryPost_WhenTheTableIsFull_ShouldKeepTheMostRecentlySeenFingerprint()
+        {
+            var small = new ReportRateLimiter(() => now, maxReportsPerGlobalWindow: int.MaxValue, maxFingerprints: 2);
+
+            small.TryPost("old", out _);
+            now += TimeSpan.FromMilliseconds(1);
+            small.TryPost("recent", out _);
+            now += TimeSpan.FromMilliseconds(1);
+            small.TryPost("old", out _);
+            now += TimeSpan.FromMilliseconds(1);
+            small.TryPost("new", out _);
+
+            Assert.False(small.TryPost("old", out _), "old was seen most recently, so it should still be tracked");
+            Assert.True(small.TryPost("recent", out _), "recent was the least recently seen, so it should have been evicted");
+        }
+
+        [Test]
+        public void Reset_ShouldForgetEveryFingerprintAndTheGlobalCap()
+        {
+            for (var i = 0; i < GlobalCap; i++)
+            {
+                TryPost($"distinct {i}");
+            }
+
+            limiter.Reset();
+
+            Assert.AreEqual(0, limiter.FingerprintCount);
+            Assert.True(TryPost("distinct 0"));
+        }
+
+        [Test]
+        public void TryPost_WhenOneFingerprintIsReportedConcurrently_ShouldPostExactlyOnce()
+        {
+            var allowed = RunConcurrently(16, _ => TryPost("same"));
+
+            Assert.AreEqual(1, allowed);
+        }
+
+        [Test]
+        public void TryPost_WhenDistinctFingerprintsAreReportedConcurrently_ShouldPostEachUpToTheGlobalCap()
+        {
+            Assert.AreEqual(GlobalCap / 2, RunConcurrently(GlobalCap / 2, i => TryPost($"distinct {i}")));
+
+            limiter.Reset();
+
+            Assert.AreEqual(GlobalCap, RunConcurrently(GlobalCap * 4, i => TryPost($"distinct {i}")));
+        }
+
+        [Test]
+        public void TryPost_UnderConcurrentChurn_ShouldKeepTheTableBounded()
+        {
+            const int max = 16;
+            var small = new ReportRateLimiter(() => now, maxFingerprints: max);
+
+            RunConcurrently(8, thread =>
+            {
+                for (var i = 0; i < 500; i++)
+                {
+                    small.TryPost($"{thread}:{i}", out _);
+                }
+                return false;
+            });
+
+            Assert.AreEqual(max, small.FingerprintCount);
+        }
+
+        static int RunConcurrently(int count, Func<int, bool> body)
+        {
+            var allowed = 0;
+            var start = new ManualResetEventSlim(false);
+            var threads = new Thread[count];
+
+            for (var i = 0; i < count; i++)
+            {
+                var index = i;
+                threads[i] = new Thread(() =>
+                {
+                    start.Wait();
+                    if (body(index))
+                    {
+                        Interlocked.Increment(ref allowed);
+                    }
+                });
+                threads[i].Start();
+            }
+
+            start.Set();
+
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
+
+            return allowed;
+        }
+
+        // The default guard and the Play-mode reset share one process-wide limiter.
 
         static bool ShouldPost(Exception ex = null) => ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl(ex);
 
-        [OneTimeSetUp]
-        public void RequireTheFieldTheseTestsDriveThrough()
-        {
-            Assert.NotNull(LastPostField, "ShouldPostExceptionImpl.lastPost is gone; these tests need to be rewritten against whatever replaced it");
-        }
-
-        [SetUp]
-        public void ResetRateLimiterBeforeTest() => SetLastPost(NeverPosted);
-
-        [TearDown]
-        public void ResetRateLimiterAfterTest() => SetLastPost(NeverPosted);
-
-        // Enter Play Mode without a domain reload keeps statics, so the SubsystemRegistration hook
-        // must reopen the window or the previous play's last report would block this play's first.
         [Test]
-        public void ResetStatics_AfterAPostInsideTheWindow_ShouldAllowTheNextPost()
+        public void DefaultShouldPostExceptionImpl_DistinctExceptionsInsideTheWindow_ShouldBothPost()
         {
-            ShouldPost(new Exception("previous play"));
-
-            typeof(ShouldPostExceptionImpl)
-                .GetMethod("ResetStatics", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, null);
-
-            Assert.True(ShouldPost(new Exception("next play")));
+            Assert.True(ShouldPost(Capture(ThrowFromA)));
+            Assert.True(ShouldPost(Capture(ThrowFromB)));
         }
 
         [Test]
-        public void DefaultShouldPostExceptionImpl_WhenNothingHasBeenPostedYet_ShouldAllowPost()
+        public void DefaultShouldPostExceptionImpl_SameExceptionInsideTheWindow_ShouldBeSuppressed()
         {
-            Assert.True(ShouldPost(new Exception("first")));
+            Assert.True(ShouldPost(Capture(ThrowFromA)));
+            Assert.False(ShouldPost(Capture(ThrowFromA)));
         }
 
         [Test]
-        public void DefaultShouldPostExceptionImpl_WhenCalledAgainInsideTheWindow_ShouldBlockPost()
-        {
-            ShouldPost(new Exception("first"));
-
-            Assert.False(ShouldPost(new Exception("second")));
-        }
-
-        // The limiter is time-based only: there is no per-signature dedup, so the second call is
-        // blocked even though it reports a completely different fault. Worse, the report is
-        // dropped rather than deferred, so a distinct exception that happens to land within three
-        // seconds of an unrelated one is never sent at all. Pinned, not endorsed - see #170.
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenSecondExceptionIsUnrelated_ShouldStillBlockPost()
-        {
-            ShouldPost(new InvalidOperationException("first"));
-
-            Assert.False(ShouldPost(new NullReferenceException("unrelated")));
-        }
-
-        // The exception argument is never read, so a null exception is not a special case.
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenExceptionIsNull_ShouldFollowTheSameWindow()
+        public void DefaultShouldPostExceptionImpl_WhenExceptionIsNull_ShouldBeRateLimitedLikeAnyOther()
         {
             Assert.True(ShouldPost(null));
             Assert.False(ShouldPost(null));
         }
 
         [Test]
-        public void DefaultShouldPostExceptionImpl_WhenWindowHasElapsed_ShouldAllowPost()
-        {
-            SetLastPost(DateTime.Now - Window - TimeSpan.FromSeconds(1));
-
-            Assert.True(ShouldPost(new Exception()));
-        }
-
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenStillInsideTheWindow_ShouldBlockPost()
-        {
-            SetLastPost(DateTime.Now - Window + TimeSpan.FromSeconds(1));
-
-            Assert.False(ShouldPost(new Exception()));
-        }
-
-        // A blocked attempt is not recorded, so a steady stream of exceptions does not hold the
-        // window open forever - one report gets through every three seconds.
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenPostIsBlocked_ShouldNotExtendTheWindow()
-        {
-            var lastPost = DateTime.Now - TimeSpan.FromSeconds(1);
-            SetLastPost(lastPost);
-
-            Assert.False(ShouldPost(new Exception()));
-            Assert.AreEqual(lastPost, GetLastPost());
-        }
-
-        // The window is measured against DateTime.Now, so the limiter follows local wall-clock
-        // time rather than a monotonic clock. A backwards jump - DST, an NTP correction, a user
-        // changing the clock - leaves a timestamp in the future and suppresses every report until
-        // real time catches up. Pinned, not endorsed.
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenClockJumpsBackwards_ShouldBlockPostUntilTimeCatchesUp()
-        {
-            SetLastPost(DateTime.Now + TimeSpan.FromHours(1));
-
-            Assert.False(ShouldPost(new Exception()));
-        }
-
-        // Every IClientSettingsRepository defaults ShouldPostException to this one static method,
-        // so separate BugSplat clients in the same process do not get separate budgets - one
-        // client's report silences the other's. Pinned, not endorsed.
-        [Test]
-        public void DefaultShouldPostExceptionImpl_WhenReachedThroughSeparateDelegates_ShouldShareOneWindow()
+        public void DefaultShouldPostExceptionImpl_WhenReachedThroughSeparateDelegates_ShouldShareOneLimiter()
         {
             Func<Exception, bool> firstClient = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
             Func<Exception, bool> secondClient = ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl;
+            var exception = Capture(ThrowFromA);
 
-            Assert.True(firstClient(new Exception()));
-            Assert.False(secondClient(new Exception()));
+            Assert.True(firstClient(exception));
+            Assert.False(secondClient(exception));
         }
 
-        // Exceptions are reported from background threads too, and the read-then-write of the
-        // shared timestamp is not synchronized, so a simultaneous burst can admit more than one
-        // report. How many is a race, so this asserts only what must hold: the burst is not
-        // silently swallowed, it cannot exceed the number of callers, and the window is closed
-        // afterwards. If #170 adds synchronization, the exact count becomes assertable.
+        // Enter Play Mode without a domain reload keeps statics, so the SubsystemRegistration hook
+        // must clear the limiter or the previous play's last report would block this play's first.
         [Test]
-        public void DefaultShouldPostExceptionImpl_WhenCalledConcurrently_ShouldAllowAtLeastOnePostAndThenClose()
+        public void ResetStatics_AfterAPostInsideTheWindow_ShouldAllowTheNextPost()
         {
-            const int callerCount = 8;
-            var allowed = 0;
-            var start = new ManualResetEventSlim(false);
-            var callers = new Thread[callerCount];
+            var exception = Capture(ThrowFromA);
+            ShouldPost(exception);
 
-            for (var i = 0; i < callerCount; i++)
+            var resetStatics = typeof(ShouldPostExceptionImpl).GetMethod("ResetStatics", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(resetStatics.GetCustomAttribute<UnityEngine.RuntimeInitializeOnLoadMethodAttribute>());
+            resetStatics.Invoke(null, null);
+
+            Assert.True(ShouldPost(exception));
+        }
+
+        [Test]
+        public void IsDefault_ShouldRecognizeTheDefaultGuardButNotACustomOne()
+        {
+            Assert.True(ShouldPostExceptionImpl.IsDefault(new WebGLClientSettingsRepository().ShouldPostException));
+            Assert.True(ShouldPostExceptionImpl.IsDefault(ShouldPostExceptionImpl.DefaultShouldPostExceptionImpl));
+            Assert.False(ShouldPostExceptionImpl.IsDefault(ex => true));
+            Assert.False(ShouldPostExceptionImpl.IsDefault(null));
+        }
+
+        // Fingerprints
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowFromA() => throw new InvalidOperationException("from A");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowFromB() => throw new InvalidOperationException("from B");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowWithMessage(string message) => throw new InvalidOperationException(message);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowArgumentWithMessage(string message) => throw new ArgumentException(message);
+
+        static Exception Capture(Action action)
+        {
+            try
             {
-                callers[i] = new Thread(() =>
-                {
-                    start.Wait();
-                    if (ShouldPost(new Exception()))
-                    {
-                        Interlocked.Increment(ref allowed);
-                    }
-                });
-                callers[i].Start();
+                action();
             }
-
-            start.Set();
-
-            foreach (var caller in callers)
+            catch (Exception ex)
             {
-                caller.Join();
+                return ex;
             }
+            throw new AssertionException("action did not throw");
+        }
 
-            Assert.GreaterOrEqual(allowed, 1);
-            Assert.LessOrEqual(allowed, callerCount);
-            Assert.False(ShouldPost(new Exception()));
+        static Exception CaptureWithMessage(string message) => Capture(() => ThrowWithMessage(message));
+
+        static Exception CaptureArgumentWithMessage(string message) => Capture(() => ThrowArgumentWithMessage(message));
+
+        [Test]
+        public void FromException_SameThrowSiteWithDifferentMessages_ShouldMatch()
+        {
+            Assert.AreEqual(
+                ReportFingerprint.FromException(CaptureWithMessage("Enemy 41 has no target")),
+                ReportFingerprint.FromException(CaptureWithMessage("Something else entirely")));
+        }
+
+        [Test]
+        public void FromException_DifferentThrowSites_ShouldDiffer()
+        {
+            Assert.AreNotEqual(
+                ReportFingerprint.FromException(Capture(ThrowFromA)),
+                ReportFingerprint.FromException(Capture(ThrowFromB)));
+        }
+
+        [Test]
+        public void FromException_DifferentTypesWithTheSameMessage_ShouldDiffer()
+        {
+            Assert.AreNotEqual(
+                ReportFingerprint.FromException(CaptureWithMessage("same")),
+                ReportFingerprint.FromException(CaptureArgumentWithMessage("same")));
+        }
+
+        // An exception that was never thrown has no stack, so its message is all that tells it
+        // apart; numbers in it are masked so a counter or id cannot mint a new fingerprint.
+        [Test]
+        public void FromException_WithoutAStack_ShouldUseTheMessageWithNumbersMasked()
+        {
+            Assert.AreEqual(
+                ReportFingerprint.FromException(new Exception("Enemy 41 at 0x7ffe12 failed")),
+                ReportFingerprint.FromException(new Exception("Enemy 42 at 0x7ffe40 failed")));
+            Assert.AreNotEqual(
+                ReportFingerprint.FromException(new Exception("Save failed")),
+                ReportFingerprint.FromException(new Exception("Load failed")));
+        }
+
+        const string UnityStack =
+            "Crasher.Enemy.Update () (at Assets/Scripts/Enemy.cs:42)\n" +
+            "UnityEngine.Debug:LogException(Exception)\n";
+
+        [Test]
+        public void FromLogMessage_SameTypeAndStackWithDifferentMessages_ShouldMatch()
+        {
+            Assert.AreEqual(
+                ReportFingerprint.FromLogMessage("NullReferenceException: Enemy 41 has no target", UnityStack),
+                ReportFingerprint.FromLogMessage("NullReferenceException: Enemy 977 has no target", UnityStack));
+        }
+
+        [Test]
+        public void FromLogMessage_DifferentTypes_ShouldDiffer()
+        {
+            Assert.AreNotEqual(
+                ReportFingerprint.FromLogMessage("NullReferenceException: x", UnityStack),
+                ReportFingerprint.FromLogMessage("InvalidOperationException: x", UnityStack));
+        }
+
+        [Test]
+        public void FromLogMessage_DifferentStacks_ShouldDiffer()
+        {
+            Assert.AreNotEqual(
+                ReportFingerprint.FromLogMessage("NullReferenceException: x", UnityStack),
+                ReportFingerprint.FromLogMessage("NullReferenceException: x", "Crasher.Player.Update () (at Assets/Scripts/Player.cs:7)\n"));
+        }
+
+        [Test]
+        public void FromLogMessage_DependsOnTheMethodNotTheLineOrBuild()
+        {
+            Assert.AreEqual(
+                ReportFingerprint.FromLogMessage("NullReferenceException: x", "Crasher.Enemy.Update () (at Assets/Scripts/Enemy.cs:42)"),
+                ReportFingerprint.FromLogMessage("NullReferenceException: x", "Crasher.Enemy.Update ()"));
+        }
+
+        [Test]
+        public void FromLogMessage_RecursionDepth_ShouldNotChangeTheFingerprint()
+        {
+            const string frame = "Crasher.Tree.Walk (Node)\n";
+            Assert.AreEqual(
+                ReportFingerprint.FromLogMessage("StackOverflowException: x", frame + frame + "Crasher.Tree.Start ()"),
+                ReportFingerprint.FromLogMessage("StackOverflowException: x", frame + frame + frame + frame + "Crasher.Tree.Start ()"));
+        }
+
+        [Test]
+        public void FromLogMessage_WithoutAStack_ShouldUseTheMessageWithNumbersMasked()
+        {
+            Assert.AreEqual(
+                ReportFingerprint.FromLogMessage("Exception: retry 3 of 5", ""),
+                ReportFingerprint.FromLogMessage("Exception: retry 4 of 5", null));
+            Assert.AreNotEqual(
+                ReportFingerprint.FromLogMessage("Exception: save failed", ""),
+                ReportFingerprint.FromLogMessage("Exception: load failed", ""));
         }
     }
 }

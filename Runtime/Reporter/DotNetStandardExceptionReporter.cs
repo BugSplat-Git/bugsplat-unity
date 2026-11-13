@@ -34,7 +34,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public IEnumerator LogMessageReceived(string logMessage, string stackTrace, LogType type, Action<ExceptionReporterPostResult> callback = null)
         {
-            if (!reportUploadGuardService.ShouldPostLogMessage(type))
+            if (!reportUploadGuardService.ShouldPostLogMessage(type, logMessage, stackTrace, out var suppressedCount))
             {
                 callback?.Invoke(new ExceptionReporterPostResult()
                 {
@@ -47,6 +47,7 @@ namespace BugSplatUnity.Runtime.Reporter
 
             var options = new ReportPostOptions();
             options.SetNullOrEmptyValues(clientSettings);
+            options.SetSuppressedReportCount(suppressedCount);
             options.CrashTypeId = (int)BugSplatDotNetStandard.BugSplat.ExceptionTypeId.UnityLegacy;
             stackTrace = $"{logMessage}\n{stackTrace}";
 
@@ -57,7 +58,7 @@ namespace BugSplatUnity.Runtime.Reporter
         {
             var stackTrace = exception.ToString();
 
-            if (!reportUploadGuardService.ShouldPostException(exception))
+            if (!reportUploadGuardService.ShouldPostException(exception, out var suppressedCount))
             {
                 callback?.Invoke(new ExceptionReporterPostResult()
                 {
@@ -67,6 +68,9 @@ namespace BugSplatUnity.Runtime.Reporter
                 });
                 yield break;
             }
+
+            options = options ?? new ReportPostOptions();
+            options.SetSuppressedReportCount(suppressedCount);
 
             yield return Post(stackTrace, options, callback);
         }

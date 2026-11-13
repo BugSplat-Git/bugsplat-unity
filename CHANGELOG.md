@@ -5,6 +5,17 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Two different C# exceptions thrown within a few seconds of each other are now both reported. The default report rate limiter allowed one report every three seconds across all exceptions, so the second was dropped and never sent ([#170](https://github.com/BugSplat-Git/bugsplat-unity/issues/170)).
+- The default rate limiter is now thread-safe, so exceptions reported from several threads at once can no longer slip past it together, and it uses a monotonic clock, so a system clock change can no longer pause reporting.
+
+### Changed
+
+- The default `ShouldPostException` now limits repeats of the same exception rather than all reports. Each distinct exception (same type and call stack; the message is ignored) is posted at most once every 10 seconds, and at most 20 reports are posted in any 60 seconds, so a burst of different exceptions still can't flood your database. Skipped repeats are counted, and the next report of that exception carries the count in a `SuppressedDuplicateReports` attribute. A custom `ShouldPostException` works as before. See [Preventing Repeated Reports](Documentation~/usage.md#preventing-repeated-reports).
+
 ## [5.1.0] - 2026-11-13
 
 ### Changed
