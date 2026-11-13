@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using BugSplatUnity.Runtime.Reporter;
+using BugSplatUnity.Runtime.Util;
 using UnityEngine;
 
 namespace BugSplatUnity.Runtime.Client
@@ -53,7 +54,7 @@ namespace BugSplatUnity.Runtime.Client
                 { "user", options.User },
                 { "callstack", exception },
                 { "crashTypeId", $"{options.CrashTypeId}" },
-                { "attributes", JsonUtility.ToJson(options.AdditionalAttributes) }
+                { "attributes", AttributesJson.Serialize(options.AdditionalAttributes) }
             };
 
             var request = UnityWebClient.Post(url, formData);
