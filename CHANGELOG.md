@@ -5,7 +5,7 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.0.1] - Unreleased
+## [5.0.1] - 2026-11-12
 
 ### Changed
 
@@ -162,7 +162,7 @@ Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md
 
 Releases before 4.0.0 predate this changelog. See the [GitHub releases page](https://github.com/BugSplat-Git/bugsplat-unity/releases) for their notes.
 
-[5.0.1]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v5.0.0...main
+[5.0.1]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v4.0.0...v4.0.1
