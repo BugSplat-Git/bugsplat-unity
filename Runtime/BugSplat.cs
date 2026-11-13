@@ -220,7 +220,7 @@ namespace BugSplatUnity
             set
             {
                 environmentOverride = value;
-                NativeCrashReporter.SetEnvironment(value);
+                if (nativeCrashReportingEnabled) NativeCrashReporter.SetEnvironment(value);
             }
         }
 

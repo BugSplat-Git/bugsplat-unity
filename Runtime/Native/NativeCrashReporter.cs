@@ -52,6 +52,8 @@ namespace BugSplatUnity.Runtime.Native
 		// OS string is read once here, on the thread that calls Initialize.
 		private static string operatingSystem = string.Empty;
 
+		private static string initializedDatabase, initializedApplication, initializedVersion;
+
 		/// <summary>The bugsplat-native version string, once initialized.</summary>
 		public static string Version { get; private set; } = string.Empty;
 
@@ -71,7 +73,13 @@ namespace BugSplatUnity.Runtime.Native
 #if BUGSPLAT_NATIVE_SUPPORTED
 			if (IsInitialized)
 			{
-				return true;
+				if (database == initializedDatabase && application == initializedApplication && version == initializedVersion)
+				{
+					return true;
+				}
+
+				LastError = $"bugsplat-native is already running in this process for {initializedDatabase}/{initializedApplication}/{initializedVersion}; a second database, application or version cannot report native crashes.";
+				return false;
 			}
 
 			settings = settings ?? new NativeSettings();
@@ -136,6 +144,9 @@ namespace BugSplatUnity.Runtime.Native
 				}
 
 				IsInitialized = true;
+				initializedDatabase = database;
+				initializedApplication = application;
+				initializedVersion = version;
 				Version = BugSplatNative.Utf8(BugSplatNative.bugsplat_version_string()) ?? string.Empty;
 				try { operatingSystem = SystemInfo.operatingSystem ?? string.Empty; } catch (Exception) { operatingSystem = string.Empty; }
 				LastError = string.Empty;

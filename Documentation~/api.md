@@ -95,7 +95,7 @@ Beyond the properties mirrored from `BugSplatOptions`, a `BugSplat` instance exp
 
 | Member | Description |
 | --- | --- |
-| `NativeCrashReportingEnabled` | `true` when bugsplat-native started for this process. `false` in the editor, on WebGL, or when the runtime is missing next to the player (the reason is in the player log) |
+| `NativeCrashReportingEnabled` | `true` when bugsplat-native started for this process. `false` in the editor, on WebGL, when the runtime is missing next to the player, or when another `BugSplat` in the process already started it for a different database, application or version (the reason is in the player log) |
 | `NativeVersion`, `NativeSettings` | The bugsplat-native version and the settings it was started with |
 | `Environment` | The OS/hardware string the SDK detected, sent as a first-class report property. Set it to override, or to `null` to restore detection |
 | `CaptureReport()` | Dump the live process out of process and report it like a crash, without crashing |
