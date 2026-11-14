@@ -50,6 +50,11 @@ namespace BugSplatUnity.Runtime.Util
             {
                 options.AdditionalAttributes[ShouldPostExceptionImpl.SuppressedReportsAttribute] = suppressedCount.ToString(CultureInfo.InvariantCulture);
             }
+            else
+            {
+                // A caller may reuse one options instance, so drop the count from an earlier report.
+                options.AdditionalAttributes.Remove(ShouldPostExceptionImpl.SuppressedReportsAttribute);
+            }
         }
     }
 }

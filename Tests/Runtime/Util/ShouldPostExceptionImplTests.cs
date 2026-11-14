@@ -461,6 +461,9 @@ namespace BugSplatUnity.RuntimeTests.Util
             Assert.AreNotEqual(
                 ReportFingerprint.FromLogMessage("Exception: save failed", ""),
                 ReportFingerprint.FromLogMessage("Exception: load failed", ""));
+            Assert.AreNotEqual(
+                ReportFingerprint.FromLogMessage("Exception: Operation failed\nSave failed", ""),
+                ReportFingerprint.FromLogMessage("Exception: Operation failed\nLoad failed", ""));
         }
     }
 }

@@ -165,11 +165,12 @@ namespace BugSplatUnity.Runtime.Util
 
         public static string FromLogMessage(string logMessage, string stackTrace)
         {
-            var firstLine = FirstLine(logMessage ?? string.Empty);
+            logMessage = logMessage ?? string.Empty;
+            var firstLine = FirstLine(logMessage);
             var colon = firstLine.IndexOf(':');
             var hasTypePrefix = colon > 0 && firstLine.IndexOf(' ', 0, colon) < 0;
             var type = hasTypePrefix ? firstLine.Substring(0, colon) : WithoutNumbers(firstLine);
-            var message = hasTypePrefix ? firstLine.Substring(colon + 1) : firstLine;
+            var message = hasTypePrefix ? logMessage.Substring(colon + 1) : logMessage;
 
             return Build(type, message, stackTrace);
         }
