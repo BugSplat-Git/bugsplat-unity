@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Two different C# exceptions thrown within a few seconds of each other are now both reported. The default report rate limiter allowed one report every three seconds across all exceptions, so the second was dropped and never sent ([#170](https://github.com/BugSplat-Git/bugsplat-unity/issues/170)).
 - The default rate limiter is now thread-safe, so exceptions reported from several threads at once can no longer slip past it together, and it uses a monotonic clock, so a system clock change can no longer pause reporting.
+- WebGL reports now include their attributes. Attributes from `BugSplatOptions.Attributes`, `BugSplat.Attributes`, or a report's `AdditionalAttributes` were sent to BugSplat as an empty `{}` from WebGL builds, so every WebGL crash arrived without them ([#175](https://github.com/BugSplat-Git/bugsplat-unity/issues/175)).
 
 ### Changed
 
