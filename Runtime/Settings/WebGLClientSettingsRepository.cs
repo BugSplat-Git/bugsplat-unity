@@ -9,7 +9,7 @@ namespace BugSplatUnity.Runtime.Settings
     {
         // Attachments aren't sent from WebGL, which reports C# exceptions only (README, Platform Support).
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
-        public IDictionary<string, string> Attributes { get; } = new Dictionary<string, string>();
+        public IDictionary<string, string> Attributes { get; } = new NativeSyncDictionary<string, string>();
         public bool CaptureEditorLog { get; set; } = false;
         public bool CapturePlayerLog { get; set; } = false;
         public bool CaptureScreenshots { get; set; } = false;

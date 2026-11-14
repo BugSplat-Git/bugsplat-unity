@@ -1166,18 +1166,23 @@ namespace BugSplatUnity
         /// Calls a static method on com.bugsplat.android.BugSplat, logging instead of throwing when the
         /// bundled AAR lacks it. Every Android call after init goes through here so a mismatched AAR
         /// degrades to missing data on a report rather than an exception in the game.
+        /// InvokeAttached attaches the calling thread to the JVM when it isn't already (and detaches it after),
+        /// because Attributes changes can arrive on any thread.
         /// </summary>
         private static void CallAndroid(string method, params object[] args)
         {
-            try
+            AndroidJNI.InvokeAttached(() =>
             {
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic(method, args);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
-            }
+                try
+                {
+                    using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                    javaClass.CallStatic(method, args);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
+                }
+            });
         }
 #endif
 
