@@ -74,5 +74,33 @@ namespace BugSplatUnity.RuntimeTests.Client
             StringAssert.AreEqualIgnoringCase(exception.ToString(), fakeUnityWebClient.FormData["callstack"]);
             StringAssert.AreEqualIgnoringCase(exceptionType.ToString(), fakeUnityWebClient.FormData["crashTypeId"]);
         }
+
+        [UnityTest]
+        public IEnumerator Post_WithoutAttributes_ShouldPostEmptyAttributesObject()
+        {
+            var fakeUnityWebClient = new FakeUnityWebClient(new FakeUnityWebRequest());
+            var options = new FakeExceptionPostOptions();
+
+            var sut = new WebGLExceptionClient("database", "application", "version");
+            sut.UnityWebClient = fakeUnityWebClient;
+            yield return sut.Post("BugSplat!", options);
+
+            Assert.AreEqual("{}", fakeUnityWebClient.FormData["attributes"]);
+        }
+
+        [UnityTest]
+        public IEnumerator Post_WithAttributes_ShouldPostAttributesAsJsonObject()
+        {
+            var fakeUnityWebClient = new FakeUnityWebClient(new FakeUnityWebRequest());
+            var options = new FakeExceptionPostOptions();
+            options.AdditionalAttributes.Add("level", "3");
+            options.AdditionalAttributes.Add("path", "C:\\Games\\\"My Game\"\n");
+
+            var sut = new WebGLExceptionClient("database", "application", "version");
+            sut.UnityWebClient = fakeUnityWebClient;
+            yield return sut.Post(new Exception("BugSplat"), options);
+
+            Assert.AreEqual(@"{""level"":""3"",""path"":""C:\\Games\\\""My Game\""\n""}", fakeUnityWebClient.FormData["attributes"]);
+        }
     }
 }
