@@ -287,6 +287,10 @@ static id EnsureDelegate() {
 // bugsplat-apple's SIGILL handler, as -start installed it. See _restoreBugSplatSIGILLForMono.
 static struct sigaction _bugsplatSIGILL;
 
+// Set once a Mono player has handed its signals to bugsplat-apple. Process-wide, because -start runs
+// only once per process: a later BugSplat client must not reset the signals again.
+static bool _monoSignalsHandedOver = false;
+
 extern "C" {
     void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
                            int autoSubmitCrashReport, int autoSubmitFatalHangReport,
@@ -414,7 +418,14 @@ extern "C" {
     // Mono's signal handlers (Mono.Runtime.InstallSignalHandlers), so Mono sees every fault first:
     // it turns its own into managed exceptions and passes the rest to bugsplat-apple. Returns 0,
     // having changed nothing, when this Mono or BugSplat-macOS.dylib lacks what that needs.
+    // Returns 2, also changing nothing, when an earlier client already did the handover: -start
+    // does nothing the second time, so resetting the signals then would remove bugsplat-apple's
+    // handlers for good. The caller then skips the reinstall too.
     int _useBSDSignalHandlersForMono() {
+        if (_monoSignalsHandedOver) {
+            return 2;
+        }
+
         id bugsplat = GetBugSplatInstance();
         void (*setSignalChaining)(int) = (void (*)(int))dlsym(RTLD_DEFAULT, "mono_set_signal_chaining");
         void (*setCrashChaining)(int) = (void (*)(int))dlsym(RTLD_DEFAULT, "mono_set_crash_chaining");
@@ -439,6 +450,7 @@ extern "C" {
         }
 
         [bugsplat setValue:@YES forKey:@"useBSDSignalHandlers"];
+        _monoSignalsHandedOver = true;
         return 1;
     }
 

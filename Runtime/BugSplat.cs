@@ -466,11 +466,18 @@ namespace BugSplatUnity
             // Mach exception handler sees the fault first and would write each one as a crash. So
             // under Mono it uses BSD signal handlers instead, and Mono's are installed again after
             // start, on top: Mono handles its own faults and passes the rest on to bugsplat-apple.
-            if (useNativeLibMac && (InstallMonoSignalHandlers == null || _useBSDSignalHandlersForMono() == 0))
+            // 1: handed over now, so reinstall after start. 2: an earlier client in this process
+            // already did it, so leave the handlers alone. 0: not possible in this player.
+            var monoHandover = 0;
+            if (useNativeLibMac)
             {
-                Debug.LogWarning("BugSplat: this Mono player cannot hand native crashes on to BugSplat, so it " +
-                    "reports managed exceptions only.");
-                useNativeLibMac = false;
+                monoHandover = InstallMonoSignalHandlers == null ? 0 : _useBSDSignalHandlersForMono();
+                if (monoHandover == 0)
+                {
+                    Debug.LogWarning("BugSplat: this Mono player cannot hand native crashes on to BugSplat, so it " +
+                        "reports managed exceptions only.");
+                    useNativeLibMac = false;
+                }
             }
 #endif
             if (useNativeLibMac)
@@ -492,8 +499,11 @@ namespace BugSplatUnity
 
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
 #if !ENABLE_IL2CPP
-                InstallMonoSignalHandlers.Invoke(null, null);
-                _restoreBugSplatSIGILLForMono();
+                if (monoHandover == 1)
+                {
+                    InstallMonoSignalHandlers.Invoke(null, null);
+                    _restoreBugSplatSIGILLForMono();
+                }
 #endif
                 nativeCrashReportingEnabled = true;
 
