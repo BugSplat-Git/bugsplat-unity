@@ -28,7 +28,7 @@ namespace BugSplatUnity.Editor
 		const string WerDllName = "BugSplatWer.dll";
 		const int ErrorCancelled = 1223;
 
-		// Includes the time someone takes to answer the administrator prompt.
+		// Starts once the administrator prompt is answered: Process.Start blocks until then.
 		static readonly TimeSpan ElevatedCommandTimeout = TimeSpan.FromMinutes(2);
 		static readonly TimeSpan QueryTimeout = TimeSpan.FromSeconds(30);
 
@@ -102,7 +102,7 @@ namespace BugSplatUnity.Editor
 					{
 						var pending =
 							$"The elevated registry update has not finished after {ProcessRunner.FormatDuration(ElevatedCommandTimeout)}, so BugSplat stopped waiting. " +
-							"If an administrator prompt is still open, it may yet apply. Use Tools > BugSplat > Windows > Check WER Handler Registration to see the result.";
+							"It may yet apply. Use Tools > BugSplat > Windows > Check WER Handler Registration to see the result.";
 						Debug.LogWarning($"BugSplat. {pending}");
 						EditorUtility.DisplayDialog("BugSplat — WER Registration", pending, "OK");
 						return;

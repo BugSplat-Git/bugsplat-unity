@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Finding `LineNumberMappings.json` no longer depends on a fixed list of paths that went stale as Unity moved the file between versions. BugSplat now searches the player's IL2CPP backup folder and the platform's `Library/Bee` folders for it, and takes the newest match. This applies to Windows, macOS, Android, and iOS ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
 - The symbol uploader's error output is now in the build log. Before, only its standard output was logged.
 - A failed upload's log now says whether it timed out, was cancelled, or exited with an error, and gives the uploader's exit code. A summary error at the end of the build lists every upload that failed.
-- The editor's other helper processes now have time limits too: `chmod` on downloaded tools and credential files, and the `reg.exe` calls behind **Tools > BugSplat > Windows**. The elevated WER registration waits up to two minutes for the administrator prompt, then points you to **Check WER Handler Registration**.
+- The editor's other helper processes now have time limits too: `chmod` on downloaded tools and credential files, and the `reg.exe` calls behind **Tools > BugSplat > Windows**. Once the administrator prompt is approved, the elevated WER registration waits up to two minutes for the update, then points you to **Check WER Handler Registration**.
 
 ## [5.1.0] - 2026-11-13
 
