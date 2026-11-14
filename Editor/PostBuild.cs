@@ -933,9 +933,10 @@ namespace BugSplatUnity.Editor
 				return 0;
 			}
 
+			var timeout = GetSymbolUploadTimeout(options.SymbolUploadTimeoutMinutes);
 			var symbolUploadPath = GetSymUploaderPath();
 			if (!SymbolUploadRelease.IsVerified(symbolUploadPath, GetSymUploaderName())
-				&& !DownloadSymbolUpload(symbolUploadPath))
+				&& !DownloadSymbolUpload(symbolUploadPath, timeout))
 			{
 				return -1;
 			}
@@ -958,7 +959,6 @@ namespace BugSplatUnity.Editor
 				symUploadProcessInfo.Arguments += " --dumpSyms";
 			}
 
-			var timeout = GetSymbolUploadTimeout(options.SymbolUploadTimeoutMinutes);
 			var bounded = timeout > TimeSpan.Zero;
 			var limit = bounded ? $" (stops after {ProcessRunner.FormatDuration(timeout)})" : string.Empty;
 			var showProgress = !Application.isBatchMode && InternalEditorUtility.CurrentThreadIsMainThread();
@@ -1033,7 +1033,7 @@ namespace BugSplatUnity.Editor
 			return 0;
 		}
 
-		private static bool DownloadSymbolUpload(string destinationPath)
+		private static bool DownloadSymbolUpload(string destinationPath, TimeSpan timeout)
 		{
 			var variant = Path.GetFileName(destinationPath);
 			var fileUrl = SymbolUploadRelease.GetDownloadUrl(variant);
@@ -1047,7 +1047,16 @@ namespace BugSplatUnity.Editor
 				{
 					Debug.Log($"BugSplat. Downloading {variant} {SymbolUploadRelease.Version} to {destinationPath}");
 
-					client.DownloadFile(fileUrl, partialPath);
+					// DownloadFile has no overall deadline, so run it off this thread and abort it at the upload timeout.
+					var download = Task.Run(() => client.DownloadFile(fileUrl, partialPath));
+					if (Task.WaitAny(new Task[] { download }, timeout) < 0)
+					{
+						client.CancelAsync();
+						download.ContinueWith(t => t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+						Debug.LogError($"BugSplat. Downloading {variant} from {fileUrl} did not finish within {ProcessRunner.FormatDuration(timeout)} and was stopped. Skipping symbol upload.");
+						return false;
+					}
+					download.GetAwaiter().GetResult();
 				}
 
 				var actualSha256 = SymbolUploadRelease.ComputeSha256(partialPath);
