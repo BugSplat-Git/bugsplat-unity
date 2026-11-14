@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The symbol uploader's error output is now in the build log. Before, only its standard output was logged.
 - A failed upload's log now says whether it timed out, was cancelled, or exited with an error, and gives the uploader's exit code. A summary error at the end of the build lists every upload that failed.
 - The editor's other helper processes now have time limits too: `chmod` on downloaded tools and credential files, and the `reg.exe` calls behind **Tools > BugSplat > Windows**. Once the administrator prompt is approved, the elevated WER registration waits up to two minutes for the update, then points you to **Check WER Handler Registration**.
+- WebGL reports now include their attributes. Attributes from `BugSplatOptions.Attributes`, `BugSplat.Attributes`, or a report's `AdditionalAttributes` were sent to BugSplat as an empty `{}` from WebGL builds, so every WebGL crash arrived without them ([#175](https://github.com/BugSplat-Git/bugsplat-unity/issues/175)).
 
 ## [5.1.0] - 2026-11-13
 
