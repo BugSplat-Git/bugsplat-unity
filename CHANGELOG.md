@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Windows CoreCLR players (Unity 7.0 alpha) report native crashes under C# code, such as an access violation in a P/Invoke or a stack overflow. Unity's CoreCLR runtime treats these as fatal errors and sends them to Unity's own crash handler, so they never reached BugSplat's crash handler and went unreported. BugSplat now registers itself as the runtime's fatal-error callback in place of Unity's, so Unity's crash handler doesn't run for these crashes. Mono and IL2CPP players are unchanged ([#259](https://github.com/BugSplat-Git/bugsplat-unity/issues/259)).
 
+## [5.1.0] - 2026-11-13
+
+### Changed
+
+- The package is now `com.bugsplat.sdk`, which is also its name on the Unity Asset Store. The Asset Store does not accept `unity` in a package name, so the package was renamed on OpenUPM and git as well, keeping one name for every install. The code is unchanged. `com.bugsplat.unity` stops at 5.0.1. To upgrade, remove `com.bugsplat.unity` from `Packages/manifest.json` and add `com.bugsplat.sdk`. Project Settings > BugSplat keeps its settings.
+
 ## [5.0.1] - 2026-11-12
 
 ### Changed
@@ -168,6 +174,7 @@ Upgrading from 4.x? See [Migrating from 4.x](Documentation~/migrating-from-4x.md
 
 Releases before 4.0.0 predate this changelog. See the [GitHub releases page](https://github.com/BugSplat-Git/bugsplat-unity/releases) for their notes.
 
+[5.1.0]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/BugSplat-Git/bugsplat-unity/compare/v4.0.1...v4.1.0

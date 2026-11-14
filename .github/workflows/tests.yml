@@ -58,7 +58,7 @@ jobs:
           cat > TestProject/Packages/manifest.json <<'EOF'
           {
             "dependencies": {
-              "com.bugsplat.unity": "file:../../package",
+              "com.bugsplat.sdk": "file:../../package",
               "com.unity.test-framework": "1.7.0",
               "com.unity.modules.androidjni": "1.0.0",
               "com.unity.modules.imageconversion": "1.0.0",
@@ -69,7 +69,7 @@ jobs:
               "com.unity.modules.unitywebrequest": "1.0.0"
             },
             "testables": [
-              "com.bugsplat.unity"
+              "com.bugsplat.sdk"
             ]
           }
           EOF
@@ -219,7 +219,7 @@ jobs:
           cat > CompileProject/Packages/manifest.json <<'EOF'
           {
             "dependencies": {
-              "com.bugsplat.unity": "file:../../package",
+              "com.bugsplat.sdk": "file:../../package",
               "com.unity.modules.androidjni": "1.0.0",
               "com.unity.modules.imageconversion": "1.0.0",
               "com.unity.modules.imgui": "1.0.0",

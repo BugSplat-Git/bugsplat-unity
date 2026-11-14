@@ -35,7 +35,7 @@ namespace BugSplatUnity.Editor
 			// FindForAssembly can return null even for package installs, so try the package root
 			// directly before concluding the sources were copied under Assets/ (where UnityLinker
 			// already reads link.xml).
-			var fallbackLinkXml = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity", "Runtime", "link.xml"));
+			var fallbackLinkXml = Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk", "Runtime", "link.xml"));
 			return File.Exists(fallbackLinkXml) ? fallbackLinkXml : null;
 		}
 	}

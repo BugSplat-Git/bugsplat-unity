@@ -51,7 +51,7 @@ namespace BugSplatUnity.Editor
 		{
 			var uploaderName = GetSymUploaderName();
 			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk"));
 			var packagePath = Path.Combine(packageRoot, "Editor", uploaderName);
 
 			// Registry and git installs resolve under Library/PackageCache, which Unity owns and may
@@ -133,7 +133,7 @@ namespace BugSplatUnity.Editor
 			}
 
 			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk"));
 			var source = Path.Combine(
 				packageRoot, "Editor", "IOS", "Frameworks", "BugSplat.xcframework",
 				"macos-arm64_x86_64", "BugSplat.framework", "Versions", "A", "Resources", LogoFileName);
@@ -222,7 +222,7 @@ namespace BugSplatUnity.Editor
 			}
 
 			var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
-			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.unity"));
+			var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk"));
 			var supportDir = Path.Combine(packageRoot, "Runtime", "Plugins", "Windows", "Support~", arch);
 
 			foreach (var fileName in new[] { "BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll" })
@@ -549,7 +549,7 @@ namespace BugSplatUnity.Editor
 		private static void EnableObjectiveCExceptionsForBridge(PBXProject project, string targetGuid)
 		{
 			const string flag = "-fobjc-exceptions";
-			const string bridgePath = "Libraries/com.bugsplat.unity/Editor/IOS/ObjC/BugSplatBridge.mm";
+			const string bridgePath = "Libraries/com.bugsplat.sdk/Editor/IOS/ObjC/BugSplatBridge.mm";
 
 			var bridgeGuid = project.FindFileGuidByProjectPath(bridgePath);
 			if (bridgeGuid == null)
