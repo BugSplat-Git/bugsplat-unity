@@ -95,12 +95,6 @@ namespace BugSplatUnity.Editor
 
 			if (target == BuildTarget.StandaloneOSX)
 			{
-				if (options.UseNativeCrashReportingForMac &&
-					PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) != ScriptingImplementation.IL2CPP)
-				{
-					Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
-				}
-
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
@@ -438,6 +432,18 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
 			});
+
+			// BugSplatBridgeMac.dylib ships prebuilt, so its dSYM comes from the package, not the build.
+			if (options.UseNativeCrashReportingForMac)
+			{
+				var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+				var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk"));
+				UploadSymbols(Path.Combine(packageRoot, "Runtime", "Plugins", "macOS", "Symbols~"), "**/*.dSYM", options, uploadExitCode =>
+				{
+					if (uploadExitCode != 0)
+						Debug.LogError("BugSplat. Could not upload the symbols of BugSplatBridgeMac.dylib.");
+				});
+			}
 
 			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
 			if (mappingsPath == null)

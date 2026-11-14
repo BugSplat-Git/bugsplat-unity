@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <dlfcn.h>
 #import <objc/runtime.h>
+#import <signal.h>
 
 static Class GetBugSplatClass() {
     static Class cls = nil;
@@ -283,6 +284,9 @@ static id EnsureDelegate() {
     return _delegateInstance;
 }
 
+// bugsplat-apple's SIGILL handler, as -start installed it. See _restoreBugSplatSIGILLForMono.
+static struct sigaction _bugsplatSIGILL;
+
 extern "C" {
     void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
                            int autoSubmitCrashReport, int autoSubmitFatalHangReport,
@@ -351,6 +355,7 @@ extern "C" {
             [[[NSUserDefaults standardUserDefaults] dictionaryForKey:kSessionLogRecordKey] copy];
 
         [bugsplat performSelector:@selector(start)];
+        sigaction(SIGILL, NULL, &_bugsplatSIGILL);
 
         RecordCurrentSessionLog(bugsplat, playerLog);
     }
@@ -403,6 +408,46 @@ extern "C" {
     // whether the log is being captured.
     void _setNativePlayerLogPath(const char* path) {
         SetPlayerLogPath([NSString stringWithUTF8String:(path ?: "")]);
+    }
+
+    // Mono players only, called right before _startBugSplat. Afterwards the caller reinstalls
+    // Mono's signal handlers (Mono.Runtime.InstallSignalHandlers), so Mono sees every fault first:
+    // it turns its own into managed exceptions and passes the rest to bugsplat-apple. Returns 0,
+    // having changed nothing, when this Mono or BugSplat-macOS.dylib lacks what that needs.
+    int _useBSDSignalHandlersForMono() {
+        id bugsplat = GetBugSplatInstance();
+        void (*setSignalChaining)(int) = (void (*)(int))dlsym(RTLD_DEFAULT, "mono_set_signal_chaining");
+        void (*setCrashChaining)(int) = (void (*)(int))dlsym(RTLD_DEFAULT, "mono_set_crash_chaining");
+        if (!bugsplat || ![bugsplat respondsToSelector:@selector(setUseBSDSignalHandlers:)] ||
+            !setSignalChaining || !setCrashChaining) {
+            return 0;
+        }
+
+        // Signal chaining makes Mono save the handlers it replaces and pass them the faults that
+        // are not its own. Crash chaining off makes it pass a native crash on at once, rather than
+        // first writing its own crash dump from inside the signal handler.
+        setSignalChaining(1);
+        setCrashChaining(0);
+
+        // The signals Mono installs handlers for. Back to the default action, so bugsplat-apple saves
+        // that rather than Mono's handler as the one to call after writing a report: once Mono
+        // reinstalls its handlers, the ones Mono chains to are bugsplat-apple's, and the two would
+        // call each other forever.
+        const int monoSignals[] = { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGQUIT, SIGSEGV };
+        for (int signo : monoSignals) {
+            signal(signo, SIG_DFL);
+        }
+
+        [bugsplat setValue:@YES forKey:@"useBSDSignalHandlers"];
+        return 1;
+    }
+
+    // Mono players only, called after Mono's signal handlers are reinstalled. Mono's SIGILL handler,
+    // unlike its others, writes Mono's crash dump and aborts without passing the fault on, so an
+    // illegal instruction (ud2 on x86_64, udf on arm64) would never reach bugsplat-apple. Mono does
+    // not use SIGILL for managed code, so bugsplat-apple gets it back.
+    void _restoreBugSplatSIGILLForMono() {
+        sigaction(SIGILL, &_bugsplatSIGILL, NULL);
     }
 
     void _attachNativeLogFile(const char* path) {

@@ -289,7 +289,7 @@ namespace BugSplatUnity
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
         /// <param name="useNativeLibIos">Whether to use the native library for crash reporting on iOS</param>
         /// <param name="useNativeLibAndroid">Whether to use the native library for crash reporting on Android</param>
-        /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS (requires IL2CPP)</param>
+        /// <param name="useNativeLibMac">Whether to use the native library for crash reporting on macOS</param>
         /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
         /// <param name="capturePlayerLog">Whether to upload Player.log with reports. Applied while the native crash reporter initializes so that native crash reports honor it too.</param>
         /// <param name="nativeAttachments">Files to attach to native crash reports, registered before the native reporter starts. On macOS and iOS that is the only time that counts: a report uploads at the next launch and its attachments are gathered while the reporter starts, so a path attached after construction never reaches it. Behaves exactly like AttachNativeLogFile on every platform otherwise.</param>
@@ -461,11 +461,15 @@ namespace BugSplatUnity
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
 #if !ENABLE_IL2CPP
-            // The bridge is an Objective-C source plugin, which Unity compiles into macOS players only
-            // under IL2CPP. Calling it from Mono throws, which would take managed reporting down too.
-            if (useNativeLibMac)
+            // Mono implements NullReferenceException with a signal handler: a null dereference faults,
+            // and the handler turns the SIGSEGV into the managed exception. bugsplat-apple's default
+            // Mach exception handler sees the fault first and would write each one as a crash. So
+            // under Mono it uses BSD signal handlers instead, and Mono's are installed again after
+            // start, on top: Mono handles its own faults and passes the rest on to bugsplat-apple.
+            if (useNativeLibMac && (InstallMonoSignalHandlers == null || _useBSDSignalHandlersForMono() == 0))
             {
-                Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
+                Debug.LogWarning("BugSplat: this Mono player cannot hand native crashes on to BugSplat, so it " +
+                    "reports managed exceptions only.");
                 useNativeLibMac = false;
             }
 #endif
@@ -487,6 +491,10 @@ namespace BugSplatUnity
                 _setNativePlayerLogPath(consoleLogPath ?? "");
 
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
+#if !ENABLE_IL2CPP
+                InstallMonoSignalHandlers.Invoke(null, null);
+                _restoreBugSplatSIGILLForMono();
+#endif
                 nativeCrashReportingEnabled = true;
 
                 if (logPath != null && IndexOfNativeAttachment(logPath) < 0)
@@ -1184,35 +1192,55 @@ namespace BugSplatUnity
         }
 
 #if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
-        // Both Apple bridges now export identical symbols with identical signatures.
-        [DllImport("__Internal")]
+        // Both Apple bridges now export identical symbols with identical signatures. The iOS bridge
+        // is compiled into the app; the macOS one ships precompiled, so Mono players can load it too.
+#if UNITY_IOS
+        const string BridgeLib = "__Internal";
+#else
+        const string BridgeLib = "BugSplatBridgeMac";
+#endif
+
+        [DllImport(BridgeLib)]
         static extern void _startBugSplat(string database, string application, string version, string logFilePath, int autoSubmitCrashReport, int autoSubmitFatalHangReport, float hangDetectionThresholdSeconds);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativeAttribute(string key, string value);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativeUser(string user);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativeEmail(string email);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativeNotes(string notes);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativeKey(string key);
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _attachNativeLogFile(string path);
 
 #if UNITY_STANDALONE_OSX
         // macOS bridge only: the Player-prev.log substitution lives there.
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _setNativePlayerLogPath(string path);
+
+#if !ENABLE_IL2CPP
+        [DllImport(BridgeLib)]
+        static extern int _useBSDSignalHandlersForMono();
+
+        [DllImport(BridgeLib)]
+        static extern void _restoreBugSplatSIGILLForMono();
+
+        // Internal to mscorlib, so reached by reflection; link.xml keeps it from being stripped.
+        static readonly System.Reflection.MethodInfo InstallMonoSignalHandlers = typeof(object).Assembly
+            .GetType("Mono.Runtime")
+            ?.GetMethod("InstallSignalHandlers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+#endif
 #endif
 
-        [DllImport("__Internal")]
+        [DllImport(BridgeLib)]
         static extern void _detachNativeLogFile(string path);
 
 #elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
