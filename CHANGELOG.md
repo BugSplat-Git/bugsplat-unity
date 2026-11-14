@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Windows CoreCLR players (Unity 7.0 alpha) report native crashes under C# code, such as an access violation in a P/Invoke or a stack overflow. Unity's CoreCLR runtime treats these as fatal errors and sends them to Unity's own crash handler, so they never reached BugSplat's crash handler and went unreported. BugSplat now registers itself as the runtime's fatal-error callback in place of Unity's, so Unity's crash handler doesn't run for these crashes. Mono and IL2CPP players are unchanged ([#259](https://github.com/BugSplat-Git/bugsplat-unity/issues/259)). This uses `BugSplat_HandleException` from bugsplat-windows 9.2.0, whose signed binaries replace 9.1.0's ([bugsplat-windows#250](https://github.com/BugSplat-Git/bugsplat-windows/pull/250)).
+- WebGL reports now include their attributes. Attributes from `BugSplatOptions.Attributes`, `BugSplat.Attributes`, or a report's `AdditionalAttributes` were sent to BugSplat as an empty `{}` from WebGL builds, so every WebGL crash arrived without them ([#175](https://github.com/BugSplat-Git/bugsplat-unity/issues/175)).
 
 ## [5.1.0] - 2026-11-13
 
