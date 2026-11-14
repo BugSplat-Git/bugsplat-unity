@@ -9,8 +9,9 @@ set -eu
 cd "$(dirname "$0")"
 
 # Universal (arm64 + x86_64), with the same minimum macOS as BugSplat-macOS.dylib. No -fobjc-arc:
-# the bridge is written for manual retain/release, which is how Unity built it from source.
-xcrun clang++ -x objective-c++ -std=c++14 -Wall -O2 -g \
+# the bridge is written for manual retain/release, which is how Unity built it from source. The
+# prefix map keeps the build machine's path out of the debug info.
+xcrun clang++ -x objective-c++ -std=c++14 -Wall -O2 -g -fdebug-prefix-map="$(pwd)"=. \
     -arch arm64 -arch x86_64 -mmacosx-version-min=11.5 \
     -dynamiclib -install_name @rpath/BugSplatBridgeMac.dylib \
     -framework Foundation \

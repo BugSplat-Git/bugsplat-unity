@@ -3,10 +3,10 @@ triple:          'x86_64-apple-darwin'
 binary-path:     '../BugSplatBridgeMac.dylib'
 relocations:
   - { offset: 0x27, size: 0x8, addend: 0x0, symName: __startBugSplat, symObjAddr: 0x0, symBinAddr: 0x980, symSize: 0x480 }
-  - { offset: 0xD9, size: 0x8, addend: 0x0, symName: __ZL14_playerLogPath, symObjAddr: 0xBC40, symBinAddr: 0x4340, symSize: 0x0 }
-  - { offset: 0x141, size: 0x8, addend: 0x0, symName: __ZL17_delegateInstance, symObjAddr: 0xBC60, symBinAddr: 0x4360, symSize: 0x0 }
-  - { offset: 0x179, size: 0x8, addend: 0x0, symName: __ZL25_previousSessionLogRecord, symObjAddr: 0xBC18, symBinAddr: 0x4318, symSize: 0x0 }
-  - { offset: 0x1B5, size: 0x8, addend: 0x0, symName: __ZL15_bugsplatSIGILL, symObjAddr: 0xBC20, symBinAddr: 0x4320, symSize: 0x0 }
+  - { offset: 0xD9, size: 0x8, addend: 0x0, symName: __ZL14_playerLogPath, symObjAddr: 0xBBD8, symBinAddr: 0x4340, symSize: 0x0 }
+  - { offset: 0x141, size: 0x8, addend: 0x0, symName: __ZL17_delegateInstance, symObjAddr: 0xBBF8, symBinAddr: 0x4360, symSize: 0x0 }
+  - { offset: 0x179, size: 0x8, addend: 0x0, symName: __ZL25_previousSessionLogRecord, symObjAddr: 0xBBB0, symBinAddr: 0x4318, symSize: 0x0 }
+  - { offset: 0x1B5, size: 0x8, addend: 0x0, symName: __ZL15_bugsplatSIGILL, symObjAddr: 0xBBB8, symBinAddr: 0x4320, symSize: 0x0 }
   - { offset: 0x506, size: 0x8, addend: 0x0, symName: __startBugSplat, symObjAddr: 0x0, symBinAddr: 0x980, symSize: 0x480 }
   - { offset: 0x953, size: 0x8, addend: 0x0, symName: __ZL14AddLogFilePathP8NSString, symObjAddr: 0x480, symBinAddr: 0xE00, symSize: 0x90 }
   - { offset: 0xA1E, size: 0x8, addend: 0x0, symName: __ZL14IdentityOfFileP8NSString, symObjAddr: 0x1680, symBinAddr: 0x2000, symSize: 0x140 }
