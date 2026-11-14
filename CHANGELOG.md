@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The macOS bridge, `BugSplatBridgeMac.dylib`, ships prebuilt instead of as Objective-C source, because Unity compiles source plugins into macOS players only under IL2CPP. It loads the same way under both backends. Its source and build script are in `Runtime/Plugins/macOS/Source~`, and its dSYM, in `Runtime/Plugins/macOS/Symbols~`, uploads with a macOS build's symbols when `UploadDebugSymbolsForMac` is set, so a crash inside the bridge stays symbolicated under IL2CPP too.
-- **Requires bugsplat-apple with `useBSDSignalHandlers`.** `BugSplat-macOS.dylib` is a build of bugsplat-apple that adds the option. IL2CPP players keep bugsplat-apple's default Mach exception handlers, so their reporting is unchanged.
+- **bugsplat-apple updated to 3.9.0** (from 3.8.1). 3.9.0 adds `useBSDSignalHandlers`, which Mono players use ([bugsplat-apple#92](https://github.com/BugSplat-Git/bugsplat-apple/pull/92)). IL2CPP players and iOS keep bugsplat-apple's default Mach exception handlers, so their reporting is unchanged.
 
 ### Removed
 
