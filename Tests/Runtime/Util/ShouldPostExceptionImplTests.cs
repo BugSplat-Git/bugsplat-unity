@@ -42,6 +42,20 @@ namespace BugSplatUnity.RuntimeTests.Util
         [TearDown]
         public void ResetRateLimiterAfterTest() => SetLastPost(NeverPosted);
 
+        // Enter Play Mode without a domain reload keeps statics, so the SubsystemRegistration hook
+        // must reopen the window or the previous play's last report would block this play's first.
+        [Test]
+        public void ResetStatics_AfterAPostInsideTheWindow_ShouldAllowTheNextPost()
+        {
+            ShouldPost(new Exception("previous play"));
+
+            typeof(ShouldPostExceptionImpl)
+                .GetMethod("ResetStatics", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, null);
+
+            Assert.True(ShouldPost(new Exception("next play")));
+        }
+
         [Test]
         public void DefaultShouldPostExceptionImpl_WhenNothingHasBeenPostedYet_ShouldAllowPost()
         {

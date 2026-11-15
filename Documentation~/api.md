@@ -81,7 +81,7 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 
 ## Player.log and privacy
 
-`CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. WebGL is the exception: the platform has no `Player.log`, so a `BugSplat` created in code there defaults to off and the setting has no effect. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:
+`CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. WebGL is the exception: the platform has no `Player.log`, so a `BugSplat` created in code there defaults to off and the setting has no effect. Unity doesn't write a `Player.log` on Android or iOS either, so there the setting is on but has nothing to attach. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:
 
 ```cs
 bugsplat.CapturePlayerLog = false;
@@ -118,6 +118,6 @@ Attaching is **additive and idempotent**. Every attached file is included in a n
 
 Attachments are copied into the report by the monitor right after the dump, on every platform, so a file attached at any point in the session reaches a later crash — including on macOS and iOS, where the report itself uploads on the next launch. Up to 24 files can be attached.
 
-`Player.log` still ships with managed posts on Windows, macOS and Linux. Android writes no `Player.log`, so there is nothing to attach there — see [Android](android.md#attachments).
+`Player.log` still ships with managed posts on Windows, macOS and Linux. Unity writes no `Player.log` on Android, iOS or WebGL, so there is nothing to attach there — see [Android](android.md#attachments).
 
 `CapturePlayerLog` uses the same mechanism with `Application.consoleLogPath`, so the two cooperate: setting it `false` detaches only `Player.log`, and attaching your own file leaves `Player.log` alone. Prefer `CapturePlayerLog` for that file rather than attaching `Application.consoleLogPath` yourself — see [Player.log and privacy](#playerlog-and-privacy).

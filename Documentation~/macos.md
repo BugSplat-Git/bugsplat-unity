@@ -32,4 +32,4 @@ Two ways to test:
 
 ## Symbols
 
-Set `UploadDebugSymbolsForMac` to upload the build's dSYMs as Breakpad `.sym` files (`symbol-upload --dumpSyms`) plus `LineNumberMappings.json` for IL2CPP builds. Xcode project exports are skipped, since the dSYMs do not exist until Xcode builds. See [Symbol Upload](symbol-upload.md) for credentials.
+Set `UploadDebugSymbolsForMac` to upload the build's dSYMs as Breakpad `.sym` files (`symbol-upload --dumpSyms`) plus Unity's `LineNumberMappings.json` for IL2CPP builds, uploaded as `LineNumberMappings-macos.json` so a macOS build never overwrites the mappings of an iOS or Windows build that shares its version. Xcode project exports are skipped, since the dSYMs do not exist until Xcode builds. See [Symbol Upload](symbol-upload.md) for credentials.

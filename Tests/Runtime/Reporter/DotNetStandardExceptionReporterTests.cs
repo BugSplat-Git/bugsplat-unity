@@ -220,5 +220,34 @@ namespace BugSplatUnity.RuntimeTests.Reporter
             Assert.IsNotEmpty(fakeExceptionClient.Calls);
             Assert.IsEmpty(fakeExceptionClient.Calls[0].Options.AdditionalFormDataParams);
         }
+
+        // With no network, BugSplatDotNetStandard throws HttpRequestException. The callback gets
+        // the reason, and getting it means the reporter read the faulted Task's exception, which
+        // marks the Task observed: an unobserved one would be reported by BugSplat's own
+        // UnobservedTaskException handler, and fail again, in a loop.
+        [UnityTest]
+        public IEnumerator Post_WhenTheRequestCantBeSent_ShouldPassTheReasonOnAndObserveTheTask()
+        {
+            // The reporter logs the failure as an error, which would otherwise fail the test.
+            LogAssert.ignoreFailingMessages = true;
+
+            var clientSettings = new WebGLClientSettingsRepository
+            {
+                ShouldPostException = (ex) => true
+            };
+            var failingClient = new FakeFailingDotNetExceptionClient(
+                new HttpRequestException("An error occurred while sending the request"));
+            var sut = new DotNetStandardExceptionReporter(clientSettings, failingClient)
+            {
+                reportUploadGuardService = new FakeTrueReportUploadGuardService()
+            };
+
+            ExceptionReporterPostResult result = null;
+            yield return sut.Post(new Exception("BugSplat rocks!"), callback: r => result = r);
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.Uploaded);
+            StringAssert.Contains("An error occurred while sending the request", result.Message);
+        }
     }
 }

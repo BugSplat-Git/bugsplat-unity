@@ -6,11 +6,13 @@ Native iOS crash reporting comes from [bugsplat-native](native.md). iOS allows n
 
 When native crash reporting is enabled, BugSplat disables Unity's built-in crash reporter in the generated Xcode project (`Classes/CrashReporter.h`) so bugsplat-native's handler sees crashes first, and sets `DEBUG_INFORMATION_FORMAT` to `dwarf-with-dsym` so symbols exist to upload.
 
-For IL2CPP builds, BugSplat also copies `LineNumberMappings.json` into the Xcode project and uploads it alongside the dSYMs, so IL2CPP-generated C++ symbols map back to C# method names, file names, and line numbers. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+For IL2CPP builds, BugSplat also copies `LineNumberMappings.json` into the Xcode project as `LineNumberMappings-ios.json` and uploads it alongside the dSYMs, so IL2CPP-generated C++ symbols map back to C# method names, file names, and line numbers. The name keeps an iOS build from overwriting the mappings of a macOS or Windows build that shares its version. Exporting into an existing Xcode project replaces the phase from an earlier export and removes the `LineNumberMappings.json` copy older versions left there. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+
+Unity does not write a `Player.log` on iOS — log output goes to the device console, which Xcode and Console.app show — so `CapturePlayerLog` has no effect on iOS reports. To attach your own log file to native iOS crash reports, see [Attachments](#attachments).
 
 ## Attachments
 
-`PersistentDataFileAttachmentPaths` and `AttachNativeLogFile` work as on the other platforms; the SDK records the attachment list per session, and the next-launch import copies the files into the report. `Player.log` is attached when `CapturePlayerLog` is enabled.
+`PersistentDataFileAttachmentPaths` and `AttachNativeLogFile` work as on the other platforms; the SDK records the attachment list per session, and the next-launch import copies the files into the report.
 
 ## Hang detection
 
@@ -29,7 +31,7 @@ Set `HangDetectionTimeoutMs` on the options asset. The heartbeat BugSplat sends 
 
 ## Symbols
 
-Set `UploadDebugSymbolsForIos` to add an Xcode build phase that uploads the dSYMs as Breakpad `.sym` files (`symbol-upload --dumpSyms`) and `LineNumberMappings.json`. The phase reads credentials from `SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` in the Xcode build environment or from `~/.bugsplat/credentials/<database>.sh`; see [Symbol Upload](symbol-upload.md).
+Set `UploadDebugSymbolsForIos` to add an Xcode build phase that uploads the dSYMs as Breakpad `.sym` files (`symbol-upload --dumpSyms`) and `LineNumberMappings-ios.json`. The phase reads credentials from `SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` in the Xcode build environment or from `~/.bugsplat/credentials/<database>.sh`; see [Symbol Upload](symbol-upload.md).
 
 > [!NOTE]
 > Unity's Xcode project has a `Generate dSYM for archive, and strip` build phase. BugSplat's upload phase is inserted after it, so the dSYM exists when the upload runs; on the first build after export, check the build log to confirm the order.

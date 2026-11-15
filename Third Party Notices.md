@@ -113,7 +113,7 @@ Component Name: BugSplatDotNetStandard
 
 License Type: "MIT"
 
-Version: 4.3.0.0 (per `Runtime/Plugins/BugSplatDotNetStandard.deps.json`)
+Version: 5.0.0.0 (per `Runtime/Plugins/BugSplatDotNetStandard.deps.json`)
 
 Shipped in: `Runtime/Plugins/BugSplatDotNetStandard.dll`
 

@@ -10,14 +10,14 @@
         <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
     </a>
     <br/>
-    <a href="https://openupm.com/packages/com.bugsplat.unity/">
-        <img alt="BugSplatUnity on OpenUPM" src="https://img.shields.io/npm/v/com.bugsplat.unity?label=openupm&registry_uri=https://package.openupm.com">
+    <a href="https://openupm.com/packages/com.bugsplat.sdk/">
+        <img alt="BugSplatUnity on OpenUPM" src="https://img.shields.io/npm/v/com.bugsplat.sdk?label=openupm&registry_uri=https://package.openupm.com">
     </a>
 </div>
 
 ## 👋 Introduction
 
-BugSplat's `com.bugsplat.unity` package reports native crashes, C# exceptions, hangs, log files, screenshots, and user feedback from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. On Windows, macOS, Linux, Android and iOS, native crashes and hangs go through one native reporter, [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native). See **Platform Support** below for what each platform captures.
+BugSplat's `com.bugsplat.sdk` package reports native crashes, C# exceptions, hangs, log files, screenshots, and user feedback from Unity games on Windows, macOS, Linux, iOS, Android, WebGL, Xbox, PlayStation 5, and Nintendo Switch 2. On Windows, macOS, Linux, Android and iOS, native crashes and hangs go through one native reporter, [bugsplat-native](https://github.com/BugSplat-Git/bugsplat-native). See **Platform Support** below for what each platform captures.
 
 Before you proceed, please make sure you have completed the following checklist:
 * [Sign Up](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user
@@ -26,13 +26,16 @@ Before you proceed, please make sure you have completed the following checklist:
 
 ## 🏗 Installation
 
-BugSplat's `com.bugsplat.unity` package can be added to your project via [OpenUPM](https://openupm.com/packages/com.bugsplat.unity/) or a URL to our git [repository](https://github.com/BugSplat-Git/bugsplat-unity.git).
+BugSplat's `com.bugsplat.sdk` package can be added to your project via [OpenUPM](https://openupm.com/packages/com.bugsplat.sdk/) or a URL to our git [repository](https://github.com/BugSplat-Git/bugsplat-unity.git).
+
+> [!NOTE]
+> BugSplat 5.0.1 and earlier were published as `com.bugsplat.unity`. To upgrade, remove `com.bugsplat.unity` from your project's `Packages/manifest.json`, then add `com.bugsplat.sdk` using one of the options below. Your Project Settings > BugSplat configuration is kept.
 
 ### OpenUPM
 Information on installing OpenUPM can be found [here](https://openupm.com). After installing OpenUPM, run the following command to add BugSplat to your project.
 
 ```sh
-openupm add com.bugsplat.unity
+openupm add com.bugsplat.sdk
 ```
 
 ### Git
@@ -47,27 +50,27 @@ https://github.com/BugSplat-Git/bugsplat-unity.git
 > [!TIP]
 > BugSplat recommends building with the IL2CPP backend for the best crash reporting experience. For more information please see the [Player Settings](#-player-settings) section.
 
-After installing `com.bugsplat.unity`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](Documentation~/usage.md) instructions.
+After installing `com.bugsplat.sdk`, you can import a sample project to help you get started with BugSplat. Click here if you'd like to skip the sample project and get straight to the [usage](Documentation~/usage.md) instructions.
 
-To import the sample, click the caret next to **Samples** to reveal the **my-unity-crasher** sample. Click **Import** to add the sample to your project.
+To import the sample, select **BugSplat** in the Package Manager, open the **Samples** tab, and click **Import** next to **my-unity-crasher**.
 
-![Importing the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/b7a39388-eb76-413a-a92f-72fd39c9a7d6)
+![Importing the Sample](Documentation~/images/package-manager-import-sample.png)
 
 
 In the Project Assets browser, open the **Sample** scene from `Samples > BugSplat > Version > my-unity-crasher > Scenes`.
 
+![Finding the Sample](Documentation~/images/sample-scene-in-project.png)
+
 Next, open **Edit > Project Settings > BugSplat**, click **Create** (or pick your project's existing asset), and enter the name of a database from your BugSplat account. The sample ships no options asset of its own, so it always reports to your database. To exercise everything it offers, also check **Post Exceptions In Editor** and every platform under **Upload Debug Symbols For** — see the [sample's README](Samples~/my-unity-crasher/README.md).
 
-![Finding the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/ba9aa64a-1d85-45a8-b11f-565520c30bcf)
-
-![Configuring BugSplat](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/a6250cea-a4da-44a8-b6cb-ff2467b0d978)
+![Configuring BugSplat](Documentation~/images/options.png)
 
 > [!NOTE]
 > The sample's UI labels use TextMeshPro. If the button text appears blank, import TMP Essentials via **Window > TextMeshPro > Import TMP Essential Resources**. TextMeshPro can't render without its default font asset, which is imported per-project and can't be bundled in the sample.
 
 Click **Play** and run a scenario from the **Crash Scenarios** menu to send an error report to BugSplat. Scenarios are grouped by the mechanism that captures them, and the menu is platform-aware — each platform lists only what it can capture. Native scenarios are disabled in the editor and need a built player; see the [sample README](https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Samples~/my-unity-crasher/README.md) for the full scenario matrix. To view the error report, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have selected the correct database.
 
-![Running the Sample](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/4418b736-dc88-496a-ada6-a27ad19032f1)
+![Running the Sample](Documentation~/images/sample-crash-scenarios.png)
 
 Navigate to the [Crashes](https://app.bugsplat.com/v2/crashes) page, and click the value in the ID column to see the details of your report, including the call stack, log file, and screenshot of your app when the error occurred.
 
@@ -120,7 +123,7 @@ Every player platform runs the same native reporter, [bugsplat-native](Documenta
 | Heap / full memory dumps | Yes | Yes | Yes | Yes | No | No |
 | Offline retry of reports | Yes | Yes | Yes | Yes | Yes | No |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
-| Automatic symbol upload | Yes (from a Windows editor) | Yes | Yes | Yes | Yes | No |
+| Automatic symbol upload | Yes | Yes | Yes | Yes | Yes | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions). In a player they are posted through the native SDK as structured reports, with a crash id and support-response URL like any other report; in the editor and on WebGL they post directly over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
 - **Native crashes** are on by default (`UseNativeCrashReporting`). An out-of-process `BugSplatMonitor` writes the dump while the player is frozen on Windows, macOS, Linux and Android; iOS uses an in-process handler. The runtime is compiled out of the editor, so play mode exercises the managed rows only.
@@ -131,7 +134,7 @@ Every player platform runs the same native reporter, [bugsplat-native](Documenta
 
 **Consoles.** On Xbox (GDK) a player reports managed exceptions. Native Xbox crash reporting through the BugSplat Xbox add-on, which is available to verified Xbox developers from the **Gaming Consoles** tab of your database's **Integrations** page in BugSplat, is not yet wired to bugsplat-native. PlayStation 5 and Nintendo Switch 2 crashes are collected by each platform's own crash reporting and processed by BugSplat; the console guides on the same tab cover Unity setup.
 
-Two things that don't fit the table: `Post(FileInfo minidump)` posts a minidump you produced yourself over HTTPS on every platform except WebGL; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, and iOS only — the Android symbol upload sends native `.so` symbols alone. Unity writes that file only when **Player Settings > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; the default, **Method Name**, leaves IL2CPP crash reports with generated C++ files and lines.
+Two things that don't fit the table: `Post(FileInfo minidump)` posts a minidump you produced yourself over HTTPS on every platform except WebGL; and IL2CPP's `LineNumberMappings.json`, which maps generated C++ frames back to C# names, files, and line numbers, is uploaded on Windows, macOS, iOS, and Android, under a per-platform name on macOS, iOS, and Android so builds of one version don't overwrite each other's mappings. Unity writes that file only when **Player Settings > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; the default, **Method Name**, leaves IL2CPP crash reports with generated C++ files and lines.
 
 ## 📚 Documentation
 
@@ -149,7 +152,7 @@ Everything above gets you reporting. These pages cover the rest.
 | [API](Documentation~/api.md) | Initialization (`BugSplat.Instance`, `BugSplat.Initialize`), every `BugSplatOptions` field, `Player.log` and privacy, native crash report attachments |
 | [Symbol Upload](Documentation~/symbol-upload.md) | Credentials, where they resolve from, environment variables |
 | [Migrating from 4.x](Documentation~/migrating-from-4x.md) | What 5.0.0 removed and renamed (options, constructor, shipped files), and what to change |
-| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — for scripts, CI, and AI agents |
+| [Automation](Documentation~/automation.md) | Setting up without the Editor UI — the options asset on disk, one batch-mode command, code-only initialization — and building in CI with the Unity CLI, for scripts, CI, and AI agents |
 
 ## 🧑‍💻 Contributing
 

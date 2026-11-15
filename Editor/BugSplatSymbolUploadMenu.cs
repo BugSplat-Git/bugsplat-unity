@@ -13,7 +13,7 @@ namespace BugSplatUnity.Editor
 		string clientId = string.Empty;
 		string clientSecret = string.Empty;
 
-		[MenuItem("BugSplat/Symbol Upload/Set Credentials...", false, 100)]
+		[MenuItem("Tools/BugSplat/Symbol Upload/Set Credentials...", false, 100)]
 		static void Open()
 		{
 			var window = GetWindow<BugSplatSymbolUploadCredentialsWindow>(true, "BugSplat Symbol Upload Credentials", true);
@@ -30,7 +30,7 @@ namespace BugSplatUnity.Editor
 			window.ShowUtility();
 		}
 
-		[MenuItem("BugSplat/Symbol Upload/Clear Credentials", false, 101)]
+		[MenuItem("Tools/BugSplat/Symbol Upload/Clear Credentials", false, 101)]
 		static void ClearCredentials()
 		{
 			var database = BuildPostprocessors.GetBugSplatOptions()?.Database;
@@ -51,7 +51,7 @@ namespace BugSplatUnity.Editor
 			EditorUtility.DisplayDialog("BugSplat", message, "OK");
 		}
 
-		[MenuItem("BugSplat/Symbol Upload/Check Credentials", false, 120)]
+		[MenuItem("Tools/BugSplat/Symbol Upload/Check Credentials", false, 120)]
 		static void CheckCredentials()
 		{
 			var database = BuildPostprocessors.GetBugSplatOptions()?.Database;
@@ -65,7 +65,7 @@ namespace BugSplatUnity.Editor
 			{
 				EditorUtility.DisplayDialog(
 					"BugSplat",
-					$"No symbol upload credentials found for '{database}'.\n\nSet {BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and {BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use BugSplat > Symbol Upload > Set Credentials.",
+					$"No symbol upload credentials found for '{database}'.\n\nSet {BugSplatSymbolUploadCredentials.ClientIdEnvironmentVariable} and {BugSplatSymbolUploadCredentials.ClientSecretEnvironmentVariable}, or use Tools > BugSplat > Symbol Upload > Set Credentials.",
 					"OK");
 				return;
 			}

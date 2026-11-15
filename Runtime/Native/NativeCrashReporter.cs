@@ -154,7 +154,7 @@ namespace BugSplatUnity.Runtime.Native
 			}
 			catch (DllNotFoundException ex)
 			{
-				LastError = $"the bugsplat native library could not be loaded ({ex.Message}). It ships in Runtime/Plugins/<platform> of com.bugsplat.unity; run Tools~/fetch-native-runtime to populate it.";
+				LastError = $"the bugsplat native library could not be loaded ({ex.Message}). It ships in Runtime/Plugins/<platform> of com.bugsplat.sdk; run Tools~/fetch-native-runtime to populate it.";
 				return false;
 			}
 			catch (EntryPointNotFoundException ex)

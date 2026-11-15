@@ -7,12 +7,12 @@ namespace BugSplatUnity.Editor
     [CustomEditor(typeof(BugSplatOptions))]
     public class BugSplatOptionsEditor : UnityEditor.Editor
     {
-        private const string logoPath = "Packages/com.bugsplat.unity/Editor/EditorResources/logo.png";
+        private const string logoPath = "Packages/com.bugsplat.sdk/Editor/EditorResources/logo.png";
         private const string integrationsURLFormat = "https://app.bugsplat.com/v2/database/integrations{0}";
         private const string integrationsText = "A Client ID and Client Secret pair can be generated on the BugSplat <a>Integrations</a> page.";
         private const string integrationsQueryString = "?database={0}";
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
-        private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
+        private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via Tools > BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
         private const int integrationsPaddingTop = 5;
         private const int integrationsPaddingBottom = 5;

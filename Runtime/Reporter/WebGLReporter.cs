@@ -83,22 +83,19 @@ namespace BugSplatUnity.Runtime.Reporter
         {
             if (clientSettings.CaptureEditorLog)
             {
-                // TODO BG support this
-                // https://github.com/BugSplat-Git/bugsplat-unity/issues/33
+                // Not supported on WebGL, which reports C# exceptions only (README, Platform Support).
                 Debug.Log($"BugSplat info: CaptureEditorLog is not implemented on this platform");
             }
 
             if (clientSettings.CapturePlayerLog)
             {
-                // TODO BG support this
-                // https://github.com/BugSplat-Git/bugsplat-unity/issues/32
+                // Not supported on WebGL, which reports C# exceptions only (README, Platform Support).
                 Debug.Log($"BugSplat info: CapturePlayerLog is not implemented on this platform");
             }
 
             if (clientSettings.CaptureScreenshots)
             {
-                // TODO BG support this
-                // https://github.com/BugSplat-Git/bugsplat-unity/issues/34
+                // Not supported on WebGL, which reports C# exceptions only (README, Platform Support).
                 Debug.Log("BugSplat info: CaptureScreenshots is not implemented on this platform");
             }
 

@@ -108,6 +108,35 @@ After initialization, `BugSplat.Instance` exposes `Attributes`, `Attachments`, t
 
 To turn BugSplat **off**, define **`BUGSPLAT_DISABLED`** — no initialization, no build validation — or uncheck `Enabled` on the asset for a project-wide switch. Defining it per build target is how you keep BugSplat out of development builds while leaving it on for QA and release. Set the define per build target under **Edit > Project Settings > Player > Scripting Define Symbols**, from a script with `PlayerSettings.SetScriptingDefineSymbols`, or in `ProjectSettings/ProjectSettings.asset` under `scriptingDefineSymbols`.
 
+## Building in CI with the Unity CLI
+
+BugSplat's build steps run in every batch-mode build, so the [Unity CLI](https://unity.com/blog/meet-the-unity-cli)'s `unity build` needs nothing BugSplat-specific beyond credentials. The native crash reporting files are added and symbols are uploaded just as they are for a build from the editor. Set the [symbol upload credentials](symbol-upload.md#symbol-upload-credentials) as environment variables, then build:
+
+```sh
+export SYMBOL_UPLOAD_CLIENT_ID=...       # from your CI's secret store
+export SYMBOL_UPLOAD_CLIENT_SECRET=...
+unity build . --target Android --output-path ./out/MyGame.aab
+```
+
+With neither the variables nor a credentials file, the build still succeeds; symbol upload is skipped with a warning in the log. The Unity CLI is in beta, so check `unity build --help` for the flags your version takes.
+
+In GitHub Actions, map the secrets onto the step that builds:
+
+```yaml
+- name: Build
+  env:
+    SYMBOL_UPLOAD_CLIENT_ID: ${{ secrets.SYMBOL_UPLOAD_CLIENT_ID }}
+    SYMBOL_UPLOAD_CLIENT_SECRET: ${{ secrets.SYMBOL_UPLOAD_CLIENT_SECRET }}
+  run: unity build . --target Android --output-path ./out/MyGame.aab
+```
+
+A platform's symbols are uploaded only when its `UploadDebugSymbolsFor…` option is on. Windows and Xbox default to on; macOS, iOS, and Android default to off. When they are uploaded depends on the platform:
+
+- **Windows**: during `unity build`. Build on a Windows runner. **Copy PDB files** can only be read by a Windows editor, and Windows IL2CPP builds need one anyway. See [Windows](windows.md).
+- **macOS**: during `unity build`, for a player built straight to a `.app`. An Xcode project export (**Create Xcode Project**) uploads nothing, and unlike iOS it gets no upload build phase, because the dSYMs don't exist until Xcode builds it. Upload them with [`symbol-upload`](https://github.com/BugSplat-Git/symbol-upload) after your `xcodebuild` step. See [macOS](macos.md).
+- **Android**: during `unity build`, from the `*.symbols.zip` Unity writes when **Debug Symbols** is **Full**. Nothing is uploaded from an **Export Project** build. See [Android](android.md).
+- **iOS**: not during `unity build`, which only writes the Xcode project. The upload is an Xcode build phase that runs when you build that project, so set the two variables on the `xcodebuild` step too. See [iOS](ios.md).
+
 ## What you will see when it is wrong
 
 Every message names both fixes, so a log is enough to act on:
