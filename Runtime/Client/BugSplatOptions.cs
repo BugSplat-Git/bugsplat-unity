@@ -79,67 +79,56 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Should BugSplat upload exceptions when in editor. Off by default so play mode exceptions stay out of your database.")]
 		public bool PostExceptionsInEditor;
 
-		[Tooltip("Paths to files, relative to Application.persistentDataPath, to attach to managed reports, and to native crash reports where native crash reporting is enabled. Entries that are not relative are skipped with a warning.")]
+		[Tooltip("Paths to files, relative to Application.persistentDataPath, to attach to managed reports and to native crash reports. Entries that are not relative are skipped with a warning.")]
 		public List<string> PersistentDataFileAttachmentPaths;
 
-		[Header("Windows")]
-		[Tooltip("Use native crash reporting library (bugsplat-windows) for Windows builds. Captures native crashes in addition to .NET exceptions. Works with both Mono and IL2CPP. On by default. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForWindows = true;
+		[Header("Native Crash Reporting")]
+		[Tooltip("Start bugsplat-native in players on Windows, macOS, Linux, Android and iOS: native crashes, hangs and captures are reported out of process, and managed exceptions post through the same SDK. Works with both Mono and IL2CPP. Has no effect in the editor or on WebGL. When off, only the .NET handler runs and reports post directly over HTTP.")]
+		public bool UseNativeCrashReporting = true;
 
-		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default, unlike the other platforms - Windows has always uploaded automatically, so defaulting this off would silently stop existing projects symbolicating. Also requires Copy PDB Files in Build Settings - only a Windows editor can check that setting, so from other editors the upload runs regardless and a warning is logged.")]
+		[Tooltip("What happens to a native report once it exists. Dialog: the BugSplat crash dialog on desktop (mobile uploads on the next launch). Quiet: upload with no UI. Manual: leave reports on disk for PostPendingReportsAsync.")]
+		public UploadPolicy UploadPolicy = UploadPolicy.Dialog;
+
+		[Tooltip("How much process memory a crash dump carries. Heap includes the managed heaps so objects resolve in a debugger; Full is every readable region. Larger dumps take longer to upload and are subject to your database's size limit.")]
+		public DumpType DumpType = DumpType.Normal;
+
+		[Tooltip("Hang detection timeout in milliseconds; 0 (default) disables it. Choose a timeout longer than your longest expected frame (loading screens, shader warmup), or those get reported as hangs. BugSplat sends the heartbeat every frame.")]
+		public int HangDetectionTimeoutMs = 0;
+
+		[Tooltip("Report: dump the live process, upload a hang report and let the game continue. Report And Terminate: also offer the user Wait / Close and end the game on Close.")]
+		public HangPolicy HangPolicy = HangPolicy.Report;
+
+		[Tooltip("Open the support-response URL in the browser after an interactive crash report upload on desktop.")]
+		public bool OpenSupportUrl = true;
+
+		[Tooltip("Serialization of managed exception reports posted through the native SDK. XML is processed by every BugSplat server; JSON requires a server that accepts JSON structured reports.")]
+		public ManagedReportFormat ManagedReportFormat = ManagedReportFormat.Xml;
+
+		[Header("Symbols")]
+		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default. Also requires Copy PDB Files in Build Settings - only a Windows editor can check that setting, so from other editors the upload runs regardless and a warning is logged.")]
 		public bool UploadDebugSymbolsForWindows = true;
 
-		[Tooltip("Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently.")]
-		public bool WindowsShowCrashDialog = true;
+		[Tooltip("Upload debug symbols (dSYMs, as Breakpad .sym files) to BugSplat for macOS builds.")]
+		public bool UploadDebugSymbolsForMac;
 
-		[Tooltip("Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection. When a hang is detected, BugSplat uploads a hang report and terminates the process, so choose a timeout longer than your longest expected frame (e.g. loading screens).")]
-		public int WindowsHangDetectionTimeoutMs = 0;
+		[Tooltip("Upload debug symbols (as Breakpad .sym files) to BugSplat for Linux builds.")]
+		public bool UploadDebugSymbolsForLinux;
+
+		[Tooltip("Add a build script phase to the Xcode project to upload the debug symbols to BugSplat.")]
+		public bool UploadDebugSymbolsForIos;
+
+		[Tooltip("Upload the symbols.zip Unity generates for Android builds to BugSplat.")]
+		public bool UploadDebugSymbolsForAndroid;
 
 		[Header("Xbox")]
+		// TODO(#255): bugsplat-native has no Xbox build, and the Xbox add-on's GDKX BugSplat.dll exports the
+		// bugsplat-windows BugSplat_* API, which nothing calls any more. Until one of them changes, Xbox players
+		// report managed exceptions only and this option has no effect.
 		[Tooltip("Use native crash reporting for Xbox (GDK) builds. On by default. Requires the BugSplat Xbox add-on, available to verified Xbox developers from the Gaming Consoles tab of your database's Integrations page in BugSplat; without it the player logs a warning and reports managed exceptions only.")]
 		public bool UseNativeCrashReportingForXbox = true;
 
 		[Tooltip("Upload .pdb, .exe and .dll symbols to BugSplat for Xbox builds. On by default, as on Windows: Xbox crashes don't symbolicate without them, and Unity's public symbol server doesn't have the Xbox player's symbols. Done by the BugSplat Xbox add-on's build step, with the same symbol upload credentials as the other platforms.")]
 		public bool UploadDebugSymbolsForXbox = true;
-
-		[Header("macOS")]
-		[Tooltip("Use native crash reporting framework for macOS builds. On by default. Requires the IL2CPP scripting backend; a Mono player logs a warning and uses the .NET handler only.")]
-		public bool UseNativeCrashReportingForMac = true;
-
-		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
-		public bool UploadDebugSymbolsForMac;
-
-		[Tooltip("Submit macOS crash reports without asking the user. Off by default - the convention on desktop, and bugsplat-apple's own macOS default - so a native crash shows the BugSplat dialog on the next launch and the user can describe what happened. Maps to bugsplat-apple's autoSubmitCrashReport.")]
-		public bool MacAutoSubmitCrashReport;
-
-		[Tooltip("Submit macOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Mac Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
-		public bool MacAutoSubmitFatalHangReport = true;
-
-		[Tooltip("Seconds the macOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Positive values below 0.1 are clamped to 0.1 by the tracker. Zero or less is not a usable threshold, so it falls back to bugsplat-apple's own default and logs a warning.")]
-		public float MacHangDetectionThresholdSeconds = 5f;
-
-		[Header("iOS")]
-		[Tooltip("Use crash reporting framework for iOS builds. On by default. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForIos = true;
-
-		[Tooltip("Add a build script phase to the Xcode project to upload the Debug symbols to BugSplat.")]
-		public bool UploadDebugSymbolsForIos;
-
-		[Tooltip("Submit iOS crash reports without asking the user. On by default - the convention on mobile, and bugsplat-apple's own iOS default. Turn this off to show the BugSplat dialog on the next launch instead. Maps to bugsplat-apple's autoSubmitCrashReport.")]
-		public bool IosAutoSubmitCrashReport = true;
-
-		[Tooltip("Submit iOS fatal hang reports without asking the user. On by default, because the app was frozen and then terminated so the user was never in a position to consent. Turn this off to ask instead, which also requires Ios Auto Submit Crash Report to be off. Maps to bugsplat-apple's autoSubmitFatalHangReport.")]
-		public bool IosAutoSubmitFatalHangReport = true;
-
-		[Tooltip("Seconds the iOS main thread must be blocked before BugSplat declares a hang. Defaults to 5, the top of bugsplat-apple's recommended 1-5 range, because Unity routinely blocks the main thread for seconds at a time on scene loads and shader warmup and a false positive costs a bogus hang report. Positive values below 0.1 are clamped to 0.1 by the tracker. Zero or less is not a usable threshold, so it falls back to bugsplat-apple's own default and logs a warning.")]
-		public float IosHangDetectionThresholdSeconds = 5f;
-
-		[Header("Android")]
-		[Tooltip("Use crash reporting library for Android builds. On by default. If set to false, will only use .NET handler.")]
-		public bool UseNativeCrashReportingForAndroid = true;
-
-		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
-		public bool UploadDebugSymbolsForAndroid;
 
 		/// <summary>
 		/// The key under which the editor stores the project's options asset in EditorBuildSettings.
@@ -161,11 +150,6 @@ namespace BugSplatUnity.Runtime.Client
 			"Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a " +
 			"single asset is selected automatically. Scripted setup: " +
 			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
-
-		internal const string MacNativeRequiresIl2CppMessage =
-			"BugSplat: native macOS crash reporting requires the IL2CPP scripting backend, so this Mono player " +
-			"reports managed exceptions only. Set Player Settings > Other Settings > Scripting Backend to IL2CPP, " +
-			"or uncheck Use Native Crash Reporting For Mac in Edit > Project Settings > BugSplat.";
 
 #if !UNITY_EDITOR
 		private static BugSplatOptions preloaded;

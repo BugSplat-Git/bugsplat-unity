@@ -1,6 +1,40 @@
 [&larr; BugSplat for Unity](../README.md)
 
-# 🚚 Migrating from 4.x
+# 🚚 Migrating from 4.x (and from the 5.0 pre-releases)
+
+Version 6.0.0 replaces the per-platform native plugins — bugsplat-windows on Windows, bugsplat-apple on macOS and iOS, bugsplat-android on Android — with one C# binding over [bugsplat-native](native.md). The public surface you call from game code (`BugSplat`, `Post`, `PostFeedback`, `Attributes`, `Attachments`, `AttachNativeLogFile`) is unchanged; the options and a few platform-specific calls are not. BugSplat also starts differently: see [Initialization](#initialization).
+
+## Options asset
+
+Open every `BugSplatOptions` asset once after upgrading. Unity keeps the fields it still knows and drops the rest silently, so check the **Native Crash Reporting** section:
+
+| 4.x / 5.0 pre-release field | 6.0.0 |
+| --- | --- |
+| `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, `UseNativeCrashReportingForAndroid` | One `UseNativeCrashReporting` (default **on**). Native crash reporting no longer needs opting in per platform; turn it off only for platforms you cannot ship the runtime on. |
+| `WindowsShowCrashDialog` | `UploadPolicy` (`Dialog` / `Quiet` / `Manual`), on every desktop platform. |
+| `WindowsHangDetectionTimeoutMs`, `MacHangDetectionThresholdSeconds`, `IosHangDetectionThresholdSeconds` | `HangDetectionTimeoutMs` (milliseconds, `0` = off) and `HangPolicy`, on every platform. |
+| `MacAutoSubmitCrashReport`, `IosAutoSubmitCrashReport`, `MacAutoSubmitFatalHangReport`, `IosAutoSubmitFatalHangReport` | Gone. Desktop shows the dialog at crash time (`UploadPolicy`); mobile uploads on the next launch without asking. |
+| — | New: `DumpType`, `OpenSupportUrl`, `ManagedReportFormat`, `UploadDebugSymbolsForLinux`. |
+
+## Code
+
+- `new BugSplat(database, application, version, useNativeLibIos, useNativeLibAndroid, useNativeLibMac, useNativeLibWin, capturePlayerLog, autoSubmitCrashReport, autoSubmitFatalHangReport, hangDetectionThresholdSeconds, nativeAttachments)` is now `new BugSplat(database, application, version, useNativeCrashReporting = true, capturePlayerLog = true, NativeSettings nativeSettings = null, IEnumerable<string> nativeAttachments = null)`.
+- `SetWindowsCrashDialogEnabled(bool)` is `SetCrashDialogEnabled(bool)` and works on every desktop platform.
+- `SetWindowsHangDetectionTimeout(int)` is gone: the timeout is read once at startup from `HangDetectionTimeoutMs` / `NativeSettings`. BugSplat sends a heartbeat every frame; call `bugsplat.Heartbeat()` yourself only to feed it from somewhere else.
+- New: `NativeCrashReportingEnabled`, `NativeVersion`, `NativeSettings`, `Environment`, `CaptureReport()`, `Heartbeat()`, `WatchThread(name)` / `UnwatchThread()`, `PostPendingReportsAsync()`.
+- Managed exceptions in a player are now posted through the native SDK as structured reports (crash type 21, XML) instead of the Unity exception type over HTTP. They carry the same frames, `Player.log`, screenshot and attachments, and get a crash id and support-response URL like every other report. In the editor and on WebGL nothing changed.
+- The `ExceptionReporterPostResult.Response` your callbacks read is populated from the native upload the same way; `HttpResponseMessage` callbacks (`PostFeedback`, `Post(FileInfo)`) still receive a status code and a JSON body with `status`, `crashId` and `infoUrl`.
+
+## Shipping
+
+- **Windows** ships `BugSplatMonitor.exe`, `BugSplatReporter.exe`, `BugSplatWer.dll` and `theme/` next to the executable. `BugSplatRc.dll` is gone. The WER registry value still names `BugSplatWer.dll`.
+- **macOS** ships `Contents/Helpers/BugSplatMonitor`, `BugSplatReporter.app` and `theme/`; sign them with the app. The `BugSplat-macOS.dylib` and `bugsplat-logo.png` are gone.
+- **Linux** gains native crash reporting: `BugSplatMonitor`, `BugSplatReporter` and `theme/` next to the player.
+- **Android** ships `libbugsplat.so` and `libBugSplatMonitor.so` instead of the `bugsplat-android` AAR; there is no Java API to call.
+- **iOS** links `libbugsplat.a` instead of `BugSplat.xcframework`.
+- Symbols for macOS, Linux, iOS and Android are uploaded as Breakpad `.sym` files (`symbol-upload --dumpSyms`); Windows keeps PDBs.
+
+## Initialization
 
 Version 5.0.0 changes how BugSplat starts. Nothing needs to be in a scene anymore:
 
@@ -9,8 +43,9 @@ Version 5.0.0 changes how BugSplat starts. Nothing needs to be in a scene anymor
 - **Builds fail when no options asset is selected, or the selected one has an empty database.** A misconfigured project used to build a player that silently reported nothing. If your code calls `BugSplat.Initialize` itself, select an asset with **Initialize Automatically** off.
 - `BugSplatRef` has been removed. It was an implementation detail of `BugSplatManager`.
 - **Your existing options asset needs no edits.** `Enabled`, `Initialize Automatically`, and the three capture options are new fields, and an asset written before they existed loads with all of them **on** — so reporting keeps working exactly as it did. `Post Exceptions In Editor` now defaults to off, but only for new assets: 4.x defaulted it to on, and an existing asset keeps the value saved in it. Uncheck it if you want play mode exceptions kept out of your database.
-- **Native crash reporting is now on by default for new assets** on Windows, macOS, iOS, and Android. An existing asset keeps the values saved in it, with one exception: `UseNativeCrashReportingForWindows` is new in 5.0, so an asset from 4.x turns it **on**. Uncheck it if you do not want `BugSplatMonitor` and the crash dialog in your Windows player.
 - Not ready to configure BugSplat, or want it only in QA and release builds? Uncheck **Enabled** on the asset, or define `BUGSPLAT_DISABLED` for the targets you want it off for. A release build fails on a missing database; a development build only warns.
+
+## From 4.x specifically
 
 Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash reporting:
 
@@ -20,4 +55,4 @@ Version 5.0.0 replaces the Unity crash-folder minidump flow with native crash re
 - `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`. Storing them there put the secret in version control and inside shipped builds. Set them per database from **Tools > BugSplat > Symbol Upload > Set Credentials**, or with environment variables in CI.
 - Those environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET` to `SYMBOL_UPLOAD_CLIENT_ID`/`SYMBOL_UPLOAD_CLIENT_SECRET`, matching the names the `symbol-upload` CLI already reads. The old names are no longer read. See [Symbol Upload Credentials](symbol-upload.md#symbol-upload-credentials).
 - **Delete any sample you imported under 4.x, then re-import it.** Package Manager copies samples into `Assets/`, and the folder it copies them to is version stamped, so an old copy stays in your project after the upgrade and keeps getting compiled. The 4.x sample calls methods 5.0.0 removed, so it will fail to compile until you delete it. Remove `Assets/Samples/BugSplat/<old version>/` and import the sample again from Package Manager. Deleting that folder discards everything in it, so copy out anything you changed and want to keep first — most often the `BugSplatOptions` asset, but the scene and scripts too if you edited them.
-- **iOS projects exported with Append, or checked into version control, keep their old "Upload dSYM files to BugSplat" build phase.** Unity matches an existing phase on its script body, so the rewritten phase is not recognised as the same one. Delete the old phase and build again, or re-export with Replace. A phase generated before 5.0.0 contains your Client ID and Secret in plain text — **rotate them**.
+- **iOS projects exported with Append, or checked into version control, can carry an old "Upload dSYM files to BugSplat" build phase.** With `UploadDebugSymbolsForIos` on, the next export from Unity replaces it with the current phase, and the build log warns when the old phase was generated before 5.0.0 and contains your Client ID and Secret in plain text. If it does, **rotate them**. With `UploadDebugSymbolsForIos` off, the old phase is left in place, so delete it by hand.

@@ -243,20 +243,12 @@ namespace Crasher
 		{
 			get
 			{
-#if UNITY_STANDALONE_WIN
-				const string option = "Use Native Crash Reporting For Windows";
-#elif UNITY_GAMECORE
+#if UNITY_GAMECORE
 				const string option = "Use Native Crash Reporting For Xbox (and install the BugSplat for Xbox package)";
-#elif UNITY_STANDALONE_OSX
-				const string option = "Use Native Crash Reporting For Mac (and build with IL2CPP)";
-#elif UNITY_IOS
-				const string option = "Use Native Crash Reporting For Ios";
-#elif UNITY_ANDROID
-				const string option = "Use Native Crash Reporting For Android";
 #else
-				const string option = "Use Native Crash Reporting for this platform";
+				const string option = "Use Native Crash Reporting";
 #endif
-				return $"Turn on {option} in Edit > Project Settings > BugSplat and rebuild.";
+				return $"Check the player log, and that {option} is on in Edit > Project Settings > BugSplat, then rebuild.";
 			}
 		}
 
@@ -276,12 +268,12 @@ namespace Crasher
 				$"Editor ({PlatformName} build target) — managed and feedback scenarios run here. " +
 				"Native, fail-fast, and hang scenarios are disabled: build a player to run them.";
 			statusText.color = Amber;
-#elif UNITY_STANDALONE_WIN || UNITY_GAMECORE || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_ANDROID
+#elif UNITY_STANDALONE_WIN || UNITY_GAMECORE || UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX || UNITY_IOS || UNITY_ANDROID
 			if (!bugsplat.NativeCrashReportingEnabled)
 			{
 				statusText.text =
-					$"{PlatformName} player — native crash reporting is OFF, so native and hang scenarios " +
-					$"are disabled. {NativeReportingHint}";
+					$"{PlatformName} player — native crash reporting did not start, so native, capture, and hang " +
+					$"scenarios are disabled; managed scenarios still report. {NativeReportingHint}";
 				statusText.color = BugSplatRed;
 				return;
 			}
@@ -299,7 +291,7 @@ namespace Crasher
 				statusText.color = BugSplatRed;
 			}
 #else
-			statusText.text = $"{PlatformName} player — native crash reporting is active.";
+			statusText.text = $"{PlatformName} player — native crash reporting is active (bugsplat-native {bugsplat.NativeVersion}).";
 			statusText.color = BugSplatGreen;
 #endif
 #else

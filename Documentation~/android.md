@@ -2,13 +2,13 @@
 
 # 🤖 Android
 
-The bugsplat-unity plugin supports crash reporting for native C++ crashes on Android. Native crash reporting (`UseNativeCrashReportingForAndroid`) is on by default; to upload symbols as well, set `UploadDebugSymbolsForAndroid` to `true` on your `BugSplatOptions` asset (**Edit > Project Settings > BugSplat**).
+Native Android crash reporting comes from [bugsplat-native](native.md): Crashpad's at-crash handler, shipped as `libBugSplatMonitor.so`, is executed when a native crash happens and writes the minidump; the report uploads through the SDK on the next launch, without a dialog.
 
-You'll also need to configure the scripting backend to use IL2CPP, target **ARM64**, and set the Minimum API Level to **Android 8.0 (API level 26)** or higher. ARM64 is the only configuration BugSplat tests; the bundled `bugsplat-android-release.aar` also ships `armeabi-v7a` and `x86_64` native libraries, but those ABIs are untested and unsupported.
+Configure the scripting backend to **IL2CPP**, target **ARM64**, and set the Minimum API Level to **Android 8.0 (API level 26)** or higher. `UseNativeCrashReporting` is on by default.
 
 ![Android Player Settings](https://github.com/BugSplat-Git/bugsplat-unity/assets/2646053/9ec8f5b7-8dfd-43db-84e0-7e7d1229324a)
 
-When you build your app for Android, set **Debug Symbols** to **Full** in the Android build settings, so Unity writes a `*.symbols.zip` next to the APK or AAB; that archive is what BugSplat uploads. **Full** carries file and line information, while **Public** carries function names only. **Symbol file extension** can be either setting: BugSplat renames Unity 6's `libil2cpp.so.dbg` and `libil2cpp.so.sym` files to `libil2cpp.so`, the module name crashes report, before uploading.
+When you build your app for Android, enable `UploadDebugSymbolsForAndroid` and set **Debug Symbols** to **Full** in the Android build settings, so Unity writes a `*.symbols.zip` next to the APK or AAB; that archive is what BugSplat uploads. **Full** carries file and line information, while **Public** carries function names only. **Symbol file extension** can be either setting: BugSplat renames Unity 6's `libil2cpp.so.dbg` and `libil2cpp.so.sym` files to `libil2cpp.so`, the module name crashes report, before uploading.
 
 ![Android Build Settings](images/android-build-profile-debug-symbols.png)
 
@@ -16,19 +16,16 @@ For IL2CPP builds, BugSplat also uploads Unity's `LineNumberMappings.json`, as `
 
 With **Export Project** enabled nothing is uploaded, since the symbols archive doesn't exist until you build the exported project. The mappings are in the exported project at `unityLibrary/src/main/Il2CppOutputProject/Source/il2cppOutput/Symbols/LineNumberMappings.json`; to upload them yourself, rename that file to `LineNumberMappings-android.json` and upload it with `symbol-upload` 11.2.0 or later.
 
-## How native crashes are reported
-
-- **Android 12 (API level 31) and later:** Android writes a tombstone for the crashed process: its own unwind of every thread, with registers. BugSplat uploads it on the **next launch** of the app, as an `Android.Tombstone` report. The report carries the application, version, attributes, and attachment list of the session that crashed. Reports are sent from the app's main process.
-- **Android 8 to 11 (API levels 26 to 30):** Crashpad writes a minidump and uploads it at crash time.
-
 ## Attachments
 
-With `UseNativeCrashReportingForAndroid` enabled, paths listed in `BugSplatOptions.PersistentDataFileAttachmentPaths` are resolved against `Application.persistentDataPath` and registered with the native crash reporter at startup, so they ride along with native Android crash reports as well as managed ones. With it disabled they still reach managed reports, and nothing is registered natively.
-
-`AttachNativeLogFile` and `DetachNativeLogFile` work on Android as they do on Windows, macOS, and iOS. Files are read when a crash is uploaded, so a log can be attached before anything has written to it. On Android 12 and later that is the next launch, so a file is sent as it is then, and attachments past 20 MB in total are skipped.
+Paths listed in `BugSplatOptions.PersistentDataFileAttachmentPaths` are resolved against `Application.persistentDataPath` and registered with the native reporter at startup; `AttachNativeLogFile` and `DetachNativeLogFile` work at any point in the session. Files are copied into the report at crash time.
 
 Unity does not write a `Player.log` on Android — log output goes to logcat and `Application.consoleLogPath` is empty — so `CapturePlayerLog` has no effect on Android reports.
 
-## ANR Reporting
+## Hang detection and ANRs
 
-When `UseNativeCrashReportingForAndroid` is enabled, BugSplat also reports ANRs (Application Not Responding events). No additional configuration is required. On the next launch, BugSplat queries the OS for ANRs that occurred during the previous session and uploads them as `Android.ANR` reports. ANR reporting requires **Android 11 (API level 30)** or higher at runtime; on older OS versions it is silently skipped while native crash reporting continues to work.
+Set `HangDetectionTimeoutMs` to have the SDK's watchdog report a stalled Unity main thread (the heartbeat BugSplat sends every frame stops). Application Not Responding events raised by the OS are imported on the next launch on Android 11 (API level 30) and higher.
+
+## Symbols
+
+`UploadDebugSymbolsForAndroid` uploads the `.so` files from Unity's `symbols.zip` as Breakpad `.sym` files (`symbol-upload --dumpSyms`). It is skipped when **Export Project** is enabled or **Debug Symbols** is **None**. See [Symbol Upload](symbol-upload.md) for credentials.

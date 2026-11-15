@@ -10,9 +10,8 @@ namespace Crasher.CrasherEditor
 	/// Turns off "Debug executable" in the exported Xcode project's Run action.
 	///
 	/// This sample exists to crash, and a crash under a debugger never reaches BugSplat: LLDB claims
-	/// the Mach exception ports before PLCrashReporter can, and bugsplat-apple suppresses hang
-	/// detection outright while a debugger is attached. Build And Run leaves the debugger on, so
-	/// every scenario in the menu appears to do nothing.
+	/// the Mach exception ports before bugsplat-native's handler can. Build And Run leaves the
+	/// debugger on, so every scenario in the menu appears to do nothing.
 	///
 	/// This lives in the sample rather than in the BugSplat package on purpose. Disabling a
 	/// project's debugger is not a decision a crash reporter should make for its users, but it is the
