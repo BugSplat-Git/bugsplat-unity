@@ -163,6 +163,10 @@ extern "C" {
 		[[BugSplat shared] setValue:createNSStringFrom(value) forAttribute:createNSStringFrom(key)];
 	}
 
+	void _removeNativeAttribute(const char* key) {
+		[[BugSplat shared] setValue:nil forAttribute:createNSStringFrom(key)];
+	}
+
 	void _setNativeUser(const char* user) {
 		[BugSplat shared].userName = createNSStringFrom(user);
 	}

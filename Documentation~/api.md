@@ -81,6 +81,19 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 > [!NOTE]
 > `PersistentDataFileAttachmentPaths` entries are relative to `Application.persistentDataPath`, so write `logs/session.log`, not `/Users/you/Desktop/session.log`. An absolute path is skipped with a warning that quotes the entry as you wrote it: a path from the machine that authored the options asset would not exist on a teammate's machine, in CI, or on a player's device, and the sandboxed platforms cannot read outside their own container at all.
 
+## Attributes on Native Crash Reports
+
+Where native crash reporting is enabled, `Attributes` is mirrored to the native crash reporter as it changes, so a native crash report carries the attributes set at the moment of the crash. Removing a key or calling `Clear` removes it there too:
+
+```cs
+bugsplat.Attributes["level"] = "3";
+bugsplat.Attributes.Remove("level");
+```
+
+On macOS, iOS and Android the attribute is gone from later native crash reports. The Windows SDK has no way to remove an attribute, so on Windows and Xbox it stays on native crash reports with an empty value. `SetNativeAttribute` and `RemoveNativeAttribute` change the native reporter directly, without touching `Attributes` or managed posts.
+
+`Attributes` can be read and changed from any thread.
+
 ## Player.log and privacy
 
 `CapturePlayerLog` is **enabled by default** on both construction paths — a new `BugSplatOptions` asset and a `BugSplat` created in code both start with it on — because `Player.log` is the most useful attachment on a crash report. WebGL is the exception: the platform has no `Player.log`, so a `BugSplat` created in code there defaults to off and the setting has no effect. Unity doesn't write a `Player.log` on Android or iOS either, so there the setting is on but has nothing to attach. Be aware that Unity writes it under the user's profile directory on every desktop platform, and it records file system paths that contain the operating system username. If you would rather not collect that, uncheck **Capture Player Log** on your options asset, or set the property in code:
