@@ -2,7 +2,7 @@
 
 # 🔑 Symbol Upload
 
-How BugSplat authenticates the post-build symbol upload, and where those credentials come from.
+How BugSplat authenticates the post-build symbol upload, where those credentials come from, and what happens when an upload stalls or fails.
 
 ## Symbol Upload Credentials
 
@@ -16,6 +16,14 @@ Credentials are generated on BugSplat's [Integrations](https://app.bugsplat.com/
 Because the file lives in your home directory rather than the project, there is nothing to add to `.gitignore` and nothing to strip out of a build.
 
 > **Upgrading from 4.x:** `SymbolUploadClientId` and `SymbolUploadClientSecret` have been removed from `BugSplatOptions`, and the environment variables are renamed from `BUGSPLAT_CLIENT_ID`/`BUGSPLAT_CLIENT_SECRET`. Move your credentials to the menu or the new variables. **If an options asset holding credentials has ever been committed, rotate them** — prior versions serialized both values into player builds and into the generated `project.pbxproj`.
+
+## Timeouts and Failures
+
+The editor waits for each upload to finish. In the editor a progress bar shows how long it has been running and the uploader's latest output, and its **Cancel** button stops the upload; in batch mode the log gets a line every minute instead.
+
+An upload that runs longer than **`SymbolUploadTimeoutMinutes`** (default `30`) is stopped and logged as an error, so a network outage or security software holding the uploader cannot hang the editor or a CI job. Thirty minutes leaves room for gigabytes of `.pdb` files on a slow connection; raise it if your symbols legitimately take longer, or set `0` to wait indefinitely.
+
+A failed, timed-out, or cancelled upload is logged as an error, followed by a summary naming every upload that failed. The player is already built and works, so by default the build still succeeds. Turn on **`FailBuildOnSymbolUploadError`** to fail the build instead, which is what you usually want in CI: a build whose crash reports won't symbolicate stops there rather than shipping. Missing credentials are not a failure; the upload is skipped with a warning, as above.
 
 ## BugSplat Environment Variables
 

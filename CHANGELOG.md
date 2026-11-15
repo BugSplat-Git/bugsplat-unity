@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `BugSplatOptions.SymbolUploadTimeoutMinutes` and `FailBuildOnSymbolUploadError`. A post-build symbol upload that runs longer than the timeout (30 minutes by default; `0` waits indefinitely) is stopped and logged as an error instead of hanging the editor or a CI job. The same limit applies to downloading the uploader on its first run, such as on a fresh CI runner. A failed upload still lets the build succeed by default; turn on `FailBuildOnSymbolUploadError` to fail it instead, for CI that should stop on a build whose crash reports won't symbolicate ([#171](https://github.com/BugSplat-Git/bugsplat-unity/issues/171)).
+- Symbol uploads show a progress bar in the editor, with how long the upload has been running, the uploader's latest output, and a **Cancel** button. Batch-mode builds log a progress line every minute instead.
+- `BugSplatOptions.WindowsLineNumberMappingsPath`, for a Windows build whose `LineNumberMappings.json` BugSplat doesn't find on its own ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+- A Windows build warns as soon as it starts when `UploadDebugSymbolsForWindows` is on but **Copy PDB files** is off, since that combination uploads no symbols. Previously the only sign was a warning after the build finished. **Edit > Project Settings > BugSplat** shows the same warning, with a button that turns Copy PDB files on ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+
 ### Fixed
 
+- Finding `LineNumberMappings.json` no longer depends on a fixed list of paths that went stale as Unity moved the file between versions. BugSplat now searches the player's IL2CPP backup folder and the platform's `Library/Bee` folders for it, and takes the newest match. This applies to Windows, macOS, Android, and iOS ([#172](https://github.com/BugSplat-Git/bugsplat-unity/issues/172)).
+- The symbol uploader's error output is now in the build log. Before, only its standard output was logged.
+- A failed upload's log now says whether it timed out, was cancelled, or exited with an error, and gives the uploader's exit code. A summary error at the end of the build lists every upload that failed.
+- The editor's other helper processes now have time limits too: `chmod` on downloaded tools and credential files, and the `reg.exe` calls behind **Tools > BugSplat > Windows**. Once the administrator prompt is approved, the elevated WER registration waits up to two minutes for the update, then points you to **Check WER Handler Registration**.
 - Windows CoreCLR players (Unity 7.0 alpha) report native crashes under C# code, such as an access violation in a P/Invoke or a stack overflow. Unity's CoreCLR runtime treats these as fatal errors and sends them to Unity's own crash handler, so they never reached BugSplat's crash handler and went unreported. BugSplat now registers itself as the runtime's fatal-error callback in place of Unity's, so Unity's crash handler doesn't run for these crashes. Mono and IL2CPP players are unchanged ([#259](https://github.com/BugSplat-Git/bugsplat-unity/issues/259)). This uses `BugSplat_HandleException` from bugsplat-windows 9.2.0, whose signed binaries replace 9.1.0's ([bugsplat-windows#250](https://github.com/BugSplat-Git/bugsplat-windows/pull/250)).
 - WebGL reports now include their attributes. Attributes from `BugSplatOptions.Attributes`, `BugSplat.Attributes`, or a report's `AdditionalAttributes` were sent to BugSplat as an empty `{}` from WebGL builds, so every WebGL crash arrived without them ([#175](https://github.com/BugSplat-Git/bugsplat-unity/issues/175)).
 

@@ -11,7 +11,8 @@ namespace BugSplatUnity.Editor
 	{
 		/// <summary>
 		/// Uploads the files under <paramref name="directory"/> that match <paramref name="globPattern"/>,
-		/// for example "**/*.pdb". Blocks until the upload finishes. Returns false if it failed; when no
+		/// for example "**/*.pdb". Blocks until the upload finishes, or until the options'
+		/// SymbolUploadTimeoutMinutes stops it. Returns false if it failed or timed out; when no
 		/// credentials are set for the database it logs a warning, uploads nothing, and returns true.
 		/// </summary>
 		public static bool Upload(string directory, string globPattern, BugSplatOptions options)

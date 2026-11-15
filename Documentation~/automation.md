@@ -120,6 +120,8 @@ unity build . --target Android --output-path ./out/MyGame.aab
 
 With neither the variables nor a credentials file, the build still succeeds; symbol upload is skipped with a warning in the log. The Unity CLI is in beta, so check `unity build --help` for the flags your version takes.
 
+An upload that fails, or runs longer than `SymbolUploadTimeoutMinutes` (30 by default; `0` waits indefinitely), is logged as an error, and the log gets a progress line every minute while an upload runs. The build still succeeds by default. To make a failed upload fail the CI job, turn on `FailBuildOnSymbolUploadError` in the options asset, or set it from your build script before calling `BuildPipeline.BuildPlayer`. See [Timeouts and Failures](symbol-upload.md#timeouts-and-failures).
+
 In GitHub Actions, map the secrets onto the step that builds:
 
 ```yaml
@@ -132,7 +134,7 @@ In GitHub Actions, map the secrets onto the step that builds:
 
 A platform's symbols are uploaded only when its `UploadDebugSymbolsFor…` option is on. Windows and Xbox default to on; macOS, iOS, and Android default to off. When they are uploaded depends on the platform:
 
-- **Windows**: during `unity build`. Build on a Windows runner. **Copy PDB files** can only be read by a Windows editor, and Windows IL2CPP builds need one anyway. See [Windows](windows.md).
+- **Windows**: during `unity build`. Build on a Windows runner. **Copy PDB files** can only be read by a Windows editor, and Windows IL2CPP builds need one anyway. With it off, the build warns when it starts and uploads nothing. See [Windows](windows.md).
 - **macOS**: during `unity build`, for a player built straight to a `.app`. An Xcode project export (**Create Xcode Project**) uploads nothing, and unlike iOS it gets no upload build phase, because the dSYMs don't exist until Xcode builds it. Upload them with [`symbol-upload`](https://github.com/BugSplat-Git/symbol-upload) after your `xcodebuild` step. See [macOS](macos.md).
 - **Android**: during `unity build`, from the `*.symbols.zip` Unity writes when **Debug Symbols** is **Full**. Nothing is uploaded from an **Export Project** build. See [Android](android.md).
 - **iOS**: not during `unity build`, which only writes the Xcode project. The upload is an Xcode build phase that runs when you build that project, so set the two variables on the `xcodebuild` step too. See [iOS](ios.md).
