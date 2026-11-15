@@ -714,6 +714,10 @@ namespace BugSplatUnity
                 }
             }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+            WebGLAbortReporter.Install(options.Database, application, version, bugSplat);
+#endif
+
             return bugSplat;
         }
 
