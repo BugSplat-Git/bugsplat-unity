@@ -308,6 +308,12 @@ namespace BugSplatUnity.Editor
 			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 		};
 
+		private static readonly string[] LinuxBeeLineNumberMappings =
+		{
+			Path.Combine("Library", "Bee", "artifacts", "LinuxPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "LinuxPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
 		private static readonly string[] MacBeeLineNumberMappings =
 		{
 			Path.Combine("Library", "Bee", "artifacts", "MacStandalonePlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
@@ -366,6 +372,7 @@ namespace BugSplatUnity.Editor
 		internal const string MacLineNumberMappingsName = "LineNumberMappings-macos.json";
 		internal const string IosLineNumberMappingsName = "LineNumberMappings-ios.json";
 		internal const string AndroidLineNumberMappingsName = "LineNumberMappings-android.json";
+		internal const string LinuxLineNumberMappingsName = "LineNumberMappings-linux.json";
 
 		private static void UploadLineNumberMappings(string mappingsPath, string uploadName, BugSplatOptions options)
 		{

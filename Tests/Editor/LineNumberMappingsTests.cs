@@ -53,6 +53,7 @@ namespace BugSplatUnity.EditorTests
 			Assert.AreEqual("LineNumberMappings-macos.json", BuildPostprocessors.MacLineNumberMappingsName);
 			Assert.AreEqual("LineNumberMappings-ios.json", BuildPostprocessors.IosLineNumberMappingsName);
 			Assert.AreEqual("LineNumberMappings-android.json", BuildPostprocessors.AndroidLineNumberMappingsName);
+			Assert.AreEqual("LineNumberMappings-linux.json", BuildPostprocessors.LinuxLineNumberMappingsName);
 		}
 
 		[Test]
