@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 [assembly: InternalsVisibleTo("BugSplat.Unity.RuntimeTests")]
@@ -349,6 +350,9 @@ namespace BugSplatUnity
                 {
                     windowsWerEnabled = NativeCrashReporter.HasCapability(BugSplatNative.Capability.Wer);
                     ReportWindowsWerStatus();
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+                    RouteCoreClrFatalErrorsToBugSplat();
+#endif
 
                     // Reports an earlier session could not send go out now, on a background thread.
                     // Manual leaves them for the app's own PostPendingReportsAsync call.
@@ -798,6 +802,43 @@ namespace BugSplatUnity
             if (!nativeCrashReportingEnabled) return;
             NativeCrashReporter.SetQuietMode(!show);
         }
+
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        internal const string CoreClrFatalErrorHookUnavailableMessage =
+            "BugSplat: couldn't register with this CoreCLR player's fatal-error callback " +
+            "(coreclr_unity_set_on_fatal_error), so a native crash under C# code goes to Unity's crash handler " +
+            "and is not reported to BugSplat.";
+
+        // Unity's CoreCLR runtime treats a native fault under managed frames as a fatal error and hands it
+        // to the callback UnityPlayer registers with coreclr_unity_set_on_fatal_error, so it never reaches
+        // BugSplat's unhandled exception filter. Registering bugsplat_handle_exception, which takes the same
+        // EXCEPTION_POINTERS*, instead reports it the way the filter would. Mono and IL2CPP players don't
+        // load coreclr.dll.
+        private static void RouteCoreClrFatalErrorsToBugSplat()
+        {
+            var coreclr = GetModuleHandleW("coreclr.dll");
+            if (coreclr == IntPtr.Zero) return;
+
+            var setOnFatalError = GetProcAddress(coreclr, "coreclr_unity_set_on_fatal_error");
+            var handleException = GetProcAddress(GetModuleHandleW("bugsplat.dll"), "bugsplat_handle_exception");
+            if (setOnFatalError == IntPtr.Zero || handleException == IntPtr.Zero)
+            {
+                Debug.LogWarning(CoreClrFatalErrorHookUnavailableMessage);
+                return;
+            }
+
+            Marshal.GetDelegateForFunctionPointer<SetOnFatalErrorCallback>(setOnFatalError)(handleException);
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void SetOnFatalErrorCallback(IntPtr callback);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        static extern IntPtr GetModuleHandleW(string moduleName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false)]
+        static extern IntPtr GetProcAddress(IntPtr module, string procName);
+#endif
 
         private void ReportWindowsWerStatus()
         {
