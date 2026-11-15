@@ -158,7 +158,7 @@ jobs:
             # noise, and a check that always warns is a check people stop reading.
             clang -fsyntax-only -x objective-c++ -std=c++14 $arc \
               -Wall \
-              Runtime/Plugins/macOS/BugSplatBridgeMac.mm
+              "Runtime/Plugins/macOS/Source~/BugSplatBridgeMac.mm"
             echo "::endgroup::"
           done
 

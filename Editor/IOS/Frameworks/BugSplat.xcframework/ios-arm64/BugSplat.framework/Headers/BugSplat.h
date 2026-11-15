@@ -263,6 +263,22 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL autoSubmitFatalHangReport;
 
 /**
+ * Catch crashes with BSD signal handlers instead of Mach exception handlers.
+ *
+ * Mach exception handlers see a fault before any signal handler in the process does. That
+ * breaks hosts whose runtime turns some faults into exceptions from its own signal handlers,
+ * such as a Mono runtime, which implements NullReferenceException with a signal handler: every
+ * caught exception would be written as a crash report. With BSD signal handlers the host can
+ * install its handlers after `-start` and pass on the faults it does not handle.
+ *
+ * Must be set before `-start` is invoked; changes after that are ignored. Has no effect on tvOS,
+ * which always uses BSD signal handlers.
+ *
+ * Default: NO
+ */
+@property (nonatomic, assign) BOOL useBSDSignalHandlers;
+
+/**
  * Add an attribute and value to a dictionary of attributes that will potentially be included in a crash report.
  * If the attribute name is nil or empty, or the attribute+value pair cannot be set, the method will return NO,
  * otherwise it will return YES.

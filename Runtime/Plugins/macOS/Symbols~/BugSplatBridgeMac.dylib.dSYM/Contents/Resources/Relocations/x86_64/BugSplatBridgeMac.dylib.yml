@@ -1,0 +1,36 @@
+---
+triple:          'x86_64-apple-darwin'
+binary-path:     '../BugSplatBridgeMac.dylib'
+relocations:
+  - { offset: 0x27, size: 0x8, addend: 0x0, symName: __startBugSplat, symObjAddr: 0x0, symBinAddr: 0x980, symSize: 0x480 }
+  - { offset: 0xD9, size: 0x8, addend: 0x0, symName: __ZL14_playerLogPath, symObjAddr: 0xBC90, symBinAddr: 0x4348, symSize: 0x0 }
+  - { offset: 0x141, size: 0x8, addend: 0x0, symName: __ZL17_delegateInstance, symObjAddr: 0xBCB0, symBinAddr: 0x4368, symSize: 0x0 }
+  - { offset: 0x179, size: 0x8, addend: 0x0, symName: __ZL25_previousSessionLogRecord, symObjAddr: 0xBC60, symBinAddr: 0x4318, symSize: 0x0 }
+  - { offset: 0x1B5, size: 0x8, addend: 0x0, symName: __ZL15_bugsplatSIGILL, symObjAddr: 0xBC68, symBinAddr: 0x4320, symSize: 0x0 }
+  - { offset: 0x364, size: 0x8, addend: 0x0, symName: __ZL22_monoSignalsHandedOver, symObjAddr: 0xBC78, symBinAddr: 0x4330, symSize: 0x0 }
+  - { offset: 0x52E, size: 0x8, addend: 0x0, symName: __startBugSplat, symObjAddr: 0x0, symBinAddr: 0x980, symSize: 0x480 }
+  - { offset: 0x97B, size: 0x8, addend: 0x0, symName: __ZL14AddLogFilePathP8NSString, symObjAddr: 0x480, symBinAddr: 0xE00, symSize: 0x90 }
+  - { offset: 0xA46, size: 0x8, addend: 0x0, symName: __ZL14IdentityOfFileP8NSString, symObjAddr: 0x16A0, symBinAddr: 0x2020, symSize: 0x140 }
+  - { offset: 0xB40, size: 0x8, addend: 0x0, symName: __startBugSplat.cold.1, symObjAddr: 0x17E0, symBinAddr: 0x2160, symSize: 0x20 }
+  - { offset: 0xB97, size: 0x8, addend: 0x0, symName: __startBugSplat.cold.2, symObjAddr: 0x1800, symBinAddr: 0x2180, symSize: 0x20 }
+  - { offset: 0xBEA, size: 0x8, addend: 0x0, symName: __ZL14AddLogFilePathP8NSString.cold.1, symObjAddr: 0x1820, symBinAddr: 0x21A0, symSize: 0x20 }
+  - { offset: 0xC2B, size: 0x8, addend: 0x0, symName: __setNativeAttribute, symObjAddr: 0x510, symBinAddr: 0xE90, symSize: 0x150 }
+  - { offset: 0xE00, size: 0x8, addend: 0x0, symName: __setNativeUser, symObjAddr: 0x660, symBinAddr: 0xFE0, symSize: 0x90 }
+  - { offset: 0xEBA, size: 0x8, addend: 0x0, symName: __setNativeEmail, symObjAddr: 0x6F0, symBinAddr: 0x1070, symSize: 0x90 }
+  - { offset: 0xF74, size: 0x8, addend: 0x0, symName: __setNativeNotes, symObjAddr: 0x780, symBinAddr: 0x1100, symSize: 0x90 }
+  - { offset: 0x102E, size: 0x8, addend: 0x0, symName: __setNativeKey, symObjAddr: 0x810, symBinAddr: 0x1190, symSize: 0x90 }
+  - { offset: 0x10E8, size: 0x8, addend: 0x0, symName: __setNativePlayerLogPath, symObjAddr: 0x8A0, symBinAddr: 0x1220, symSize: 0x70 }
+  - { offset: 0x115F, size: 0x8, addend: 0x0, symName: __useBSDSignalHandlersForMono, symObjAddr: 0x910, symBinAddr: 0x1290, symSize: 0x150 }
+  - { offset: 0x139B, size: 0x8, addend: 0x0, symName: __restoreBugSplatSIGILLForMono, symObjAddr: 0xA60, symBinAddr: 0x13E0, symSize: 0x20 }
+  - { offset: 0x13CA, size: 0x8, addend: 0x0, symName: __attachNativeLogFile, symObjAddr: 0xA80, symBinAddr: 0x1400, symSize: 0xB0 }
+  - { offset: 0x14F9, size: 0x8, addend: 0x0, symName: __detachNativeLogFile, symObjAddr: 0xB30, symBinAddr: 0x14B0, symSize: 0xA0 }
+  - { offset: 0x15B9, size: 0x8, addend: 0x0, symName: __crashNative, symObjAddr: 0xBD0, symBinAddr: 0x1550, symSize: 0x10 }
+  - { offset: 0x15DC, size: 0x8, addend: 0x0, symName: __hangNative, symObjAddr: 0xBE0, symBinAddr: 0x1560, symSize: 0x50 }
+  - { offset: 0x1616, size: 0x8, addend: 0x0, symName: ____ZL16GetBugSplatClassv_block_invoke, symObjAddr: 0xC30, symBinAddr: 0x15B0, symSize: 0x220 }
+  - { offset: 0x17E1, size: 0x8, addend: 0x0, symName: ____ZL12LogFilePathsv_block_invoke, symObjAddr: 0xE50, symBinAddr: 0x17D0, symSize: 0x20 }
+  - { offset: 0x1806, size: 0x8, addend: 0x0, symName: ____ZL14EnsureDelegatev_block_invoke, symObjAddr: 0xE70, symBinAddr: 0x17F0, symSize: 0xA0 }
+  - { offset: 0x1985, size: 0x8, addend: 0x0, symName: __ZL30DelegateAttachmentsForBugSplatP11objc_objectP13objc_selectorS0_, symObjAddr: 0xF10, symBinAddr: 0x1890, symSize: 0x10 }
+  - { offset: 0x19DB, size: 0x8, addend: 0x0, symName: __ZL28AttachmentsForCrashedSessionP6NSUUID, symObjAddr: 0xF30, symBinAddr: 0x18B0, symSize: 0x770 }
+  - { offset: 0x1DD6, size: 0x8, addend: 0x0, symName: __ZL37DelegateAttachmentsForBugSplatSessionP11objc_objectP13objc_selectorS0_P6NSUUID, symObjAddr: 0xF20, symBinAddr: 0x18A0, symSize: 0x10 }
+  - { offset: 0x204A, size: 0x8, addend: 0x0, symName: __ZL28AttachmentsForCrashedSessionP6NSUUID.cold.1, symObjAddr: 0x1960, symBinAddr: 0x21C0, symSize: 0x18 }
+...
