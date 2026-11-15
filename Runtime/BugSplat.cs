@@ -411,6 +411,9 @@ namespace BugSplatUnity
                     // Tag native crashes as UnityNative (BugSplat crash type 15) so the
                     // backend applies LineNumberMappings.json to symbolicate C# frames.
                     BugSplat_SetCrashType(15);
+#if UNITY_STANDALONE_WIN
+                    RouteCoreClrFatalErrorsToBugSplat();
+#endif
 
                     SetNativePlayerLogAttachment(capturePlayerLog);
 
@@ -997,6 +1000,40 @@ namespace BugSplatUnity
 #endif
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        internal const string CoreClrFatalErrorHookUnavailableMessage =
+            "BugSplat: couldn't register with this CoreCLR player's fatal-error callback " +
+            "(coreclr_unity_set_on_fatal_error), so a native crash under C# code goes to Unity's crash handler " +
+            "and is not reported to BugSplat.";
+
+        // Unity's CoreCLR runtime treats a native fault under managed frames as a fatal error and hands it
+        // to the callback UnityPlayer registers with coreclr_unity_set_on_fatal_error, so it never reaches
+        // BugSplat's unhandled exception filter. Registering BugSplat_HandleException instead reports it
+        // the way the filter would. Mono and IL2CPP players don't load coreclr.dll.
+        private static void RouteCoreClrFatalErrorsToBugSplat()
+        {
+            var coreclr = GetModuleHandleW("coreclr.dll");
+            if (coreclr == IntPtr.Zero) return;
+
+            var setOnFatalError = GetProcAddress(coreclr, "coreclr_unity_set_on_fatal_error");
+            var handleException = GetProcAddress(GetModuleHandleW(BugSplatDll + ".dll"), "BugSplat_HandleException");
+            if (setOnFatalError == IntPtr.Zero || handleException == IntPtr.Zero)
+            {
+                Debug.LogWarning(CoreClrFatalErrorHookUnavailableMessage);
+                return;
+            }
+
+            Marshal.GetDelegateForFunctionPointer<SetOnFatalErrorCallback>(setOnFatalError)(handleException);
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void SetOnFatalErrorCallback(IntPtr callback);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        static extern IntPtr GetModuleHandleW(string moduleName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false)]
+        static extern IntPtr GetProcAddress(IntPtr module, string procName);
+
         private void ReportWindowsWerStatus()
         {
             try
