@@ -32,6 +32,8 @@ To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Clie
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
 
+For CoreCLR builds (Unity 7), BugSplat also uploads your scripts' PDBs, so C# frames in native crash reports show file names and line numbers. Unity only puts those PDBs in the build when **Edit > Project Settings > Player > Other Settings > Managed Stack Trace Information** is **Method Name, File Name, and Line Number**, so BugSplat reads each script assembly's PDB from `Library/Bee`, where the compiler wrote it. They're uploaded at either setting, and nothing extra ships with your game.
+
 ## Windows Hang Detection
 
 Set `WindowsHangDetectionTimeoutMs` to a non-zero value to report hangs when your game's main thread stops responding for longer than the configured timeout. When a hang is detected, BugSplat captures a hang report, uploads it, and **terminates the hung process**.
