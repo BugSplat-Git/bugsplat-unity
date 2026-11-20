@@ -1,4 +1,5 @@
 using BugSplatUnity.Runtime.Settings;
+using BugSplatUnity.Runtime.Util;
 using System;
 using UnityEngine;
 
@@ -7,8 +8,8 @@ namespace BugSplatUnity.Runtime.Reporter
 {
     internal interface IReportUploadGuardService
     {
-        bool ShouldPostLogMessage(LogType type);
-        bool ShouldPostException(Exception exception);
+        bool ShouldPostLogMessage(LogType type, string logMessage, string stackTrace, out int suppressedCount);
+        bool ShouldPostException(Exception exception, out int suppressedCount);
     }
 
     internal class ReportUploadGuardService : IReportUploadGuardService
@@ -27,6 +28,34 @@ namespace BugSplatUnity.Runtime.Reporter
 
         public bool ShouldPostException(Exception exception)
         {
+            return ShouldPostException(exception, out _);
+        }
+
+        public bool ShouldPostException(Exception exception, out int suppressedCount)
+        {
+            return ShouldPost(exception, null, null, out suppressedCount);
+        }
+
+        public bool ShouldPostLogMessage(LogType type)
+        {
+            return ShouldPostLogMessage(type, null, null, out _);
+        }
+
+        public bool ShouldPostLogMessage(LogType type, string logMessage, string stackTrace, out int suppressedCount)
+        {
+            if (type != LogType.Exception)
+            {
+                suppressedCount = 0;
+                return false;
+            }
+
+            return ShouldPost(null, logMessage, stackTrace, out suppressedCount);
+        }
+
+        private bool ShouldPost(Exception exception, string logMessage, string stackTrace, out int suppressedCount)
+        {
+            suppressedCount = 0;
+
             if (Application.isEditor && !_clientSettingsRepository.PostExceptionsInEditor)
             {
                 // Once per client, which is once per play: otherwise the first exception a new
@@ -40,17 +69,20 @@ namespace BugSplatUnity.Runtime.Reporter
                 return false;
             }
 
-            return _clientSettingsRepository.ShouldPostException(exception);
-        }
+            var shouldPostException = _clientSettingsRepository.ShouldPostException;
 
-        public bool ShouldPostLogMessage(LogType type)
-        {
-            if (type != LogType.Exception)
+            // A logged exception reaches a custom guard as null, but the default guard can still
+            // tell it apart from others by the logged type and stack trace.
+            if (ShouldPostExceptionImpl.IsDefault(shouldPostException))
             {
-                return false;
+                var fingerprint = exception != null
+                    ? ReportFingerprint.FromException(exception)
+                    : ReportFingerprint.FromLogMessage(logMessage, stackTrace);
+
+                return ShouldPostExceptionImpl.ShouldPost(fingerprint, out suppressedCount);
             }
 
-            return ShouldPostException(null);
+            return shouldPostException(exception);
         }
     }
 }

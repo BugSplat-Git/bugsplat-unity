@@ -36,8 +36,9 @@ namespace Crasher
             {
                 var now = DateTime.Now;
 
-                // Set to a long TimeSpan for demonstration purposes
-                // In production BugSplat recommends 3 seconds between posts
+                // A plain 7 second throttle for demonstration purposes. It replaces the default,
+                // which posts each distinct exception at most once every 10 seconds (and at most
+                // 20 reports a minute) and counts the repeats it skips
                 if (now - lastPost < TimeSpan.FromSeconds(7))
                 {
                     Debug.LogWarning("ShouldPostException returns false in BugSplatSettings. Skipping BugSplat report...");
