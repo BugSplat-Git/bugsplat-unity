@@ -74,6 +74,8 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 | IosHangDetectionThresholdSeconds | Seconds the iOS main thread must be blocked before BugSplat declares a hang. `5` by default, above bugsplat-apple's own 2 because Unity blocks the main thread for seconds on scene loads and shader warmup. Positive values below 0.1 are clamped to 0.1; zero or less is not usable and falls back to bugsplat-apple's own default with a warning |
 | UseNativeCrashReportingForAndroid | Use native crash reporting (bugsplat-android) for Android builds. On by default |
 | UploadDebugSymbolsForAndroid | Upload the generated symbols archive to BugSplat for Android builds. `false` by default |
+| CaptureWebAssemblyCrashes | Report WebAssembly traps and aborts on WebGL from JavaScript, including ones before BugSplat initializes. On by default. Off also leaves `BugSplatWebGL.jspre` out of the build. See [WebGL](webgl.md) |
+| UploadDebugSymbolsForWebGL | Upload the function-name map, the WebAssembly source map and `LineNumberMappings-webgl.json` for WebGL builds, and set the build flags they need for the duration of each build. `false` by default. See [WebGL](webgl.md) |
 
 > [!NOTE]
 > `ShouldPostException` is not a field on the `BugSplatOptions` asset. It is a runtime-only property you assign on your `BugSplat` instance in code — see [Preventing Repeated Reports](usage.md#preventing-repeated-reports).

@@ -138,6 +138,7 @@ namespace BugSplatUnity
             {
                 clientSettings.Description = value;
                 SetNativeDescription(value);
+                webAssemblyCrashReporter?.Sync();
             }
         }
 
@@ -154,6 +155,7 @@ namespace BugSplatUnity
             {
                 clientSettings.Email = value;
                 SetNativeEmail(value);
+                webAssemblyCrashReporter?.Sync();
             }
         }
 
@@ -170,6 +172,7 @@ namespace BugSplatUnity
             {
                 clientSettings.Key = value;
                 SetNativeKey(value);
+                webAssemblyCrashReporter?.Sync();
             }
         }
 
@@ -201,6 +204,7 @@ namespace BugSplatUnity
             {
                 clientSettings.Notes = value;
                 SetNativeNotes(value);
+                webAssemblyCrashReporter?.Sync();
             }
         }
 
@@ -217,6 +221,7 @@ namespace BugSplatUnity
             {
                 clientSettings.User = value;
                 SetNativeUser(value);
+                webAssemblyCrashReporter?.Sync();
             }
         }
 
@@ -239,6 +244,7 @@ namespace BugSplatUnity
         internal IExceptionReporter exceptionReporter;
         internal IDotNetStandardFeedbackClient feedbackClient;
         private INativeCrashReportClient nativeCrashReportClient;
+        private WebAssemblyCrashReporter webAssemblyCrashReporter;
         private bool nativeCrashReportingEnabled;
         private readonly List<string> nativeAttachmentPaths = new List<string>();
 
@@ -282,6 +288,13 @@ namespace BugSplatUnity
         public bool NativeCrashReportingEnabled => nativeCrashReportingEnabled;
 
         /// <summary>
+        /// True when this WebGL player reports WebAssembly traps and aborts (memory access out of bounds,
+        /// unreachable, out of memory) that end the player before any C# code can run. Always false on
+        /// other platforms.
+        /// </summary>
+        public bool WebAssemblyCrashReportingEnabled => webAssemblyCrashReporter?.Enabled ?? false;
+
+        /// <summary>
         /// Post Exceptions and minidump files to BugSplat
         /// </summary>
         /// <param name="database">The BugSplat database for your organization</param>
@@ -293,6 +306,7 @@ namespace BugSplatUnity
         /// <param name="useNativeLibWin">Whether to use the native library for crash reporting on Windows (works with Mono and IL2CPP)</param>
         /// <param name="capturePlayerLog">Whether to upload Player.log with reports. Applied while the native crash reporter initializes so that native crash reports honor it too.</param>
         /// <param name="nativeAttachments">Files to attach to native crash reports, registered before the native reporter starts. On macOS and iOS that is the only time that counts: a report uploads at the next launch and its attachments are gathered while the reporter starts, so a path attached after construction never reaches it. Behaves exactly like AttachNativeLogFile on every platform otherwise.</param>
+        /// <param name="captureWebAssemblyCrashes">Whether to report WebAssembly traps and aborts on WebGL, which end the player before C# can report them. Ignored on other platforms.</param>
         public BugSplat(
             string database,
             string application,
@@ -305,7 +319,8 @@ namespace BugSplatUnity
             bool? autoSubmitCrashReport = null,
             bool? autoSubmitFatalHangReport = null,
             float? hangDetectionThresholdSeconds = null,
-            IEnumerable<string> nativeAttachments = null
+            IEnumerable<string> nativeAttachments = null,
+            bool captureWebAssemblyCrashes = true
         )
         {
             if (string.IsNullOrEmpty(database))
@@ -431,6 +446,17 @@ namespace BugSplatUnity
             var webGLReporter = new WebGLReporter(webGLClientSettings, webGLExceptionClient);
             clientSettings = webGLClientSettings;
             exceptionReporter = webGLReporter;
+
+            webAssemblyCrashReporter = new WebAssemblyCrashReporter(database, application, version, webGLClientSettings);
+            webGLClientSettings.ObservableAttributes.Changed += webAssemblyCrashReporter.Sync;
+            if (captureWebAssemblyCrashes)
+            {
+                webAssemblyCrashReporter.Enable();
+            }
+            else
+            {
+                webAssemblyCrashReporter.Disable();
+            }
 #elif UNITY_IOS && !UNITY_EDITOR
             if (useNativeLibIos)
             {
@@ -663,7 +689,8 @@ namespace BugSplatUnity
                 null,
                 null,
 #endif
-                nativeAttachments
+                nativeAttachments,
+                options.CaptureWebAssemblyCrashes
             )
             {
                 Description = options.Description,
@@ -713,10 +740,6 @@ namespace BugSplatUnity
                     bugSplat.nativePersistentDataAttachmentPaths.Add(fileInfo.FullName);
                 }
             }
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-            WebGLAbortReporter.Install(options.Database, application, version, bugSplat);
-#endif
 
             return bugSplat;
         }

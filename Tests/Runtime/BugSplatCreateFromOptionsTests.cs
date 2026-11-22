@@ -367,6 +367,30 @@ namespace BugSplatUnity.RuntimeTests
 			Assert.IsEmpty(sut.NativePersistentDataAttachmentPaths);
 		}
 
+#if UNITY_WEBGL
+		[Test]
+		public void WebAssemblyCrashReporting_ShouldBeOnWhenConstructedInCode()
+		{
+			Assert.True(new BugSplat("database", "application", "version", false, false).WebAssemblyCrashReportingEnabled);
+		}
+
+		[Test]
+		public void WebAssemblyCrashReporting_ShouldFollowCaptureWebAssemblyCrashes()
+		{
+			Assert.True(BugSplat.CreateFromOptions(options).WebAssemblyCrashReportingEnabled, "default");
+
+			options.CaptureWebAssemblyCrashes = false;
+
+			Assert.False(BugSplat.CreateFromOptions(options).WebAssemblyCrashReportingEnabled, "opted out");
+		}
+#else
+		[Test]
+		public void WebAssemblyCrashReporting_ShouldBeOffOutsideWebGL()
+		{
+			Assert.False(BugSplat.CreateFromOptions(options).WebAssemblyCrashReportingEnabled);
+		}
+#endif
+
 #if !UNITY_WEBGL
 		// WebGL is excluded: it has no Player.log, so its repository defaults to off.
 		[Test]
