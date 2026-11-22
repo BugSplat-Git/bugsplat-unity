@@ -39,7 +39,7 @@ namespace BugSplatUnity.Editor
 		// The desktop runtime, per platform. Directories are copied recursively.
 		static readonly string[] WindowsRuntimeFiles = { "BugSplatMonitor.exe", "BugSplatReporter.exe", "theme" };
 		static readonly string[] MacRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter.app", "theme" };
-		static readonly string[] LinuxRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter", "theme" };
+		static readonly string[] LinuxRuntimeFiles = { "BugSplatMonitor", "BugSplatReporter", "bugsplat-logo.png", "bugsplat-logo-dark.png", "theme" };
 
 		internal static string GetSymUploaderName() =>
 			Application.platform switch
@@ -280,24 +280,177 @@ namespace BugSplatUnity.Editor
 			if (options.UseNativeCrashReporting &&
 				CopyRuntime("Linux", "x86_64", LinuxRuntimeFiles, buildDir, "Linux x86_64"))
 			{
-				Debug.Log("BugSplat. Copied the Linux native runtime next to the built executable. Ship BugSplatMonitor, BugSplatReporter and theme/ with your game.");
+				Debug.Log("BugSplat. Copied the Linux native runtime next to the built executable. Ship BugSplatMonitor, BugSplatReporter, the two bugsplat-logo PNGs and theme/ with your game.");
 			}
 
 			if (!options.UploadDebugSymbolsForLinux)
 				return;
 
-			// Unity ships a stripped player; the debug information is in the .debug files next to
-			// it when debug symbols are on. dump_syms turns either into .sym.
-			UploadSymbols(buildDir, "**/{*.so,*.debug,*.x86_64}", options, uploadExitCode =>
+			UploadLinuxSymbols(buildDir, options);
+
+			// Library/Bee keeps the last IL2CPP build's mappings, which a Mono build must not upload.
+			var isIl2Cpp = PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) == ScriptingImplementation.IL2CPP;
+			var mappingsPath = isIl2Cpp ? FindLineNumberMappings(pathToBuiltProject, LinuxBeeLineNumberMappings) : null;
+			if (mappingsPath == null)
 			{
-				if (uploadExitCode != 0)
+				LogMissingLineNumberMappings(UnityEditor.Build.NamedBuildTarget.Standalone, "Linux");
+				return;
+			}
+
+			UploadLineNumberMappings(mappingsPath, LinuxLineNumberMappingsName, options);
+		}
+
+		private static void UploadLinuxSymbols(string buildDir, BugSplatOptions options)
+		{
+			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out _, out _))
+			{
+				UploadSymbols(buildDir, string.Empty, options, _ => { });
+				return;
+			}
+
+			// Short: dump_syms output nests <module>/<debug id>/<file>.sym, past MAX_PATH under a deep project.
+			var staging = Path.Combine(Path.GetTempPath(), "BugSplat", Guid.NewGuid().ToString("N").Substring(0, 8));
+			var dumped = Path.Combine(staging, "dumped");
+			var playerDebug = Path.Combine(staging, "player");
+			var merged = Path.Combine(staging, "merged");
+			try
+			{
+				var dumpExitCode = 0;
+				UploadSymbols(buildDir, "**/{*.so,*.debug,*.x86_64}", options, code => dumpExitCode = code, dumpSyms: true, localPath: dumped);
+				if (dumpExitCode == 0 && CopyLinuxPlayerDebugFiles(playerDebug))
 				{
-					Debug.LogError("BugSplat. Could not upload Linux symbols.");
+					UploadSymbols(playerDebug, "*.debug", options, code => dumpExitCode = code, dumpSyms: true, localPath: dumped);
+				}
+
+				if (dumpExitCode != 0)
+				{
+					Debug.LogError("BugSplat. Could not dump Linux symbols.");
 					return;
 				}
 
-				Debug.Log("BugSplat. Linux symbols uploading completed.");
-			}, dumpSyms: true);
+				var pairs = MergeSplitDebugSymbols(dumped, merged);
+				Debug.Log($"BugSplat. Merged {pairs} Linux binaries with their split debug files.");
+				UploadSymbols(merged, "**/*.sym", options, uploadExitCode =>
+				{
+					if (uploadExitCode != 0)
+					{
+						Debug.LogError("BugSplat. Could not upload Linux symbols.");
+						return;
+					}
+
+					Debug.Log("BugSplat. Linux symbols uploading completed.");
+				});
+			}
+			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+			{
+				Debug.LogError($"BugSplat. Could not prepare Linux symbols in {staging}: {e.Message}");
+			}
+			finally
+			{
+				try
+				{
+					if (Directory.Exists(staging))
+						Directory.Delete(staging, true);
+				}
+				catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+				{
+					Debug.LogWarning($"BugSplat. Could not clean up {staging}: {e.Message}");
+				}
+			}
+		}
+
+		// A Mono player has no IL2CPP backup folder, so the player's split debug files come from the
+		// editor's Linux support, built from the same binaries Unity copied into the build.
+		private static bool CopyLinuxPlayerDebugFiles(string destination)
+		{
+			if (PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) == ScriptingImplementation.IL2CPP)
+				return false;
+
+			var variation = $"linux64_player_{(EditorUserBuildSettings.development ? "development" : "nondevelopment")}_mono";
+			var source = Path.Combine(BuildPipeline.GetPlaybackEngineDirectory(BuildTarget.StandaloneLinux64, BuildOptions.None), "Variations", variation);
+			var copied = false;
+			foreach (var name in new[] { "UnityPlayer_s.debug", "LinuxPlayer_s.debug" })
+			{
+				var file = Path.Combine(source, name);
+				if (!File.Exists(file))
+					continue;
+
+				Directory.CreateDirectory(destination);
+				File.Copy(file, Path.Combine(destination, name), true);
+				copied = true;
+			}
+
+			return copied;
+		}
+
+		/// <summary>
+		/// The minidump names a module by its soname, and dump_syms names a split debug file's .sym after
+		/// the file (GameAssembly.debug, UnityPlayer_s.debug), so its functions and lines would never be
+		/// found. Each stripped binary's .sym keeps its MODULE line and STACK records and takes the
+		/// FILE, FUNC, line and PUBLIC records of the debug file with the same debug id.
+		/// </summary>
+		internal static int MergeSplitDebugSymbols(string dumpedDir, string outputDir)
+		{
+			var byDebugId = new Dictionary<string, (string binary, string debug)>();
+			foreach (var sym in Directory.GetFiles(dumpedDir, "*.sym", SearchOption.AllDirectories))
+			{
+				string first;
+				using (var reader = new StreamReader(sym))
+					first = reader.ReadLine() ?? string.Empty;
+
+				var module = first.Split(' ');
+				if (module.Length < 5 || module[0] != "MODULE")
+					continue;
+
+				byDebugId.TryGetValue(module[3], out var pair);
+				if (module[4].EndsWith(".debug", StringComparison.OrdinalIgnoreCase))
+					pair.debug = sym;
+				else
+					pair.binary = sym;
+				byDebugId[module[3]] = pair;
+			}
+
+			var merged = 0;
+			foreach (var entry in byDebugId)
+			{
+				var (binary, debug) = entry.Value;
+				if (binary == null)
+				{
+					Debug.LogWarning($"BugSplat. {Path.GetFileName(debug)} matches no binary in the build; not uploaded.");
+					continue;
+				}
+
+				var target = Path.Combine(outputDir, entry.Key, Path.GetFileName(binary));
+				Directory.CreateDirectory(Path.GetDirectoryName(target));
+				if (debug == null)
+				{
+					File.Copy(binary, target, true);
+					continue;
+				}
+
+				using (var writer = new StreamWriter(target, false, new UTF8Encoding(false)) { NewLine = "\n" })
+				{
+					foreach (var line in File.ReadLines(binary))
+					{
+						if (line.StartsWith("MODULE ") || line.StartsWith("INFO "))
+							writer.WriteLine(line);
+					}
+					foreach (var line in File.ReadLines(debug))
+					{
+						if (!line.StartsWith("MODULE ") && !line.StartsWith("INFO ") && !line.StartsWith("STACK "))
+							writer.WriteLine(line);
+					}
+					foreach (var line in File.ReadLines(binary))
+					{
+						if (line.StartsWith("STACK "))
+							writer.WriteLine(line);
+					}
+				}
+
+				merged++;
+			}
+
+			return merged;
 		}
 
 		private static readonly string[] WindowsBeeLineNumberMappings =
@@ -306,6 +459,12 @@ namespace BugSplatUnity.Editor
 			Path.Combine("Library", "Bee", "artifacts", "WinPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
 			Path.Combine("Library", "Bee", "artifacts", "WindowsPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
+		};
+
+		private static readonly string[] LinuxBeeLineNumberMappings =
+		{
+			Path.Combine("Library", "Bee", "artifacts", "LinuxPlayerBuildProgram", "il2cppOutput", "cpp", "Symbols", "LineNumberMappings.json"),
+			Path.Combine("Library", "Bee", "artifacts", "LinuxPlayerBuildProgram", "il2cppOutput", "LineNumberMappings.json"),
 		};
 
 		private static readonly string[] MacBeeLineNumberMappings =
@@ -366,6 +525,7 @@ namespace BugSplatUnity.Editor
 		internal const string MacLineNumberMappingsName = "LineNumberMappings-macos.json";
 		internal const string IosLineNumberMappingsName = "LineNumberMappings-ios.json";
 		internal const string AndroidLineNumberMappingsName = "LineNumberMappings-android.json";
+		internal const string LinuxLineNumberMappingsName = "LineNumberMappings-linux.json";
 
 		private static void UploadLineNumberMappings(string mappingsPath, string uploadName, BugSplatOptions options)
 		{
@@ -940,9 +1100,10 @@ namespace BugSplatUnity.Editor
 		}
 #endif
 
-		internal static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted, bool dumpSyms = false)
+		internal static void UploadSymbols(string artifactsDirPath, string globPattern, BugSplatOptions options, Action<int> onCompleted, bool dumpSyms = false, string localPath = null)
 		{
-			if (!BugSplatSymbolUploadCredentials.TryResolve(options.Database, out var clientId, out var clientSecret))
+			string clientId = null, clientSecret = null;
+			if (localPath == null && !BugSplatSymbolUploadCredentials.TryResolve(options.Database, out clientId, out clientSecret))
 			{
 				Debug.LogWarning(
 					$"BugSplat: no symbol upload credentials for database '{options.Database}'. Set " +
@@ -973,8 +1134,15 @@ namespace BugSplatUnity.Editor
 					$"--version \"{version}\" --files \"{globPattern}\" --directory \"{artifactsDirPath}\""
 			};
 
-			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
-			symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
+			if (localPath == null)
+			{
+				symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_ID"] = clientId;
+				symUploadProcessInfo.EnvironmentVariables["SYMBOL_UPLOAD_CLIENT_SECRET"] = clientSecret;
+			}
+			else
+			{
+				symUploadProcessInfo.Arguments += $" --localPath \"{localPath}\"";
+			}
 
 			// Every platform Crashpad runs on is symbolicated from Breakpad .sym files; PDBs stay
 			// PDBs for the Windows pipeline.

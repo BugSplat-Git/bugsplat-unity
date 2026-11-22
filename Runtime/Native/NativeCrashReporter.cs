@@ -104,10 +104,9 @@ namespace BugSplatUnity.Runtime.Native
 				BugSplatNative.bugsplat_options_set_hang_detection(o, settings.HangDetectionTimeoutMs, (int)settings.HangPolicy);
 				BugSplatNative.bugsplat_options_set_open_support_url(o, settings.OpenSupportUrl ? 1 : 0);
 				BugSplatNative.bugsplat_options_set_crash_type_id(o, settings.CrashTypeId != 0 ? settings.CrashTypeId : DefaultCrashTypeId);
-				// Unity's runtimes (Mono and IL2CPP) install their own signal handlers on the POSIX
-				// platforms to turn faults in managed code into managed exceptions. They must see a
-				// fault first, or a NullReferenceException becomes a native crash report.
-				BugSplatNative.bugsplat_options_set_chain_previous_signal_handlers(o, 1);
+				// Mono turns faults in managed code into managed exceptions, so it must see a fault
+				// first or a NullReferenceException becomes a native crash report.
+				BugSplatNative.bugsplat_options_set_chain_previous_signal_handlers(o, ChainPreviousSignalHandlers ? 1 : 0);
 				// Terminate after the dump rather than running the CRT's exit path: a standalone
 				// player's shutdown can hang inside its own teardown after a crash.
 				BugSplatNative.bugsplat_options_set_crash_completion(o, 1 /* BUGSPLAT_COMPLETION_TERMINATE */);
@@ -167,6 +166,13 @@ namespace BugSplatUnity.Runtime.Native
 			return false;
 #endif
 		}
+
+		private static bool ChainPreviousSignalHandlers =>
+#if UNITY_STANDALONE_LINUX && ENABLE_IL2CPP
+			false;
+#else
+			true;
+#endif
 
 		/// <summary>Windows players keep BugSplat's UnityNative crash type so IL2CPP frames symbolicate through LineNumberMappings.json.</summary>
 		private static int DefaultCrashTypeId =>
