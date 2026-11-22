@@ -5,42 +5,46 @@
   "brand": {
     "productName": "BugSplat",
     "logo": "",
-    "logoHeight": 0,
+    "logoHeight": 40,
     "logoAlignment": "start"
   },
 
   "palette": {
     "light": {
-      "background": "#F3F3F3",
+      "background": "#FFFFFF",
       "surface": "#FFFFFF",
-      "surfaceAlt": "#F6F6F6",
-      "bannerBackground": "#FFFFFF",
+      "surfaceAlt": "#F3F2EF",
+      "bannerBackground": "#FBFAF6",
+      "footerBackground": "#F7F6F2",
       "textPrimary": "#1A1A1A",
-      "textSecondary": "#606060",
-      "textDisabled": "#A0A0A0",
-      "accent": "#0F6CBD",
-      "accentHover": "#115EA3",
-      "accentPressed": "#0C4B85",
+      "textSecondary": "#6B6B6B",
+      "textDisabled": "#A3A3A3",
+      "accent": "#1F64DB",
+      "accentHover": "#1A55BC",
+      "accentPressed": "#164A9F",
       "accentText": "#FFFFFF",
-      "border": "#D1D1D1",
-      "borderStrong": "#8A8A8A",
+      "link": "#1F64DB",
+      "border": "#D9D7D2",
+      "borderStrong": "#A8A6A0",
       "focus": "#1A1A1A",
       "error": "#C42B1C"
     },
     "dark": {
-      "background": "#202020",
-      "surface": "#2D2D2D",
-      "surfaceAlt": "#383838",
-      "bannerBackground": "#FFFFFF",
-      "textPrimary": "#FFFFFF",
-      "textSecondary": "#B4B4B4",
-      "textDisabled": "#767676",
-      "accent": "#4C9EEB",
-      "accentHover": "#60ACF0",
-      "accentPressed": "#4086C8",
-      "accentText": "#000000",
-      "border": "#424242",
-      "borderStrong": "#6E6E6E",
+      "background": "#1E1E1E",
+      "surface": "#262626",
+      "surfaceAlt": "#303030",
+      "bannerBackground": "#242321",
+      "footerBackground": "#252422",
+      "textPrimary": "#F5F5F5",
+      "textSecondary": "#ABABAB",
+      "textDisabled": "#6E6E6E",
+      "accent": "#2F6FD8",
+      "accentHover": "#2A66CC",
+      "accentPressed": "#2459B3",
+      "accentText": "#FFFFFF",
+      "link": "#6FA3F8",
+      "border": "#3D3C39",
+      "borderStrong": "#6A6965",
       "focus": "#FFFFFF",
       "error": "#FF99A4"
     }
@@ -48,21 +52,21 @@
 
   "type": {
     "family": "Segoe UI",
-    "baseSize": 9,
-    "headingSize": 13,
-    "headingWeight": 600
+    "baseSize": 10,
+    "headingSize": 15,
+    "headingWeight": 700
   },
 
   "layout": {
-    "windowWidth": 440,
-    "padding": 20,
-    "spacing": 14,
-    "controlRadius": 4,
+    "windowWidth": 500,
+    "padding": 28,
+    "spacing": 16,
+    "controlRadius": 8,
     "roundedWindow": true,
     "mica": true,
     "banner": true,
-    "bannerHeight": 64,
-    "descriptionLines": 5
+    "bannerHeight": 76,
+    "descriptionLines": 4
   },
 
   "features": {

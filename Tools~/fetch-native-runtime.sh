@@ -15,7 +15,7 @@ layout() {
     windows-x86)   echo "Windows/x86|BugSplat.dll|Windows/Support~/x86|BugSplatMonitor.exe BugSplatReporter.exe BugSplatWer.dll theme" ;;
     windows-arm64) echo "Windows/ARM64|BugSplat.dll|Windows/Support~/ARM64|BugSplatMonitor.exe BugSplatReporter.exe BugSplatWer.dll theme" ;;
     macos)         echo "macOS|libbugsplat.dylib|macOS/Support~|BugSplatMonitor BugSplatReporter.app theme" ;;
-    linux-x64)     echo "Linux/x86_64|libbugsplat.so|Linux/Support~/x86_64|BugSplatMonitor BugSplatReporter theme" ;;
+    linux-x64)     echo "Linux/x86_64|libbugsplat.so|Linux/Support~/x86_64|BugSplatMonitor BugSplatReporter bugsplat-logo.png bugsplat-logo-dark.png theme" ;;
     android)       echo "Android/libs|arm64-v8a armeabi-v7a x86_64||" ;;
     ios)           echo "iOS|libbugsplat.a||" ;;
     *) echo "unknown platform $1" >&2; exit 2 ;;

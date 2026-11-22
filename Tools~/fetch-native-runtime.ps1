@@ -23,7 +23,7 @@ $layout = @{
   "windows-x86"   = @{ lib = "Windows/x86";    libs = @("BugSplat.dll"); support = "Windows/Support~/x86"; helpers = @("BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll", "theme") }
   "windows-arm64" = @{ lib = "Windows/ARM64";  libs = @("BugSplat.dll"); support = "Windows/Support~/ARM64"; helpers = @("BugSplatMonitor.exe", "BugSplatReporter.exe", "BugSplatWer.dll", "theme") }
   "macos"         = @{ lib = "macOS";          libs = @("libbugsplat.dylib"); support = "macOS/Support~"; helpers = @("BugSplatMonitor", "BugSplatReporter.app", "theme") }
-  "linux-x64"     = @{ lib = "Linux/x86_64";   libs = @("libbugsplat.so"); support = "Linux/Support~/x86_64"; helpers = @("BugSplatMonitor", "BugSplatReporter", "theme") }
+  "linux-x64"     = @{ lib = "Linux/x86_64";   libs = @("libbugsplat.so"); support = "Linux/Support~/x86_64"; helpers = @("BugSplatMonitor", "BugSplatReporter", "bugsplat-logo.png", "bugsplat-logo-dark.png", "theme") }
   "android"       = @{ lib = "Android/libs";   libs = @("arm64-v8a", "armeabi-v7a", "x86_64"); support = ""; helpers = @() }
   "ios"           = @{ lib = "iOS";            libs = @("libbugsplat.a"); support = ""; helpers = @() }
 }
