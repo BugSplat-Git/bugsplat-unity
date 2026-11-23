@@ -132,7 +132,7 @@ Two things are worth knowing about the timing. The runtime raises this event onl
 
 ## Windows Crashes
 
-BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](windows.md) section for setup details.
+BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/integrations/desktop/windows). See the [Windows](windows.md) section for setup details.
 
 > [!IMPORTANT]
 > `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
@@ -198,4 +198,4 @@ When an exception occurs, a page similar to the following will open in the user'
 
 <img width="1086" alt="image" src="https://github.com/user-attachments/assets/3a3d6f82-e3bf-42bc-ae7f-582ba35cd499">
 
-More information on support responses can be found [here](https://docs.bugsplat.com/introduction/production/setting-up-custom-support-responses).
+More information on support responses can be found [here](https://docs.bugsplat.com/guides/production/setting-up-custom-support-responses).

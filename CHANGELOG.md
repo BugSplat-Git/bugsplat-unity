@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Windows CoreCLR builds upload your scripts' PDBs.** Native crash reports from CoreCLR players can name C# frames with file names and line numbers, which needs the PDB of each script assembly. Unity puts those PDBs in the build only when **Edit > Project Settings > Player > Other Settings > Managed Stack Trace Information** is **Method Name, File Name, and Line Number**, which isn't the default. BugSplat now finds each assembly's PDB in `Library/Bee`, where the build's own `.dll` says the compiler wrote it, and uploads it, so line numbers work at the default setting and no PDBs ship with your game. Mono and IL2CPP builds are unchanged.
+- **Native macOS crash reporting in Mono players.** It used to need IL2CPP: a Mono player logged a warning and reported managed exceptions only. Mono players now report native crashes too, uploaded on the next launch like IL2CPP's. Mono turns a null dereference into a `NullReferenceException` from its own signal handler, so under Mono bugsplat-apple catches crashes with BSD signal handlers, and Mono's handlers are installed again on top of them: Mono handles its own faults and passes real crashes on to BugSplat. Caught and uncaught `NullReferenceException`s are not reported as crashes. C# frames in a Mono native crash are addresses, without method names, files or lines: Mono players have no `LineNumberMappings.json`. A stack overflow in C# is not reported under Mono, because Mono's signal handlers have no alternate stack to run on ([#292](https://github.com/BugSplat-Git/bugsplat-unity/issues/292)).
+
+### Changed
+
+- The macOS bridge, `BugSplatBridgeMac.dylib`, ships prebuilt instead of as Objective-C source, because Unity compiles source plugins into macOS players only under IL2CPP. It loads the same way under both backends. Its source and build script are in `Runtime/Plugins/macOS/Source~`, and its dSYM, in `Runtime/Plugins/macOS/Symbols~`, uploads with a macOS build's symbols when `UploadDebugSymbolsForMac` is set, so a crash inside the bridge stays symbolicated under IL2CPP too.
+- **bugsplat-apple updated to 3.9.0** (from 3.8.1). 3.9.0 adds `useBSDSignalHandlers`, which Mono players use ([bugsplat-apple#92](https://github.com/BugSplat-Git/bugsplat-apple/pull/92)). IL2CPP players and iOS keep bugsplat-apple's default Mach exception handlers, so their reporting is unchanged.
+
+### Removed
+
+- The build-time and startup warning that native macOS crash reporting requires IL2CPP.
+
 ### Fixed
 
 - Removing an attribute from `BugSplat.Instance.Attributes`, or clearing them, now removes it from native crash reports too. Before, a removed attribute stayed on every native crash report for the rest of the session. macOS, iOS and Android drop the attribute. The Windows SDK cannot remove one, so on Windows and Xbox the attribute stays on native crash reports with an empty value. The new `RemoveNativeAttribute` does the same for an attribute set with `SetNativeAttribute`.

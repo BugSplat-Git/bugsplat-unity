@@ -95,12 +95,6 @@ namespace BugSplatUnity.Editor
 
 			if (target == BuildTarget.StandaloneOSX)
 			{
-				if (options.UseNativeCrashReportingForMac &&
-					PlayerSettings.GetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone) != ScriptingImplementation.IL2CPP)
-				{
-					Debug.LogWarning(BugSplatOptions.MacNativeRequiresIl2CppMessage);
-				}
-
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
@@ -188,6 +182,12 @@ namespace BugSplatUnity.Editor
 				Debug.Log("BugSplat. Symbols uploading completed.");
 			});
 
+			if (CoreClrScriptPdbs.IsCoreClrBuild(Path.GetDirectoryName(pathToBuiltProject)))
+			{
+				UploadCoreClrScriptPdbs(Path.GetDirectoryName(pathToBuiltProject), options);
+				return;
+			}
+
 			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, WindowsBeeLineNumberMappings);
 			if (mappingsPath == null)
 			{
@@ -196,6 +196,47 @@ namespace BugSplatUnity.Editor
 			}
 
 			UploadLineNumberMappings(mappingsPath, WindowsLineNumberMappingsName, options);
+		}
+
+		private static void UploadCoreClrScriptPdbs(string buildDir, BugSplatOptions options)
+		{
+			var pdbs = CoreClrScriptPdbs.Find(buildDir);
+			if (pdbs.Count == 0)
+				return;
+
+			var stagingDir = Path.GetFullPath(Path.Combine("Temp", "BugSplat", Guid.NewGuid().ToString("N")));
+			try
+			{
+				for (var i = 0; i < pdbs.Count; i++)
+				{
+					var dir = Path.Combine(stagingDir, i.ToString());
+					Directory.CreateDirectory(dir);
+					File.Copy(pdbs[i], Path.Combine(dir, Path.GetFileName(pdbs[i])));
+				}
+
+				Debug.Log($"BugSplat: uploading {pdbs.Count} script PDBs from Library/Bee, for C# file names and line numbers in CoreCLR crash reports.");
+				UploadSymbols(stagingDir, "**/*.pdb", options, false, uploadExitCode =>
+				{
+					if (uploadExitCode != 0)
+						Debug.LogError("BugSplat. Could not upload the script PDBs.");
+				});
+			}
+			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+			{
+				Debug.LogError($"BugSplat. Could not stage the script PDBs for upload: {e.Message}");
+			}
+			finally
+			{
+				try
+				{
+					if (Directory.Exists(stagingDir))
+						Directory.Delete(stagingDir, true);
+				}
+				catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+				{
+					Debug.LogWarning($"BugSplat. Could not clean up {stagingDir}: {e.Message}");
+				}
+			}
 		}
 
 		private static void PostProcessWindows(string pathToBuiltProject, BugSplatOptions options)
@@ -438,6 +479,18 @@ namespace BugSplatUnity.Editor
 
 				Debug.Log("BugSplat. macOS symbols uploading completed.");
 			});
+
+			// BugSplatBridgeMac.dylib ships prebuilt, so its dSYM comes from the package, not the build.
+			if (options.UseNativeCrashReportingForMac)
+			{
+				var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(BuildPostprocessors).Assembly);
+				var packageRoot = packageInfo?.resolvedPath ?? Path.GetFullPath(Path.Combine("Packages", "com.bugsplat.sdk"));
+				UploadSymbols(Path.Combine(packageRoot, "Runtime", "Plugins", "macOS", "Symbols~"), "**/*.dSYM", options, uploadExitCode =>
+				{
+					if (uploadExitCode != 0)
+						Debug.LogError("BugSplat. Could not upload the symbols of BugSplatBridgeMac.dylib.");
+				});
+			}
 
 			var mappingsPath = FindLineNumberMappings(pathToBuiltProject, MacBeeLineNumberMappings);
 			if (mappingsPath == null)

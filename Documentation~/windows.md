@@ -2,7 +2,7 @@
 
 # 🪟 Windows
 
-The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
+The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/integrations/desktop/windows). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
 
 Native crash reporting for Windows (`UseNativeCrashReportingForWindows`) is on by default, for both Mono and IL2CPP.
 
@@ -31,6 +31,8 @@ The Unity package doesn't have a setting for a custom theme yet: every Windows b
 To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Client Secret on the BugSplat [Integrations](https://app.bugsplat.com/v2/database/integrations) page and provide them as described in [Symbol Upload Credentials](symbol-upload.md#symbol-upload-credentials). If your game contains Native Windows C++ plugins, `.dll` and `.pdb` files in the `Assets/Plugins/x86` and `Assets/Plugins/x86_64` folders will be uploaded by BugSplat's PostBuild script and used in symbolication.
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+
+For CoreCLR builds (Unity 7), BugSplat also uploads your scripts' PDBs, so C# frames in native crash reports show file names and line numbers. Unity only puts those PDBs in the build when **Edit > Project Settings > Player > Other Settings > Managed Stack Trace Information** is **Method Name, File Name, and Line Number**, so BugSplat reads each script assembly's PDB from `Library/Bee`, where the compiler wrote it. They're uploaded at either setting, and nothing extra ships with your game.
 
 ## Windows Hang Detection
 

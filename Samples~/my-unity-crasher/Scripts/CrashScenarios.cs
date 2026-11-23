@@ -818,10 +818,10 @@ namespace Crasher
 		}
 
 #if !UNITY_EDITOR
-		[DllImport("__Internal")]
+		[DllImport("BugSplatBridgeMac")]
 		static extern void _crashNative();
 
-		[DllImport("__Internal")]
+		[DllImport("BugSplatBridgeMac")]
 		static extern void _hangNative();
 #endif
 
