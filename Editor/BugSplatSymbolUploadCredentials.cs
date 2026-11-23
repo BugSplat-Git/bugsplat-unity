@@ -150,12 +150,11 @@ namespace BugSplatUnity.Editor
 
 			try
 			{
-				var chmod = new System.Diagnostics.ProcessStartInfo("/bin/chmod", $"600 \"{path}\"")
+				var chmod = ProcessRunner.Run(new System.Diagnostics.ProcessStartInfo("/bin/chmod", $"600 \"{path}\""), TimeSpan.FromSeconds(30));
+				if (!chmod.Succeeded)
 				{
-					UseShellExecute = false,
-					CreateNoWindow = true
-				};
-				System.Diagnostics.Process.Start(chmod)?.WaitForExit();
+					UnityEngine.Debug.LogWarning($"BugSplat: could not restrict permissions on {path}{(chmod.TimedOut ? ": chmod timed out" : $": {chmod.Output}")}");
+				}
 			}
 			catch (Exception ex)
 			{

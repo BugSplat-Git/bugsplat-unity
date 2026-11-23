@@ -58,8 +58,11 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 | CaptureScreenshots | Should BugSplat a screenshot and upload it when Post is called |
 | PostExceptionsInEditor | Should BugSplat upload exceptions when in editor. Defaults to false so play mode exceptions stay out of your database |
 | PersistentDataFileAttachmentPaths |  Paths to files (relative to Application.persistentDataPath) to attach to managed reports, and to native crash reports on platforms where native crash reporting is enabled |
+| SymbolUploadTimeoutMinutes | Minutes a post-build symbol upload may run before it is stopped and reported as failed. `30` by default; `0` waits indefinitely. See [Timeouts and Failures](symbol-upload.md#timeouts-and-failures) |
+| FailBuildOnSymbolUploadError | Fail the build when a post-build symbol upload fails or times out. `false` by default, so a failed upload is logged as an error and the build succeeds |
 | UseNativeCrashReportingForWindows | Use native crash reporting library (bugsplat-windows) for Windows builds. Works with both Mono and IL2CPP. On by default |
 | UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols to BugSplat for Windows builds. `true` by default — Windows has always uploaded automatically, so defaulting it off would silently stop existing projects symbolicating. Also needs **Copy PDB Files**, which only a Windows editor can check; from other editors the upload runs regardless and a warning is logged |
+| WindowsLineNumberMappingsPath | Where to find IL2CPP's `LineNumberMappings.json` for Windows builds, if BugSplat's search doesn't find it. A file or a folder; relative to the project folder. Empty by default. See [Windows Symbols](windows.md#windows-symbols) |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
 | UseNativeCrashReportingForMac | Use native crash reporting (bugsplat-apple) for macOS builds. On by default. Requires IL2CPP; a Mono player logs a warning and uses the .NET handler only |

@@ -15,6 +15,8 @@ namespace BugSplatUnity.Editor
         private const string hangDialogConflictFormat = "Auto-submit is off for {0} fatal hang reports but still on for {0} crash reports, so hangs will keep uploading without asking. Turn off auto-submit for {0} crash reports as well to be prompted.";
         private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via Tools > BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
+        private const string copyPdbFilesOffMessage = "Upload Debug Symbols For Windows is on, but Copy PDB files is off in File > Build Profiles > Windows, so Windows builds have no .pdb files to upload and their native crash reports will not symbolicate.";
+
         private const int integrationsPaddingTop = 5;
         private const int integrationsPaddingBottom = 5;
 
@@ -93,6 +95,17 @@ namespace BugSplatUnity.Editor
             {
                 EditorGUILayout.HelpBox(emptyDatabaseErrorMessage, MessageType.Error);
             }
+
+#if UNITY_EDITOR_WIN
+            if (options.UploadDebugSymbolsForWindows && !UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
+            {
+                EditorGUILayout.HelpBox(copyPdbFilesOffMessage, MessageType.Warning);
+                if (GUILayout.Button("Turn On Copy PDB Files"))
+                {
+                    UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles = true;
+                }
+            }
+#endif
 
             // Caught here as well as at runtime: this pair is configured in the Inspector, so the
             // Inspector is where noticing it costs nothing. The runtime warning only surfaces on a
