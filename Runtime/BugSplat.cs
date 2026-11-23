@@ -36,7 +36,9 @@ namespace BugSplatUnity
 
         /// <summary>
         /// A dictionary of key values pairs to be added every time Post is called.
-        /// On platforms with native crash reporting, attributes are automatically synced to the native crash reporter.
+        /// On platforms with native crash reporting, attributes are automatically synced to the native crash reporter,
+        /// including removals and <c>Clear</c> (see <see cref="RemoveNativeAttribute"/> for the Windows exception).
+        /// Safe to use from any thread.
         /// </summary>
         public IDictionary<string, string> Attributes
         {
@@ -616,7 +618,7 @@ namespace BugSplatUnity
 
             if (clientSettings.Attributes is NativeSyncDictionary<string, string> syncDict)
             {
-                syncDict.SetCallback((key, value) => SetNativeAttribute(key, value));
+                syncDict.SetCallback(SetNativeAttribute, RemoveNativeAttribute);
             }
         }
 
@@ -900,6 +902,26 @@ namespace BugSplatUnity
             BugSplat_SetAttribute(key, value);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             CallAndroid("setAttribute", key, value);
+#endif
+        }
+
+        /// <summary>
+        /// Remove an attribute from the native crash reporter, so native crash reports no longer carry it.
+        /// Removing a key from <see cref="Attributes"/> calls this for you.
+        /// </summary>
+        /// <remarks>
+        /// macOS, iOS and Android remove the attribute. The Windows and Xbox SDKs have no way to remove one, so
+        /// there the attribute stays on native crash reports with an empty value.
+        /// </remarks>
+        public void RemoveNativeAttribute(string key)
+        {
+            if (!nativeCrashReportingEnabled) return;
+#if (UNITY_IOS || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+            _removeNativeAttribute(key);
+#elif (UNITY_STANDALONE_WIN || UNITY_GAMECORE) && !UNITY_EDITOR
+            BugSplat_SetAttribute(key, string.Empty);
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            CallAndroid("removeAttribute", key);
 #endif
         }
 
@@ -1202,18 +1224,23 @@ namespace BugSplatUnity
         /// Calls a static method on com.bugsplat.android.BugSplat, logging instead of throwing when the
         /// bundled AAR lacks it. Every Android call after init goes through here so a mismatched AAR
         /// degrades to missing data on a report rather than an exception in the game.
+        /// InvokeAttached attaches the calling thread to the JVM when it isn't already (and detaches it after),
+        /// because Attributes changes can arrive on any thread.
         /// </summary>
         private static void CallAndroid(string method, params object[] args)
         {
-            try
+            AndroidJNI.InvokeAttached(() =>
             {
-                using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
-                javaClass.CallStatic(method, args);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
-            }
+                try
+                {
+                    using var javaClass = new AndroidJavaClass("com.bugsplat.android.BugSplat");
+                    javaClass.CallStatic(method, args);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"BugSplat warning: com.bugsplat.android.BugSplat.{method} failed: {ex.Message}. This needs bugsplat-android 1.4.0 or later.");
+                }
+            });
         }
 #endif
 
@@ -1255,6 +1282,9 @@ namespace BugSplatUnity
 
         [DllImport(BridgeLib)]
         static extern void _setNativeAttribute(string key, string value);
+
+        [DllImport(BridgeLib)]
+        static extern void _removeNativeAttribute(string key);
 
         [DllImport(BridgeLib)]
         static extern void _setNativeUser(string user);

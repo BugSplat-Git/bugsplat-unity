@@ -291,6 +291,23 @@ static struct sigaction _bugsplatSIGILL;
 // only once per process: a later BugSplat client must not reset the signals again.
 static bool _monoSignalsHandedOver = false;
 
+static void SetValueForAttribute(NSString *v, const char* key) {
+    id bugsplat = GetBugSplatInstance();
+    if (!bugsplat) return;
+
+    NSString *k = [NSString stringWithUTF8String:(key ?: "")];
+
+    SEL sel = @selector(setValue:forAttribute:);
+    if ([bugsplat respondsToSelector:sel]) {
+        NSMethodSignature *sig = [bugsplat methodSignatureForSelector:sel];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setSelector:sel];
+        [inv setArgument:&v atIndex:2];
+        [inv setArgument:&k atIndex:3];
+        [inv invokeWithTarget:bugsplat];
+    }
+}
+
 extern "C" {
     void _startBugSplat(const char* database, const char* application, const char* version, const char* logFilePath,
                            int autoSubmitCrashReport, int autoSubmitFatalHangReport,
@@ -365,21 +382,11 @@ extern "C" {
     }
 
     void _setNativeAttribute(const char* key, const char* value) {
-        id bugsplat = GetBugSplatInstance();
-        if (!bugsplat) return;
+        SetValueForAttribute([NSString stringWithUTF8String:(value ?: "")], key);
+    }
 
-        NSString *k = [NSString stringWithUTF8String:(key ?: "")];
-        NSString *v = [NSString stringWithUTF8String:(value ?: "")];
-
-        SEL sel = @selector(setValue:forAttribute:);
-        if ([bugsplat respondsToSelector:sel]) {
-            NSMethodSignature *sig = [bugsplat methodSignatureForSelector:sel];
-            NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-            [inv setSelector:sel];
-            [inv setArgument:&v atIndex:2];
-            [inv setArgument:&k atIndex:3];
-            [inv invokeWithTarget:bugsplat];
-        }
+    void _removeNativeAttribute(const char* key) {
+        SetValueForAttribute(nil, key);
     }
 
     void _setNativeUser(const char* user) {
