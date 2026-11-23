@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEngine;
 
 namespace BugSplatUnity.Editor
 {
@@ -40,6 +41,7 @@ namespace BugSplatUnity.Editor
 			}
 			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
 			{
+				Debug.LogWarning($"BugSplat: could not search {artifacts} for {FileName}: {e.Message}");
 				return Array.Empty<string>();
 			}
 		}
@@ -71,6 +73,7 @@ namespace BugSplatUnity.Editor
 			}
 			catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is PathTooLongException)
 			{
+				Debug.LogWarning($"BugSplat: could not resolve the line number mappings path \"{overridePath}\": {e.Message}");
 				return null;
 			}
 
@@ -112,6 +115,7 @@ namespace BugSplatUnity.Editor
 			}
 			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
 			{
+				Debug.LogWarning($"BugSplat: could not search {root} for {FileName}: {e.Message}");
 				return Array.Empty<string>();
 			}
 		}

@@ -114,14 +114,8 @@ namespace BugSplatUnity.Editor
 
 				result.Elapsed = stopwatch.Elapsed;
 
-				try
-				{
-					process.CancelOutputRead();
-					process.CancelErrorRead();
-				}
-				catch (InvalidOperationException)
-				{
-				}
+				process.CancelOutputRead();
+				process.CancelErrorRead();
 			}
 
 			lock (gate)
@@ -137,16 +131,22 @@ namespace BugSplatUnity.Editor
 				if (!process.HasExited)
 					process.Kill();
 			}
-			catch (Exception e) when (e is InvalidOperationException || e is Win32Exception || e is NotSupportedException)
+			catch (InvalidOperationException)
 			{
+				// The process exited between the HasExited check and Kill().
+			}
+			catch (Exception e) when (e is Win32Exception || e is NotSupportedException)
+			{
+				UnityEngine.Debug.LogWarning($"BugSplat: could not stop {process.StartInfo.FileName}, so it may still be running: {e.Message}");
 			}
 
 			try
 			{
 				process.WaitForExit((int)KillTimeout.TotalMilliseconds);
 			}
-			catch (SystemException)
+			catch (Exception e) when (e is InvalidOperationException || e is Win32Exception)
 			{
+				UnityEngine.Debug.LogWarning($"BugSplat: could not wait for {process.StartInfo.FileName} to exit: {e.Message}");
 			}
 		}
 

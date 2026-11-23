@@ -1,8 +1,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using BugSplatUnity.Editor;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace BugSplatUnity.EditorTests
 {
@@ -134,6 +137,14 @@ namespace BugSplatUnity.EditorTests
 		public void ResolveOverride_ShouldReturnNullWithoutAFile(string overridePath)
 		{
 			Assert.IsNull(LineNumberMappingsSearch.ResolveOverride(overridePath, root));
+		}
+
+		[Test]
+		public void ResolveOverride_ShouldWarnAndReturnNullForAnInvalidPath()
+		{
+			LogAssert.Expect(LogType.Warning, new Regex("BugSplat: could not resolve the line number mappings path"));
+
+			Assert.IsNull(LineNumberMappingsSearch.ResolveOverride("Mappings\0", root));
 		}
 	}
 }
