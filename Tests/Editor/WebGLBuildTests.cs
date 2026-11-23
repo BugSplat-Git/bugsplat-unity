@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using BugSplatUnity.Editor;
 using BugSplatUnity.Runtime.Client;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace BugSplatUnity.EditorTests
 {
@@ -179,6 +181,15 @@ namespace BugSplatUnity.EditorTests
 			Assert.AreEqual(
 				"        codeUrl: buildUrl + \"/MyGame.wasm\",\r\n        streamingAssetsUrl: \"StreamingAssets\",\r\n",
 				WebGLBuild.RemoveSymbolsUrl(html, "MyGame.symbols.json"));
+		}
+
+		[Test]
+		public void RemoveSymbolsUrl_ShouldLeaveAPropertySharingItsLineIntact()
+		{
+			var html = "var config = { codeUrl: buildUrl + \"/MyGame.wasm\", symbolsUrl: buildUrl + \"/MyGame.symbols.json\" };\n";
+
+			LogAssert.Expect(LogType.Warning, new Regex("symbolsUrl reference to MyGame.symbols.json"));
+			Assert.AreEqual(html, WebGLBuild.RemoveSymbolsUrl(html, "MyGame.symbols.json"));
 		}
 
 		[Test]

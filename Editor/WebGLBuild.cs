@@ -265,8 +265,16 @@ namespace BugSplatUnity.Editor
 
 		internal static string RemoveSymbolsUrl(string html, string symbolsFileName)
 		{
-			var lines = html.Split('\n');
-			var kept = lines.Where(line => !(line.Contains("symbolsUrl") && line.Contains(symbolsFileName)));
+			var property = new Regex(@"^\s*symbolsUrl\s*:\s*[^,;{}]*[""'][^""']*" + Regex.Escape(symbolsFileName) + @"[""']\s*,?\s*\r?$");
+			var kept = new List<string>();
+			foreach (var line in html.Split('\n'))
+			{
+				if (property.IsMatch(line))
+					continue;
+				if (line.Contains("symbolsUrl") && line.Contains(symbolsFileName))
+					Debug.LogWarning($"BugSplat: left the symbolsUrl reference to {symbolsFileName} in index.html because it shares a line with other code. The file was not deployed, so remove the reference by hand.");
+				kept.Add(line);
+			}
 			return string.Join("\n", kept);
 		}
 
@@ -403,7 +411,7 @@ namespace BugSplatUnity.Editor
 
 		static void BakeConfig(string buildDir, BugSplatOptions options)
 		{
-			var defines = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.WebGL);
+			var defines = PlayerBuildDefines.For(NamedBuildTarget.WebGL);
 			if (!ShouldBakeConfig(options, defines) || !Directory.Exists(buildDir))
 				return;
 

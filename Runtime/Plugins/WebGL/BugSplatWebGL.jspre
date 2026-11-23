@@ -115,24 +115,38 @@
       attributes[detail] = report.details[detail];
     }
 
+    var fields = [
+      ['database', current['database']],
+      ['appName', current['application'] || ''],
+      ['appVersion', current['version'] || ''],
+      ['appKey', current['key'] || ''],
+      ['user', current['user'] || ''],
+      ['email', current['email'] || ''],
+      ['description', current['description'] || ''],
+      ['notes', current['notes'] || ''],
+      ['callstack', report.callstack],
+      ['crashTypeId', '39'],
+      ['attributes', JSON.stringify(attributes)]
+    ];
+    var log = new Blob([report.log], { type: 'text/plain' });
     var body = new FormData();
-    body.append('database', current['database']);
-    body.append('appName', current['application'] || '');
-    body.append('appVersion', current['version'] || '');
-    body.append('appKey', current['key'] || '');
-    body.append('user', current['user'] || '');
-    body.append('email', current['email'] || '');
-    body.append('description', current['description'] || '');
-    body.append('notes', current['notes'] || '');
-    body.append('callstack', report.callstack);
-    body.append('crashTypeId', '39');
-    body.append('attributes', JSON.stringify(attributes));
-    body.append('BugSplatWebGL.log', new Blob([report.log], { type: 'text/plain' }), 'BugSplatWebGL.log');
+    var bytes = log.size;
+    for (var i = 0; i < fields.length; i++) {
+      body.append(fields[i][0], fields[i][1]);
+      bytes += new Blob([fields[i][1]]).size;
+    }
+    body.append('BugSplatWebGL.log', log, 'BugSplatWebGL.log');
 
     var url = 'https://' + current['database'] + '.bugsplat.com/post/dotnetstandard/';
-    var keepalive = report.callstack.length + report.log.length < keepaliveLimit;
+    var keepalive = bytes < keepaliveLimit;
     try {
       fetch(url, { method: 'POST', body: body, keepalive: keepalive })
+        .catch(function (e) {
+          if (!keepalive) {
+            throw e;
+          }
+          return fetch(url, { method: 'POST', body: body });
+        })
         .then(function (response) { return response.text().then(function (text) { return response.status + ' ' + text; }); })
         .then(function (text) { console.log('BugSplat: WebAssembly crash posted ' + text); })
         .catch(function (e) { console.error('BugSplat: WebAssembly crash post failed ' + e); });
@@ -156,7 +170,7 @@
     configure: function (value) {
       config = value;
       disabled = false;
-      flush();
+      setTimeout(flush, 0);
     },
     disable: function () {
       disabled = true;
