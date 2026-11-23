@@ -88,7 +88,11 @@ StartCoroutine(bugsplat.Post(ex, options, callback));
 
 ## Preventing Repeated Reports
 
-By default, BugSplat prevents reports from being sent at a rate greater than 1 per every 3 seconds. You can override the default crash report throttling implementation by setting `ShouldPostException` on your BugSplat instance. To override `ShouldPostException`, assign the property a new `Func<Exception, bool>` value. Be sure your new implementation can handle a null value for `Exception`!
+By default, BugSplat posts each distinct C# exception at most once every 10 seconds. Two exceptions count as the same when they have the same type and call stack. The message is ignored, so an id or counter in it doesn't make every report look new. Repeats inside those 10 seconds are skipped and counted. The next report of that exception that does post carries the count in a `SuppressedDuplicateReports` attribute.
+
+Different exceptions don't hold each other back, but BugSplat posts at most 20 reports in any 60 seconds, so a burst of distinct exceptions can't flood your database. Reports over that cap are counted the same way. Every BugSplat client in the process shares these limits, and they reset when Play mode starts.
+
+To change this, assign `ShouldPostException` on your BugSplat instance a new `Func<Exception, bool>`. Your guard replaces the default entirely, so there is no per-exception deduplication and no `SuppressedDuplicateReports` attribute unless you add them. It must handle a null `Exception`: exceptions BugSplat captures from Unity's log, which include unhandled exceptions and `Debug.LogException`, arrive as null because Unity passes only their text.
 
 The following example demonstrates how you could implement your own time-based report throttling mechanism:
 
@@ -132,7 +136,7 @@ Two things are worth knowing about the timing. The runtime raises this event onl
 
 ## Windows Crashes
 
-BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). See the [Windows](windows.md) section for setup details.
+BugSplat captures native Windows crashes via [BugSplat for Windows](https://docs.bugsplat.com/integrations/desktop/windows). See the [Windows](windows.md) section for setup details.
 
 > [!IMPORTANT]
 > `Utils.ForceCrash` goes through Unity's internal crash pipeline and will **not** be captured by native crash reporters on iOS, macOS, or Android. On those platforms, use a real native crash (such as a null pointer dereference in native code) to test crash reporting. The BugSplat sample app uses real native crashes to test native crash reporting.
@@ -198,4 +202,4 @@ When an exception occurs, a page similar to the following will open in the user'
 
 <img width="1086" alt="image" src="https://github.com/user-attachments/assets/3a3d6f82-e3bf-42bc-ae7f-582ba35cd499">
 
-More information on support responses can be found [here](https://docs.bugsplat.com/introduction/production/setting-up-custom-support-responses).
+More information on support responses can be found [here](https://docs.bugsplat.com/guides/production/setting-up-custom-support-responses).

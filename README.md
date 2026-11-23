@@ -116,14 +116,14 @@ What BugSplat captures on each platform. Setup for each one is covered in [Andro
 | Capability | Windows | macOS | iOS | Android | Linux | WebGL |
 | --- | --- | --- | --- | --- | --- | --- |
 | Managed C# exceptions | Yes | Yes | Yes | Yes | Yes | Yes |
-| Native crashes | Yes (Mono or IL2CPP) | Yes (IL2CPP only) | Yes | Yes | No | No |
+| Native crashes | Yes (Mono or IL2CPP) | Yes (Mono or IL2CPP) | Yes | Yes | No | No |
 | Hang / ANR reporting | Yes (opt-in) | Yes | Yes | Yes (Android 11+) | No | No |
 | Offline retry of native reports | Yes | Yes | Yes | Yes | n/a | n/a |
 | User feedback (`PostFeedback`) | Yes | Yes | Yes | Yes | Yes | No |
 | Automatic symbol upload | Yes | Yes | Yes | Yes | No | No |
 
 - **Managed C# exceptions** are captured on every platform through Unity's log callbacks — including [background threads](Documentation~/usage.md#background-thread-exceptions) — and posted over HTTPS. WebGL uses a separate reporter that cannot attach log files or screenshots.
-- **Native crashes** are captured by default on Windows, macOS (IL2CPP only), iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
+- **Native crashes** are captured by default on Windows, macOS, iOS, and Android. Each platform has an option to turn it off on your `BugSplatOptions` asset: `UseNativeCrashReportingForWindows`, `UseNativeCrashReportingForMac`, `UseNativeCrashReportingForIos`, and `UseNativeCrashReportingForAndroid`. Linux and WebGL have no native reporter and fall back to managed exception reporting alone. Every native reporter is compiled out of the editor, so play mode exercises the managed rows only.
 - **Hang / ANR reporting** is opt-in on Windows through `WindowsHangDetectionTimeoutMs` (`0`, disabled, by default) and automatic on macOS, iOS, and Android once native crash reporting is enabled. Android ANRs additionally need Android 11 (API level 30) at runtime. macOS reports a hang only when the frozen app is force-quit, since nothing on macOS terminates an unresponsive app on its own.
 - **Offline retry** covers native reports only: they are written to disk when the crash happens and uploaded on a later launch, so being offline at crash time does not lose the report. Managed exception posts are never persisted — if that upload fails, the report is gone.
 - **User feedback** is posted with `bugsplat.PostFeedback`. WebGL has no feedback client and logs an error instead.

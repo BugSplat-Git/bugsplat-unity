@@ -2,7 +2,7 @@
 
 # 🪟 Windows
 
-The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/cplusplus). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
+The bugsplat-unity plugin supports native crash reporting on Windows via [BugSplat for Windows](https://docs.bugsplat.com/integrations/desktop/windows). Native Windows crash reporting works with both the **Mono** and **IL2CPP** scripting backends, on x86 (32-bit), x64, and Windows-on-ARM (ARM64) players.
 
 Native crash reporting for Windows (`UseNativeCrashReportingForWindows`) is on by default, for both Mono and IL2CPP.
 
@@ -33,6 +33,8 @@ To enable the uploading of plugin symbols, generate an OAuth2 Client ID and Clie
 Windows symbols are uploaded only when **Copy PDB files** is on in **File > Build Profiles > Windows**; without it the build contains no `.pdb` files, so BugSplat skips the upload. If `UploadDebugSymbolsForWindows` is on and Copy PDB files is off, the build log warns as soon as the build starts, and **Edit > Project Settings > BugSplat** shows the same warning with a button that turns the setting on. Only a Windows editor can read the setting.
 
 For IL2CPP builds, BugSplat will also upload `LineNumberMappings.json`. Line mappings allow BugSplat to replace generated C++ function names, file names, and line numbers with their original C# equivalents. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+
+For CoreCLR builds (Unity 7), BugSplat also uploads your scripts' PDBs, so C# frames in native crash reports show file names and line numbers. Unity only puts those PDBs in the build when **Edit > Project Settings > Player > Other Settings > Managed Stack Trace Information** is **Method Name, File Name, and Line Number**, so BugSplat reads each script assembly's PDB from `Library/Bee`, where the compiler wrote it. They're uploaded at either setting, and nothing extra ships with your game.
 
 Unity has moved `LineNumberMappings.json` between versions, so BugSplat searches for it: first in the player's `<Game>_BackUpThisFolder_ButDontShipItWithYourGame` folder, then in the Windows folders under `Library/Bee/artifacts`, taking the newest. If your build puts it somewhere else, set `WindowsLineNumberMappingsPath` to the file, or to the folder holding it. A relative path is relative to the project folder. If nothing is there, the build log warns and BugSplat searches as usual.
 

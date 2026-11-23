@@ -113,7 +113,7 @@ namespace BugSplatUnity.Runtime.Client
 		public bool UploadDebugSymbolsForXbox = true;
 
 		[Header("macOS")]
-		[Tooltip("Use native crash reporting framework for macOS builds. On by default. Requires the IL2CPP scripting backend; a Mono player logs a warning and uses the .NET handler only.")]
+		[Tooltip("Use native crash reporting framework for macOS builds. Works with both Mono and IL2CPP. On by default.")]
 		public bool UseNativeCrashReportingForMac = true;
 
 		[Tooltip("Upload debug symbols (dSYMs) to BugSplat for macOS builds.")]
@@ -171,11 +171,6 @@ namespace BugSplatUnity.Runtime.Client
 			"Open Edit > Project Settings > BugSplat, or add a BugSplatOptions asset anywhere under Assets/ - a " +
 			"single asset is selected automatically. Scripted setup: " +
 			"https://github.com/BugSplat-Git/bugsplat-unity/blob/main/Documentation~/automation.md";
-
-		internal const string MacNativeRequiresIl2CppMessage =
-			"BugSplat: native macOS crash reporting requires the IL2CPP scripting backend, so this Mono player " +
-			"reports managed exceptions only. Set Player Settings > Other Settings > Scripting Backend to IL2CPP, " +
-			"or uncheck Use Native Crash Reporting For Mac in Edit > Project Settings > BugSplat.";
 
 #if !UNITY_EDITOR
 		private static BugSplatOptions preloaded;

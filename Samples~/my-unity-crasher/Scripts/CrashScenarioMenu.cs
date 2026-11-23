@@ -248,7 +248,7 @@ namespace Crasher
 #elif UNITY_GAMECORE
 				const string option = "Use Native Crash Reporting For Xbox (and install the BugSplat for Xbox package)";
 #elif UNITY_STANDALONE_OSX
-				const string option = "Use Native Crash Reporting For Mac (and build with IL2CPP)";
+				const string option = "Use Native Crash Reporting For Mac";
 #elif UNITY_IOS
 				const string option = "Use Native Crash Reporting For Ios";
 #elif UNITY_ANDROID
