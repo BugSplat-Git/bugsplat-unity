@@ -2,7 +2,7 @@
 
 # 🖥 macOS
 
-The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes. It works with both the **Mono** and **IL2CPP** scripting backends, on Apple silicon and Intel. IL2CPP gives better reports: see [Mono players](#mono-players).
+The bugsplat-unity plugin supports native crash reporting on macOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes. It works with both the **Mono** and **IL2CPP** scripting backends, on Apple silicon and Intel, and with **CoreCLR** players (Unity 7.0 alpha). IL2CPP gives better reports: see [Mono players](#mono-players) and [CoreCLR players](#coreclr-players).
 
 `UseNativeCrashReportingForMac` is on by default. To upload symbols as well, set `UploadDebugSymbolsForMac` to `true` on your `BugSplatOptions` asset. BugSplat then uploads the build's dSYMs, plus the dSYM of its own prebuilt bridge, `BugSplatBridgeMac.dylib`, which comes from the package. For IL2CPP builds it also uploads Unity's `LineNumberMappings.json` for full symbolication. The mappings file is uploaded as `LineNumberMappings-macos.json`, so a macOS build never overwrites the mappings of an iOS or Windows build that shares its version; the file Unity wrote is left as it is. Unity only generates `LineNumberMappings.json` when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
 
@@ -23,6 +23,17 @@ What differs from IL2CPP:
 - **Stack overflows in C# are not reported.** Mono's signal handlers don't run on an alternate signal stack, so when C# recursion exhausts the stack, macOS has nowhere to run any crash handler and ends the process at once. A Mono player without BugSplat dies the same way. IL2CPP players report these crashes.
 - **A few milliseconds at startup.** Between BugSplat taking over Mono's signals and Mono getting them back, while BugSplat starts, a null dereference in C# on another thread would crash the player instead of throwing.
 - **Other signal handlers.** Under Mono, crashes reach BugSplat through signal handlers, so a native plugin that installs its own crash signal handlers after BugSplat initializes gets each crash first. Unless it passes the signals it does not handle on to the handler it replaced, those crashes never reach BugSplat. IL2CPP players are less exposed: there BugSplat catches hardware faults such as `SIGSEGV` and `SIGBUS` with a Mach exception handler, which runs before any signal handler. If you write such a plugin, chain unhandled signals to the previous handler.
+
+## CoreCLR players
+
+Unity 7.0 alpha builds macOS players with the CoreCLR scripting backend. BugSplat reports their native crashes and main-thread hangs with bugsplat-apple's Mach exception handlers, as in IL2CPP players. The CoreCLR runtime handles a null dereference in C# before bugsplat-apple sees the fault, so a `NullReferenceException` is not reported as a native crash.
+
+What differs from IL2CPP:
+
+- **C# frames are addresses.** CoreCLR compiles C# at run time, so the C# frames of a native crash or hang show as `???` with an address, without method names, files or lines. Native frames (Unity, the OS, your native plugins) are symbolicated as usual.
+- **`Environment.FailFast` and stack overflows in C# are not reported.** The runtime ends the process itself in both cases, and writes the C# stack trace to `Player.log`.
+
+Tested with Unity 7000.0.0a20 on Apple silicon.
 
 ## Attachments
 

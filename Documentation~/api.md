@@ -65,7 +65,7 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 | WindowsLineNumberMappingsPath | Where to find IL2CPP's `LineNumberMappings.json` for Windows builds, if BugSplat's search doesn't find it. A file or a folder; relative to the project folder. Empty by default. See [Windows Symbols](windows.md#windows-symbols) |
 | WindowsShowCrashDialog | Show the BugSplat crash dialog when a native crash occurs on Windows (default). When disabled, crash reports are sent silently |
 | WindowsHangDetectionTimeoutMs | Native hang detection timeout in milliseconds for Windows. 0 (default) disables hang detection |
-| UseNativeCrashReportingForMac | Use native crash reporting (bugsplat-apple) for macOS builds. On by default. Requires IL2CPP; a Mono player logs a warning and uses the .NET handler only |
+| UseNativeCrashReportingForMac | Use native crash reporting (bugsplat-apple) for macOS builds. On by default. Works with Mono, IL2CPP, and CoreCLR players; see [macOS](macos.md) |
 | UploadDebugSymbolsForMac | Upload dSYMs to BugSplat for macOS builds. `false` by default |
 | MacAutoSubmitCrashReport | Submit macOS crash reports without asking the user. `false` by default — the convention on desktop, and bugsplat-apple's own macOS default |
 | MacAutoSubmitFatalHangReport | Submit macOS fatal hang reports without asking the user. `true` by default. Needs `MacAutoSubmitCrashReport` off too before a dialog can appear |

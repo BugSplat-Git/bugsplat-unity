@@ -466,7 +466,7 @@ namespace BugSplatUnity
 
             UseDotNetHandler(database, application, version, capturePlayerLog);
 #elif UNITY_STANDALONE_OSX && !UNITY_EDITOR
-#if !ENABLE_IL2CPP
+#if ENABLE_MONO
             // Mono implements NullReferenceException with a signal handler: a null dereference faults,
             // and the handler turns the SIGSEGV into the managed exception. bugsplat-apple's default
             // Mach exception handler sees the fault first and would write each one as a crash. So
@@ -504,7 +504,7 @@ namespace BugSplatUnity
                 _setNativePlayerLogPath(consoleLogPath ?? "");
 
                 _startBugSplat(database, application, version, logPath ?? "", autoSubmit, autoSubmitHang, hangThreshold);
-#if !ENABLE_IL2CPP
+#if ENABLE_MONO
                 if (monoHandover == 1)
                 {
                     InstallMonoSignalHandlers.Invoke(null, null);
@@ -1276,7 +1276,7 @@ namespace BugSplatUnity
         [DllImport(BridgeLib)]
         static extern void _setNativePlayerLogPath(string path);
 
-#if !ENABLE_IL2CPP
+#if ENABLE_MONO
         [DllImport(BridgeLib)]
         static extern int _useBSDSignalHandlersForMono();
 
