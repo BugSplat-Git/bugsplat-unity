@@ -6,30 +6,50 @@
   var maxLogLines = 100;
   var maxLogLineLength = 500;
   var keepaliveLimit = 60000;
-  var logs = [];
   var config = null;
   var disabled = false;
   var pending = null;
-  var reported = false;
 
-  function pushLog(level, args) {
-    var parts = [];
-    for (var i = 0; i < args.length; i++) {
-      var arg = args[i];
-      try {
-        parts.push(typeof arg === 'string' ? arg : (arg instanceof Error ? (arg.stack || String(arg)) : JSON.stringify(arg)));
-      } catch (e) {
-        parts.push(String(arg));
-      }
+  function format(value) {
+    if (typeof value === 'string') {
+      return value;
     }
-    var line = new Date().toISOString() + ' [' + level + '] ' + parts.join(' ').replace(/\s+$/, '');
-    logs.push(line.length > maxLogLineLength ? line.substring(0, maxLogLineLength) + '...' : line);
+    if (value instanceof Error) {
+      return value.stack || String(value);
+    }
+    if (value !== null && typeof value === 'object') {
+      var name = Object.prototype.toString.call(value).slice(8, -1);
+      return typeof value.length === 'number' ? name + '(' + value.length + ')' : '[' + name + ']';
+    }
+    return String(value);
+  }
+
+  function pushLog(logs, level, args) {
+    var parts = [];
+    var budget = maxLogLineLength;
+    for (var i = 0; i < args.length && budget > 0; i++) {
+      var part;
+      try {
+        part = format(args[i]);
+      } catch (e) {
+        part = '[unreadable]';
+      }
+      if (part.length > budget) {
+        part = part.substring(0, budget) + '...';
+      }
+      budget -= part.length + 1;
+      parts.push(part);
+    }
+    logs.push(new Date().toISOString() + ' [' + level + '] ' + parts.join(' ').replace(/\s+$/, ''));
     if (logs.length > maxLogLines) {
       logs.shift();
     }
   }
 
-  if (typeof console !== 'undefined') {
+  function hookConsole(logs) {
+    if (typeof console === 'undefined') {
+      return;
+    }
     ['log', 'info', 'warn', 'error', 'debug'].forEach(function (level) {
       var original = console[level];
       if (typeof original !== 'function') {
@@ -37,11 +57,26 @@
       }
       console[level] = function () {
         try {
-          pushLog(level, arguments);
+          pushLog(logs, level, arguments);
         } catch (e) {}
         return original.apply(console, arguments);
       };
     });
+  }
+
+  function describe(error, fallbackMessage) {
+    var message = '';
+    var stack = '';
+    if (error && typeof error === 'object') {
+      message = error.name && error.message ? error.name + ': ' + error.message : String(error);
+      stack = error.stack ? String(error.stack) : '';
+    } else if (error !== undefined && error !== null) {
+      message = String(error);
+    }
+    if (!message) {
+      message = fallbackMessage || 'Unknown error';
+    }
+    return stack && stack.indexOf(message) === 0 ? stack : (stack ? message + '\n' + stack : message);
   }
 
   function isWasmFailure(source, error, text) {
@@ -54,6 +89,34 @@
     return /wasm-function\[|wasm:\/\/|^RuntimeError|^abort\(|^Aborted\(/.test(text);
   }
 
+  // One console hook, one pair of window listeners and one report per page, however many players
+  // the page creates. A failure goes to the player whose wasm is in the stack, else the oldest.
+  var page = window['__BugSplatWebGL'];
+  if (!page) {
+    page = window['__BugSplatWebGL'] = { 'logs': [], 'players': [], 'reported': false };
+    hookConsole(page['logs']);
+    var dispatch = function (source, error, fallbackMessage) {
+      var text = describe(error, fallbackMessage);
+      if (!page['players'].length || !isWasmFailure(source, error, text)) {
+        return;
+      }
+      var owner = page['players'][0];
+      for (var i = 0; i < page['players'].length; i++) {
+        if (page['players'][i]['codeUrl'] && text.indexOf(page['players'][i]['codeUrl']) >= 0) {
+          owner = page['players'][i];
+          break;
+        }
+      }
+      owner['capture'](source, text);
+    };
+    window.addEventListener('error', function (e) {
+      dispatch('error', e.error, e.message);
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) {
+      dispatch('unhandledrejection', e.reason);
+    }, true);
+  }
+
   function heapBytes() {
     try {
       if (typeof HEAPU8 !== 'undefined' && HEAPU8) {
@@ -63,23 +126,8 @@
     return 0;
   }
 
-  function capture(source, error, fallbackMessage) {
-    if (disabled || reported || pending) {
-      return;
-    }
-    var message = '';
-    var stack = '';
-    if (error && typeof error === 'object') {
-      message = error.name && error.message ? error.name + ': ' + error.message : String(error);
-      stack = error.stack ? String(error.stack) : '';
-    } else if (error !== undefined && error !== null) {
-      message = String(error);
-    }
-    if (!message) {
-      message = fallbackMessage || 'Unknown error';
-    }
-    var text = stack && stack.indexOf(message) === 0 ? stack : (stack ? message + '\n' + stack : message);
-    if (!isWasmFailure(source, error, text)) {
+  function capture(source, text) {
+    if (disabled || page['reported'] || pending) {
       return;
     }
 
@@ -91,16 +139,16 @@
     if (typeof performance !== 'undefined' && performance.memory) {
       details.jsHeapUsedBytes = String(performance.memory.usedJSHeapSize);
     }
-    pending = { callstack: text, details: details, log: logs.join('\n') };
+    pending = { callstack: text, details: details, log: page['logs'].join('\n') };
     flush();
   }
 
   function flush() {
     var current = config || Module['bugsplat'];
-    if (!pending || reported || disabled || !current || !current['database']) {
+    if (!pending || page['reported'] || disabled || !current || !current['database']) {
       return;
     }
-    reported = true;
+    page['reported'] = true;
     var report = pending;
     pending = null;
 
@@ -153,13 +201,6 @@
     } catch (e) {}
   }
 
-  window.addEventListener('error', function (e) {
-    capture('error', e.error, e.message);
-  }, true);
-  window.addEventListener('unhandledrejection', function (e) {
-    capture('unhandledrejection', e.reason);
-  }, true);
-
   var abortHandler = Module['abortHandler'];
   Module['abortHandler'] = function (message) {
     capture('abort', String(message));
@@ -177,6 +218,24 @@
       pending = null;
     }
   };
+
+  var player = { 'codeUrl': '', 'capture': capture };
+  try {
+    if (Module['codeUrl']) {
+      player['codeUrl'] = new URL(Module['codeUrl'], document.baseURI).href;
+    }
+  } catch (e) {}
+  page['players'].push(player);
+  if (Module['deinitializers'] && typeof Module['deinitializers'].push === 'function') {
+    Module['deinitializers'].push(function () {
+      disabled = true;
+      pending = null;
+      var index = page['players'].indexOf(player);
+      if (index >= 0) {
+        page['players'].splice(index, 1);
+      }
+    });
+  }
 
   flush();
 })();

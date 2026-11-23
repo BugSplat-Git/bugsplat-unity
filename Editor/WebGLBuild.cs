@@ -84,7 +84,7 @@ namespace BugSplatUnity.Editor
 		static void FilterJspre()
 		{
 			if (AssetImporter.GetAtPath(JspreAssetPath) is PluginImporter jspre)
-				jspre.SetIncludeInBuildDelegate(_ => BuildPostprocessors.GetBugSplatOptions()?.CaptureWebAssemblyCrashes ?? true);
+				jspre.SetIncludeInBuildDelegate(_ => ShouldIncludeJspre(BuildPostprocessors.GetBugSplatOptions(), PlayerBuildDefines.For(NamedBuildTarget.WebGL)));
 		}
 
 		internal static WebGLBuildSettings Apply()
@@ -318,13 +318,19 @@ namespace BugSplatUnity.Editor
 			return config.Substring(0, config.Length - 1) + ",\"attributes\":" + Runtime.Util.AttributesJson.Serialize(attributes) + "}";
 		}
 
+		internal static bool IsDisabled(string scriptingDefines) =>
+			(scriptingDefines ?? "").Split(';', ',').Select(define => define.Trim()).Contains(BugSplatOptions.DisabledDefine);
+
+		internal static bool ShouldIncludeJspre(BugSplatOptions options, string scriptingDefines) =>
+			(options?.CaptureWebAssemblyCrashes ?? true) && !IsDisabled(scriptingDefines);
+
 		internal static bool ShouldBakeConfig(BugSplatOptions options, string scriptingDefines) =>
 			options != null
 			&& options.Enabled
 			&& options.InitializeAutomatically
 			&& options.CaptureWebAssemblyCrashes
 			&& !string.IsNullOrEmpty(options.Database)
-			&& !(scriptingDefines ?? "").Split(';', ',').Select(define => define.Trim()).Contains(BugSplatOptions.DisabledDefine);
+			&& !IsDisabled(scriptingDefines);
 
 		/// <summary>
 		/// Post-build steps for a WebGL player: bakes the options into the loader so a crash before C#

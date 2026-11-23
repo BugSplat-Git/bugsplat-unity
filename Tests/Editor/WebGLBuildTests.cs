@@ -235,6 +235,19 @@ namespace BugSplatUnity.EditorTests
 		}
 
 		[Test]
+		public void ShouldIncludeJspre_ShouldRespectTheOptOuts()
+		{
+			var options = Options();
+			Assert.IsTrue(WebGLBuild.ShouldIncludeJspre(options, "FOO;BAR"));
+			Assert.IsTrue(WebGLBuild.ShouldIncludeJspre(null, ""));
+			Assert.IsFalse(WebGLBuild.ShouldIncludeJspre(options, "FOO;BUGSPLAT_DISABLED"));
+
+			options.CaptureWebAssemblyCrashes = false;
+			Assert.IsFalse(WebGLBuild.ShouldIncludeJspre(options, ""));
+			UnityEngine.Object.DestroyImmediate(options);
+		}
+
+		[Test]
 		public void ShouldBakeConfig_ShouldRespectConsentAndTheOptOuts()
 		{
 			var options = Options();
