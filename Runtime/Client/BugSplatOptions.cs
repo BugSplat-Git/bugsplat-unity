@@ -141,6 +141,13 @@ namespace BugSplatUnity.Runtime.Client
 		[Tooltip("Add a build script phase to upload the Debug symbols to BugSplat.")]
 		public bool UploadDebugSymbolsForAndroid;
 
+		[Header("WebGL")]
+		[Tooltip("Report WebAssembly traps and aborts (memory access out of bounds, unreachable, out of memory, stack overflow) on WebGL. These end the player before any C# runs, so they are reported from JavaScript, with the last 100 console lines attached. On by default. Off also leaves BugSplat's .jspre out of the build.")]
+		public bool CaptureWebAssemblyCrashes = true;
+
+		[Tooltip("Upload symbols for WebGL builds: the function name map, the WebAssembly source map and IL2CPP's C# line mappings. Turning this on also sets Debug Symbols to External and adds -gsource-map, IL2CPP -g and source mapping, and UnityLinker --link-symbols for the duration of each WebGL build, then restores your settings. Function names and line numbers in WebGL crash reports need it. Slows WebGL builds; see Documentation~/webgl.md.")]
+		public bool UploadDebugSymbolsForWebGL;
+
 		/// <summary>
 		/// The key under which the editor stores the project's options asset in EditorBuildSettings.
 		/// The build step carries that asset into the player as a preloaded asset.

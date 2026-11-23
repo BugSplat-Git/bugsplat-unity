@@ -163,7 +163,7 @@ namespace BugSplatUnity.Editor
 				try
 				{
 					var target = NamedBuildTarget.FromBuildTargetGroup(report.summary.platformGroup);
-					return HasDefine(PlayerSettings.GetScriptingDefineSymbols(target), define);
+					return HasDefine(PlayerBuildDefines.For(target), define);
 				}
 				catch (ArgumentException)
 				{

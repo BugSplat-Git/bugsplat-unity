@@ -98,6 +98,9 @@ namespace BugSplatUnity.Editor
 				CopyMacCrashDialogLogo(pathToBuiltProject, options);
 				PostProcessMac(pathToBuiltProject, options);
 			}
+
+			if (target == BuildTarget.WebGL)
+				WebGLBuild.PostProcess(pathToBuiltProject, options);
 		}
 
 		/// <summary>
