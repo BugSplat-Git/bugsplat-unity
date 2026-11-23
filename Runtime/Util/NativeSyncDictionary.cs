@@ -100,11 +100,9 @@ namespace BugSplatUnity.Runtime.Util
         {
             lock (_lock)
             {
-                var removed = _inner.Keys.ToList();
-                _inner.Clear();
-                foreach (var key in removed)
+                foreach (var key in _inner.Keys.ToList())
                 {
-                    _onRemove?.Invoke(key);
+                    if (_inner.Remove(key)) _onRemove?.Invoke(key);
                 }
             }
         }

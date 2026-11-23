@@ -199,6 +199,26 @@ namespace BugSplatUnity.RuntimeTests.Util
         }
 
         [Test]
+        public void Clear_WithReentrantRemoveCallback_ShouldKeepNativeMirrorInSync()
+        {
+            var dict = new NativeSyncDictionary<string, string>();
+            var mirror = new Dictionary<string, string>();
+            dict.SetCallback((k, v) => mirror[k] = v, k =>
+            {
+                mirror.Remove(k);
+                if (k == "a") dict["b"] = "re-added";
+                if (k == "b") dict.Remove("c");
+            });
+            dict.Add("a", "1");
+            dict.Add("b", "2");
+            dict.Add("c", "3");
+
+            dict.Clear();
+
+            CollectionAssert.AreEquivalent(dict.ToList(), mirror.ToList());
+        }
+
+        [Test]
         public void Clear_Empty_ShouldNotInvokeRemoveCallback()
         {
             var dict = new NativeSyncDictionary<string, string>();
