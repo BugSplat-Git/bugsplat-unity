@@ -263,6 +263,17 @@ namespace BugSplatUnity.RuntimeTests.Util
             Assert.IsNotNull(new WebGLClientSettingsRepository().Attachments);
         }
 
+        [Test]
+        public void SetSuppressedReportCount_WhenOptionsAreReusedWithNothingSuppressed_ShouldRemoveTheEarlierCount()
+        {
+            var options = new ReportPostOptions();
+
+            options.SetSuppressedReportCount(5);
+            options.SetSuppressedReportCount(0);
+
+            Assert.IsFalse(options.AdditionalAttributes.ContainsKey(ShouldPostExceptionImpl.SuppressedReportsAttribute));
+        }
+
         class FakeClientSettingsRepository : IClientSettingsRepository
         {
             public List<FileInfo> Attachments { get; set; } = new List<FileInfo>();
