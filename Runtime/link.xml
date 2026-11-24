@@ -21,16 +21,6 @@
     </assembly>
 
     <!--
-      Mono macOS players reinstall Mono's signal handlers after BugSplat starts (see BugSplat.cs),
-      through this internal method, which only reflection reaches.
-    -->
-    <assembly fullname="mscorlib">
-        <type fullname="Mono.Runtime">
-            <method name="InstallSignalHandlers"/>
-        </type>
-    </assembly>
-
-    <!--
       Deliberately absent:
 
       BugSplatDotNetStandard, the vendored DLL. Every entry point the player uses is called

@@ -2,23 +2,23 @@
 
 # 🍎 iOS
 
-The bugsplat-unity plugin supports native crash reporting on iOS via [bugsplat-apple](https://github.com/BugSplat-Git/bugsplat-apple), which uses PLCrashReporter to capture crashes via Mach exception handling. Native crash reporting (`UseNativeCrashReportingForIos`) is on by default; to upload symbols as well, set `UploadDebugSymbolsForIos` to `true` on your `BugSplatOptions` asset (**Edit > Project Settings > BugSplat**).
+Native iOS crash reporting comes from [bugsplat-native](native.md). iOS allows no out-of-process helper, so Crashpad's in-process handler captures the crash and writes an intermediate dump; the SDK converts it and uploads it on the next launch, without a dialog. `UseNativeCrashReporting` is on by default.
 
-When native crash reporting is enabled, BugSplat automatically disables Unity's built-in crash reporter during the build to prevent conflicts with PLCrashReporter. Crashes are captured at crash time and uploaded on the next app launch.
+When native crash reporting is enabled, BugSplat disables Unity's built-in crash reporter in the generated Xcode project (`Classes/CrashReporter.h`) so bugsplat-native's handler sees crashes first, and sets `DEBUG_INFORMATION_FORMAT` to `dwarf-with-dsym` so symbols exist to upload.
 
-For IL2CPP builds, BugSplat will also upload Unity's `LineNumberMappings.json` alongside dSYMs. This enables BugSplat to map IL2CPP-generated C++ symbols back to original C# method names, file names, and line numbers. The Unity build copies it into the Xcode project as `LineNumberMappings-ios.json`, and the Xcode build phase uploads that, so an iOS build never overwrites the mappings of a macOS or Windows build that shares its version. Exporting into an existing Xcode project replaces the phase from an earlier export and removes the `LineNumberMappings.json` copy older versions left there. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
+For IL2CPP builds, BugSplat also copies `LineNumberMappings.json` into the Xcode project as `LineNumberMappings-ios.json` and uploads it alongside the dSYMs, so IL2CPP-generated C++ symbols map back to C# method names, file names, and line numbers. The name keeps an iOS build from overwriting the mappings of a macOS or Windows build that shares its version. Exporting into an existing Xcode project replaces the phase from an earlier export and removes the `LineNumberMappings.json` copy older versions left there. Unity only generates the file when **Edit > Project Settings > Player > Other Settings > IL2CPP Stacktrace Information** is set to **Method Name, File Name, and Line Number**; without it, the build log warns and names the setting.
 
 Unity does not write a `Player.log` on iOS — log output goes to the device console, which Xcode and Console.app show — so `CapturePlayerLog` has no effect on iOS reports. To attach your own log file to native iOS crash reports, see [Attachments](#attachments).
 
 ## Attachments
 
-A native crash report is uploaded at the **next launch**, not at crash time, and BugSplat asks for its attachments then — in a fresh process that did not experience the crash. A file registered with `AttachNativeLogFile` part-way through a session is therefore not remembered across the crash and never reaches the report.
+`PersistentDataFileAttachmentPaths` and `AttachNativeLogFile` work as on the other platforms; the SDK records the attachment list per session, and the next-launch import copies the files into the report.
 
-Register native attachments during initialization instead. `BugSplatOptions.PersistentDataFileAttachmentPaths` is applied on every launch and is unaffected by this. Each attachment is truncated to its last 10 MB. See [Attaching Files to Native Crash Reports](api.md#attaching-files-to-native-crash-reports).
+## Hang detection
 
 ## Testing on Device
 
-A debugger claims the Mach exception ports before PLCrashReporter does, so **a crash that happens under the Xcode debugger never reaches BugSplat**. Hang detection is suppressed outright while a debugger is attached. Xcode's **Build And Run** leaves the debugger on, so a crash triggered that way produces no report and no explanation.
+A debugger claims the Mach exception ports before bugsplat-native's handler does, so **a crash that happens under the Xcode debugger never reaches BugSplat**. Xcode's **Build And Run** leaves the debugger on, so a crash triggered that way produces no report and no explanation.
 
 Two ways to test:
 
@@ -27,6 +27,11 @@ Two ways to test:
 
 Either way the report uploads on the **next** launch, not at crash time, so relaunch the app after the crash.
 
-## Hang Detection
+Set `HangDetectionTimeoutMs` on the options asset. The heartbeat BugSplat sends every frame feeds an in-process watchdog; when it stops for longer than the timeout, the SDK writes a hang report that uploads on the next launch. Full-memory dumps are not available on iOS; `DumpType` is ignored there with a logged warning.
 
-When `UseNativeCrashReportingForIos` is enabled, BugSplat also detects fatal main-thread hangs. No additional configuration is required. If the main thread stalls past the detection threshold and the app is subsequently terminated without recovering — by the OS watchdog at launch/resume, or by the user force-quitting — BugSplat uploads an `App Hang (Fatal)` report on the next launch. Hangs the app recovers from are not reported. Detection is suppressed while a debugger is attached, so test hang reporting on a build run without the Xcode debugger.
+## Symbols
+
+Set `UploadDebugSymbolsForIos` to add an Xcode build phase that uploads the dSYMs as Breakpad `.sym` files (`symbol-upload --dumpSyms`) and `LineNumberMappings-ios.json`. The phase reads credentials from `SYMBOL_UPLOAD_CLIENT_ID` / `SYMBOL_UPLOAD_CLIENT_SECRET` in the Xcode build environment or from `~/.bugsplat/credentials/<database>.sh`; see [Symbol Upload](symbol-upload.md).
+
+> [!NOTE]
+> Unity's Xcode project has a `Generate dSYM for archive, and strip` build phase. BugSplat's upload phase is inserted after it, so the dSYM exists when the upload runs; on the first build after export, check the build log to confirm the order.
