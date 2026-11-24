@@ -65,7 +65,10 @@ Use `Enabled` for a project-wide switch and `BUGSPLAT_DISABLED` for a per-build-
 | HangPolicy | `Report` (default): dump the live process, upload, continue. `ReportAndTerminate`: also offer Wait / Close |
 | OpenSupportUrl | Open the support-response URL after an interactive upload on desktop (default `true`) |
 | ManagedReportFormat | `Xml` (default) or `Json` for managed exception reports posted through the native SDK |
+| SymbolUploadTimeoutMinutes | Minutes a post-build symbol upload may run before it is stopped and reported as failed. `30` by default; `0` waits indefinitely. See [Timeouts and Failures](symbol-upload.md#timeouts-and-failures) |
+| FailBuildOnSymbolUploadError | Fail the build when a post-build symbol upload fails or times out. `false` by default, so a failed upload is logged as an error and the build succeeds |
 | UploadDebugSymbolsForWindows | Upload `.pdb`, `.dll` and `.exe` symbols for Windows builds. `true` by default. Also needs **Copy PDB Files**, which only a Windows editor can check; from other editors the upload runs regardless and a warning is logged |
+| WindowsLineNumberMappingsPath | Where to find IL2CPP's `LineNumberMappings.json` for Windows builds, if BugSplat's search doesn't find it. A file or a folder; relative to the project folder. Empty by default. See [Windows Symbols](windows.md#windows-symbols) |
 | UploadDebugSymbolsForMac | Upload dSYMs as Breakpad `.sym` files for macOS builds |
 | UploadDebugSymbolsForLinux | Upload the player's `.so` and `.debug` files as Breakpad `.sym` files for Linux builds |
 | UploadDebugSymbolsForIos | Add an Xcode build phase that uploads dSYMs as Breakpad `.sym` files |

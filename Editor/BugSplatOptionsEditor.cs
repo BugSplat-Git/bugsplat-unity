@@ -14,6 +14,8 @@ namespace BugSplatUnity.Editor
         private const string emptyDatabaseErrorMessage = "Database cannot be null or empty!";
         private const string credentialsInfoMessage = "Symbol upload credentials are not stored here — they would end up in version control and in your builds. Set them per database via Tools > BugSplat > Symbol Upload > Set Credentials, or with the SYMBOL_UPLOAD_CLIENT_ID and SYMBOL_UPLOAD_CLIENT_SECRET environment variables.";
 
+        private const string copyPdbFilesOffMessage = "Upload Debug Symbols For Windows is on, but Copy PDB files is off in File > Build Profiles > Windows, so Windows builds have no .pdb files to upload and their native crash reports will not symbolicate.";
+
         private const int integrationsPaddingTop = 5;
         private const int integrationsPaddingBottom = 5;
 
@@ -91,6 +93,17 @@ namespace BugSplatUnity.Editor
             {
                 EditorGUILayout.HelpBox(emptyDatabaseErrorMessage, MessageType.Error);
             }
+
+#if UNITY_EDITOR_WIN
+            if (options.UploadDebugSymbolsForWindows && !UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles)
+            {
+                EditorGUILayout.HelpBox(copyPdbFilesOffMessage, MessageType.Warning);
+                if (GUILayout.Button("Turn On Copy PDB Files"))
+                {
+                    UnityEditor.WindowsStandalone.UserBuildSettings.copyPDBFiles = true;
+                }
+            }
+#endif
         }
     }
 }

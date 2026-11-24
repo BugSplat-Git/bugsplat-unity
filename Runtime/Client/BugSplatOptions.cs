@@ -105,8 +105,17 @@ namespace BugSplatUnity.Runtime.Client
 		public ManagedReportFormat ManagedReportFormat = ManagedReportFormat.Xml;
 
 		[Header("Symbols")]
+		[Tooltip("Minutes the post-build symbol upload may run before it is stopped and reported as failed. Defaults to 30, room for gigabytes of .pdb files on a slow uplink while still ending a stalled upload - a network outage, or security software holding the uploader - well inside a typical CI job limit. 0 waits indefinitely. Applies to every platform the editor uploads symbols for.")]
+		public int SymbolUploadTimeoutMinutes = 30;
+
+		[Tooltip("Fail the build when a post-build symbol upload fails or times out. Off by default: the player is already built and works, so a failed upload is logged as an error and the build succeeds. Turn it on in CI to stop a build whose crash reports would not symbolicate. Missing symbol upload credentials are not a failure - the upload is skipped with a warning.")]
+		public bool FailBuildOnSymbolUploadError;
+
 		[Tooltip("Upload .pdb, .dll and .exe symbols to BugSplat for Windows builds. On by default. Also requires Copy PDB Files in Build Settings - only a Windows editor can check that setting, so from other editors the upload runs regardless and a warning is logged.")]
 		public bool UploadDebugSymbolsForWindows = true;
+
+		[Tooltip("Where to find IL2CPP's LineNumberMappings.json for Windows builds, if BugSplat does not find it on its own. A file, or a folder holding one; relative paths are relative to the project folder. Leave empty (default) to search the player's IL2CPP backup folder and Library/Bee.")]
+		public string WindowsLineNumberMappingsPath;
 
 		[Tooltip("Upload debug symbols (dSYMs, as Breakpad .sym files) to BugSplat for macOS builds.")]
 		public bool UploadDebugSymbolsForMac;
