@@ -108,6 +108,13 @@ namespace BugSplatUnity.Runtime.Native
 				// platforms to turn faults in managed code into managed exceptions. They must see a
 				// fault first, or a NullReferenceException becomes a native crash report.
 				BugSplatNative.bugsplat_options_set_chain_previous_signal_handlers(o, 1);
+#if UNITY_STANDALONE_OSX && ENABLE_CORECLR
+				// CoreCLR takes the faults of managed code on thread-level Mach ports, so those never
+				// reach bugsplat-native. Every other fault is dumped where it happens. Without this the
+				// dump is written when the process dies, on whichever thread took the re-sent signal.
+				// Not for Mono, whose null checks are faults nothing would stand in front of.
+				BugSplatNative.bugsplat_options_set_mach_fault_exceptions(o, 1);
+#endif
 				// Terminate after the dump rather than running the CRT's exit path: a standalone
 				// player's shutdown can hang inside its own teardown after a crash.
 				BugSplatNative.bugsplat_options_set_crash_completion(o, 1 /* BUGSPLAT_COMPLETION_TERMINATE */);
@@ -136,7 +143,21 @@ namespace BugSplatUnity.Runtime.Native
 				}
 
 				// bugsplat_init takes ownership of the options, success or not.
-				var result = (BugSplatNative.Result)BugSplatNative.bugsplat_init(o);
+				BugSplatNative.Result result;
+#if UNITY_STANDALONE_OSX && ENABLE_MONO
+				// On macOS Mono's handlers have to go on top of bugsplat-native's: see MonoSignals.
+				var monoHandover = MonoSignals.HandOver();
+				try
+				{
+					result = (BugSplatNative.Result)BugSplatNative.bugsplat_init(o);
+				}
+				finally
+				{
+					if (monoHandover) MonoSignals.Reinstall();
+				}
+#else
+				result = (BugSplatNative.Result)BugSplatNative.bugsplat_init(o);
+#endif
 				if (result != BugSplatNative.Result.Ok)
 				{
 					LastError = Describe(result);
@@ -167,6 +188,83 @@ namespace BugSplatUnity.Runtime.Native
 			return false;
 #endif
 		}
+
+#if UNITY_STANDALONE_OSX && ENABLE_MONO && !UNITY_EDITOR
+		/// <summary>
+		/// Mono on macOS turns a null dereference into a NullReferenceException in a SIGSEGV handler,
+		/// and ends the process itself when a thread it does not know faults. For both to work with
+		/// bugsplat-native, Mono's handlers go on top of bugsplat-native's and pass on what is not
+		/// theirs: Mono keeps its own faults, and the rest are dumped from the faulting thread.
+		/// </summary>
+		private static class MonoSignals
+		{
+			private const string LibSystem = "/usr/lib/libSystem.dylib";
+			private static readonly IntPtr RtldDefault = new IntPtr(-2);
+			private const int SIGQUIT = 3, SIGILL = 4, SIGABRT = 6, SIGFPE = 8, SIGBUS = 10, SIGSEGV = 11;
+
+			[StructLayout(LayoutKind.Sequential)]
+			private struct SigAction
+			{
+				public IntPtr Handler;
+				public uint Mask;
+				public int Flags;
+			}
+
+			[UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate void SetChaining(int enabled);
+
+			[DllImport(LibSystem)] private static extern IntPtr dlsym(IntPtr handle, string symbol);
+			[DllImport(LibSystem)] private static extern IntPtr signal(int sig, IntPtr handler);
+			[DllImport(LibSystem)] private static extern int sigaction(int sig, IntPtr action, out SigAction previous);
+			[DllImport(LibSystem)] private static extern int sigaction(int sig, ref SigAction action, IntPtr previous);
+
+			// Internal to mscorlib, so reached by reflection; link.xml keeps it from being stripped.
+			private static readonly System.Reflection.MethodInfo InstallSignalHandlers = typeof(object).Assembly
+				.GetType("Mono.Runtime")
+				?.GetMethod("InstallSignalHandlers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+			/// <summary>
+			/// Call right before bugsplat_init. Returns false, having changed nothing, when this Mono
+			/// lacks what the handover needs; native crashes are then reported when the process dies.
+			/// </summary>
+			public static bool HandOver()
+			{
+				var setSignalChaining = dlsym(RtldDefault, "mono_set_signal_chaining");
+				var setCrashChaining = dlsym(RtldDefault, "mono_set_crash_chaining");
+				if (InstallSignalHandlers == null || setSignalChaining == IntPtr.Zero || setCrashChaining == IntPtr.Zero)
+				{
+					return false;
+				}
+
+				// Signal chaining makes Mono save the handlers it replaces and pass them the faults
+				// that are not its own. Crash chaining off makes it pass a native crash on at once,
+				// rather than first writing its own crash dump from inside the signal handler.
+				Marshal.GetDelegateForFunctionPointer<SetChaining>(setSignalChaining)(1);
+				Marshal.GetDelegateForFunctionPointer<SetChaining>(setCrashChaining)(0);
+
+				// The signals Mono installs handlers for. Back to the default action, so that is what
+				// bugsplat_init saves as the handler to call after its own. Were it Mono's, the two
+				// would call each other forever once Mono's handlers are back on top.
+				foreach (var sig in new[] { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGQUIT, SIGSEGV })
+				{
+					signal(sig, IntPtr.Zero);
+				}
+
+				return true;
+			}
+
+			/// <summary>Call after bugsplat_init, whether it succeeded or not: Mono's handlers are gone until then.</summary>
+			public static void Reinstall()
+			{
+				var haveSigill = sigaction(SIGILL, IntPtr.Zero, out var sigill) == 0;
+				InstallSignalHandlers.Invoke(null, null);
+
+				// Mono's SIGILL handler, unlike its others, writes Mono's crash dump and aborts without
+				// passing the fault on. Mono does not use SIGILL for managed code, so the handler
+				// bugsplat_init installed (or the default, when it failed) gets the signal back.
+				if (haveSigill) sigaction(SIGILL, ref sigill, IntPtr.Zero);
+			}
+		}
+#endif
 
 		/// <summary>Windows players keep BugSplat's UnityNative crash type so IL2CPP frames symbolicate through LineNumberMappings.json.</summary>
 		private static int DefaultCrashTypeId =>
