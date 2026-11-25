@@ -11,6 +11,10 @@ Native macOS crash reporting comes from [bugsplat-native](native.md): an out-of-
 - At build time, BugSplat copies `BugSplatMonitor`, `BugSplatReporter.app` and `theme/` into `<Game>.app/Contents/Helpers/`. For an Xcode project export, add them to the target yourself.
 - Managed exceptions post through the same SDK as structured reports.
 
+## Mono and CoreCLR players
+
+Mono and CoreCLR handle some faults themselves: a null dereference in C# becomes a `NullReferenceException`, which BugSplat reports as a managed exception. Every other fault is a native crash, reported from the thread where it happened, including a thread that one of your native plugins created. There is nothing to set up.
+
 ## Signing and notarization
 
 The helpers are executables inside your bundle, so they must be signed with your Developer ID (hardened runtime) along with the app before notarization — `codesign --deep` or an explicit pass over `Contents/Helpers` both work. `BugSplatMonitor` needs no entitlements of its own.

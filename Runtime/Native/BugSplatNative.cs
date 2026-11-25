@@ -70,6 +70,7 @@ namespace BugSplatUnity.Runtime.Native
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_open_support_url(IntPtr o, int enabled);
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_crash_signature(IntPtr o, int enabled);
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_chain_previous_signal_handlers(IntPtr o, int enabled);
+		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_mach_fault_exceptions(IntPtr o, int enabled);
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_key(IntPtr o, [MarshalAs(UnmanagedType.LPUTF8Str)] string v);
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_user(IntPtr o, [MarshalAs(UnmanagedType.LPUTF8Str)] string v);
 		[DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] internal static extern void bugsplat_options_set_email(IntPtr o, [MarshalAs(UnmanagedType.LPUTF8Str)] string v);
